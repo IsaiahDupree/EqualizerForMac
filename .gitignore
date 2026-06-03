@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+.build/
+
+# XcodeGen generates the project from project.yml — do not commit it
+SonanceEQ.xcodeproj/
+
+# Swift Package Manager
+.swiftpm/
+
+# Secrets / signing
+*.p12
+*.mobileprovision
+*.cer
+ExportOptions.plist
