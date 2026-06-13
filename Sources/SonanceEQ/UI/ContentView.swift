@@ -11,7 +11,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 14) {
             header
             if app.permission.status == .denied { permissionBanner }
             targetRow
@@ -27,6 +27,7 @@ struct ContentView: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            Divider()
             footer
         }
         .padding(22)
@@ -64,6 +65,7 @@ struct ContentView: View {
             ))
             .toggleStyle(.switch)
             .disabled(!app.isRunning)
+            .help("Pass audio through unprocessed for an A/B comparison")
             Button(app.isRunning ? "Stop" : "Start EQ") { app.toggle() }
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
@@ -181,6 +183,7 @@ struct ContentView: View {
             }
             .toggleStyle(.switch)
             .controlSize(.small)
+            .help("EQ the mono center and the stereo width with separate curves")
         }
     }
 
@@ -204,6 +207,7 @@ struct ContentView: View {
             }
             .toggleStyle(.switch)
             .controlSize(.small)
+            .help("Same EQ curve with zero phase distortion · adds a little latency")
 
             if app.linearPhase {
                 Text(String(format: "+%.0f ms latency", app.latencyMs))
