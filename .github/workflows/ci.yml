@@ -1,8 +1,14 @@
 name: CI
 
+# Manual trigger only — macOS runners need GitHub Actions billing (10× minutes) on a private repo.
+# To run automatically on every push/PR, either:
+#   • enable a spending limit / payment method under Settings → Billing & plans, OR
+#   • make the repo public (public repos get free macOS runners),
+# then add back:  push:  /  pull_request:  under `on:`.
+# Until then the local pre-commit hook (.githooks/pre-commit) is the gate; run this manually via the
+# Actions tab ("Run workflow") once billing is set up.
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
