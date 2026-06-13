@@ -31,8 +31,14 @@ if [ -z "${DEVELOPER_ID:-}" ]; then
   echo "  ✗ DEVELOPER_ID not set (need a 'Developer ID Application' certificate from Apple)."
   missing=1
 fi
-if [ -z "${NOTARY_PROFILE:-}" ] && { [ -z "${APPLE_ID:-}" ] || [ -z "${TEAM_ID:-}" ] || [ -z "${APP_PASSWORD:-}" ]; }; then
-  echo "  ✗ Notarization creds not set (NOTARY_PROFILE, or APPLE_ID+TEAM_ID+APP_PASSWORD)."
+have_api_key=0
+if [ -n "${NOTARY_KEY:-}" ] && [ -n "${NOTARY_KEY_ID:-}" ] && [ -n "${NOTARY_ISSUER:-}" ]; then have_api_key=1; fi
+if [ "$have_api_key" = "0" ] && [ -z "${NOTARY_PROFILE:-}" ] \
+   && { [ -z "${APPLE_ID:-}" ] || [ -z "${TEAM_ID:-}" ] || [ -z "${APP_PASSWORD:-}" ]; }; then
+  echo "  ✗ Notarization creds not set. Provide ONE of:"
+  echo "      • App Store Connect API key: NOTARY_KEY (path to .p8) + NOTARY_KEY_ID + NOTARY_ISSUER  ← reuse your ~/private_keys/AuthKey_<KEYID>.p8"
+  echo "      • a stored notarytool profile: NOTARY_PROFILE"
+  echo "      • Apple ID: APPLE_ID + TEAM_ID + APP_PASSWORD (app-specific password)"
   missing=1
 fi
 if [ "$missing" = "1" ]; then
@@ -66,7 +72,9 @@ hdiutil create -volname "Sonance EQ" -srcfolder "$APP_PATH" -ov -format UDZO "$D
 codesign --sign "$DEVELOPER_ID" --timestamp "$DMG_PATH"
 
 echo "▸ Notarizing (this can take a few minutes)"
-if [ -n "${NOTARY_PROFILE:-}" ]; then
+if [ -n "${NOTARY_KEY:-}" ] && [ -n "${NOTARY_KEY_ID:-}" ] && [ -n "${NOTARY_ISSUER:-}" ]; then
+  xcrun notarytool submit "$DMG_PATH" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER" --wait
+elif [ -n "${NOTARY_PROFILE:-}" ]; then
   xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
 else
   xcrun notarytool submit "$DMG_PATH" --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait

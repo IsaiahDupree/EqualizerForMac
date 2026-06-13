@@ -42,7 +42,8 @@ First run:
 2. macOS will ask for permission to capture audio — **Allow** it.
 3. Play audio in any app. Drag bands on the response curve, click **Headphones** to load a correction for your gear, or pick a preset. Toggle **Bypass** to A/B against the unprocessed sound.
 
-See the [User Manual](docs/MANUAL.md) for a full walkthrough.
+See the [User Manual](docs/MANUAL.md) for a full walkthrough, and the
+[Release Runbook](docs/RELEASE.md) for the signed-DMG / App Store automation.
 
 > The project file (`SonanceEQ.xcodeproj`) is git-ignored — always regenerate it with `xcodegen generate`. Edit `project.yml`, never the `.xcodeproj` directly.
 

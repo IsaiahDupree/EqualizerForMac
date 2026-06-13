@@ -1,0 +1,59 @@
+name: Release (Developer ID DMG)
+
+# Push a version tag (e.g. v1.0.0) → build, sign (Developer ID), notarize, staple, DMG, GitHub Release.
+# Configure these repo secrets first (Settings → Secrets and variables → Actions):
+#   DEVELOPER_ID_CERT_P12        base64 of your "Developer ID Application" .p12  (base64 -i cert.p12 | pbcopy)
+#   DEVELOPER_ID_CERT_PASSWORD   password for that .p12
+#   DEVELOPER_ID_NAME            e.g. "Developer ID Application: Your Name (TEAMID)"
+#   ASC_API_KEY_P8               contents of your App Store Connect API key .p8  (reuse AuthKey_VBDA4SUDJV.p8)
+#   ASC_API_KEY_ID               the key id (e.g. VBDA4SUDJV)
+#   ASC_API_ISSUER_ID            the API key issuer id (App Store Connect → Users and Access → Integrations)
+# See docs/RELEASE.md for the full runbook.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the GitHub Release
+
+jobs:
+  release:
+    name: Build · Notarize · Release
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Developer ID certificate
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          p12-password: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Write App Store Connect API key
+        run: |
+          mkdir -p "$HOME/private_keys"
+          printf '%s' "${{ secrets.ASC_API_KEY_P8 }}" > "$HOME/private_keys/AuthKey.p8"
+
+      - name: Build · sign · notarize · DMG
+        env:
+          DEVELOPER_ID: ${{ secrets.DEVELOPER_ID_NAME }}
+          NOTARY_KEY: ${{ github.workspace }}/../private_keys/AuthKey.p8
+          NOTARY_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          NOTARY_ISSUER: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          export NOTARY_KEY="$HOME/private_keys/AuthKey.p8"
+          ./Tools/package_and_notarize.sh
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            build/Sonance-EQ.dmg \
+            --title "Sonance EQ ${{ github.ref_name }}" \
+            --generate-notes
