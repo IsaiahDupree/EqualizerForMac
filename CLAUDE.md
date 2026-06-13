@@ -72,14 +72,22 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 - **Driver-based** designs cannot ship self-contained on the Mac App Store (2.4.5/2.5.2) — that's why the
   virtual-driver fallback is a v2, off-store concern.
 - Keep the aggregate **output-only** so it doesn't trip mic permission.
-- Real-time discipline: no allocations/locks-of-unknown-duration on the IOProc thread. M0 uses a brief
-  `OSAllocatedUnfairLock` snapshot in `EQEngine.beginRender()`; **M2 must make this lock-free** (double-buffer
-  swap) and add `vDSP_biquadm_SetTargets` ramping to remove zipper noise on live slider edits.
+- Real-time discipline: no allocations/locks-of-unknown-duration on the IOProc thread. **M2 done:**
+  `EQEngine` now runs `vDSP_biquadm` (32 sections/channel). The control→audio handoff is **wait-free**
+  (`beginRender()` uses `withLockIfAvailable` — a try-lock — so the audio thread never blocks; it keeps
+  ramping toward the last targets if the control thread is mid-write). Coefficient changes are applied
+  via `vDSP_biquadm_SetTargetsDouble` (per-sample ramp ≈ a few ms), killing zipper noise on live edits,
+  preset switches, and bypass (preamp + bypass fold into the ramped coefficient set).
+- ⚠️ **`vDSP_biquadm_CreateSetup(coeffs, M, N)` gotcha:** despite the header param names, **M = number of
+  sections, N = number of channels** (the opposite of how it reads). Getting it backwards makes the
+  function read N channel pointers when you supply one → **segfault on the audio thread**. Verified
+  empirically by `Tools/verify_biquad.swift` (offline frequency-response check — run it after any DSP
+  change: `swiftc -O Tools/verify_biquad.swift -o /tmp/vb && /tmp/vb`).
 
 ## Roadmap (see docs/BUILD-PLAN.md)
 - **M0 ✅** prove capture→DSP→replay loop
 - **M1 ✅** working system-wide 10-band graphic EQ + UI + permission + device rebuild
-- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. **Remaining:** swap the hand-rolled biquad cascade for `vDSP_biquadm` (lock-free double-buffer + `SetTargets` ramping to kill zipper noise on live drags), a true parametric editor UI (drag freq/Q + response curve), FIR linear-phase, per-channel/Mid-Side.
+- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. Engine since upgraded to `vDSP_biquadm` (wait-free handoff + `SetTargets` ramping — see gotchas + `Tools/verify_biquad.swift`). **Remaining:** a true parametric editor UI (drag freq/Q + live response curve), FIR linear-phase, per-channel/Mid-Side.
 - **M3** RevenueCat one-time-paid gating, Developer-ID notarization, branding/icon, MAS submission of tap-only public-permission build, per-app EQ
 
 ## Reference
