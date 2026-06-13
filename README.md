@@ -6,6 +6,10 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 
 > Not a browser extension. Unlike Safari-only equalizers, Sonance EQ sits between the macOS audio mixer and your output device, so it shapes **everything you hear**.
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="Sonance EQ — parametric editor with response curve, presets, per-app EQ, and Mid-Side" width="440">
+</p>
+
 ## Status
 
 **M0 + M1 + M2 complete — a system-wide parametric EQ with an 8,850-headphone library, linear-phase & Mid-Side modes.**
@@ -51,4 +55,8 @@ all apps → [global process tap, muted-when-tapped] → private aggregate devic
 
 ## License / IP
 
-Original work. Inspired by the *category* of system equalizers; no code, assets, or branding copied from any other app. Headphone correction presets (M2) come from the MIT-licensed [AutoEq](https://github.com/jaakkopasanen/AutoEq) project with attribution. See `docs/RESEARCH.md` §IP.
+Original work, **source-available but not open-source** — see [`LICENSE`](LICENSE). The compiled app is a
+commercial product (one-time purchase); the source is published for transparency. No code, assets, or
+branding copied from any other app. Bundled headphone corrections come from the MIT-licensed
+[AutoEq](https://github.com/jaakkopasanen/AutoEq) project with attribution; full third-party credits are
+in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md). See `docs/RESEARCH.md` §IP for the IP analysis.

@@ -1,0 +1,28 @@
+Sonance EQ
+Copyright (c) 2026 Isaiah Dupree. All rights reserved.
+
+This source code is published for transparency and portfolio purposes.
+It is source-available, NOT open-source.
+
+YOU MAY:
+  - View and study the source code.
+  - Clone and build it locally for personal evaluation and development.
+
+YOU MAY NOT, without prior written permission from the copyright holder:
+  - Use the code, or any substantial portion of it, in another product or work.
+  - Redistribute, sublicense, sell, or publish the code or any compiled binary.
+  - Use it for commercial purposes.
+
+The compiled application "Sonance EQ" is a commercial product distributed under a
+separate end-user license (a one-time purchase). Nothing here grants a license to
+the application itself.
+
+Third-party components included or referenced by this project are licensed under
+their own terms — see THIRD-PARTY-NOTICES.md. In particular, the bundled headphone
+correction data is from the AutoEq project (MIT) and is used with attribution.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM, OUT OF, OR IN CONNECTION WITH
+THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -97,6 +97,13 @@ final class PurchaseManager {
         isPro = false
     }
 
+    /// Mock-store only: unlock synchronously (used by `--demo` launches / screenshots).
+    func mockUnlock() {
+        guard store == .mock else { return }
+        defaults.set(true, forKey: mockKey)
+        isPro = true
+    }
+
     /// Single place that decides what Pro unlocks.
     func canUse(_ feature: ProFeature) -> Bool { isPro }
 

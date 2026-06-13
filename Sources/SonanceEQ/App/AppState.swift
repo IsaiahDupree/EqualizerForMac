@@ -14,6 +14,12 @@ final class AppState {
 
     init() {
         license.start()
+        if CommandLine.arguments.contains("--demo") {
+            // Presentation/screenshot state: a shaped curve with Pro unlocked (no locks).
+            license.mockUnlock()
+            bands = Presets.loudness
+            activePresetName = "Loudness"
+        }
     }
 
     /// Which EQ chain the editor is shaping in Mid-Side mode.
