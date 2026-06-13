@@ -35,7 +35,10 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ
-        PRODUCT_NAME: Sonance EQ
+        # PRODUCT_NAME has no space so the .app/exec match the target name (needed for TEST_HOST).
+        # The user-facing name is CFBundleDisplayName ("Sonance EQ") below.
+        PRODUCT_NAME: SonanceEQ
+        PRODUCT_MODULE_NAME: SonanceEQ   # clean Swift module name for `@testable import SonanceEQ`
         CODE_SIGN_ENTITLEMENTS: Sources/SonanceEQ/Resources/SonanceEQ.entitlements
         # Dev builds are not sandboxed and have hardened runtime off so the
         # private TCC permission SPI (used to request system-audio capture) works.
@@ -58,3 +61,29 @@ targets:
         LSUIElement: false
         NSHumanReadableCopyright: "© 2026 Isaiah Dupree"
         NSAudioCaptureUsageDescription: "Sonance EQ captures your Mac's audio output so it can apply your equalizer to everything you hear. Audio is processed live on your device and is never recorded, saved, or sent anywhere."
+
+  SonanceEQTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.4"
+    sources:
+      - Tests
+    dependencies:
+      - target: SonanceEQ
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQTests
+        GENERATE_INFOPLIST_FILE: YES
+        # PresetStore uses SQLite3; link it for the test bundle too.
+        OTHER_LDFLAGS: "-lsqlite3"
+
+schemes:
+  SonanceEQ:
+    build:
+      targets:
+        SonanceEQ: all
+    test:
+      targets:
+        - SonanceEQTests
+    run:
+      config: Debug

@@ -17,6 +17,16 @@ xcodegen generate
 xcodebuild -project SonanceEQ.xcodeproj -scheme SonanceEQ -configuration Debug \
   -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build   # compile check
 ```
+
+Run the test suite (508 cases / 71 funcs, **Swift Testing**, hosted in the app so `Bundle.main`
+resolves `autoeq.sqlite`; do NOT pass `CODE_SIGNING_ALLOWED=NO` here — the host app must ad-hoc sign to launch):
+```bash
+xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ -destination 'platform=macOS,arch=arm64'
+```
+Tests live in `Tests/` (`@testable import SonanceEQ`). The module name is `SonanceEQ` (set via
+`PRODUCT_MODULE_NAME`; `PRODUCT_NAME` is `SonanceEQ` so the `.app`/exec match the target for `TEST_HOST`,
+while the user-facing name stays `Sonance EQ` via `CFBundleDisplayName`). Standalone DSP proofs also live
+in `Tools/verify_{biquad,fir,midside}.swift` (compile-and-run against the shipping sources).
 Edit `project.yml`, never the `.xcodeproj`. Swift language mode is **5** (set in project.yml) to keep
 Core Audio IOProc closures simple; the one Swift-6 concurrency hotspot (EQEngine lock closure) is already clean.
 
