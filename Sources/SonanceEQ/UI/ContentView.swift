@@ -9,6 +9,7 @@ struct ContentView: View {
             header
             if app.permission.status == .denied { permissionBanner }
             presetRow
+            stereoRow
             ResponseCurveView(app: app)
             preampRow
             phaseRow
@@ -100,6 +101,30 @@ struct ContentView: View {
             Text(String(format: "%+.1f dB", app.preampDb))
                 .font(.system(size: 11, design: .monospaced))
                 .frame(width: 64, alignment: .trailing)
+        }
+    }
+
+    // MARK: Stereo / Mid-Side
+
+    private var stereoRow: some View {
+        HStack(spacing: 8) {
+            if app.midSideEnabled {
+                Picker("", selection: Binding(get: { app.editTarget },
+                                              set: { app.editTarget = $0 })) {
+                    Text("Mid").tag(AppState.ChannelTarget.mid)
+                    Text("Side").tag(AppState.ChannelTarget.side)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 130)
+                Text("editing the \(app.editTarget == .side ? "Side (stereo width)" : "Mid (center)") channel")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Toggle("Mid-Side", isOn: Binding(get: { app.midSideEnabled },
+                                             set: { app.setMidSide($0) }))
+                .toggleStyle(.switch)
+                .controlSize(.small)
         }
     }
 

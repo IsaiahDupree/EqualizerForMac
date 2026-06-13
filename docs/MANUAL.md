@@ -34,7 +34,7 @@ If you accidentally denied permission, see §11 (Troubleshooting).
 | **Preset row** | One-click built-in presets (Flat, Bass Boost, Treble, Vocal, Loudness) and the **Headphones** button (the AutoEq library). |
 | **Response curve** | The live parametric editor — the blue curve is exactly what the EQ is doing to your sound. |
 | **Preamp** | Master level trim (see §9). |
-| **Linear Phase** | Switch the filter type (see §8). |
+| **Linear Phase / Mid-Side** | Advanced filter & stereo modes (see §8). |
 | **Footer** | Reset, Import…, Export… (see §9). |
 
 ---
@@ -92,7 +92,9 @@ zipper noise or clicks.
 
 ---
 
-## 8. Linear Phase mode
+## 8. Advanced modes
+
+### Linear Phase
 
 The **Linear Phase** switch (below the preamp) changes *how* the EQ filters, without changing the
 shape of the curve:
@@ -106,6 +108,18 @@ shape of the curve:
   **off** for video/calls and switch it **on** for focused music listening.
 
 Both modes sound identical in *tonal balance*; the difference is phase/transient behavior.
+
+### Mid-Side
+
+The **Mid-Side** switch lets you EQ the **center** of the stereo image separately from the **width**:
+
+- **Mid** = what's common to both channels — lead vocals, bass, kick drum (the mono content).
+- **Side** = the *difference* between channels — ambience, reverb, hard-panned instruments (the width).
+
+Turn it on and a **Mid | Side** selector appears above the curve. Choose which one you're shaping; the
+curve you're editing is drawn solid, the other faintly for reference. For example: add a couple dB of
+"air" to the **Side** highs to widen a mix, or trim boomy bass on the **Mid** without thinning the sides.
+With the switch **off** (plain stereo), both channels get the same EQ — the normal case.
 
 ## 9. Preamp, Reset, Import / Export
 

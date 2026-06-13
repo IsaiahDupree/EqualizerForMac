@@ -30,7 +30,7 @@ struct ResponseCurveView: View {
                 // Tap empty space to deselect.
                 Color.clear.contentShape(Rectangle())
                     .onTapGesture { selectedBandID = nil }
-                ForEach(app.bands) { band in
+                ForEach(app.activeBands) { band in
                     handle(band, g)
                 }
             }
@@ -49,7 +49,7 @@ struct ResponseCurveView: View {
         }
         .controlSize(.small)
         .padding(6)
-        .disabled(app.bands.count >= EQEngine.maxBands)
+        .disabled(app.activeBands.count >= EQEngine.maxBands)
     }
 
     private func handle(_ band: EQBand, _ g: CurveGeometry) -> some View {
@@ -63,10 +63,10 @@ struct ResponseCurveView: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         selectedBandID = band.id
-                        guard let i = app.bands.firstIndex(where: { $0.id == band.id }) else { return }
-                        app.bands[i].frequency = g.freq(value.location.x).clamped(fMin, fMax)
-                        if app.bands[i].type.usesGain {
-                            app.bands[i].gain = Float(g.db(value.location.y).clamped(-gainRange, gainRange))
+                        guard let i = app.activeBands.firstIndex(where: { $0.id == band.id }) else { return }
+                        app.activeBands[i].frequency = g.freq(value.location.x).clamped(fMin, fMax)
+                        if app.activeBands[i].type.usesGain {
+                            app.activeBands[i].gain = Float(g.db(value.location.y).clamped(-gainRange, gainRange))
                         }
                         app.pushSettings()
                     }
@@ -76,24 +76,24 @@ struct ResponseCurveView: View {
     // MARK: Inspector
 
     @ViewBuilder private var inspector: some View {
-        if let id = selectedBandID, let i = app.bands.firstIndex(where: { $0.id == id }) {
+        if let id = selectedBandID, let i = app.activeBands.firstIndex(where: { $0.id == id }) {
             HStack(spacing: 10) {
                 Picker("", selection: bind(\.type, at: i)) {
                     ForEach(FilterType.allCases) { Text($0.shortLabel).tag($0) }
                 }
                 .labelsHidden().frame(width: 72)
 
-                Text("\(app.bands[i].freqLabel) Hz")
+                Text("\(app.activeBands[i].freqLabel) Hz")
                     .font(.caption.monospaced()).frame(width: 64, alignment: .leading)
 
                 HStack(spacing: 4) {
                     Text("Q").font(.caption2).foregroundStyle(.secondary)
                     Slider(value: bind(\.q, at: i), in: 0.1...10)
-                    Text(String(format: "%.2f", app.bands[i].q))
+                    Text(String(format: "%.2f", app.activeBands[i].q))
                         .font(.caption2.monospaced()).frame(width: 32)
                 }
 
-                Text(app.bands[i].type.usesGain ? String(format: "%+.1f dB", app.bands[i].gain) : "—")
+                Text(app.activeBands[i].type.usesGain ? String(format: "%+.1f dB", app.activeBands[i].gain) : "—")
                     .font(.caption2.monospaced()).frame(width: 52, alignment: .trailing)
 
                 Button(role: .destructive) {
@@ -117,8 +117,8 @@ struct ResponseCurveView: View {
     /// Two-way binding to a band field that pushes to the audio engine on change.
     private func bind<V>(_ key: WritableKeyPath<EQBand, V>, at i: Int) -> Binding<V> {
         Binding(
-            get: { app.bands[i][keyPath: key] },
-            set: { app.bands[i][keyPath: key] = $0; app.pushSettings() }
+            get: { app.activeBands[i][keyPath: key] },
+            set: { app.activeBands[i][keyPath: key] = $0; app.pushSettings() }
         )
     }
 
@@ -155,25 +155,35 @@ struct ResponseCurveView: View {
     }
 
     private func drawCurve(_ ctx: inout GraphicsContext, _ g: CurveGeometry) {
-        let points = FrequencyResponse.curve(bands: app.bands, sampleRate: app.sampleRateHz,
-                                             fMin: fMin, fMax: fMax)
+        // In Mid-Side mode, draw the inactive chain faintly for context.
+        if app.midSideEnabled {
+            let other = app.editTarget == .side ? app.bands : app.sideBands
+            strokeCurve(&ctx, g, bands: other, color: .gray.opacity(0.45), width: 1.2, fill: false)
+        }
+        strokeCurve(&ctx, g, bands: app.activeBands, color: .accentColor, width: 2, fill: true)
+    }
+
+    private func strokeCurve(_ ctx: inout GraphicsContext, _ g: CurveGeometry,
+                             bands: [EQBand], color: Color, width: CGFloat, fill: Bool) {
+        let points = FrequencyResponse.curve(bands: bands, sampleRate: app.sampleRateHz, fMin: fMin, fMax: fMax)
         guard !points.isEmpty else { return }
 
         var line = Path()
-        var fill = Path()
-        fill.move(to: CGPoint(x: 0, y: g.y(0)))
+        var fillPath = Path()
+        fillPath.move(to: CGPoint(x: 0, y: g.y(0)))
         for (idx, p) in points.enumerated() {
             let pt = CGPoint(x: g.x(p.freq), y: g.y(p.db.clamped(-gainRange, gainRange)))
             if idx == 0 { line.move(to: pt) } else { line.addLine(to: pt) }
-            fill.addLine(to: pt)
+            fillPath.addLine(to: pt)
         }
-        fill.addLine(to: CGPoint(x: g.size.width, y: g.y(0)))
-        fill.closeSubpath()
-
-        ctx.fill(fill, with: .linearGradient(
-            Gradient(colors: [.accentColor.opacity(0.28), .accentColor.opacity(0.04)]),
-            startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: g.size.height)))
-        ctx.stroke(line, with: .color(.accentColor), lineWidth: 2)
+        if fill {
+            fillPath.addLine(to: CGPoint(x: g.size.width, y: g.y(0)))
+            fillPath.closeSubpath()
+            ctx.fill(fillPath, with: .linearGradient(
+                Gradient(colors: [color.opacity(0.28), color.opacity(0.04)]),
+                startPoint: CGPoint(x: 0, y: 0), endPoint: CGPoint(x: 0, y: g.size.height)))
+        }
+        ctx.stroke(line, with: .color(color), lineWidth: width)
     }
 }
 

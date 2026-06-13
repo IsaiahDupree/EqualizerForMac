@@ -156,13 +156,11 @@ final class SystemAudioTap {
         let inList = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
         let outList = UnsafeMutableAudioBufferListPointer(output)
 
-        var channelOffset = 0
+        // 1. Copy each tap input buffer into the matching output buffer (silence if absent).
         for i in 0..<outList.count {
             let outBuffer = outList[i]
             guard let outData = outBuffer.mData else { continue }
             let outBytes = Int(outBuffer.mDataByteSize)
-
-            // 1. Copy the matching tap input buffer into the output buffer (silence if absent).
             if i < inList.count, let inData = inList[i].mData {
                 let copyBytes = min(outBytes, Int(inList[i].mDataByteSize))
                 memcpy(outData, inData, copyBytes)
@@ -172,17 +170,48 @@ final class SystemAudioTap {
             } else {
                 memset(outData, 0, outBytes)
             }
+        }
 
-            // 2. EQ each channel of the output buffer in place.
+        // 2a. Mid-Side decoding needs the L/R pair together.
+        if eq.isMidSide, let pair = stereoPair(outList) {
+            eq.processMidSide(left: pair.left, right: pair.right, frames: pair.frames,
+                              strideL: pair.strideL, strideR: pair.strideR)
+            return
+        }
+
+        // 2b. Otherwise EQ each channel of each output buffer in place.
+        var channelOffset = 0
+        for i in 0..<outList.count {
+            let outBuffer = outList[i]
+            guard let outData = outBuffer.mData else { continue }
             let channels = Int(outBuffer.mNumberChannels)
             guard channels > 0 else { continue }
-            let frames = outBytes / (MemoryLayout<Float>.size * channels)
+            let frames = Int(outBuffer.mDataByteSize) / (MemoryLayout<Float>.size * channels)
             let samples = outData.assumingMemoryBound(to: Float.self)
             for ch in 0..<channels {
                 eq.process(channel: channelOffset + ch, data: samples + ch, frames: frames, stride: channels)
             }
             channelOffset += channels
         }
+    }
+
+    /// Returns L/R pointers + strides if the output is exactly 2 channels (interleaved or planar), else nil.
+    private static func stereoPair(_ outList: UnsafeMutableAudioBufferListPointer)
+        -> (left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
+            frames: Int, strideL: Int, strideR: Int)? {
+        // Interleaved: 1 buffer, 2 channels.
+        if outList.count == 1, outList[0].mNumberChannels == 2, let d = outList[0].mData {
+            let base = d.assumingMemoryBound(to: Float.self)
+            let frames = Int(outList[0].mDataByteSize) / (MemoryLayout<Float>.size * 2)
+            return (base, base + 1, frames, 2, 2)
+        }
+        // Planar: 2 buffers, 1 channel each.
+        if outList.count == 2, outList[0].mNumberChannels == 1, outList[1].mNumberChannels == 1,
+           let l = outList[0].mData, let r = outList[1].mData {
+            let frames = Int(outList[0].mDataByteSize) / MemoryLayout<Float>.size
+            return (l.assumingMemoryBound(to: Float.self), r.assumingMemoryBound(to: Float.self), frames, 1, 1)
+        }
+        return nil
     }
 
     // MARK: Output-device change handling

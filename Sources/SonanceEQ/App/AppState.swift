@@ -16,12 +16,26 @@ final class AppState {
         license.start()
     }
 
+    /// Which EQ chain the editor is shaping in Mid-Side mode.
+    enum ChannelTarget { case mid, side }
+
     // EQ state (control plane)
-    var bands: [EQBand] = Presets.flat
+    var bands: [EQBand] = Presets.flat       // Mid (or the single curve in plain stereo)
+    var sideBands: [EQBand] = []             // Side chain (only used in Mid-Side mode)
     var preampDb: Float = 0
     var bypassed = false
     /// Linear-phase (FIR) mode. Off = minimum-phase IIR (zero added latency).
     var linearPhase = false
+    /// Mid-Side mode: EQ the mono (Mid) and stereo-difference (Side) signals separately.
+    var midSideEnabled = false
+    /// Which chain the editor curve is currently shaping.
+    var editTarget: ChannelTarget = .mid
+
+    /// The band set the editor is currently shaping (Mid or Side).
+    var activeBands: [EQBand] {
+        get { editTarget == .side ? sideBands : bands }
+        set { if editTarget == .side { sideBands = newValue } else { bands = newValue } }
+    }
 
     // UI state
     var isRunning = false
@@ -91,7 +105,16 @@ final class AppState {
 
     /// Push the current band/preamp/bypass state to the audio engine.
     func pushSettings() {
-        eq.update(bands: bands, preampDb: preampDb, bypassed: bypassed, sampleRate: sampleRate, linearPhase: linearPhase)
+        eq.update(bands: bands, sideBands: sideBands, preampDb: preampDb, bypassed: bypassed,
+                  sampleRate: sampleRate, linearPhase: linearPhase, midSide: midSideEnabled)
+    }
+
+    /// Toggle Mid-Side mode. Seeds a flat Side curve the first time it's enabled.
+    func setMidSide(_ on: Bool) {
+        midSideEnabled = on
+        if on, sideBands.isEmpty { sideBands = Presets.flat }
+        if !on { editTarget = .mid }
+        pushSettings()
     }
 
     /// Added latency from linear-phase mode (0 in minimum-phase mode).
@@ -99,25 +122,19 @@ final class AppState {
         linearPhase ? Double(FIRProcessor.length / 2) / sampleRateHz * 1000 : 0
     }
 
-    func setGain(_ gain: Float, at index: Int) {
-        guard bands.indices.contains(index) else { return }
-        bands[index].gain = gain
-        pushSettings()
-    }
-
-    /// Add a new parametric band (peaking, 1 kHz, flat). Returns its id so the UI can select it.
+    /// Add a new parametric band (peaking, 1 kHz, flat) to the active chain. Returns its id to select it.
     @discardableResult
     func addBand() -> UUID? {
-        guard bands.count < EQEngine.maxBands else { return nil }
+        guard activeBands.count < EQEngine.maxBands else { return nil }
         let band = EQBand(frequency: 1000, gain: 0, q: 1.0, type: .peaking)
-        bands.append(band)
+        activeBands.append(band)
         activePresetName = nil
         pushSettings()
         return band.id
     }
 
     func removeBand(id: UUID) {
-        bands.removeAll { $0.id == id }
+        activeBands.removeAll { $0.id == id }
         activePresetName = nil
         pushSettings()
     }
@@ -137,9 +154,11 @@ final class AppState {
         pushSettings()
     }
 
+    /// Reset the chain currently being edited to flat.
     func resetFlat() {
         activePresetName = nil
-        apply(Presets.flat)
+        activeBands = Presets.flat
+        pushSettings()
     }
 
     // MARK: Import / Export

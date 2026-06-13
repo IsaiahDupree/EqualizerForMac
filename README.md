@@ -6,7 +6,7 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 
 ## Status
 
-**M0 + M1 complete · M2 well underway — a system-wide parametric EQ with an 8,850-headphone library.**
+**M0 + M1 + M2 complete — a system-wide parametric EQ with an 8,850-headphone library, linear-phase & Mid-Side modes.**
 
 - ✅ Driverless system-audio capture via Core Audio **process taps** (macOS 14.4+) — no kernel extension, no installer, no reboot.
 - ✅ Capture → DSP → re-inject loop (private aggregate device, real output as clock master, self-excluded to prevent feedback).
@@ -14,7 +14,9 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ **Parametric editor** with a live response curve (drag bands for freq/gain, edit Q & type, add/remove up to 32 bands), preamp, bypass A/B, starter presets, live output-device rebuild.
 - ✅ **8,850 AutoEq headphone corrections** bundled (searchable browser) + JSON **import/export**.
 - ✅ **Linear-phase FIR mode** (toggle) — same magnitude, zero phase distortion, ~21 ms latency; default off (minimum-phase IIR).
-- ⏭️ Remaining (M2): per-channel / Mid-Side. **M3:** RevenueCat paid unlock, Developer-ID notarization, per-app EQ, Mac App Store build.
+- ✅ **Mid-Side mode** — EQ the mono center and the stereo width with independent curves.
+- 🔬 All DSP proven offline against the shipping sources: `Tools/verify_{biquad,fir,midside}.swift`.
+- ⏭️ **M3:** RevenueCat paid unlock, Developer-ID notarization, per-app EQ, Mac App Store build.
 
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).

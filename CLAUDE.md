@@ -30,10 +30,10 @@ Sources/SonanceEQ/
     AudioRecordingPermission.swift  TCC kTCCServiceAudioCapture via private SPI behind ENABLE_TCC_SPI
     SystemAudioTap.swift        THE CORE: tap + private aggregate + IOProc re-injection + device-change rebuild
   DSP/Biquad.swift              FilterType (+usesGain) + BiquadCoeffs + RBJ cookbook coefficients
-  DSP/EQEngine.swift            real-time cascade; control plane (update) vs audio plane (beginRender/process)
+  DSP/EQEngine.swift            real-time engine; two chains (Mid/Side); control plane (update) vs audio plane (beginRender/process/processMidSide)
   DSP/FrequencyResponse.swift   magnitude-response (dB) of the band cascade for the editor curve
   DSP/FIRDesigner.swift         linear-phase FIR design (frequency-sampling IDFT + L/2-centered Blackman); proven by Tools/verify_fir.swift
-  DSP/FIRProcessor.swift        streaming overlap convolution (vDSP_conv + per-channel history), wait-free filter swap; L=2048 → ~21ms latency
+  DSP/FIRProcessor.swift        streaming overlap convolution (vDSP_conv + per-channel history), 2 filter slots (Mid/Side), wait-free swap; L=2048 → ~21ms latency
   UI/ResponseCurveView.swift    parametric editor: live curve + draggable band handles + inspector (type/Q/gain), add/remove
   Models/EQBand.swift           band model (freq/gain/Q/type/enabled)
   Models/Presets.swift          starter presets (10-band graphic)
@@ -91,7 +91,7 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 ## Roadmap (see docs/BUILD-PLAN.md)
 - **M0 ✅** prove capture→DSP→replay loop
 - **M1 ✅** working system-wide 10-band graphic EQ + UI + permission + device rebuild
-- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. Engine since upgraded to `vDSP_biquadm` (wait-free handoff + `SetTargets` ramping — see gotchas + `Tools/verify_biquad.swift`). Parametric editor (live response curve + draggable handles, up to 32 bands) replaced the graphic fader row. **Linear-phase FIR mode** added (toggle in UI; `FIRDesigner` + `FIRProcessor`, default off so the IIR path is unchanged; ~21ms latency surfaced in UI). User manual at `docs/MANUAL.md`. **Remaining:** per-channel/Mid-Side.
+- **M2 ✅** — AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. `vDSP_biquadm` engine (wait-free handoff + `SetTargets` ramping). Parametric editor (live response curve + draggable handles, up to 32 bands). **Linear-phase FIR mode** (`FIRDesigner` + `FIRProcessor`, toggle, ~21ms latency). **Mid-Side mode** (two chains; `processMidSide` encodes L/R→M/S, EQs each, decodes; Mid/Side curve selector in UI). User manual at `docs/MANUAL.md`. All DSP proven offline by `Tools/verify_{biquad,fir,midside}.swift` (compiled against shipping sources).
 - **M3** RevenueCat one-time-paid gating, Developer-ID notarization, branding/icon, MAS submission of tap-only public-permission build, per-app EQ
 
 ## Reference
