@@ -95,4 +95,28 @@ import Testing
     func highPassAttenuatesBelowCutoff(_ fc: Double) {
         #expect(bandDb(.highPass, freq: fc, gain: 0, q: 0.707, at: fc / 4) < -6)
     }
+
+    // Exhaustive stability: every filter type, frequency, and Q yields a stable biquad. (360 cases)
+    @Test(arguments: Grid.typeFreqQ)
+    func everyFilterIsStable(_ tfq: [Double]) {
+        let type = Grid.types[Int(tfq[0])]
+        let c = RBJ.coeffs(type: type, sampleRate: kFs, freq: tfq[1], gainDb: 6, q: tfq[2])
+        #expect(biquadStable(c))
+        #expect(c.b0.isFinite && c.b1.isFinite && c.b2.isFinite && c.a1.isFinite && c.a2.isFinite)
+    }
+
+    // Exhaustive peaking center-gain accuracy: freq × Q × ±gain. (120 cases)
+    @Test(arguments: Grid.peakCenter)
+    func peakingCenterGainExhaustive(_ fqg: [Double]) {
+        let db = bandDb(.peaking, freq: fqg[0], gain: fqg[2], q: fqg[1], at: fqg[0])
+        #expect(abs(db - fqg[2]) < 0.35)
+    }
+
+    // A peaking boost is highest at its center and lower an octave to either side. (8 cases)
+    @Test(arguments: [125.0, 250, 500, 1000, 2000, 4000, 8000, 10000])
+    func peakingPeaksAtCenter(_ f0: Double) {
+        let center = bandDb(.peaking, freq: f0, gain: 9, q: 2, at: f0)
+        #expect(center > bandDb(.peaking, freq: f0, gain: 9, q: 2, at: f0 * 2))
+        #expect(center > bandDb(.peaking, freq: f0, gain: 9, q: 2, at: f0 / 2))
+    }
 }

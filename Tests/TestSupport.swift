@@ -27,4 +27,14 @@ enum Grid {
     static let gainQ: [[Double]] = gains.flatMap { g in qs.map { [g, $0] } }                  // 48
     static let typeFreq: [(FilterType, Double)] = types.flatMap { t in freqs.map { (t, $0) } } // 60
     static let typeGain: [(FilterType, Double)] = types.flatMap { t in gains.map { (t, $0) } } // 48
+
+    /// Exhaustive stability grid: every type × frequency × Q (gain fixed). 6×10×6 = 360.
+    static let typeFreqQ: [[Double]] = types.enumerated().flatMap { (ti, _) in
+        freqs.flatMap { f in qs.map { q in [Double(ti), f, q] } }
+    }
+
+    /// Peaking center-gain accuracy grid: frequency × Q × {+gain, -gain}. 10×6×2 = 120.
+    static let peakCenter: [[Double]] = freqs.flatMap { f in
+        qs.flatMap { q in [6.0, -6.0].map { g in [f, q, g] } }
+    }
 }
