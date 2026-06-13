@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var app: AppState
+    @State private var showingBrowser = false
 
     var body: some View {
         VStack(spacing: 18) {
@@ -21,6 +22,7 @@ struct ContentView: View {
         }
         .padding(22)
         .frame(width: 560)
+        .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
     }
 
     // MARK: Header
@@ -29,9 +31,10 @@ struct ContentView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sonance EQ").font(.title2.bold())
-                Text(app.isRunning ? "Active · \(app.outputDeviceName)" : "Stopped")
+                Text(headerSubtitle)
                     .font(.caption)
                     .foregroundStyle(app.isRunning ? .green : .secondary)
+                    .lineLimit(1)
             }
             Spacer()
             Toggle("Bypass", isOn: Binding(
@@ -44,6 +47,14 @@ struct ContentView: View {
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
         }
+    }
+
+    private var headerSubtitle: String {
+        if app.isRunning {
+            if let preset = app.activePresetName { return "Active · \(preset)" }
+            return "Active · \(app.outputDeviceName)"
+        }
+        return app.activePresetName ?? "Stopped"
     }
 
     private var permissionBanner: some View {
@@ -67,6 +78,12 @@ struct ContentView: View {
                     .controlSize(.small)
             }
             Spacer()
+            Button {
+                showingBrowser = true
+            } label: {
+                Label("Headphones", systemImage: "headphones")
+            }
+            .controlSize(.small)
         }
     }
 
@@ -123,6 +140,10 @@ struct ContentView: View {
     private var footer: some View {
         HStack {
             Button("Reset") { app.resetFlat() }
+                .controlSize(.small)
+            Button("Import…") { app.importPreset() }
+                .controlSize(.small)
+            Button("Export…") { app.exportCurrentPreset() }
                 .controlSize(.small)
             Spacer()
             Text("System-wide · driverless")

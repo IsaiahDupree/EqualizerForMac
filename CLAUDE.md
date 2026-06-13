@@ -33,9 +33,23 @@ Sources/SonanceEQ/
   DSP/EQEngine.swift            real-time cascade; control plane (update) vs audio plane (beginRender/process)
   Models/EQBand.swift           band model (freq/gain/Q/type/enabled)
   Models/Presets.swift          starter presets (10-band graphic)
+  Models/AutoEqPreset.swift     one AutoEq headphone correction; bands() → [EQBand]
+  Models/PresetStore.swift      @MainActor SQLite reader over bundled autoeq.sqlite (import SQLite3); search(text,category)
+  Models/PresetFile.swift       portable versioned import/export JSON (PortableBand, no UUIDs)
+  UI/PresetBrowserView.swift    searchable headphone-library sheet (Pro-gated via license.canUse(.autoEqLibrary))
+  Licensing/LicenseConfig.swift  M3-fillable RevenueCat IDs (public key/entitlement/offering/product) + ProFeature enum
+  Licensing/PurchaseManager.swift @MainActor @Observable; configures RevenueCat, tracks isPro, purchase/restore. Unconfigured key ⇒ Pro-unlocked, no network (dev/eval safe)
   UI/ContentView.swift          faders, presets, preamp, bypass, permission banner
   Resources/                    Info.plist + entitlements (generated/maintained via project.yml)
+
+references/                     git-ignored study-only clones (AudioCap, eqMac, AutoEq) — see references/README.md. DO NOT copy code; data (AutoEq presets) is fair to ship with attribution.
 ```
+
+## Licensing (RevenueCat, wired early — M3 fills the IDs)
+- SPM dep `RevenueCat` (`from: 5.0.0`) added in project.yml. `PurchaseManager` is held by `AppState` and `start()`ed in its init.
+- **Dev/eval builds run Pro-unlocked with zero network** while `LicenseConfig.revenueCatPublicAPIKey` is the `REVENUECAT_PUBLIC_KEY_TODO` sentinel — so M1/M2 work and the headless compile-check are unaffected.
+- Gating lives in one place: `PurchaseManager.canUse(_ feature: ProFeature)`. Default free tier = M1 10-band graphic EQ + built-in presets; Pro = parametric/AutoEq library/import-export/per-app.
+- **M3 TODO:** create the Sonance EQ app(s) in RevenueCat (direct vs MAS = two apps/keys), a `pro` entitlement, a one-time non-consumable in App Store Connect (`com.isaiahdupree.SonanceEQ.pro`), fill the public key(s), and add a paywall + In-App-Purchase capability. RevenueCat account today only has EverReach.
 
 ## The audio loop (the load-bearing part)
 1. `CATapDescription(stereoGlobalTapButExcludeProcesses: [selfObjectID])` — global stereo tap of all
@@ -65,7 +79,7 @@ Sources/SonanceEQ/
 ## Roadmap (see docs/BUILD-PLAN.md)
 - **M0 ✅** prove capture→DSP→replay loop
 - **M1 ✅** working system-wide 10-band graphic EQ + UI + permission + device rebuild
-- **M2** vDSP_biquadm 32-band parametric, AutoEq import (SQLite, 6,000+ headphones), import/export, FIR linear-phase, per-channel/Mid-Side
+- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. **Remaining:** swap the hand-rolled biquad cascade for `vDSP_biquadm` (lock-free double-buffer + `SetTargets` ramping to kill zipper noise on live drags), a true parametric editor UI (drag freq/Q + response curve), FIR linear-phase, per-channel/Mid-Side.
 - **M3** RevenueCat one-time-paid gating, Developer-ID notarization, branding/icon, MAS submission of tap-only public-permission build, per-app EQ
 
 ## Reference

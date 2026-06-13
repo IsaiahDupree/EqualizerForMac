@@ -7,9 +7,14 @@ import OSLog
 final class AppState {
     let eq = EQEngine()
     let permission = AudioRecordingPermission()
+    let license = PurchaseManager()
 
     private var tap: SystemAudioTap?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
+
+    init() {
+        license.start()
+    }
 
     // EQ state (control plane)
     var bands: [EQBand] = Presets.flat
@@ -20,6 +25,8 @@ final class AppState {
     var isRunning = false
     var outputDeviceName = "—"
     var errorMessage: String?
+    /// Name of the loaded headphone/AutoEq preset, if any (shown in the header).
+    var activePresetName: String?
 
     private var sampleRate: Double { tap?.tapFormat?.mSampleRate ?? 48_000 }
 
@@ -93,7 +100,57 @@ final class AppState {
         pushSettings()
     }
 
-    func resetFlat() { apply(Presets.flat) }
+    /// Load an AutoEq headphone correction: its parametric bands + its safety preamp.
+    func applyAutoEq(_ preset: AutoEqPreset) {
+        let newBands = preset.bands()
+        guard !newBands.isEmpty else { return }
+        bands = newBands
+        preampDb = preset.preampDb
+        activePresetName = preset.displayName
+        pushSettings()
+    }
+
+    func resetFlat() {
+        activePresetName = nil
+        apply(Presets.flat)
+    }
+
+    // MARK: Import / Export
+    // Dev builds use AppKit panels directly (not sandboxed). The Mac App Store build will swap these
+    // for SwiftUI `.fileExporter`/`.fileImporter` so file access works under the sandbox.
+
+    func exportCurrentPreset() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "\(activePresetName ?? "My EQ").sonanceeq.json"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let file = PresetFile(name: activePresetName ?? "My EQ", preampDb: preampDb, bands: bands)
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            try encoder.encode(file).write(to: url)
+        } catch {
+            errorMessage = "Export failed: \(error.localizedDescription)"
+        }
+    }
+
+    func importPreset() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let file = try JSONDecoder().decode(PresetFile.self, from: Data(contentsOf: url))
+            let imported = file.eqBands()
+            guard !imported.isEmpty else { errorMessage = "That file has no EQ bands."; return }
+            bands = imported
+            preampDb = file.preampDb
+            activePresetName = file.name
+            pushSettings()
+        } catch {
+            errorMessage = "Import failed: not a Sonance EQ preset."
+        }
+    }
 
     func openPrivacySettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {

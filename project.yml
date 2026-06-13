@@ -6,6 +6,11 @@ options:
   createIntermediateGroups: true
   groupSortPosition: top
 
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios.git
+    from: "5.0.0"
+
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -24,6 +29,9 @@ targets:
       - path: Sources/SonanceEQ
         excludes:
           - "**/*.entitlements"
+    dependencies:
+      - package: RevenueCat
+        product: RevenueCat
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ
@@ -33,6 +41,8 @@ targets:
         # private TCC permission SPI (used to request system-audio capture) works.
         ENABLE_HARDENED_RUNTIME: NO
         ENABLE_APP_SANDBOX: NO
+        # AutoEq preset DB access (Models/PresetStore.swift uses `import SQLite3`).
+        OTHER_LDFLAGS: "-lsqlite3"
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "DEBUG ENABLE_TCC_SPI"

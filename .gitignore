@@ -16,6 +16,9 @@ SonanceEQ.xcodeproj/
 # Swift Package Manager
 .swiftpm/
 
+# Study-only external reference clones (do NOT copy code — license/IP). See references/README.md
+references/
+
 # Secrets / signing
 *.p12
 *.mobileprovision
