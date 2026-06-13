@@ -1,0 +1,84 @@
+# Sonance EQ — fastlane automation for macOS build / sign / notarize / release.
+# Reuses your account-level App Store Connect API key for notarization + App Store upload.
+# Required env (see fastlane/README.md): ASC_API_KEY_ID, ASC_API_ISSUER_ID, ASC_API_KEY_PATH.
+# Developer ID cert: create it once (Xcode or `fastlane mac certificates`); see docs/RELEASE.md.
+
+default_platform(:mac)
+
+# App Store Connect API key object (used for notarization + upload).
+def asc_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("ASC_API_KEY_ID"),
+    issuer_id: ENV.fetch("ASC_API_ISSUER_ID"),
+    key_filepath: ENV["ASC_API_KEY_PATH"] ||
+      File.expand_path("~/private_keys/AuthKey_#{ENV['ASC_API_KEY_ID']}.p8"),
+    is_key_content_base64: false,
+    in_house: false
+  )
+end
+
+# Regenerate the (git-ignored) Xcode project from project.yml before building.
+def regenerate
+  sh("cd .. && command -v xcodegen >/dev/null && xcodegen generate || true")
+end
+
+platform :mac do
+  desc "Run the test suite (1,000+ Swift Testing cases)"
+  lane :test do
+    regenerate
+    run_tests(project: "../SonanceEQ.xcodeproj", scheme: "SonanceEQ", destination: "platform=macOS")
+  end
+
+  desc "Create/fetch the Developer ID Application certificate (interactive Apple-ID 2FA the first time; Account Holder only)"
+  lane :certificates do
+    # Developer ID creation is gated by Apple to the Account Holder via Apple-ID auth.
+    # If this fails, create it in Xcode (Settings → Accounts → Manage Certificates → ＋) — see docs/RELEASE.md.
+    cert(type: "developer_id_application", platform: "macos", output_path: File.expand_path("../build/certs"))
+  end
+
+  desc "Build a Developer ID-signed .app (Release, hardened runtime)"
+  lane :build_app do
+    regenerate
+    build_mac_app(
+      project: "../SonanceEQ.xcodeproj",
+      scheme: "SonanceEQ",
+      configuration: "Release",
+      export_method: "developer-id",
+      output_directory: "../build",
+      output_name: "SonanceEQ",
+      xcargs: "ENABLE_HARDENED_RUNTIME=YES OTHER_CODE_SIGN_FLAGS='--timestamp --options runtime'"
+    )
+  end
+
+  desc "Direct distribution: build → notarize → DMG (one command)"
+  lane :release do
+    build_app
+    app = "../build/SonanceEQ.app"
+    notarize(package: app, api_key: asc_key, print_log: true)
+    sh("cd .. && rm -f build/Sonance-EQ.dmg && " \
+       "hdiutil create -volname 'Sonance EQ' -srcfolder build/SonanceEQ.app -ov -format UDZO build/Sonance-EQ.dmg && " \
+       "xcrun stapler staple build/SonanceEQ.app")
+    UI.success("✓ build/Sonance-EQ.dmg — signed, notarized, stapled.")
+  end
+
+  desc "Mac App Store: build sandboxed .pkg and upload via the API key"
+  lane :appstore do
+    regenerate
+    build_mac_app(
+      project: "../SonanceEQ.xcodeproj",
+      scheme: "SonanceEQ",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "../build/appstore",
+      # MAS variant: sandboxed, public permission flow (no ENABLE_TCC_SPI). See docs/RELEASE.md re: 2.5.1 risk.
+      xcargs: "ENABLE_APP_SANDBOX=YES ENABLE_HARDENED_RUNTIME=NO SWIFT_ACTIVE_COMPILATION_CONDITIONS=''"
+    )
+    upload_to_app_store(
+      api_key: asc_key,
+      platform: "osx",
+      skip_screenshots: true,
+      skip_metadata: true,
+      run_precheck_before_submit: false
+    )
+  end
+end

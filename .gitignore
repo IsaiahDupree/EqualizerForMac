@@ -23,4 +23,12 @@ references/
 *.p12
 *.mobileprovision
 *.cer
+*.p8
 ExportOptions.plist
+
+# fastlane run artifacts (the Fastfile/Appfile/README are committed)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/*.log

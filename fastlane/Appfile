@@ -1,0 +1,5 @@
+# Identifiers come from env so no personal data lands in this public repo.
+# Set FASTLANE_APPLE_ID / FASTLANE_TEAM_ID in your shell (see fastlane/README.md).
+app_identifier(ENV["APP_IDENTIFIER"] || "com.isaiahdupree.SonanceEQ")
+apple_id(ENV["FASTLANE_APPLE_ID"]) if ENV["FASTLANE_APPLE_ID"]
+team_id(ENV["FASTLANE_TEAM_ID"]) if ENV["FASTLANE_TEAM_ID"]
