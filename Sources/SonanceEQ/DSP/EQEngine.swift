@@ -32,14 +32,19 @@ final class EQEngine {
 
     private struct Staging {
         var coeffs: [Double]
+        var linearPhase: Bool = false
         var generation: UInt64 = 1   // starts at 1 so the first beginRender applies it
     }
     private let staging: OSAllocatedUnfairLock<Staging>
+
+    /// Linear-phase (FIR) alternative to the IIR biquad path. Designed on the control thread.
+    private let fir = FIRProcessor()
 
     // MARK: Audio-thread-owned.
 
     private var setups: [vDSP_biquadm_Setup?]            // one M=1, N=maxBands setup per channel
     private var appliedGeneration: UInt64 = 0
+    private var renderLinear = false                     // which path process() runs
     private let renderBuf: UnsafeMutablePointer<Double>  // scratch copy of staged coeffs
 
     private let log = Logger(subsystem: kSubsystem, category: "EQEngine")
@@ -91,11 +96,17 @@ final class EQEngine {
         destroySetups()
         createSetups(from: snapshot.0)
         appliedGeneration = snapshot.1
+        fir.reset()
     }
 
     // MARK: Control plane (UI thread)
 
-    func update(bands: [EQBand], preampDb: Float, bypassed: Bool, sampleRate: Double) {
+    func update(bands: [EQBand], preampDb: Float, bypassed: Bool, sampleRate: Double, linearPhase: Bool = false) {
+        if linearPhase {
+            fir.setFilter(FIRDesigner.design(bands: bands, preampDb: preampDb, sampleRate: sampleRate,
+                                             length: FIRProcessor.length, bypassed: bypassed))
+        }
+
         var coeffs = Self.identityCoeffs()
 
         if !bypassed {
@@ -124,6 +135,7 @@ final class EQEngine {
 
         staging.withLock { s in
             s.coeffs = coeffs
+            s.linearPhase = linearPhase
             s.generation &+= 1
         }
     }
@@ -133,14 +145,19 @@ final class EQEngine {
     /// Pick up newly staged coefficients (wait-free) and hand them to the ramping engine.
     /// Call once per render cycle before `process`.
     func beginRender() {
+        fir.beginRender()   // wait-free filter pickup for the linear-phase path
+
         var changed = false
+        var linear = renderLinear
         let seen: UInt64? = staging.withLockIfAvailable { s in
+            linear = s.linearPhase
             if s.generation != appliedGeneration {
                 s.coeffs.withUnsafeBufferPointer { renderBuf.update(from: $0.baseAddress!, count: $0.count) }
                 changed = true
             }
             return s.generation
         }
+        renderLinear = linear
         guard let seen, changed else { return }
         appliedGeneration = seen
         for ch in 0..<Self.maxChannels where setups[ch] != nil {
@@ -157,6 +174,10 @@ final class EQEngine {
     ///   - frames: number of frames to process
     ///   - stride: sample stride between frames (= channel count for interleaved, 1 for planar)
     func process(channel: Int, data: UnsafeMutablePointer<Float>, frames: Int, stride: Int) {
+        if renderLinear {
+            fir.process(channel: channel, data: data, frames: frames, stride: stride)
+            return
+        }
         guard channel < Self.maxChannels, let setup = setups[channel] else { return }
         var input: UnsafePointer<Float> = UnsafePointer(data)
         var output: UnsafeMutablePointer<Float> = data

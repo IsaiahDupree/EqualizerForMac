@@ -13,7 +13,8 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ Real-time **`vDSP_biquadm`** EQ engine (up to 32 sections/channel) with a **wait-free** control→audio handoff and **ramped** coefficient updates — no zipper noise on live edits.
 - ✅ **Parametric editor** with a live response curve (drag bands for freq/gain, edit Q & type, add/remove up to 32 bands), preamp, bypass A/B, starter presets, live output-device rebuild.
 - ✅ **8,850 AutoEq headphone corrections** bundled (searchable browser) + JSON **import/export**.
-- ⏭️ Remaining (M2): FIR linear-phase mode, per-channel / Mid-Side. **M3:** RevenueCat paid unlock, Developer-ID notarization, per-app EQ, Mac App Store build.
+- ✅ **Linear-phase FIR mode** (toggle) — same magnitude, zero phase distortion, ~21 ms latency; default off (minimum-phase IIR).
+- ⏭️ Remaining (M2): per-channel / Mid-Side. **M3:** RevenueCat paid unlock, Developer-ID notarization, per-app EQ, Mac App Store build.
 
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).

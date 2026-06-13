@@ -20,6 +20,8 @@ final class AppState {
     var bands: [EQBand] = Presets.flat
     var preampDb: Float = 0
     var bypassed = false
+    /// Linear-phase (FIR) mode. Off = minimum-phase IIR (zero added latency).
+    var linearPhase = false
 
     // UI state
     var isRunning = false
@@ -89,7 +91,12 @@ final class AppState {
 
     /// Push the current band/preamp/bypass state to the audio engine.
     func pushSettings() {
-        eq.update(bands: bands, preampDb: preampDb, bypassed: bypassed, sampleRate: sampleRate)
+        eq.update(bands: bands, preampDb: preampDb, bypassed: bypassed, sampleRate: sampleRate, linearPhase: linearPhase)
+    }
+
+    /// Added latency from linear-phase mode (0 in minimum-phase mode).
+    var latencyMs: Double {
+        linearPhase ? Double(FIRProcessor.length / 2) / sampleRateHz * 1000 : 0
     }
 
     func setGain(_ gain: Float, at index: Int) {

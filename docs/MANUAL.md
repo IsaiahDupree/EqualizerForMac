@@ -18,11 +18,11 @@ reboot. It uses Apple's Core Audio *process taps* (macOS 14.4+).
 2. Click **Start EQ** (top-right).
 3. macOS asks for permission to capture system audio — click **Allow**. (Sonance EQ needs this to
    "see" the audio it equalizes. Audio is processed live on your Mac and is **never recorded, saved,
-   or sent anywhere** — see §11.)
+   or sent anywhere** — see §13.)
 4. Play audio in any app. You should hear the EQ immediately. Toggle **Bypass** to compare against
    the untouched sound.
 
-If you accidentally denied permission, see §10 (Troubleshooting).
+If you accidentally denied permission, see §11 (Troubleshooting).
 
 ---
 
@@ -33,8 +33,9 @@ If you accidentally denied permission, see §10 (Troubleshooting).
 | **Header** | App status (Active / Stopped + the output device or loaded preset), **Bypass** switch, **Start/Stop EQ** button. |
 | **Preset row** | One-click built-in presets (Flat, Bass Boost, Treble, Vocal, Loudness) and the **Headphones** button (the AutoEq library). |
 | **Response curve** | The live parametric editor — the blue curve is exactly what the EQ is doing to your sound. |
-| **Preamp** | Master level trim (see §7). |
-| **Footer** | Reset, Import…, Export… (see §8). |
+| **Preamp** | Master level trim (see §9). |
+| **Linear Phase** | Switch the filter type (see §8). |
+| **Footer** | Reset, Import…, Export… (see §9). |
 
 ---
 
@@ -91,7 +92,22 @@ zipper noise or clicks.
 
 ---
 
-## 8. Preamp, Reset, Import / Export
+## 8. Linear Phase mode
+
+The **Linear Phase** switch (below the preamp) changes *how* the EQ filters, without changing the
+shape of the curve:
+
+- **Off (default) — Minimum Phase.** Classic, like analog EQ. Zero added latency. Best for everyday
+  use, gaming, video calls.
+- **On — Linear Phase.** Applies the exact same magnitude curve but with **no phase distortion** —
+  all frequencies stay perfectly time-aligned, which some listeners prefer for critical listening and
+  bass tightness. The trade-off is a small, fixed **latency** (shown next to the switch, ~21 ms at
+  48 kHz). Because audio is delayed, you may notice slight lip-sync offset on video — so leave it
+  **off** for video/calls and switch it **on** for focused music listening.
+
+Both modes sound identical in *tonal balance*; the difference is phase/transient behavior.
+
+## 9. Preamp, Reset, Import / Export
 
 - **Preamp** — a master gain trim. Boosting many bands can cause clipping (distortion); pull the
   preamp **down** a few dB to leave headroom. AutoEq presets set this for you.
@@ -101,7 +117,7 @@ zipper noise or clicks.
 
 ---
 
-## 9. Switching speakers / headphones
+## 10. Switching speakers / headphones
 
 When you change your Mac's output device (plug in headphones, connect Bluetooth, switch in Control
 Center), Sonance EQ automatically rebuilds itself to keep equalizing the new device. You may hear a
@@ -109,7 +125,7 @@ brief gap during the switch — this is expected.
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 **No sound after pressing Start, or audio is silent**
 - Make sure the right output device is selected in macOS (Control Center → Sound).
@@ -120,13 +136,13 @@ brief gap during the switch — this is expected.
 - Open **System Settings → Privacy & Security → Audio Capture** (or use the **Open Settings** button
   in the app's permission banner) and enable **Sonance EQ**, then press Start again.
 
-**Some audio isn't being equalized** — see §11.
+**Some audio isn't being equalized** — see §12.
 
 **Distortion / crackling when boosting a lot** — lower the **Preamp** a few dB for headroom.
 
 ---
 
-## 11. What Sonance EQ can and can't EQ
+## 12. What Sonance EQ can and can't EQ
 
 - It equalizes **all unprotected audio** on your Mac.
 - It **cannot** equalize **DRM/FairPlay-protected** streams (some Apple Music tracks, some Netflix
@@ -135,7 +151,7 @@ brief gap during the switch — this is expected.
 
 ---
 
-## 12. Privacy
+## 13. Privacy
 
 Audio is processed **live, on your Mac, in memory only**. Sonance EQ does **not** record, store, or
 transmit your audio anywhere. The Audio Capture permission exists solely so the equalizer can shape
@@ -143,7 +159,7 @@ the sound on its way to your speakers.
 
 ---
 
-## 13. Licensing
+## 14. Licensing
 
 Sonance EQ is a one-time purchase. While the app is in development it runs fully unlocked. Headphone
 corrections are © the [AutoEq](https://github.com/jaakkopasanen/AutoEq) project (MIT) and are bundled

@@ -11,6 +11,7 @@ struct ContentView: View {
             presetRow
             ResponseCurveView(app: app)
             preampRow
+            phaseRow
             if let message = app.errorMessage {
                 Text(message)
                     .font(.caption)
@@ -102,6 +103,29 @@ struct ContentView: View {
         }
     }
 
+    // MARK: Phase mode
+
+    private var phaseRow: some View {
+        HStack(spacing: 8) {
+            Toggle(isOn: Binding(get: { app.linearPhase },
+                                 set: { app.linearPhase = $0; app.pushSettings() })) {
+                Text("Linear Phase")
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+
+            if app.linearPhase {
+                Text(String(format: "+%.0f ms latency", app.latencyMs))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text("System-wide · driverless")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
     // MARK: Footer
 
     private var footer: some View {
@@ -113,9 +137,6 @@ struct ContentView: View {
             Button("Export…") { app.exportCurrentPreset() }
                 .controlSize(.small)
             Spacer()
-            Text("System-wide · driverless")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
         }
     }
 }
