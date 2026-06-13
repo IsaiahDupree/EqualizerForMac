@@ -27,6 +27,9 @@ final class SystemAudioTap {
     private(set) var outputDeviceName = "—"
     private(set) var isRunning = false
 
+    /// Which apps to equalize. `.allApps` = global tap; `.apps` = mixdown tap of those processes.
+    var target: EQTarget = .allApps
+
     /// Called on the main queue when the engine rebuilds itself (e.g. output device changed).
     var onRebuild: ((Result<String, Error>) -> Void)?
 
@@ -58,8 +61,21 @@ final class SystemAudioTap {
             exclude = [selfObject]
         }
 
-        // 2. Create a stereo global tap of every (other) process, muted while we read it.
-        let desc = CATapDescription(stereoGlobalTapButExcludeProcesses: exclude)
+        // 2. Create the tap. Global (all apps) excludes ourselves to prevent feedback; a per-app tap is
+        //    a mixdown of just the chosen processes (we're not in it, so no feedback). If the chosen apps
+        //    aren't producing audio right now, fall back to a global tap.
+        let desc: CATapDescription
+        switch target {
+        case .allApps:
+            desc = CATapDescription(stereoGlobalTapButExcludeProcesses: exclude)
+        case let .apps(bundleIDs):
+            let objects = AudioProcesses.processObjectIDs(forBundleIDs: bundleIDs)
+            if objects.isEmpty {
+                desc = CATapDescription(stereoGlobalTapButExcludeProcesses: exclude)
+            } else {
+                desc = CATapDescription(stereoMixdownOfProcesses: objects)
+            }
+        }
         desc.name = "Sonance EQ Tap"
         desc.uuid = UUID()
         desc.muteBehavior = .mutedWhenTapped
@@ -234,6 +250,13 @@ final class SystemAudioTap {
                                                  mElement: kAudioObjectPropertyElementMain)
         AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
         deviceChangeBlock = nil
+    }
+
+    /// Change which apps are equalized, rebuilding the tap if running.
+    func retarget(_ newTarget: EQTarget) {
+        target = newTarget
+        guard isRunning else { return }
+        rebuild()
     }
 
     /// Rebuild the tap + aggregate after the output device or its format changes

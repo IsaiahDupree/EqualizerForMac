@@ -14,6 +14,7 @@ struct ContentView: View {
         VStack(spacing: 18) {
             header
             if app.permission.status == .denied { permissionBanner }
+            targetRow
             presetRow
             stereoRow
             ResponseCurveView(app: app)
@@ -86,6 +87,41 @@ struct ContentView: View {
         }
         .padding(10)
         .background(.yellow.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    // MARK: Per-app target
+
+    private var targetRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "app.badge").foregroundStyle(.secondary)
+            Text("Equalize").font(.caption).foregroundStyle(.secondary)
+            if app.license.canUse(.perAppEQ) {
+                Menu {
+                    Button { app.setAllApps() } label: {
+                        Label("All Apps", systemImage: app.eqTarget.isAllApps ? "checkmark" : "")
+                    }
+                    if !app.availableApps.isEmpty { Divider() }
+                    ForEach(app.availableApps) { audioApp in
+                        Button { app.toggleApp(audioApp.bundleID) } label: {
+                            Label(audioApp.name, systemImage: app.isAppSelected(audioApp.bundleID) ? "checkmark" : "")
+                        }
+                    }
+                    Divider()
+                    Button("Refresh list") { app.refreshApps() }
+                } label: {
+                    Text(app.targetLabel)
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .onAppear { app.refreshApps() }
+            } else {
+                Button { showingPaywall = true } label: {
+                    Label("All Apps · per-app EQ is Pro", systemImage: "lock.fill")
+                }
+                .controlSize(.small)
+            }
+            Spacer()
+        }
     }
 
     // MARK: Presets

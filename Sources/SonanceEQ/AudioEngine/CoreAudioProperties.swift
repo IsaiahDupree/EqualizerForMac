@@ -54,6 +54,23 @@ extension AudioObjectID {
         return cf as String
     }
 
+    /// Read a variable-length array property (e.g. the process-object list).
+    func readArray<T>(_ selector: AudioObjectPropertySelector,
+                      scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal,
+                      element: AudioObjectPropertyElement = kAudioObjectPropertyElementMain) throws -> [T] {
+        var address = AudioObjectPropertyAddress(mSelector: selector, mScope: scope, mElement: element)
+        var dataSize: UInt32 = 0
+        var status = AudioObjectGetPropertyDataSize(self, &address, 0, nil, &dataSize)
+        guard status == noErr else { throw CoreAudioError.property(selector, status) }
+        let count = Int(dataSize) / MemoryLayout<T>.stride
+        guard count > 0 else { return [] }
+        let buffer = UnsafeMutableBufferPointer<T>.allocate(capacity: count)
+        defer { buffer.deallocate() }
+        status = AudioObjectGetPropertyData(self, &address, 0, nil, &dataSize, buffer.baseAddress!)
+        guard status == noErr else { throw CoreAudioError.property(selector, status) }
+        return Array(buffer)
+    }
+
     // MARK: Concrete helpers
 
     /// The device apps play to by default (the real speakers/headphones we re-route into).

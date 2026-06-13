@@ -16,7 +16,7 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ **Linear-phase FIR mode** (toggle) — same magnitude, zero phase distortion, ~21 ms latency; default off (minimum-phase IIR).
 - ✅ **Mid-Side mode** — EQ the mono center and the stereo width with independent curves.
 - 🔬 All DSP proven offline against the shipping sources: `Tools/verify_{biquad,fir,midside}.swift`, plus a **1,030-case** test suite (`Tests/`, Swift Testing) + pre-commit hook + CI.
-- 🚧 **M3 (mocked pre-Apple-registration):** Pro paywall + feature gating with a **mock RevenueCat store** (real buy/restore/persist UX, no Apple), Developer-ID notarize/DMG script. Pending registration: real RC keys + App Store Connect product, notarization run, per-app EQ, MAS build.
+- 🚧 **M3 (mocked pre-Apple-registration):** Pro paywall + feature gating with a **mock RevenueCat store** (real buy/restore/persist UX, no Apple), **per-app EQ** (target specific apps via a mixdown tap), **AI-generated app icon**, Developer-ID notarize/DMG script. Pending registration: real RC keys + App Store Connect product, notarization run, MAS build.
 
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).

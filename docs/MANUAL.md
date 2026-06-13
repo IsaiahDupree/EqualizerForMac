@@ -34,6 +34,7 @@ If you accidentally denied permission, see §11 (Troubleshooting).
 | **Preset row** | One-click built-in presets (Flat, Bass Boost, Treble, Vocal, Loudness) and the **Headphones** button (the AutoEq library). |
 | **Response curve** | The live parametric editor — the blue curve is exactly what the EQ is doing to your sound. |
 | **Preamp** | Master level trim (see §9). |
+| **Equalize** | Choose which apps to EQ — All Apps or a specific selection (per-app EQ, see §8). |
 | **Linear Phase / Mid-Side** | Advanced filter & stereo modes (see §8). |
 | **Footer** | Reset, Import…, Export… (see §9). |
 
@@ -120,6 +121,13 @@ Turn it on and a **Mid | Side** selector appears above the curve. Choose which o
 curve you're editing is drawn solid, the other faintly for reference. For example: add a couple dB of
 "air" to the **Side** highs to widen a mix, or trim boomy bass on the **Mid** without thinning the sides.
 With the switch **off** (plain stereo), both channels get the same EQ — the normal case.
+
+### Per-app EQ
+
+By default Sonance EQ equalizes **all apps**. Use the **Equalize** menu (top of the window) to target
+specific apps instead — e.g. EQ only Spotify while leaving Zoom untouched. The menu lists apps that are
+currently playing audio; tick one or more, or choose **All Apps**. Selecting an app that isn't playing
+yet falls back to all apps until it starts. (Per-app EQ is a Pro feature.)
 
 ## 9. Preamp, Reset, Import / Export
 

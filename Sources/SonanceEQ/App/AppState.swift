@@ -37,6 +37,10 @@ final class AppState {
         set { if editTarget == .side { sideBands = newValue } else { bands = newValue } }
     }
 
+    // Per-app EQ (Pro)
+    var eqTarget: EQTarget = .allApps
+    var availableApps: [AudioApp] = []
+
     // UI state
     var isRunning = false
     var outputDeviceName = "—"
@@ -84,6 +88,7 @@ final class AppState {
                 }
             }
         }
+        tap.target = eqTarget
         do {
             try tap.start()
             self.tap = tap
@@ -196,6 +201,42 @@ final class AppState {
         } catch {
             errorMessage = "Import failed: not a Sonance EQ preset."
         }
+    }
+
+    // MARK: Per-app EQ
+
+    /// Refresh the list of apps currently producing audio.
+    func refreshApps() { availableApps = AudioProcesses.runningOutputApps() }
+
+    /// Human-readable description of the current target (for the menu label).
+    var targetLabel: String {
+        switch eqTarget {
+        case .allApps:
+            return "All Apps"
+        case let .apps(ids):
+            if ids.isEmpty { return "All Apps" }
+            let names = availableApps.filter { ids.contains($0.bundleID) }.map(\.name)
+            let shown = names.isEmpty ? Array(ids) : names
+            return shown.count == 1 ? shown[0] : "\(shown.count) apps"
+        }
+    }
+
+    func isAppSelected(_ bundleID: String) -> Bool {
+        if case let .apps(ids) = eqTarget { return ids.contains(bundleID) }
+        return false
+    }
+
+    func setAllApps() {
+        eqTarget = .allApps
+        tap?.retarget(eqTarget)
+    }
+
+    /// Toggle one app in the target set; an empty set falls back to All Apps.
+    func toggleApp(_ bundleID: String) {
+        var ids: Set<String> = { if case let .apps(s) = eqTarget { return s } else { return [] } }()
+        if ids.contains(bundleID) { ids.remove(bundleID) } else { ids.insert(bundleID) }
+        eqTarget = ids.isEmpty ? .allApps : .apps(ids)
+        tap?.retarget(eqTarget)
     }
 
     func openPrivacySettings() {
