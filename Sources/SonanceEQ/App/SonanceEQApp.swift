@@ -14,6 +14,9 @@ struct SonanceEQApp: App {
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(replacing: .newItem) {} // no "New Window"
+            CommandGroup(replacing: .appInfo) {
+                Button("About Sonance EQ") { app.showingAbout = true }
+            }
         }
     }
 }

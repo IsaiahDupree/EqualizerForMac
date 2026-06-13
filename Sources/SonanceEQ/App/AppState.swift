@@ -45,6 +45,7 @@ final class AppState {
     var isRunning = false
     var outputDeviceName = "—"
     var errorMessage: String?
+    var showingAbout = false
     /// Name of the loaded headphone/AutoEq preset, if any (shown in the header).
     var activePresetName: String?
 

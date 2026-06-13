@@ -33,6 +33,7 @@ struct ContentView: View {
         .frame(width: 560)
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
         .sheet(isPresented: $showingPaywall) { PaywallView(app: app) }
+        .sheet(isPresented: $app.showingAbout) { AboutView() }
     }
 
     // MARK: Header
@@ -227,6 +228,9 @@ struct ContentView: View {
             Button("Export…") { requirePro(.importExport) { app.exportCurrentPreset() } }
                 .controlSize(.small)
             Spacer()
+            Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
+                .buttonStyle(.borderless)
+                .help("About Sonance EQ")
         }
     }
 }
