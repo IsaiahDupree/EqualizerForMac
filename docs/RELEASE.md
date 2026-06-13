@@ -24,6 +24,25 @@ Two distribution paths. **Lead with Direct** — the Mac App Store path is the p
 
 ---
 
+## Creating the Developer ID Application certificate
+
+⚠️ Apple **does not allow** Developer ID certificate creation via the App Store Connect API — it returns
+`403 "This operation can only be performed by the Account Holder."` (API keys max out at Admin). It must be
+created by the **Account Holder**, one of two ways:
+
+- **Easiest — Xcode (2 clicks):** Xcode → Settings → Accounts → select the team → **Manage Certificates…**
+  → **＋** → **Developer ID Application**. Xcode generates the key + cert directly in your keychain. Done.
+- **Or upload our prepared CSR:** a keypair + CSR were already generated at
+  `~/private_keys/sonance_devid_key.pem` and `~/private_keys/sonance_devid.csr`. Go to
+  developer.apple.com → Certificates → **＋** → *Developer ID Application* → upload `sonance_devid.csr` →
+  download the `.cer`, then:
+  ```bash
+  Tools/import_developer_id.sh ~/Downloads/developerID_application.cer
+  ```
+  which installs the cert + private key and prints the `DEVELOPER_ID` identity string.
+
+Verify with `security find-identity -p codesigning -v | grep "Developer ID Application"`.
+
 ## Path A — Direct distribution (recommended): notarized DMG
 
 ### Locally

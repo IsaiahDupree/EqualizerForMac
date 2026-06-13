@@ -5,7 +5,7 @@ name: Release (Developer ID DMG)
 #   DEVELOPER_ID_CERT_P12        base64 of your "Developer ID Application" .p12  (base64 -i cert.p12 | pbcopy)
 #   DEVELOPER_ID_CERT_PASSWORD   password for that .p12
 #   DEVELOPER_ID_NAME            e.g. "Developer ID Application: Your Name (TEAMID)"
-#   ASC_API_KEY_P8               contents of your App Store Connect API key .p8  (reuse AuthKey_VBDA4SUDJV.p8)
+#   ASC_API_KEY_P8               contents of your App Store Connect API key .p8  (reuse your existing key)
 #   ASC_API_KEY_ID               the key id (e.g. VBDA4SUDJV)
 #   ASC_API_ISSUER_ID            the API key issuer id (App Store Connect → Users and Access → Integrations)
 # See docs/RELEASE.md for the full runbook.

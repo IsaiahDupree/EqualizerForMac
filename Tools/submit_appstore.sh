@@ -9,7 +9,7 @@
 #    (Tools/package_and_notarize.sh). This script automates the upload mechanics for when you tackle MAS.
 #
 # Required (env or defaults):
-#   ASC_API_KEY_ID    App Store Connect API key id      (e.g. VBDA4SUDJV — reused from EverReach)
+#   ASC_API_KEY_ID    App Store Connect API key id      (reuse your existing account-level key)
 #   ASC_API_ISSUER    API key issuer id                 (App Store Connect → Users and Access → Integrations)
 #   ASC_APP_ID        the Sonance EQ app record's Apple ID (created once in App Store Connect)
 #   DIST_IDENTITY     "Apple Distribution: Your Name (TEAMID)"
