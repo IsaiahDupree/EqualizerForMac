@@ -3,6 +3,12 @@ import SwiftUI
 struct ContentView: View {
     @Bindable var app: AppState
     @State private var showingBrowser = false
+    @State private var showingPaywall = false
+
+    /// Run `action` if the feature is unlocked, otherwise present the paywall.
+    private func requirePro(_ feature: ProFeature, _ action: () -> Void) {
+        if app.license.canUse(feature) { action() } else { showingPaywall = true }
+    }
 
     var body: some View {
         VStack(spacing: 18) {
@@ -25,6 +31,7 @@ struct ContentView: View {
         .padding(22)
         .frame(width: 560)
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
+        .sheet(isPresented: $showingPaywall) { PaywallView(app: app) }
     }
 
     // MARK: Header
@@ -39,6 +46,16 @@ struct ContentView: View {
                     .lineLimit(1)
             }
             Spacer()
+            if app.license.isPro {
+                Text("PRO").font(.caption2.bold())
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(.tint.opacity(0.2), in: Capsule())
+            } else {
+                Button { showingPaywall = true } label: {
+                    Label("Unlock Pro", systemImage: "lock.fill")
+                }
+                .controlSize(.small)
+            }
             Toggle("Bypass", isOn: Binding(
                 get: { app.bypassed },
                 set: { app.bypassed = $0; app.pushSettings() }
@@ -81,9 +98,9 @@ struct ContentView: View {
             }
             Spacer()
             Button {
-                showingBrowser = true
+                requirePro(.autoEqLibrary) { showingBrowser = true }
             } label: {
-                Label("Headphones", systemImage: "headphones")
+                Label("Headphones", systemImage: app.license.canUse(.autoEqLibrary) ? "headphones" : "lock.fill")
             }
             .controlSize(.small)
         }
@@ -121,10 +138,22 @@ struct ContentView: View {
                     .font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
-            Toggle("Mid-Side", isOn: Binding(get: { app.midSideEnabled },
-                                             set: { app.setMidSide($0) }))
-                .toggleStyle(.switch)
-                .controlSize(.small)
+            Toggle(isOn: Binding(get: { app.midSideEnabled },
+                                 set: { if app.license.canUse(.parametricEQ) { app.setMidSide($0) } else { showingPaywall = true } })) {
+                proLabel("Mid-Side", feature: .parametricEQ)
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+        }
+    }
+
+    /// A control label that shows a lock when its feature is gated.
+    private func proLabel(_ title: String, feature: ProFeature) -> some View {
+        HStack(spacing: 4) {
+            Text(title)
+            if !app.license.canUse(feature) {
+                Image(systemName: "lock.fill").font(.caption2).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -133,8 +162,8 @@ struct ContentView: View {
     private var phaseRow: some View {
         HStack(spacing: 8) {
             Toggle(isOn: Binding(get: { app.linearPhase },
-                                 set: { app.linearPhase = $0; app.pushSettings() })) {
-                Text("Linear Phase")
+                                 set: { if app.license.canUse(.parametricEQ) { app.linearPhase = $0; app.pushSettings() } else { showingPaywall = true } })) {
+                proLabel("Linear Phase", feature: .parametricEQ)
             }
             .toggleStyle(.switch)
             .controlSize(.small)
@@ -157,9 +186,9 @@ struct ContentView: View {
         HStack {
             Button("Reset") { app.resetFlat() }
                 .controlSize(.small)
-            Button("Import…") { app.importPreset() }
+            Button("Import…") { requirePro(.importExport) { app.importPreset() } }
                 .controlSize(.small)
-            Button("Export…") { app.exportCurrentPreset() }
+            Button("Export…") { requirePro(.importExport) { app.exportCurrentPreset() } }
                 .controlSize(.small)
             Spacer()
         }

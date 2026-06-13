@@ -173,11 +173,23 @@ the sound on its way to your speakers.
 
 ---
 
-## 14. Licensing
+## 14. Sonance EQ Pro
 
-Sonance EQ is a one-time purchase. While the app is in development it runs fully unlocked. Headphone
-corrections are © the [AutoEq](https://github.com/jaakkopasanen/AutoEq) project (MIT) and are bundled
-with attribution.
+Sonance EQ is **free to use** for everyday equalizing — built-in presets and basic editing. **Pro** is a
+one-time purchase that unlocks:
+
+- the **8,850-headphone** AutoEq library,
+- the full **parametric** editor with **Linear Phase** and **Mid-Side** modes,
+- **Import / Export** of presets.
+
+Tap **Unlock Pro** (top of the window) or any 🔒 control to open the store. A single purchase unlocks
+everything, forever, on your Mac.
+
+> **Development builds** show a *mock* store (no real charge) so the purchase flow can be exercised before
+> the App Store listing is live. Your unlock persists between launches; "Relock (mock)" resets it.
+
+Headphone corrections are © the [AutoEq](https://github.com/jaakkopasanen/AutoEq) project (MIT) and are
+bundled with attribution.
 
 ---
 

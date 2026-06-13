@@ -51,6 +51,7 @@ Sources/SonanceEQ/
   Models/PresetStore.swift      @MainActor SQLite reader over bundled autoeq.sqlite (import SQLite3); search(text,category)
   Models/PresetFile.swift       portable versioned import/export JSON (PortableBand, no UUIDs)
   UI/PresetBrowserView.swift    searchable headphone-library sheet (Pro-gated via license.canUse(.autoEqLibrary))
+  UI/PaywallView.swift          Sonance EQ Pro paywall (buy/restore); drives PurchaseManager (mock or live)
   Licensing/LicenseConfig.swift  M3-fillable RevenueCat IDs (public key/entitlement/offering/product) + ProFeature enum
   Licensing/PurchaseManager.swift @MainActor @Observable; configures RevenueCat, tracks isPro, purchase/restore. Unconfigured key ⇒ Pro-unlocked, no network (dev/eval safe)
   UI/ContentView.swift          faders, presets, preamp, bypass, permission banner
@@ -59,11 +60,20 @@ Sources/SonanceEQ/
 references/                     git-ignored study-only clones (AudioCap, eqMac, AutoEq) — see references/README.md. DO NOT copy code; data (AutoEq presets) is fair to ship with attribution.
 ```
 
-## Licensing (RevenueCat, wired early — M3 fills the IDs)
-- SPM dep `RevenueCat` (`from: 5.0.0`) added in project.yml. `PurchaseManager` is held by `AppState` and `start()`ed in its init.
-- **Dev/eval builds run Pro-unlocked with zero network** while `LicenseConfig.revenueCatPublicAPIKey` is the `REVENUECAT_PUBLIC_KEY_TODO` sentinel — so M1/M2 work and the headless compile-check are unaffected.
-- Gating lives in one place: `PurchaseManager.canUse(_ feature: ProFeature)`. Default free tier = M1 10-band graphic EQ + built-in presets; Pro = parametric/AutoEq library/import-export/per-app.
-- **M3 TODO:** create the Sonance EQ app(s) in RevenueCat (direct vs MAS = two apps/keys), a `pro` entitlement, a one-time non-consumable in App Store Connect (`com.isaiahdupree.SonanceEQ.pro`), fill the public key(s), and add a paywall + In-App-Purchase capability. RevenueCat account today only has EverReach.
+## Licensing (RevenueCat — M3, mocked until Apple registration)
+- SPM dep `RevenueCat` (`from: 5.0.0`). `PurchaseManager` (held by `AppState`) has two stores:
+  - **`.mock`** (active while `LicenseConfig.isUnconfigured`): persists a `mockProUnlocked` flag in `UserDefaults`
+    — full paywall → buy → unlock → relaunch → gating flow with **no network/Apple**. Default **locked** so the
+    paywall/gates are visible; `mockRelock()` re-locks for testing. Injectable `UserDefaults` for tests.
+  - **`.revenueCat`** (active once a real public key is set): live StoreKit via RevenueCat, unchanged.
+- Gating: one place — `PurchaseManager.canUse(_ feature: ProFeature)`. UI gates via `ContentView.requirePro`:
+  Headphones→`.autoEqLibrary`, Linear-Phase/Mid-Side→`.parametricEQ`, Import/Export→`.importExport`; locked
+  controls open `PaywallView`. Free tier = built-in presets + basic editing.
+- **Packaging:** `Tools/package_and_notarize.sh` (Developer-ID build→codesign→notarize→staple→DMG) is ready; it
+  preflights and tells you which Apple creds are missing (`DEVELOPER_ID`, notary profile/Apple-ID).
+- **What unblocks when you register with Apple:** create the Sonance EQ app(s) in RevenueCat (direct vs MAS = two
+  keys), a `pro` entitlement, a one-time non-consumable in App Store Connect (`com.isaiahdupree.SonanceEQ.pro`),
+  fill the public key(s) in `LicenseConfig` → mock store auto-switches to live. Then notarize via the script.
 
 ## The audio loop (the load-bearing part)
 1. `CATapDescription(stereoGlobalTapButExcludeProcesses: [selfObjectID])` — global stereo tap of all
@@ -102,7 +112,7 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 - **M0 ✅** prove capture→DSP→replay loop
 - **M1 ✅** working system-wide 10-band graphic EQ + UI + permission + device rebuild
 - **M2 ✅** — AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. `vDSP_biquadm` engine (wait-free handoff + `SetTargets` ramping). Parametric editor (live response curve + draggable handles, up to 32 bands). **Linear-phase FIR mode** (`FIRDesigner` + `FIRProcessor`, toggle, ~21ms latency). **Mid-Side mode** (two chains; `processMidSide` encodes L/R→M/S, EQs each, decodes; Mid/Side curve selector in UI). User manual at `docs/MANUAL.md`. All DSP proven offline by `Tools/verify_{biquad,fir,midside}.swift` (compiled against shipping sources).
-- **M3** RevenueCat one-time-paid gating, Developer-ID notarization, branding/icon, MAS submission of tap-only public-permission build, per-app EQ
+- **M3 (in progress, mocked pre-Apple-registration)** — done: Pro paywall + feature gating + a **mock RevenueCat store** (real buy/restore/persist UX with no Apple), Developer-ID notarize/DMG script. **Pending Apple registration:** real RevenueCat keys + App Store Connect product, Developer ID cert + notarization run, branding/icon, MAS tap-only public-permission build, per-app EQ.
 
 ## Reference
 - Apple SDK headers (ground truth): `…/MacOSX26.0.sdk/.../CoreAudio.framework/Headers/{AudioHardwareTapping,CATapDescription,AudioHardware}.h`
