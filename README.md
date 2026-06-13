@@ -6,15 +6,17 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 
 ## Status
 
-**M0 + M1 complete — a working system-wide 10-band graphic EQ.**
+**M0 + M1 complete · M2 well underway — a system-wide parametric EQ with an 8,850-headphone library.**
 
 - ✅ Driverless system-audio capture via Core Audio **process taps** (macOS 14.4+) — no kernel extension, no installer, no reboot.
 - ✅ Capture → DSP → re-inject loop (private aggregate device, real output as clock master, self-excluded to prevent feedback).
-- ✅ Real-time RBJ biquad EQ engine (double-precision coefficients, per-channel cascade).
-- ✅ 10-band graphic EQ UI, preamp, bypass A/B, starter presets, live output-device rebuild.
-- ⏭️ Next (M2): 32-band **parametric** engine on `vDSP_biquadm`, **6,000+ AutoEq headphone presets**, import/export, linear-phase mode.
+- ✅ Real-time **`vDSP_biquadm`** EQ engine (up to 32 sections/channel) with a **wait-free** control→audio handoff and **ramped** coefficient updates — no zipper noise on live edits.
+- ✅ **Parametric editor** with a live response curve (drag bands for freq/gain, edit Q & type, add/remove up to 32 bands), preamp, bypass A/B, starter presets, live output-device rebuild.
+- ✅ **8,850 AutoEq headphone corrections** bundled (searchable browser) + JSON **import/export**.
+- ⏭️ Remaining (M2): FIR linear-phase mode, per-channel / Mid-Side. **M3:** RevenueCat paid unlock, Developer-ID notarization, per-app EQ, Mac App Store build.
 
-See [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md) for the full roadmap and [`docs/RESEARCH.md`](docs/RESEARCH.md) for the fact-checked technical findings.
+**📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
+For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).
 
 ## Build & run
 
@@ -29,7 +31,9 @@ open SonanceEQ.xcodeproj        # then press ⌘R in Xcode
 First run:
 1. Press **Start EQ**.
 2. macOS will ask for permission to capture audio — **Allow** it.
-3. Play audio in any app and drag the faders. Toggle **Bypass** to A/B against the unprocessed sound.
+3. Play audio in any app. Drag bands on the response curve, click **Headphones** to load a correction for your gear, or pick a preset. Toggle **Bypass** to A/B against the unprocessed sound.
+
+See the [User Manual](docs/MANUAL.md) for a full walkthrough.
 
 > The project file (`SonanceEQ.xcodeproj`) is git-ignored — always regenerate it with `xcodegen generate`. Edit `project.yml`, never the `.xcodeproj` directly.
 

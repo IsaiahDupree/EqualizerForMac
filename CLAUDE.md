@@ -29,8 +29,10 @@ Sources/SonanceEQ/
     CoreAudioProperties.swift   AudioObjectID property-read helpers (our own)
     AudioRecordingPermission.swift  TCC kTCCServiceAudioCapture via private SPI behind ENABLE_TCC_SPI
     SystemAudioTap.swift        THE CORE: tap + private aggregate + IOProc re-injection + device-change rebuild
-  DSP/Biquad.swift              FilterType + BiquadCoeffs + RBJ cookbook coefficients
+  DSP/Biquad.swift              FilterType (+usesGain) + BiquadCoeffs + RBJ cookbook coefficients
   DSP/EQEngine.swift            real-time cascade; control plane (update) vs audio plane (beginRender/process)
+  DSP/FrequencyResponse.swift   magnitude-response (dB) of the band cascade for the editor curve
+  UI/ResponseCurveView.swift    parametric editor: live curve + draggable band handles + inspector (type/Q/gain), add/remove
   Models/EQBand.swift           band model (freq/gain/Q/type/enabled)
   Models/Presets.swift          starter presets (10-band graphic)
   Models/AutoEqPreset.swift     one AutoEq headphone correction; bands() → [EQBand]
@@ -87,7 +89,7 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 ## Roadmap (see docs/BUILD-PLAN.md)
 - **M0 ✅** prove capture→DSP→replay loop
 - **M1 ✅** working system-wide 10-band graphic EQ + UI + permission + device rebuild
-- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. Engine since upgraded to `vDSP_biquadm` (wait-free handoff + `SetTargets` ramping — see gotchas + `Tools/verify_biquad.swift`). **Remaining:** a true parametric editor UI (drag freq/Q + live response curve), FIR linear-phase, per-channel/Mid-Side.
+- **M2 (in progress)** — done: AutoEq import (`Tools/build_autoeq_db.py` → bundled `Resources/autoeq.sqlite`, **8,850** headphones), searchable browser UI, JSON import/export. The existing 32-band engine already runs the ≤10-filter AutoEq parametric presets, so no DSP rewrite was needed to ship the library. Engine since upgraded to `vDSP_biquadm` (wait-free handoff + `SetTargets` ramping — see gotchas + `Tools/verify_biquad.swift`). Parametric editor (live response curve + draggable handles, up to 32 bands) replaced the graphic fader row. User manual at `docs/MANUAL.md`. **Remaining:** FIR linear-phase, per-channel/Mid-Side.
 - **M3** RevenueCat one-time-paid gating, Developer-ID notarization, branding/icon, MAS submission of tap-only public-permission build, per-app EQ
 
 ## Reference

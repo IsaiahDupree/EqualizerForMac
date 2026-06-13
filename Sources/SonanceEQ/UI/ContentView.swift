@@ -9,7 +9,7 @@ struct ContentView: View {
             header
             if app.permission.status == .denied { permissionBanner }
             presetRow
-            bandsRow
+            ResponseCurveView(app: app)
             preampRow
             if let message = app.errorMessage {
                 Text(message)
@@ -84,39 +84,6 @@ struct ContentView: View {
                 Label("Headphones", systemImage: "headphones")
             }
             .controlSize(.small)
-        }
-    }
-
-    // MARK: Bands (10-band graphic faders)
-
-    private var bandsRow: some View {
-        HStack(alignment: .top, spacing: 6) {
-            ForEach(app.bands.indices, id: \.self) { index in
-                bandFader(index)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func bandFader(_ index: Int) -> some View {
-        VStack(spacing: 6) {
-            Text(app.bands[index].gainLabel)
-                .font(.system(size: 9, weight: .medium, design: .monospaced))
-                .foregroundStyle(.secondary)
-            Slider(
-                value: Binding(
-                    get: { app.bands[index].gain },
-                    set: { app.setGain($0, at: index) }
-                ),
-                in: -12...12
-            )
-            .controlSize(.mini)
-            .frame(width: 150)
-            .rotationEffect(.degrees(-90))
-            .frame(width: 28, height: 150)
-            Text(app.bands[index].freqLabel)
-                .font(.system(size: 9, design: .monospaced))
-                .foregroundStyle(.secondary)
         }
     }
 

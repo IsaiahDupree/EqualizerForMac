@@ -21,6 +21,15 @@ enum FilterType: String, Codable, CaseIterable, Identifiable {
         case .notch: return "NO"
         }
     }
+
+    /// Whether the filter's gain parameter is meaningful (peaking/shelf) vs ignored (pass/notch).
+    /// Drives the editor: only gain-bearing bands move vertically when dragged.
+    var usesGain: Bool {
+        switch self {
+        case .peaking, .lowShelf, .highShelf: return true
+        case .lowPass, .highPass, .notch: return false
+        }
+    }
 }
 
 /// Normalized direct-form biquad coefficients (a0 divided out).

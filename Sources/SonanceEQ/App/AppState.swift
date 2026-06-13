@@ -30,6 +30,9 @@ final class AppState {
 
     private var sampleRate: Double { tap?.tapFormat?.mSampleRate ?? 48_000 }
 
+    /// Sample rate to draw the response curve against (live tap rate, or 48 kHz when stopped).
+    var sampleRateHz: Double { sampleRate }
+
     // MARK: Run control
 
     func toggle() { isRunning ? stop() : start() }
@@ -92,6 +95,23 @@ final class AppState {
     func setGain(_ gain: Float, at index: Int) {
         guard bands.indices.contains(index) else { return }
         bands[index].gain = gain
+        pushSettings()
+    }
+
+    /// Add a new parametric band (peaking, 1 kHz, flat). Returns its id so the UI can select it.
+    @discardableResult
+    func addBand() -> UUID? {
+        guard bands.count < EQEngine.maxBands else { return nil }
+        let band = EQBand(frequency: 1000, gain: 0, q: 1.0, type: .peaking)
+        bands.append(band)
+        activePresetName = nil
+        pushSettings()
+        return band.id
+    }
+
+    func removeBand(id: UUID) {
+        bands.removeAll { $0.id == id }
+        activePresetName = nil
         pushSettings()
     }
 
