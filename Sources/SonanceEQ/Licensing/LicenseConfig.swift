@@ -35,4 +35,5 @@ enum ProFeature: CaseIterable {
     case autoEqLibrary   // M2 — 8,850-headphone AutoEq correction database
     case importExport    // M2 — preset import/export
     case perAppEQ        // M3 — per-application equalization
+    case audioRecorder   // Tier 1 — record system / per-app audio to a file
 }

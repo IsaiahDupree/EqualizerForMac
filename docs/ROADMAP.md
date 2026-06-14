@@ -24,10 +24,17 @@ Audio Hijack, Loopback ($99).
    - ⏳ Live verification (can't be unit-tested — needs ears): per-app volume, mute, output routing,
      and EQ-on + mixer-on coexistence on the same and on different apps
 
-2. **System / per-app audio recorder** ("Audio Hijack"-lite) — *fast follow.*
-   Write the already-captured tap buffers to a file (WAV → AAC/ALAC via AVAudioFile). Record system
-   audio, a single app, or the EQ'd output. Mostly an encoder + file-writer on top of the IOProc;
-   the buffer-to-file path is unit-testable offline.
+2. **System / per-app audio recorder** ("Audio Hijack"-lite) — *feature-complete; pending live verification.*
+   Capture system audio (or chosen apps) to a file via an **unmuted observer tap** — playback is
+   untouched while recording. WAV (lossless float), Apple Lossless, or AAC.
+   - ✅ `RecordingFormat` (WAV/ALAC/AAC settings + extensions) + tests
+   - ✅ `AudioFileWriter` (`AVAudioFile` wrapper; buffer→file path unit-tested offline by round-trip)
+   - ✅ `AudioRecorder` engine (unmuted tap → aggregate → IOProc → file writer; watchdog + fail-safe teardown)
+   - ✅ Recorder UI (`RecorderView`: record button, elapsed time, source picker, format picker) +
+     Pro-gated `Record` button (`.audioRecorder`) + Save-panel destination + reveal-in-Finder
+   - ✅ `NSAudioCaptureUsageDescription` updated to disclose optional recording (stays local)
+   - ⏳ Live verification (needs ears): record system audio + a single app, confirm playback is
+     unaffected, and the WAV/ALAC/AAC files open and sound correct
 
 3. **Virtual audio device / routing** ("Loopback"/BlackHole) — *largest, off-store.*
    Combine app + mic sources into a virtual output for OBS/streaming. Needs an `AudioServerPlugIn`

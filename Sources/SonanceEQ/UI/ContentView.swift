@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var showingBrowser = false
     @State private var showingPaywall = false
     @State private var showingMixer = false
+    @State private var showingRecorder = false
 
     /// Run `action` if the feature is unlocked, otherwise present the paywall.
     private func requirePro(_ feature: ProFeature, _ action: () -> Void) {
@@ -36,6 +37,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
         .sheet(isPresented: $showingPaywall) { PaywallView(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
+        .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
     }
 
@@ -133,6 +135,13 @@ struct ContentView: View {
             }
             .controlSize(.small)
             .help("Independent volume and output device per app")
+            Button {
+                requirePro(.audioRecorder) { showingRecorder = true }
+            } label: {
+                Label("Record", systemImage: app.license.canUse(.audioRecorder) ? "record.circle" : "lock.fill")
+            }
+            .controlSize(.small)
+            .help("Record system or per-app audio to a file")
         }
     }
 

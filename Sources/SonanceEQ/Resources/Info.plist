@@ -27,7 +27,7 @@
 	<key>LSUIElement</key>
 	<false/>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>Sonance EQ captures your Mac's audio output so it can apply your equalizer to everything you hear. Audio is processed live on your device and is never recorded, saved, or sent anywhere.</string>
+	<string>Sonance EQ captures your Mac's audio output so it can apply your equalizer to everything you hear, and — only when you start a recording — save that audio to a file you choose. Audio is processed on your device and is never sent anywhere.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Isaiah Dupree</string>
 </dict>

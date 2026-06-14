@@ -17,6 +17,11 @@ final class AppState {
         mixerEngine.onChannelFailure = { [weak self] _, message in
             self?.errorMessage = "Mixer: \(message)"
         }
+        recorder.onFailure = { [weak self] message in
+            guard let self else { return }
+            self.finishRecordingUI()
+            self.errorMessage = "Recorder: \(message)"
+        }
         if CommandLine.arguments.contains("--demo") {
             // Presentation/screenshot state: a shaped curve with Pro unlocked (no locks).
             license.mockUnlock()
@@ -55,6 +60,15 @@ final class AppState {
     private let mixerEngine = PerAppMixer()
     var mixerEnabled = false
     var availableDevices: [AudioDevice] = []
+
+    // Audio recorder (Pro): capture system or per-app audio to a file
+    private let recorder = AudioRecorder()
+    var isRecording = false
+    var recordingFormat: RecordingFormat = .wav
+    var recordTarget: EQTarget = .allApps
+    var recordingElapsed: Double = 0
+    var lastRecordingURL: URL?
+    private var recordingTimer: Timer?
 
     // UI state
     var isRunning = false
@@ -288,6 +302,97 @@ final class AppState {
 
     func resetAppChannel(_ app: AudioApp) {
         mixer.reset(app.bundleID); applyMixer()
+    }
+
+    // MARK: Audio recorder
+
+    func toggleRecording() { isRecording ? stopRecording() : startRecording() }
+
+    /// Ask where to save, then begin capturing the chosen target to disk.
+    func startRecording() {
+        guard !isRecording else { return }
+        errorMessage = nil
+        guard permission.status != .denied else {
+            errorMessage = "Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security."
+            return
+        }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [recordingFormat == .wav ? .wav : .mpeg4Audio]
+        panel.nameFieldStringValue = "\(defaultRecordingBaseName).\(recordingFormat.fileExtension)"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try recorder.start(target: recordTarget, format: recordingFormat, url: url)
+            isRecording = true
+            recordingElapsed = 0
+            lastRecordingURL = url
+            startRecordingTimer()
+        } catch {
+            errorMessage = "Recorder: \(error.localizedDescription)"
+        }
+    }
+
+    func stopRecording() {
+        let url = recorder.stop()
+        finishRecordingUI()
+        if let url { lastRecordingURL = url }
+    }
+
+    /// Reveal the most recent recording in Finder.
+    func revealLastRecording() {
+        guard let url = lastRecordingURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    /// A timestamped default file name (no extension).
+    private var defaultRecordingBaseName: String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
+        return "Sonance Recording \(f.string(from: Date()))"
+    }
+
+    private func startRecordingTimer() {
+        recordingTimer?.invalidate()
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.isRecording else { return }
+                self.recordingElapsed = self.recorder.elapsedSeconds
+            }
+        }
+    }
+
+    /// Tear down UI/timer state after recording stops (whether by the user or a failure).
+    private func finishRecordingUI() {
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+        recordingElapsed = recorder.elapsedSeconds
+        isRecording = false
+    }
+
+    // Record-target selection (independent of the EQ target), mirroring the per-app EQ menu.
+    var recordTargetLabel: String {
+        switch recordTarget {
+        case .allApps:
+            return "All Apps"
+        case let .apps(ids):
+            if ids.isEmpty { return "All Apps" }
+            let names = availableApps.filter { ids.contains($0.bundleID) }.map(\.name)
+            let shown = names.isEmpty ? Array(ids) : names
+            return shown.count == 1 ? shown[0] : "\(shown.count) apps"
+        }
+    }
+
+    func isRecordAppSelected(_ bundleID: String) -> Bool {
+        if case let .apps(ids) = recordTarget { return ids.contains(bundleID) }
+        return false
+    }
+
+    func setRecordAllApps() { recordTarget = .allApps }
+
+    func toggleRecordApp(_ bundleID: String) {
+        var ids: Set<String> = { if case let .apps(s) = recordTarget { return s } else { return [] } }()
+        if ids.contains(bundleID) { ids.remove(bundleID) } else { ids.insert(bundleID) }
+        recordTarget = ids.isEmpty ? .allApps : .apps(ids)
     }
 
     func openPrivacySettings() {

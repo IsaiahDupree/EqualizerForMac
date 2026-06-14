@@ -11,7 +11,10 @@ import Testing
     @Test func entitlementIdentifier() { #expect(LicenseConfig.proEntitlementID == "pro") }
     @Test func productIdentifier() { #expect(LicenseConfig.proProductID == "com.isaiahdupree.SonanceEQ.pro") }
     @Test func offeringIdentifier() { #expect(LicenseConfig.offeringID == "default") }
-    @Test func fourProFeatures() { #expect(ProFeature.allCases.count == 4) }
+    @Test func proFeatureCatalog() {
+        #expect(ProFeature.allCases.count == 5)
+        #expect(ProFeature.allCases.contains(.audioRecorder))
+    }
 }
 
 @MainActor
