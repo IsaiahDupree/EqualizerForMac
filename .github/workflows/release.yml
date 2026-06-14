@@ -10,9 +10,10 @@ name: Release (Developer ID DMG)
 #   ASC_API_ISSUER_ID            the API key issuer id (App Store Connect → Users and Access → Integrations)
 # See docs/RELEASE.md for the full runbook.
 
+# Manual trigger only — releases are cut locally via Tools/package_and_notarize.sh (reuses the local
+# Developer ID cert + ASC key). To run this in CI instead, set the secrets above and trigger it from the
+# Actions tab. (Kept off tag-push so tagging a release doesn't fail here for lack of secrets.)
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
 
 permissions:
