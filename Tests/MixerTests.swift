@@ -98,6 +98,20 @@ import Testing
     }
 }
 
+@Suite struct MixerScaleTests {
+    private func scaled(_ input: [Float], gain: Float) -> [Float] {
+        var s = input
+        s.withUnsafeMutableBufferPointer { MixerChannelTap.scale($0.baseAddress!, frames: $0.count, gain: gain) }
+        return s
+    }
+
+    @Test func halves() { #expect(scaled([1, -1, 0.5, -0.5], gain: 0.5) == [0.5, -0.5, 0.25, -0.25]) }
+    @Test func unityIsNoOp() { #expect(scaled([0.3, -0.7], gain: 1) == [0.3, -0.7]) }
+    @Test func zeroSilences() { #expect(scaled([0.9, -0.9, 0.5], gain: 0).allSatisfy { $0 == 0 }) }
+    @Test func boosts() { #expect(abs(scaled([0.4], gain: 1.25)[0] - 0.5) < 1e-6) }
+    @Test func emptyIsSafe() { #expect(scaled([], gain: 0.5).isEmpty) }
+}
+
 @Suite struct AudioDeviceTests {
     // Lenient: a CI runner may have no audio hardware. Assert invariants that hold regardless.
     @Test func enumeratedDevicesHaveIdentity() {
