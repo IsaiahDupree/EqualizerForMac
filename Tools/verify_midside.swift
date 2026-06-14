@@ -1,7 +1,8 @@
 // Integration check of the real EQEngine.processMidSide. Compile WITH the engine sources:
 //   swiftc -O Tools/verify_midside.swift \
 //     Sources/SonanceEQ/DSP/EQEngine.swift Sources/SonanceEQ/DSP/FIRProcessor.swift \
-//     Sources/SonanceEQ/DSP/FIRDesigner.swift Sources/SonanceEQ/DSP/FrequencyResponse.swift \
+//     Sources/SonanceEQ/DSP/FIRDesigner.swift Sources/SonanceEQ/DSP/FilterDesigner.swift \
+//     Sources/SonanceEQ/DSP/FrequencyResponse.swift \
 //     Sources/SonanceEQ/DSP/Biquad.swift Sources/SonanceEQ/Models/EQBand.swift -o /tmp/vms && /tmp/vms
 //
 // Verifies the Mid-Side decomposition:

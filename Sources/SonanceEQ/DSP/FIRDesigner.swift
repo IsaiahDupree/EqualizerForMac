@@ -33,8 +33,8 @@ enum FIRDesigner {
         }
 
         // --- 1. Target magnitude on a linear grid (zero-phase, hermitian-even). ---
-        let coeffs = bands.filter(\.enabled).map {
-            RBJ.coeffs(type: $0.type, sampleRate: sampleRate, freq: $0.frequency, gainDb: Double($0.gain), q: $0.q)
+        let coeffs = bands.filter(\.enabled).flatMap {
+            FilterDesigner.sections(for: $0, sampleRate: sampleRate)
         }
         let preamp = pow(10.0, Double(preampDb) / 20.0)
 

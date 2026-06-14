@@ -86,11 +86,22 @@ struct ResponseCurveView: View {
                 Text("\(band.freqLabel) Hz")
                     .font(.caption.monospaced()).frame(width: 64, alignment: .leading)
 
-                HStack(spacing: 4) {
-                    Text("Q").font(.caption2).foregroundStyle(.secondary)
-                    Slider(value: bind(\.q, id: id, fallback: band.q), in: 0.1...10)
-                    Text(String(format: "%.2f", band.q))
-                        .font(.caption2.monospaced()).frame(width: 32)
+                if band.type.supportsSlope {
+                    HStack(spacing: 4) {
+                        Picker("", selection: bind(\.slopeDbPerOct, id: id, fallback: band.slopeDbPerOct)) {
+                            ForEach(FilterDesigner.slopes, id: \.self) { Text("\(Int($0))").tag($0) }
+                        }
+                        .labelsHidden().frame(width: 60)
+                        Text("dB/oct").font(.caption2).foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Text("Q").font(.caption2).foregroundStyle(.secondary)
+                        Slider(value: bind(\.q, id: id, fallback: band.q), in: 0.1...10)
+                        Text(String(format: "%.2f", band.q))
+                            .font(.caption2.monospaced()).frame(width: 32)
+                    }
                 }
 
                 Text(band.type.usesGain ? String(format: "%+.1f dB", band.gain) : "—")

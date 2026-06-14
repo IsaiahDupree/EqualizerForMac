@@ -24,8 +24,8 @@ enum FrequencyResponse {
                       points: Int = 220,
                       fMin: Double = 20,
                       fMax: Double = 20_000) -> [(freq: Double, db: Double)] {
-        let coeffs = bands.filter(\.enabled).map {
-            RBJ.coeffs(type: $0.type, sampleRate: sampleRate, freq: $0.frequency, gainDb: Double($0.gain), q: $0.q)
+        let coeffs = bands.filter(\.enabled).flatMap {
+            FilterDesigner.sections(for: $0, sampleRate: sampleRate)
         }
         let logMin = log10(fMin), logMax = log10(fMax)
         return (0..<points).map { i in

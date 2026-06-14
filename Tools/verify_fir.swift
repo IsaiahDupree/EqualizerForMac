@@ -1,6 +1,7 @@
 // Offline check of FIRDesigner: compile WITH the real app sources so it tests shipping code:
 //   swiftc -O Tools/verify_fir.swift \
-//     Sources/SonanceEQ/DSP/FIRDesigner.swift Sources/SonanceEQ/DSP/FrequencyResponse.swift \
+//     Sources/SonanceEQ/DSP/FIRDesigner.swift Sources/SonanceEQ/DSP/FilterDesigner.swift \
+//     Sources/SonanceEQ/DSP/FrequencyResponse.swift \
 //     Sources/SonanceEQ/DSP/Biquad.swift Sources/SonanceEQ/Models/EQBand.swift -o /tmp/vfir && /tmp/vfir
 //
 // Verifies: (1) the impulse is symmetric → exactly linear phase; (2) the realized magnitude matches the

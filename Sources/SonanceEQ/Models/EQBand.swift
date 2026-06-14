@@ -8,6 +8,8 @@ struct EQBand: Identifiable, Codable, Equatable {
     var q: Double
     var type: FilterType
     var enabled: Bool = true
+    /// Slope for Low/High Cut filters, in dB/octave (6,12,18,24,36,48,72,96). Ignored by other shapes.
+    var slopeDbPerOct: Double = 12
 
     /// Human-readable center-frequency label (e.g. "1k", "16k", "250").
     var freqLabel: String {

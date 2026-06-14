@@ -17,7 +17,10 @@ struct PresetFile: Codable {
 
     /// Materialize into live EQ bands.
     func eqBands() -> [EQBand] {
-        bands.map { EQBand(frequency: $0.frequency, gain: $0.gain, q: $0.q, type: $0.type, enabled: $0.enabled) }
+        bands.map {
+            EQBand(frequency: $0.frequency, gain: $0.gain, q: $0.q, type: $0.type,
+                   enabled: $0.enabled, slopeDbPerOct: $0.slopeDbPerOct)
+        }
     }
 }
 
@@ -27,6 +30,7 @@ struct PortableBand: Codable {
     var gain: Float
     var q: Double
     var enabled: Bool
+    var slopeDbPerOct: Double
 
     init(_ band: EQBand) {
         type = band.type
@@ -34,5 +38,17 @@ struct PortableBand: Codable {
         gain = band.gain
         q = band.q
         enabled = band.enabled
+        slopeDbPerOct = band.slopeDbPerOct
+    }
+
+    // Tolerant decode: presets written before slope existed default to 12 dB/oct.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        type = try c.decode(FilterType.self, forKey: .type)
+        frequency = try c.decode(Double.self, forKey: .frequency)
+        gain = try c.decode(Float.self, forKey: .gain)
+        q = try c.decode(Double.self, forKey: .q)
+        enabled = try c.decode(Bool.self, forKey: .enabled)
+        slopeDbPerOct = try c.decodeIfPresent(Double.self, forKey: .slopeDbPerOct) ?? 12
     }
 }

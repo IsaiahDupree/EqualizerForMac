@@ -8,6 +8,8 @@ enum FilterType: String, Codable, CaseIterable, Identifiable {
     case lowPass
     case highPass
     case notch
+    case bandPass
+    case allPass
 
     var id: String { rawValue }
 
@@ -19,6 +21,8 @@ enum FilterType: String, Codable, CaseIterable, Identifiable {
         case .lowPass: return "LP"
         case .highPass: return "HP"
         case .notch: return "NO"
+        case .bandPass: return "BP"
+        case .allPass: return "AP"
         }
     }
 
@@ -27,9 +31,12 @@ enum FilterType: String, Codable, CaseIterable, Identifiable {
     var usesGain: Bool {
         switch self {
         case .peaking, .lowShelf, .highShelf: return true
-        case .lowPass, .highPass, .notch: return false
+        case .lowPass, .highPass, .notch, .bandPass, .allPass: return false
         }
     }
+
+    /// Cut filters (Low/High Cut) support a variable slope (cascaded Butterworth sections).
+    var supportsSlope: Bool { self == .lowPass || self == .highPass }
 }
 
 /// Normalized direct-form biquad coefficients (a0 divided out).
@@ -111,6 +118,22 @@ enum RBJ {
             b0 = 1
             b1 = -2 * cosw
             b2 = 1
+            a0 = 1 + alpha
+            a1 = -2 * cosw
+            a2 = 1 - alpha
+
+        case .bandPass:    // constant 0 dB peak gain
+            b0 = alpha
+            b1 = 0
+            b2 = -alpha
+            a0 = 1 + alpha
+            a1 = -2 * cosw
+            a2 = 1 - alpha
+
+        case .allPass:
+            b0 = 1 - alpha
+            b1 = -2 * cosw
+            b2 = 1 + alpha
             a0 = 1 + alpha
             a1 = -2 * cosw
             a2 = 1 - alpha

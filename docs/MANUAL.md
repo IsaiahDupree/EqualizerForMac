@@ -80,9 +80,12 @@ Each **dot** is a band you can grab.
 
 - **Move a band** — drag its dot. Left/right changes the **frequency**; up/down changes the **gain**.
 - **Select a band** — click its dot. The inspector row below shows its controls:
-  - **Type** — `PK` peaking (a bump/dip), `LSC` low-shelf, `HSC` high-shelf, `LP`/`HP` low/high-pass,
-    `NO` notch. (Pass and notch filters have no gain, so they only move horizontally.)
-  - **Q** — bandwidth. Higher Q = narrower, more surgical; lower Q = wider, gentler.
+  - **Type** — `PK` peaking (a bump/dip), `LSC` low-shelf, `HSC` high-shelf, `LP` low cut / `HP` high cut,
+    `NO` notch, `BP` band-pass, `AP` all-pass. (Pass/notch/all-pass have no gain, so they only move
+    horizontally.)
+  - **Slope** (Low/High Cut only) — pick the steepness from **6 to 96 dB/octave**. Gentle (6/12) for
+    musical roll-offs, steep (48/96) for surgical cuts.
+  - **Q** — bandwidth for bell/band-pass/notch. Higher Q = narrower; lower Q = wider.
   - The frequency and gain readouts update as you drag.
   - **Trash** — delete the band.
 - **Add a band** — click **+ Band** (top-right of the curve). A new peaking band appears at 1 kHz.

@@ -15,6 +15,12 @@ func bandDb(_ type: FilterType, freq: Double, gain: Double, q: Double, at evalFr
     return FrequencyResponse.magnitudeDb(c, 2 * .pi * evalFreq / fs)
 }
 
+/// Total magnitude (dB) of a full band (all its expanded sections) at `evalFreq`.
+func bandTotalDb(_ band: EQBand, at evalFreq: Double, fs: Double = kFs) -> Double {
+    let w = 2 * .pi * evalFreq / fs
+    return FilterDesigner.sections(for: band, sampleRate: fs).reduce(0) { $0 + FrequencyResponse.magnitudeDb($1, w) }
+}
+
 /// Shared parameter grids.
 enum Grid {
     static let freqs: [Double] = [31.25, 62.5, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]

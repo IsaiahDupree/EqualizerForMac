@@ -116,14 +116,15 @@ final class EQEngine {
         var coeffs = Self.identityCoeffs()
         guard !bypassed else { return coeffs }
         var section = 0
-        for band in bands where band.enabled {
-            if section >= Self.maxBands { break }
-            let c = RBJ.coeffs(type: band.type, sampleRate: sampleRate,
-                               freq: band.frequency, gainDb: Double(band.gain), q: band.q)
-            let b = Self.coeffsPerSection * section
-            coeffs[b + 0] = Double(c.b0); coeffs[b + 1] = Double(c.b1); coeffs[b + 2] = Double(c.b2)
-            coeffs[b + 3] = Double(c.a1); coeffs[b + 4] = Double(c.a2)
-            section += 1
+        outer: for band in bands where band.enabled {
+            // A band may expand into several sections (e.g. a steep Low/High Cut).
+            for c in FilterDesigner.sections(for: band, sampleRate: sampleRate) {
+                if section >= Self.maxBands { break outer }
+                let b = Self.coeffsPerSection * section
+                coeffs[b + 0] = Double(c.b0); coeffs[b + 1] = Double(c.b1); coeffs[b + 2] = Double(c.b2)
+                coeffs[b + 3] = Double(c.a1); coeffs[b + 4] = Double(c.a2)
+                section += 1
+            }
         }
         let preamp = Double(pow(10, preampDb / 20))
         coeffs[0] *= preamp; coeffs[1] *= preamp; coeffs[2] *= preamp

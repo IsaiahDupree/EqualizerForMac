@@ -40,7 +40,8 @@ Sources/SonanceEQ/
     AudioRecordingPermission.swift  TCC kTCCServiceAudioCapture via private SPI behind ENABLE_TCC_SPI
     AudioProcesses.swift        enumerate Core Audio process objects → running-audio apps (per-app EQ); resolve bundleIDs→objectIDs
     SystemAudioTap.swift        THE CORE: tap (global OR per-app mixdown via `target`) + private aggregate + IOProc re-injection + device-change rebuild; `retarget()` rebuilds on app-selection change
-  DSP/Biquad.swift              FilterType (+usesGain) + BiquadCoeffs + RBJ cookbook coefficients
+  DSP/Biquad.swift              FilterType (8 shapes: PK/LSC/HSC/LP/HP/NO/BP/AP, +usesGain/supportsSlope) + BiquadCoeffs + RBJ coefficients
+  DSP/FilterDesigner.swift      expands one EQBand → biquad section(s); variable-slope Low/High Cut = Butterworth cascade (6–96 dB/oct, up to 8 sections)
   DSP/EQEngine.swift            real-time engine; two chains (Mid/Side); control plane (update) vs audio plane (beginRender/process/processMidSide)
   DSP/FrequencyResponse.swift   magnitude-response (dB) of the band cascade for the editor curve
   DSP/FIRDesigner.swift         linear-phase FIR design (frequency-sampling IDFT + L/2-centered Blackman); proven by Tools/verify_fir.swift
