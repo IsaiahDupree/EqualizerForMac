@@ -12,14 +12,17 @@ grow it into a full **audio control center** by reusing the Core Audio engine we
 Reuses the existing process-tap / aggregate / IOProc engine. Competes with SoundSource ($49),
 Audio Hijack, Loopback ($99).
 
-1. **Per-app volume mixer + output router** — *building now.*
+1. **Per-app volume mixer + output router** — *feature-complete; pending live verification.*
    Independent volume / mute / output-device per app. Architecture: one tap per controlled app
    (`MixerChannel`), each scaled by `gain` and routed to its `outputDeviceUID` (or the default).
    - ✅ `AudioDevices` (output-device enumeration) + tests
    - ✅ `MixerChannel` / `MixerState` model + persistence + tests
-   - ⏳ `PerAppMixer` engine (per-app tap → gain → routed output)
-   - ⏳ Mixer UI (app list, volume sliders, mute, output picker)
-   - ⏳ Live verification (can't be unit-tested — needs ears)
+   - ✅ `PerAppMixer` engine (per-app tap → gain → routed output) + `MixerChannelTap` + tests
+   - ✅ Mixer UI (`MixerView`: app list, volume sliders, mute, output picker) + Pro-gated button
+   - ✅ EQ/mixer double-tap resolved — the global EQ tap excludes mixer-owned apps
+     (`SystemAudioTap.excludedBundleIDs`, kept in sync by `AppState`)
+   - ⏳ Live verification (can't be unit-tested — needs ears): per-app volume, mute, output routing,
+     and EQ-on + mixer-on coexistence on the same and on different apps
 
 2. **System / per-app audio recorder** ("Audio Hijack"-lite) — *fast follow.*
    Write the already-captured tap buffers to a file (WAV → AAC/ALAC via AVAudioFile). Record system
