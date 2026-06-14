@@ -23,6 +23,9 @@ final class SystemAudioTap {
     private var procID: AudioDeviceIOProcID?
     private var deviceChangeBlock: AudioObjectPropertyListenerBlock?
 
+    /// Bumped on every IOProc call — the watchdog uses it to confirm audio is actually flowing.
+    private let renderCount = OSAllocatedUnfairLock(initialState: 0)
+
     private(set) var tapFormat: AudioStreamBasicDescription?
     private(set) var outputDeviceName = "—"
     private(set) var isRunning = false
@@ -39,9 +42,31 @@ final class SystemAudioTap {
 
     func start() throws {
         guard !isRunning else { return }
-        try build()
+        do {
+            try build()
+        } catch {
+            // A partial build may have created the muted tap already — never leave the user's audio
+            // muted with no re-injection. Tear everything down before surfacing the error.
+            teardown()
+            throw error
+        }
         installDefaultDeviceListener()
+        renderCount.withLock { $0 = 0 }
         isRunning = true
+        startWatchdog()
+    }
+
+    /// Fail-safe: if the IOProc never delivers audio (routing failed on this device), stop and report
+    /// instead of leaving the user's apps muted with no sound. Only fires when audio truly never flows.
+    private func startWatchdog() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, self.isRunning else { return }
+            let rendered = self.renderCount.withLock { $0 }
+            guard rendered == 0 else { return }   // audio is flowing — all good
+            self.log.error("Audio routing never started (IOProc idle) — stopping to restore sound.")
+            self.stop()
+            self.onRebuild?(.failure(CoreAudioError.create("Couldn't route audio on this output device", -1)))
+        }
     }
 
     func stop() {
@@ -129,7 +154,9 @@ final class SystemAudioTap {
         // 6. Install the render block and start.
         let engine = eq
         var newProc: AudioDeviceIOProcID?
+        let counter = renderCount
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
+            counter.withLock { $0 &+= 1 }
             SystemAudioTap.route(engine, input: inInput, output: outOutput)
         }
         guard status == noErr, let proc = newProc else {
