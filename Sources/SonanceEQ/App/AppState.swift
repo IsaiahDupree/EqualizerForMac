@@ -105,6 +105,7 @@ final class AppState {
             }
         }
         tap.target = eqTarget
+        tap.excludedBundleIDs = mixerEnabled ? Set(mixer.activeChannels.map(\.bundleID)) : []
         do {
             try tap.start()
             self.tap = tap
@@ -259,15 +260,18 @@ final class AppState {
 
     func refreshDevices() { availableDevices = AudioDevices.outputDevices() }
 
-    /// Turn the mixer on/off. Off tears down all per-app mixer taps.
+    /// Turn the mixer on/off. Off tears down all per-app mixer taps and stops excluding them from the EQ.
     func setMixerEnabled(_ on: Bool) {
         mixerEnabled = on
-        if on { refreshApps(); refreshDevices(); applyMixer() } else { mixerEngine.stopAll() }
+        if on { refreshApps(); refreshDevices(); applyMixer() }
+        else { mixerEngine.stopAll(); tap?.excludedBundleIDs = [] }
     }
 
     private func applyMixer() {
         guard mixerEnabled else { return }
         mixerEngine.apply(mixer.activeChannels)
+        // Keep the global EQ tap from also tapping the apps the mixer now owns.
+        tap?.excludedBundleIDs = Set(mixer.activeChannels.map(\.bundleID))
     }
 
     func setAppVolume(_ volume: Float, _ app: AudioApp) {

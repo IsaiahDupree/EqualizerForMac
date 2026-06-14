@@ -33,6 +33,15 @@ final class SystemAudioTap {
     /// Which apps to equalize. `.allApps` = global tap; `.apps` = mixdown tap of those processes.
     var target: EQTarget = .allApps
 
+    /// Bundle ids the per-app mixer is handling — the global EQ tap excludes them so an app is never
+    /// tapped (and muted) twice. Setting this while running rebuilds the tap. Only affects global taps.
+    var excludedBundleIDs: Set<String> = [] {
+        didSet {
+            guard isRunning, oldValue != excludedBundleIDs else { return }
+            rebuild()
+        }
+    }
+
     /// Called on the main queue when the engine rebuilds itself (e.g. output device changed).
     var onRebuild: ((Result<String, Error>) -> Void)?
 
@@ -84,6 +93,10 @@ final class SystemAudioTap {
         var exclude: [AudioObjectID] = []
         if let selfObject = try? AudioObjectID.system.translatePID(getpid()), selfObject.isValid {
             exclude = [selfObject]
+        }
+        // Also exclude any apps the per-app mixer owns, so they're not double-tapped/double-muted.
+        if !excludedBundleIDs.isEmpty {
+            exclude += AudioProcesses.processObjectIDs(forBundleIDs: excludedBundleIDs)
         }
 
         // 2. Create the tap. Global (all apps) excludes ourselves to prevent feedback; a per-app tap is
