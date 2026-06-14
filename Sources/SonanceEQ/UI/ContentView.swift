@@ -4,6 +4,7 @@ struct ContentView: View {
     @Bindable var app: AppState
     @State private var showingBrowser = false
     @State private var showingPaywall = false
+    @State private var showingMixer = false
 
     /// Run `action` if the feature is unlocked, otherwise present the paywall.
     private func requirePro(_ feature: ProFeature, _ action: () -> Void) {
@@ -34,6 +35,7 @@ struct ContentView: View {
         .frame(width: 560)
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
         .sheet(isPresented: $showingPaywall) { PaywallView(app: app) }
+        .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
     }
 
@@ -124,6 +126,13 @@ struct ContentView: View {
                 .controlSize(.small)
             }
             Spacer()
+            Button {
+                requirePro(.perAppEQ) { showingMixer = true }
+            } label: {
+                Label("Mixer", systemImage: app.license.canUse(.perAppEQ) ? "slider.vertical.3" : "lock.fill")
+            }
+            .controlSize(.small)
+            .help("Independent volume and output device per app")
         }
     }
 

@@ -14,6 +14,9 @@ final class AppState {
 
     init() {
         license.start()
+        mixerEngine.onChannelFailure = { [weak self] _, message in
+            self?.errorMessage = "Mixer: \(message)"
+        }
         if CommandLine.arguments.contains("--demo") {
             // Presentation/screenshot state: a shaped curve with Pro unlocked (no locks).
             license.mockUnlock()
@@ -46,6 +49,12 @@ final class AppState {
     // Per-app EQ (Pro)
     var eqTarget: EQTarget = .allApps
     var availableApps: [AudioApp] = []
+
+    // Per-app mixer (Pro): independent volume / mute / output routing per app
+    let mixer = MixerState()
+    private let mixerEngine = PerAppMixer()
+    var mixerEnabled = false
+    var availableDevices: [AudioDevice] = []
 
     // UI state
     var isRunning = false
@@ -244,6 +253,37 @@ final class AppState {
         if ids.contains(bundleID) { ids.remove(bundleID) } else { ids.insert(bundleID) }
         eqTarget = ids.isEmpty ? .allApps : .apps(ids)
         tap?.retarget(eqTarget)
+    }
+
+    // MARK: Per-app mixer
+
+    func refreshDevices() { availableDevices = AudioDevices.outputDevices() }
+
+    /// Turn the mixer on/off. Off tears down all per-app mixer taps.
+    func setMixerEnabled(_ on: Bool) {
+        mixerEnabled = on
+        if on { refreshApps(); refreshDevices(); applyMixer() } else { mixerEngine.stopAll() }
+    }
+
+    private func applyMixer() {
+        guard mixerEnabled else { return }
+        mixerEngine.apply(mixer.activeChannels)
+    }
+
+    func setAppVolume(_ volume: Float, _ app: AudioApp) {
+        mixer.setVolume(volume, for: app.bundleID, name: app.name); applyMixer()
+    }
+
+    func setAppMuted(_ muted: Bool, _ app: AudioApp) {
+        mixer.setMuted(muted, for: app.bundleID, name: app.name); applyMixer()
+    }
+
+    func setAppOutput(_ uid: String?, _ app: AudioApp) {
+        mixer.setOutput(uid, for: app.bundleID, name: app.name); applyMixer()
+    }
+
+    func resetAppChannel(_ app: AudioApp) {
+        mixer.reset(app.bundleID); applyMixer()
     }
 
     func openPrivacySettings() {
