@@ -21,6 +21,15 @@ func bandTotalDb(_ band: EQBand, at evalFreq: Double, fs: Double = kFs) -> Doubl
     return FilterDesigner.sections(for: band, sampleRate: fs).reduce(0) { $0 + FrequencyResponse.magnitudeDb($1, w) }
 }
 
+/// An `EQEngine` loaded with `bands`, coefficients applied immediately (ready for `process`).
+func primedEngine(_ bands: [EQBand]) -> EQEngine {
+    let eq = EQEngine()
+    eq.update(bands: bands, preampDb: 0, bypassed: false, sampleRate: kFs)
+    eq.resetState()
+    eq.beginRender()
+    return eq
+}
+
 /// Shared parameter grids.
 enum Grid {
     static let freqs: [Double] = [31.25, 62.5, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]

@@ -22,7 +22,7 @@ cd "$(git rev-parse --show-toplevel)"
 APP_NAME="SonanceEQ"
 SCHEME="SonanceEQ"
 BUILD_DIR="build/release"
-APP_PATH="$BUILD_DIR/$APP_NAME.app"
+APP_PATH="build/$APP_NAME.app"      # NOTE: must live OUTSIDE $BUILD_DIR (which holds the build products)
 DMG_PATH="build/Sonance-EQ.dmg"
 
 echo "▸ Preflight"
@@ -59,9 +59,10 @@ xcodebuild -project "$APP_NAME.xcodeproj" -scheme "$SCHEME" -configuration Relea
   OTHER_CODE_SIGN_FLAGS="--timestamp --options runtime" \
   clean build
 
-rm -rf "$BUILD_DIR" && mkdir -p "$BUILD_DIR"
-cp -R "$BUILD_DIR/dd/Build/Products/Release/$APP_NAME.app" "$APP_PATH" 2>/dev/null \
-  || cp -R "$(find ~/Library/Developer/Xcode/DerivedData -name "$APP_NAME.app" -path '*Release*' | head -1)" "$APP_PATH"
+PRODUCT="$BUILD_DIR/dd/Build/Products/Release/$APP_NAME.app"
+[ -d "$PRODUCT" ] || { echo "✗ build product not found at $PRODUCT"; exit 1; }
+rm -rf "$APP_PATH"
+cp -R "$PRODUCT" "$APP_PATH"
 
 echo "▸ Verifying signature"
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
