@@ -37,7 +37,7 @@ platform :mac do
   end
 
   desc "Build a Developer ID-signed .app (Release, hardened runtime)"
-  lane :build_app do
+  lane :signed_app do
     regenerate
     build_mac_app(
       project: "../SonanceEQ.xcodeproj",
@@ -52,7 +52,7 @@ platform :mac do
 
   desc "Direct distribution: build → notarize → DMG (one command)"
   lane :release do
-    build_app
+    signed_app
     app = "../build/SonanceEQ.app"
     notarize(package: app, api_key: asc_key, print_log: true)
     sh("cd .. && rm -f build/Sonance-EQ.dmg && " \
@@ -62,7 +62,7 @@ platform :mac do
   end
 
   desc "Mac App Store: build sandboxed .pkg and upload via the API key"
-  lane :appstore do
+  lane :app_store do
     regenerate
     build_mac_app(
       project: "../SonanceEQ.xcodeproj",

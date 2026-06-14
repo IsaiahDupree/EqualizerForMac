@@ -76,24 +76,24 @@ struct ResponseCurveView: View {
     // MARK: Inspector
 
     @ViewBuilder private var inspector: some View {
-        if let id = selectedBandID, let i = app.activeBands.firstIndex(where: { $0.id == id }) {
+        if let id = selectedBandID, let band = app.activeBands.first(where: { $0.id == id }) {
             HStack(spacing: 10) {
-                Picker("", selection: bind(\.type, at: i)) {
+                Picker("", selection: bind(\.type, id: id, fallback: band.type)) {
                     ForEach(FilterType.allCases) { Text($0.shortLabel).tag($0) }
                 }
                 .labelsHidden().frame(width: 72)
 
-                Text("\(app.activeBands[i].freqLabel) Hz")
+                Text("\(band.freqLabel) Hz")
                     .font(.caption.monospaced()).frame(width: 64, alignment: .leading)
 
                 HStack(spacing: 4) {
                     Text("Q").font(.caption2).foregroundStyle(.secondary)
-                    Slider(value: bind(\.q, at: i), in: 0.1...10)
-                    Text(String(format: "%.2f", app.activeBands[i].q))
+                    Slider(value: bind(\.q, id: id, fallback: band.q), in: 0.1...10)
+                    Text(String(format: "%.2f", band.q))
                         .font(.caption2.monospaced()).frame(width: 32)
                 }
 
-                Text(app.activeBands[i].type.usesGain ? String(format: "%+.1f dB", app.activeBands[i].gain) : "—")
+                Text(band.type.usesGain ? String(format: "%+.1f dB", band.gain) : "—")
                     .font(.caption2.monospaced()).frame(width: 52, alignment: .trailing)
 
                 Button(role: .destructive) {
@@ -114,11 +114,17 @@ struct ResponseCurveView: View {
         }
     }
 
-    /// Two-way binding to a band field that pushes to the audio engine on change.
-    private func bind<V>(_ key: WritableKeyPath<EQBand, V>, at i: Int) -> Binding<V> {
+    /// Two-way binding to a band field, resolved by the band's **stable id** each access — crash-proof if
+    /// the band list changes between SwiftUI update passes (index-based bindings would read out of bounds).
+    /// `fallback` is returned if the band no longer exists.
+    private func bind<V>(_ key: WritableKeyPath<EQBand, V>, id: UUID, fallback: V) -> Binding<V> {
         Binding(
-            get: { app.activeBands[i][keyPath: key] },
-            set: { app.activeBands[i][keyPath: key] = $0; app.pushSettings() }
+            get: { app.activeBands.first(where: { $0.id == id })?[keyPath: key] ?? fallback },
+            set: { newValue in
+                guard let i = app.activeBands.firstIndex(where: { $0.id == id }) else { return }
+                app.activeBands[i][keyPath: key] = newValue
+                app.pushSettings()
+            }
         )
     }
 

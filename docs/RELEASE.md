@@ -1,7 +1,7 @@
 # Release Runbook
 
 > **Two ways to drive this:** plain shell (`Tools/*.sh`, zero dependencies) or **fastlane**
-> (`fastlane mac release` / `fastlane mac appstore` — see [`fastlane/README.md`](../fastlane/README.md)).
+> (`fastlane mac release` / `fastlane mac app_store` — see [`fastlane/README.md`](../fastlane/README.md)).
 > Both reuse the same account-level App Store Connect API key. Pick whichever you prefer.
 
 Two distribution paths. **Lead with Direct** — the Mac App Store path is the project's #1 rejection risk
