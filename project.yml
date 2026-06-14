@@ -53,6 +53,9 @@ targets:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "DEBUG ENABLE_TCC_SPI"
         Release:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "ENABLE_TCC_SPI"
+          # Don't inject the debugger-attach entitlement (com.apple.security.get-task-allow) into the
+          # distribution build — notarization rejects any binary that requests it.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: "NO"
     info:
       path: Sources/SonanceEQ/Resources/Info.plist
       properties:

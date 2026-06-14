@@ -67,6 +67,14 @@ cp -R "$PRODUCT" "$APP_PATH"
 echo "▸ Verifying signature"
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
+# Guard: notarization rejects any binary carrying the debugger-attach entitlement. Catch it here
+# (instant) instead of after a multi-minute notarization round-trip.
+if codesign -d --entitlements - --xml "$APP_PATH" 2>/dev/null | grep -q 'get-task-allow'; then
+  echo "✗ $APP_NAME has com.apple.security.get-task-allow — notarization would fail."
+  echo "  Set CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO for the Release config (see project.yml)."
+  exit 1
+fi
+
 echo "▸ Building DMG"
 rm -f "$DMG_PATH"
 hdiutil create -volname "Sonance EQ" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
