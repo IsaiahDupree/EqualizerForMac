@@ -39,6 +39,18 @@ struct ContentView: View {
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
+        .onAppear(perform: openLaunchArgPanel)
+    }
+
+    /// Auto-present a panel from a launch argument (`--screen mixer|recorder`) for demos/screenshots.
+    private func openLaunchArgPanel() {
+        let args = CommandLine.arguments
+        guard let i = args.firstIndex(of: "--screen"), i + 1 < args.count else { return }
+        switch args[i + 1] {
+        case "mixer": showingMixer = true
+        case "recorder": showingRecorder = true
+        default: break
+        }
     }
 
     // MARK: Header
