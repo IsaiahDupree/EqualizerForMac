@@ -105,7 +105,8 @@ def ensure_profile(name="Sonance EQ MAS"):
 
 # ---------- app record (read-only; creation is browser-only) ----------
 def get_app():
-    for a in api("GET", f"/v1/apps?filter[bundleId]={BUNDLE}&limit=200").get("data", []):
+    # List-and-match (the filter[bundleId] query can lag right after creation).
+    for a in api("GET", "/v1/apps?limit=200").get("data", []):
         if a["attributes"].get("bundleId") == BUNDLE:
             return a
     return None

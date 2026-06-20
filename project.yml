@@ -83,6 +83,8 @@ targets:
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
         CFBundleIconName: AppIcon
+        # Required by the Mac App Store (App Store Connect validation). Audio EQ → Music.
+        LSApplicationCategoryType: public.app-category.music
         LSMinimumSystemVersion: "14.4"
         LSUIElement: false
         NSHumanReadableCopyright: "© 2026 Isaiah Dupree"
