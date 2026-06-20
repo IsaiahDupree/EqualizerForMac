@@ -66,6 +66,18 @@ platform :mac do
   # Once accepted, create the "Apple Distribution" + "Mac Installer Distribution" certs in Xcode
   # (Settings → Accounts → Manage Certificates) or via `fastlane match`. See docs/APP-STORE.md.
 
+  desc "Create the macOS App Store Connect app record (idempotent)"
+  lane :make_app do
+    produce(
+      app_identifier: "com.isaiahdupree.SonanceEQ",
+      app_name: "Sonance EQ",
+      platform: "osx",
+      language: "English",
+      sku: "com.isaiahdupree.SonanceEQ",
+      api_key: asc_key
+    )
+  end
+
   desc "Mac App Store: build sandboxed .pkg (Release-MAS) and upload via the API key"
   lane :app_store do
     regenerate

@@ -71,6 +71,11 @@ targets:
           ENABLE_APP_SANDBOX: YES
           ENABLE_HARDENED_RUNTIME: YES
           CODE_SIGN_INJECT_BASE_ENTITLEMENTS: "NO"
+          # Manual App Store signing — set PER-TARGET (not as a global xcodebuild arg) so the RevenueCat
+          # SPM package, which can't carry a provisioning profile, isn't affected.
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_IDENTITY: "3rd Party Mac Developer Application"
+          PROVISIONING_PROFILE_SPECIFIER: "Sonance EQ MAS"
     info:
       path: Sources/SonanceEQ/Resources/Info.plist
       properties:
