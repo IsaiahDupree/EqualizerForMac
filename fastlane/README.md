@@ -31,10 +31,10 @@ Run the test suite (1,000+ Swift Testing cases)
 
 Create/fetch the Developer ID Application certificate (interactive Apple-ID 2FA the first time; Account Holder only)
 
-### mac build_app
+### mac signed_app
 
 ```sh
-[bundle exec] fastlane mac build_app
+[bundle exec] fastlane mac signed_app
 ```
 
 Build a Developer ID-signed .app (Release, hardened runtime)
@@ -47,13 +47,21 @@ Build a Developer ID-signed .app (Release, hardened runtime)
 
 Direct distribution: build → notarize → DMG (one command)
 
-### mac appstore
+### mac mas_certificates
 
 ```sh
-[bundle exec] fastlane mac appstore
+[bundle exec] fastlane mac mas_certificates
 ```
 
-Mac App Store: build sandboxed .pkg and upload via the API key
+Fetch/create the Mac App Store signing certs (app + installer) via the API key (non-interactive)
+
+### mac app_store
+
+```sh
+[bundle exec] fastlane mac app_store
+```
+
+Mac App Store: build sandboxed .pkg (Release-MAS) and upload via the API key
 
 ----
 

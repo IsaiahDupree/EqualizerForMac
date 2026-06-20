@@ -61,17 +61,22 @@ platform :mac do
     UI.success("✓ build/Sonance-EQ.dmg — signed, notarized, stapled.")
   end
 
-  desc "Mac App Store: build sandboxed .pkg and upload via the API key"
+  # NOTE: Mac App Store cert provisioning happens AFTER the Apple Developer Program License Agreement
+  # is accepted in the web portal — until then the ASC API returns 403 PLA_NOT_ACCEPTED for everything.
+  # Once accepted, create the "Apple Distribution" + "Mac Installer Distribution" certs in Xcode
+  # (Settings → Accounts → Manage Certificates) or via `fastlane match`. See docs/APP-STORE.md.
+
+  desc "Mac App Store: build sandboxed .pkg (Release-MAS) and upload via the API key"
   lane :app_store do
     regenerate
     build_mac_app(
       project: "../SonanceEQ.xcodeproj",
       scheme: "SonanceEQ",
-      configuration: "Release",
+      # The dedicated MAS config: sandbox on, hardened runtime on, public permission flow (no TCC SPI),
+      # MAS entitlements. Tap loop verified to run sandboxed (Tools/sandbox_tap_probe.swift).
+      configuration: "Release-MAS",
       export_method: "app-store",
-      output_directory: "../build/appstore",
-      # MAS variant: sandboxed, public permission flow (no ENABLE_TCC_SPI). See docs/RELEASE.md re: 2.5.1 risk.
-      xcargs: "ENABLE_APP_SANDBOX=YES ENABLE_HARDENED_RUNTIME=NO SWIFT_ACTIVE_COMPILATION_CONDITIONS=''"
+      output_directory: "../build/appstore"
     )
     upload_to_app_store(
       api_key: asc_key,

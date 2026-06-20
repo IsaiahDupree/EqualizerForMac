@@ -48,6 +48,21 @@ authorized and lets the system prompt on first capture. No private API → no Gu
 
 ---
 
+## ⛔ Current hard blocker: Program License Agreement (PLA)
+
+A read-only probe of the App Store Connect API (the account-level ASC key, JWT auth — verified working)
+returns **`403 FORBIDDEN_ERROR.PLA_NOT_ACCEPTED`** ("Program License Agreement update available") for every
+endpoint. This blocks **all** API operations — listing/creating certs, registering the bundle id, creating
+the app record, and uploading. It is account-wide and can only be cleared by the **Account Holder accepting
+the updated agreement** at developer.apple.com (or on App Store Connect login). There is no CLI bypass.
+
+**Until the PLA is accepted, none of the steps below can run.** Once accepted, they are fully scriptable.
+
+What we already have (found by "living off the land"): Team ID `Y4HDXFWXUV`, the ASC API key id + issuer
+(ios-deploy skill) + the `.p8` on disk, a Developer ID cert, and the `fastlane mac app_store` lane wired to
+`Release-MAS`. Missing only: the App Store distribution cert + the App Store Connect app record (both
+PLA-gated).
+
 ## Remaining steps — all Apple-account / outward-facing (need your go)
 
 1. **App Store Connect app record** — create the app under bundle id `com.isaiahdupree.SonanceEQ`
