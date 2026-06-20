@@ -16,12 +16,15 @@ import sys
 import urllib.request
 
 PROMPT = (
-    "A macOS app icon for a premium system-wide audio equalizer app called 'Sonance EQ'. "
-    "Rounded-square icon (squircle) with a rich deep gradient background from indigo to violet to "
-    "midnight blue. Centered, a clean glowing graphic-equalizer motif: a smooth rising-and-falling "
-    "EQ response curve over softly lit vertical equalizer bars, in luminous cyan and magenta accents. "
-    "Modern, minimal, high-end, Apple design-language, subtle depth and soft inner glow, crisp. "
-    "No text, no letters, no words. Studio product render."
+    "A premium macOS app icon, Apple Big Sur design language, for a high-end system-wide audio "
+    "equalizer called 'Sonance EQ'. A single rounded-square (squircle) that fills the frame, with a "
+    "rich glossy gradient background flowing from deep indigo at the top through violet to vivid "
+    "magenta at the bottom, with a soft inner glow and a subtle top highlight for depth. The hero "
+    "element is ONE bold, luminous parametric EQ response curve — a smooth glowing bell/S-shaped line "
+    "sweeping left to right in bright cyan-to-magenta, with two or three small glowing node dots sitting "
+    "on the curve, and a soft neon glow beneath it. Faint, low-contrast vertical frequency bars sit "
+    "quietly behind the curve for texture. Minimal, confident, three-dimensional, studio product render, "
+    "crisp at small sizes, centered, clean negative space. No text, no letters, no words, no numbers."
 )
 
 DEFAULT_ENV = os.path.expanduser("~/Documents/Software/MediaPoster/Backend/.env")
