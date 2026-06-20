@@ -38,6 +38,12 @@ Sources: Apple Core Audio taps doc; `AudioHardwareCreateProcessTap` / `CATapDesc
   (prompt on first capture) but is undocumented and worse UX.
 - **Conclusion:** lead with **direct** (Developer ID + notarization); treat MAS as upside via a tap-only
   public-permission build. Don't block direct distribution on MAS review.
+- **UPDATE (verified 2026-06):** the open question "does the tap loop run under the App Sandbox?" is now
+  answered **YES** — empirically, via `Tools/sandbox_tap_probe.swift` (the exact tap→aggregate→IOProc→start
+  sequence, ad-hoc-signed with `app-sandbox` + `audio-input` inside a `.app` bundle: all calls `noErr`,
+  render callbacks fire) and by the full app built in the `Release-MAS` config running with a live sandbox
+  container. The MAS path is therefore technically de-risked; only Apple-side records remain. See
+  `docs/APP-STORE.md`.
 
 Sources: App Store Review Guidelines 2.4.5/2.5.1/2.5.2; `AudioCap` README; Boom 3D MAS FAQ; SpeakerAmp +
 nimblesnail audio-driver page; Apple taps doc; `com.apple.security.device.audio-input` entitlement; eqMac.

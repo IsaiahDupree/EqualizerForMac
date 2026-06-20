@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Mac App Store entitlements. The App Sandbox is mandatory for MAS. The process-tap
+	  audio loop (tap → private aggregate → IOProc → re-inject) is VERIFIED to run under
+	  this sandbox with audio-input alone — see Tools/sandbox_tap_probe.swift.
+	-->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- System-audio capture (the Core Audio process tap). The actual gate is the TCC
+	     "Audio Capture" permission, prompted on first capture via the public flow. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+
+	<!-- RevenueCat / StoreKit reach Apple + RevenueCat servers for the one-time Pro unlock. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Preset import/export + audio recording write to files the user picks via the
+	     open/save panels (powerbox-granted). -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+</dict>
+</plist>

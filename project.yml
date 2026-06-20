@@ -11,6 +11,13 @@ packages:
     url: https://github.com/RevenueCat/purchases-ios.git
     from: "5.0.0"
 
+# Three configurations: Debug + Release are the direct (Developer ID) builds (private TCC SPI on,
+# no sandbox). Release-MAS is the Mac App Store build (sandbox on, public permission flow).
+configs:
+  Debug: debug
+  Release: release
+  Release-MAS: release
+
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -55,6 +62,14 @@ targets:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: "ENABLE_TCC_SPI"
           # Don't inject the debugger-attach entitlement (com.apple.security.get-task-allow) into the
           # distribution build — notarization rejects any binary that requests it.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: "NO"
+        Release-MAS:
+          # Mac App Store: NO private TCC SPI (public permission flow), sandbox + hardened runtime on,
+          # the MAS entitlements file. The tap loop is proven to work sandboxed (Tools/sandbox_tap_probe.swift).
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+          CODE_SIGN_ENTITLEMENTS: Sources/SonanceEQ/Resources/SonanceEQ-MAS.entitlements
+          ENABLE_APP_SANDBOX: YES
+          ENABLE_HARDENED_RUNTIME: YES
           CODE_SIGN_INJECT_BASE_ENTITLEMENTS: "NO"
     info:
       path: Sources/SonanceEQ/Resources/Info.plist
