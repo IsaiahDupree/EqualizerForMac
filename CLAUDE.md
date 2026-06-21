@@ -18,7 +18,7 @@ xcodebuild -project SonanceEQ.xcodeproj -scheme SonanceEQ -configuration Debug \
   -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build   # compile check
 ```
 
-Run the test suite (~3,490 cases / 206 funcs, **Swift Testing**, hosted in the app so `Bundle.main`
+Run the test suite (~3,690 cases / 215 funcs, **Swift Testing**, hosted in the app so `Bundle.main`
 resolves `autoeq.sqlite`; do NOT pass `CODE_SIGNING_ALLOWED=NO` here — the host app must ad-hoc sign to launch):
 ```bash
 xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ -destination 'platform=macOS,arch=arm64'

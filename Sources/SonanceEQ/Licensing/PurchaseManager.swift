@@ -168,10 +168,28 @@ final class PurchaseManager {
     /// Whether tapping a `feature` control should open the paywall instead of running its action.
     func shouldShowPaywall(for feature: ProFeature) -> Bool { !canUse(feature) }
 
+    // MARK: - Entitlement policy (pure, the actual "is this user paid?" decision)
+
+    /// Pro is unlocked **only** when RevenueCat reports the configured entitlement among the customer's
+    /// validated, currently-active entitlements. **Fail-closed:** an empty set (no purchase), a
+    /// *different* entitlement, or an inactive/expired/refunded one (which RevenueCat omits from
+    /// `.active`) all resolve to locked. RevenueCat does the receipt/transaction validation server-side;
+    /// this is the on-device policy that trusts only that validated signal.
+    static func isProActive(in activeEntitlementIDs: Set<String>) -> Bool {
+        activeEntitlementIDs.contains(LicenseConfig.proEntitlementID)
+    }
+
+    /// Apply a validated set of active entitlement ids (from RevenueCat `CustomerInfo.entitlements.active`).
+    /// Drives `isPro` through the single policy above — the one gate every Pro feature funnels through.
+    func applyActiveEntitlements(_ activeEntitlementIDs: Set<String>) {
+        isPro = Self.isProActive(in: activeEntitlementIDs)
+    }
+
     // MARK: - Private
 
     private func apply(_ info: CustomerInfo) {
-        isPro = info.entitlements[LicenseConfig.proEntitlementID]?.isActive == true
+        // `.active` already contains only entitlements RevenueCat validated as currently active.
+        applyActiveEntitlements(Set(info.entitlements.active.keys))
     }
 
     private func report(_ error: Error, _ op: String) {
