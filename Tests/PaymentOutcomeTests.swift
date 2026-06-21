@@ -2,20 +2,22 @@ import Foundation
 import Testing
 @testable import SonanceEQ
 
+/// Failure messages and the full outcome set — file-scope (nonisolated) so the `@Test` macro can
+/// read them when expanding arguments outside the `@MainActor` suite.
+private let outcomeFailures: [PurchaseManager.MockOutcome] = [
+    .failure("The network connection was lost."),
+    .failure("Payment is not allowed on this device."),
+    .failure("Cannot connect to iTunes Store."),
+    .failure("Your purchase could not be completed."),
+    .failure("An unknown error occurred."),
+]
+private let allOutcomes: [PurchaseManager.MockOutcome] = [.success, .cancelled] + outcomeFailures
+
 /// Payment outcomes on the mock store: success, user-cancel, and failure — each drives `isPro`,
 /// `lastError`, and the tracked funnel events. This is how the cancel/failure code paths get
 /// exercised without StoreKit.
 @MainActor
 @Suite struct PaymentOutcomeTests {
-    private static let failures: [PurchaseManager.MockOutcome] = [
-        .failure("The network connection was lost."),
-        .failure("Payment is not allowed on this device."),
-        .failure("Cannot connect to iTunes Store."),
-        .failure("Your purchase could not be completed."),
-        .failure("An unknown error occurred."),
-    ]
-    private static let allOutcomes: [PurchaseManager.MockOutcome] =
-        [.success, .cancelled] + failures
 
     // 7 outcomes — full state + last-event check.
     @Test(arguments: allOutcomes)
