@@ -122,5 +122,12 @@ schemes:
     test:
       targets:
         - SonanceEQTests
+      # StoreKitIntegrationTests is opt-in (process-global StoreKit state is flaky under the full
+      # suite's parallel load). Flip this checkbox in Xcode (Edit Scheme → Test → Arguments →
+      # Environment Variables) to run it; left disabled so the default suite stays deterministic.
+      environmentVariables:
+        - variable: SONANCE_STOREKIT_TESTS
+          value: "1"
+          isEnabled: false
     run:
       config: Debug

@@ -1,0 +1,36 @@
+{
+  "identifier" : "5F2A1C3D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "19.99",
+      "familyShareable" : false,
+      "internalID" : "1",
+      "localizations" : [
+        {
+          "description" : "Unlock all Pro features in Sonance EQ.",
+          "displayName" : "Sonance EQ Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.isaiahdupree.SonanceEQ.pro",
+      "referenceName" : "Sonance EQ Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
