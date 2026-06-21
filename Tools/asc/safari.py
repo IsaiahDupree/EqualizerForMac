@@ -46,6 +46,27 @@ def goto(url):
     subprocess.run(["osascript", "-e",
         'tell application "Safari" to set URL of front document to "%s"' % url], check=True)
 
+def focus(host):
+    """Bring the Safari tab whose URL contains `host` to the front document (so run()/goto() target it).
+    Returns True if found. The single most-reused browser-automation primitive — Safari has many tabs."""
+    script = ('tell application "Safari"\n'
+              ' set found to false\n'
+              ' repeat with w in windows\n'
+              '  repeat with t in tabs of w\n'
+              '   if (URL of t) contains "%s" then\n'
+              '    set current tab of w to t\n set index of w to 1\n set found to true\n'
+              '   end if\n  end repeat\n end repeat\n return found\nend tell') % host
+    return subprocess.run(["osascript", "-e", script], capture_output=True, text=True).stdout.strip() == "true"
+
+def field(label):
+    """Id of the first interactive field whose label/text contains `label` (case-insensitive), else None.
+    The adaptive addressing used by every web flow — survives Apple/RevenueCat selector churn."""
+    q = label.lower()
+    for f in run_json("__asc.fields()"):
+        if q in (f["label"] + " " + f["text"]).lower() and not f.get("disabled"):
+            return f["id"]
+    return None
+
 def jarg(s):  # JS string literal
     return json.dumps(s)
 
@@ -54,6 +75,10 @@ def main():
     a = sys.argv[2:]
     if cmd == "goto":
         goto(a[0]); print("→", a[0])
+    elif cmd == "focus":
+        print("focused" if focus(a[0]) else "NOT FOUND: " + a[0])
+    elif cmd == "field":
+        fid = field(a[0]); print(fid if fid is not None else "(no field matching: %s)" % a[0])
     elif cmd == "fields":
         for f in run_json("__asc.fields()"):
             opt = (" opts=" + "/".join(f["options"])[:60]) if f.get("options") else ""
