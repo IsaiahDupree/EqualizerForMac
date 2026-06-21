@@ -3,7 +3,8 @@ import OSLog
 import RevenueCat
 
 /// Owns licensing state: configures RevenueCat (when a real key is present) or a **mock store**
-/// (until then), tracks the Pro entitlement, and runs purchase/restore.
+/// (until then), tracks the Pro entitlement, runs purchase/restore, and records the conversion
+/// funnel via `PurchaseEventTracker`.
 ///
 /// **Mock store (M3 development):** while `LicenseConfig.isUnconfigured`, this never touches the network.
 /// It persists a single "purchased" flag in `UserDefaults`, so the whole paywall → buy → unlock → relaunch
@@ -15,18 +16,36 @@ import RevenueCat
 final class PurchaseManager {
     enum Store { case mock, revenueCat }
 
+    /// Outcome the **mock** store should simulate for the next purchase. The default (`.success`)
+    /// keeps shipping behaviour unchanged; `.cancelled` / `.failure` let the cancel and failure code
+    /// paths (and their tracked events) be exercised without StoreKit. Mock-store only.
+    enum MockOutcome: Equatable, Sendable {
+        case success
+        case cancelled
+        case failure(String)
+    }
+
     private(set) var isPro = false
     private(set) var isConfigured = false      // true once the live RevenueCat SDK is configured
     private(set) var store: Store = .mock
     var lastError: String?
 
+    /// Mock-store purchase outcome (see `MockOutcome`). Ignored by the live RevenueCat store.
+    var mockOutcome: MockOutcome = .success
+
+    let tracker: PurchaseEventTracker
+
     private let defaults: UserDefaults
     private let mockKey = "mockProUnlocked"
     private let log = Logger(subsystem: kSubsystem, category: "Purchases")
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, tracker: PurchaseEventTracker? = nil) {
         self.defaults = defaults
+        self.tracker = tracker ?? PurchaseEventTracker(defaults: defaults)
     }
+
+    /// Human-readable store tag for tracked events.
+    private var storeName: String { store == .mock ? "mock" : "revenueCat" }
 
     /// Call once at launch.
     func start() {
@@ -57,11 +76,24 @@ final class PurchaseManager {
 
     /// Buy the one-time Pro unlock.
     func purchasePro() async {
+        lastError = nil
+        tracker.record(.purchaseStarted, store: storeName)
         switch store {
         case .mock:
-            defaults.set(true, forKey: mockKey)
-            isPro = true
-            log.notice("MOCK purchase completed — Pro unlocked.")
+            switch mockOutcome {
+            case .success:
+                defaults.set(true, forKey: mockKey)
+                isPro = true
+                tracker.record(.purchaseCompleted, store: storeName, detail: LicenseConfig.proProductID)
+                log.notice("MOCK purchase completed — Pro unlocked.")
+            case .cancelled:
+                tracker.record(.purchaseCancelled, store: storeName)
+                log.notice("MOCK purchase cancelled.")
+            case .failure(let message):
+                lastError = message
+                tracker.record(.purchaseFailed, store: storeName, detail: message)
+                log.error("MOCK purchase failed: \(message, privacy: .public)")
+            }
         case .revenueCat:
             guard isConfigured else { return }
             do {
@@ -69,25 +101,46 @@ final class PurchaseManager {
                 let offering = offerings.current ?? offerings.offering(identifier: LicenseConfig.offeringID)
                 guard let package = offering?.availablePackages.first else {
                     lastError = "No purchase option is available right now."
+                    tracker.record(.purchaseFailed, store: storeName, detail: lastError)
                     return
                 }
-                apply(try await Purchases.shared.purchase(package: package).customerInfo)
+                let result = try await Purchases.shared.purchase(package: package)
+                if result.userCancelled {
+                    tracker.record(.purchaseCancelled, store: storeName)
+                } else {
+                    apply(result.customerInfo)
+                    tracker.record(.purchaseCompleted, store: storeName, detail: LicenseConfig.proProductID)
+                }
             } catch {
                 report(error, "purchase")
+                tracker.record(.purchaseFailed, store: storeName, detail: error.localizedDescription)
             }
         }
     }
 
     /// Restore a previous purchase.
     func restore() async {
+        lastError = nil
+        tracker.record(.restoreStarted, store: storeName)
         switch store {
         case .mock:
             isPro = defaults.bool(forKey: mockKey)
+            tracker.record(isPro ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
         case .revenueCat:
             guard isConfigured else { return }
-            do { apply(try await Purchases.shared.restorePurchases()) }
-            catch { report(error, "restore") }
+            do {
+                apply(try await Purchases.shared.restorePurchases())
+                tracker.record(isPro ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
+            } catch {
+                report(error, "restore")
+                tracker.record(.restoreFailed, store: storeName, detail: error.localizedDescription)
+            }
         }
+    }
+
+    /// Record that the paywall was presented (the top of the conversion funnel).
+    func paywallShown() {
+        tracker.record(.paywallShown, store: storeName)
     }
 
     /// Mock-store only: relock so the paywall + gating can be re-tested.
@@ -107,6 +160,14 @@ final class PurchaseManager {
     /// Single place that decides what Pro unlocks.
     func canUse(_ feature: ProFeature) -> Bool { isPro }
 
+    // MARK: - Indicators (pure, shared by UI + tests)
+
+    /// What a Pro-gated control should display for `feature` given the current entitlement.
+    func indicator(for feature: ProFeature) -> ProIndicator { canUse(feature) ? .unlocked : .locked }
+
+    /// Whether tapping a `feature` control should open the paywall instead of running its action.
+    func shouldShowPaywall(for feature: ProFeature) -> Bool { !canUse(feature) }
+
     // MARK: - Private
 
     private func apply(_ info: CustomerInfo) {
@@ -116,5 +177,23 @@ final class PurchaseManager {
     private func report(_ error: Error, _ op: String) {
         lastError = error.localizedDescription
         log.error("\(op, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+    }
+}
+
+/// The visual state of a Pro-gated control. The actual SF Symbol for the locked state is
+/// `ProIndicator.lockedSymbol`; the unlocked symbol is feature-specific (chosen at the call site).
+enum ProIndicator: Equatable {
+    case unlocked
+    case locked
+
+    /// SF Symbol shown when a feature is locked. One constant so every gate looks identical.
+    static let lockedSymbol = "lock.fill"
+
+    /// The symbol to show for a gated control: its natural `unlocked` symbol, or the lock when locked.
+    func symbol(unlocked: String) -> String {
+        switch self {
+        case .unlocked: return unlocked
+        case .locked:   return Self.lockedSymbol
+        }
     }
 }

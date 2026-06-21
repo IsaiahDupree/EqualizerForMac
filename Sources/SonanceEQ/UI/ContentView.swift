@@ -7,9 +7,15 @@ struct ContentView: View {
     @State private var showingMixer = false
     @State private var showingRecorder = false
 
+    /// Present the paywall and record the impression (top of the conversion funnel).
+    private func presentPaywall() {
+        app.license.paywallShown()
+        showingPaywall = true
+    }
+
     /// Run `action` if the feature is unlocked, otherwise present the paywall.
     private func requirePro(_ feature: ProFeature, _ action: () -> Void) {
-        if app.license.canUse(feature) { action() } else { showingPaywall = true }
+        if app.license.shouldShowPaywall(for: feature) { presentPaywall() } else { action() }
     }
 
     var body: some View {
@@ -70,7 +76,7 @@ struct ContentView: View {
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(.tint.opacity(0.2), in: Capsule())
             } else {
-                Button { showingPaywall = true } label: {
+                Button { presentPaywall() } label: {
                     Label("Unlock Pro", systemImage: "lock.fill")
                 }
                 .controlSize(.small)
@@ -134,7 +140,7 @@ struct ContentView: View {
                 .fixedSize()
                 .onAppear { app.refreshApps() }
             } else {
-                Button { showingPaywall = true } label: {
+                Button { presentPaywall() } label: {
                     Label("All Apps · per-app EQ is Pro", systemImage: "lock.fill")
                 }
                 .controlSize(.small)
@@ -208,7 +214,7 @@ struct ContentView: View {
             }
             Spacer()
             Toggle(isOn: Binding(get: { app.midSideEnabled },
-                                 set: { if app.license.canUse(.parametricEQ) { app.setMidSide($0) } else { showingPaywall = true } })) {
+                                 set: { if app.license.canUse(.parametricEQ) { app.setMidSide($0) } else { presentPaywall() } })) {
                 proLabel("Mid-Side", feature: .parametricEQ)
             }
             .toggleStyle(.switch)
@@ -232,7 +238,7 @@ struct ContentView: View {
     private var phaseRow: some View {
         HStack(spacing: 8) {
             Toggle(isOn: Binding(get: { app.linearPhase },
-                                 set: { if app.license.canUse(.parametricEQ) { app.linearPhase = $0; app.pushSettings() } else { showingPaywall = true } })) {
+                                 set: { if app.license.canUse(.parametricEQ) { app.linearPhase = $0; app.pushSettings() } else { presentPaywall() } })) {
                 proLabel("Linear Phase", feature: .parametricEQ)
             }
             .toggleStyle(.switch)
