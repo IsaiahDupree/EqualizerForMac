@@ -62,11 +62,18 @@ def review_shot(iid):
         "attributes": {"uploaded": True, "sourceFileChecksum": hashlib.md5(data).hexdigest()}}})
     print("  ✓ review screenshot uploaded")
 
+def set_availability(iid):
+    terr = [{"type": "territories", "id": t["id"]} for t in api("GET", "/v1/territories?limit=200")["data"]]
+    api("POST", "/v1/inAppPurchaseAvailabilities", {"data": {"type": "inAppPurchaseAvailabilities",
+        "attributes": {"availableInNewTerritories": True},
+        "relationships": {"inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
+            "availableTerritories": {"data": terr}}}})
+    print(f"  ✓ available in all {len(terr)} territories")
+
 if __name__ == "__main__":
     iid = iap_id()
     localize(iid)
-    try: set_price(iid)
-    except Exception as e: print(f"  price: {str(e)[:140]}")
-    try: review_shot(iid)
-    except Exception as e: print(f"  review shot: {str(e)[:140]}")
+    for fn in (set_price, review_shot, set_availability):
+        try: fn(iid)
+        except Exception as e: print(f"  {fn.__name__}: {str(e)[:140]}")
     print("✓ IAP finalize done")
