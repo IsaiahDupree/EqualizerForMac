@@ -131,6 +131,10 @@ struct PurchaseAnalyticsView: View {
         case .restoreCompleted:   return "Restore completed"
         case .restoreNoEntitlement: return "Restore — nothing to restore"
         case .restoreFailed:      return "Restore failed"
+        case .configured:         return "RevenueCat configured"
+        case .customerInfoUpdated: return "Customer info updated"
+        case .entitlementGranted: return "Entitlement granted"
+        case .entitlementRevoked: return "Entitlement revoked"
         }
     }
 
@@ -141,13 +145,17 @@ struct PurchaseAnalyticsView: View {
         case .purchaseCompleted, .restoreCompleted: return "checkmark.circle.fill"
         case .purchaseCancelled, .restoreNoEntitlement: return "minus.circle"
         case .purchaseFailed, .restoreFailed:     return "xmark.octagon.fill"
+        case .configured:          return "gearshape"
+        case .customerInfoUpdated: return "arrow.triangle.2.circlepath"
+        case .entitlementGranted:  return "lock.open.fill"
+        case .entitlementRevoked:  return "lock.fill"
         }
     }
 
     private func color(for event: PurchaseEvent) -> Color {
         switch event {
-        case .purchaseCompleted, .restoreCompleted: return .green
-        case .purchaseFailed, .restoreFailed:        return .red
+        case .purchaseCompleted, .restoreCompleted, .entitlementGranted: return .green
+        case .purchaseFailed, .restoreFailed, .entitlementRevoked:       return .red
         case .purchaseCancelled, .restoreNoEntitlement: return .orange
         default: return .secondary
         }

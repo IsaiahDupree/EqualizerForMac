@@ -17,6 +17,14 @@ public enum PurchaseEvent: String, Codable, CaseIterable, Sendable {
     case restoreNoEntitlement    // restore succeeded, but there was nothing to restore
     case restoreFailed
 
+    // Apple / RevenueCat-originated lifecycle (pushed via `Purchases.customerInfoStream`, so they
+    // capture changes that happen *outside* an app-initiated buy: renewals, refunds, Ask-to-Buy
+    // approvals, purchases made on another device, and RevenueCat dashboard grants).
+    case configured              // the live RevenueCat SDK finished configuring at launch
+    case customerInfoUpdated     // RevenueCat pushed a fresh CustomerInfo
+    case entitlementGranted      // Pro flipped inactive → active (unlock from any source)
+    case entitlementRevoked      // Pro flipped active → inactive (refund / expiry / revoke)
+
     /// Terminal outcomes of a purchase attempt (everything after `purchaseStarted`).
     public static let purchaseOutcomes: [PurchaseEvent] = [.purchaseCompleted, .purchaseCancelled, .purchaseFailed]
     /// Terminal outcomes of a restore attempt.

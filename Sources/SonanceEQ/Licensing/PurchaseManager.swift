@@ -38,11 +38,16 @@ final class PurchaseManager {
     private let defaults: UserDefaults
     private let mockKey = "mockProUnlocked"
     private let log = Logger(subsystem: kSubsystem, category: "Purchases")
+    // `nonisolated(unsafe)` so the nonisolated `deinit` can cancel it; a `Task?` is safe to cancel
+    // from any thread, and it's only assigned once (on the main actor, in `start()`).
+    nonisolated(unsafe) private var customerInfoTask: Task<Void, Never>?
 
     init(defaults: UserDefaults = .standard, tracker: PurchaseEventTracker? = nil) {
         self.defaults = defaults
         self.tracker = tracker ?? PurchaseEventTracker(defaults: defaults)
     }
+
+    deinit { customerInfoTask?.cancel() }
 
     /// Human-readable store tag for tracked events.
     private var storeName: String { store == .mock ? "mock" : "revenueCat" }
@@ -59,6 +64,14 @@ final class PurchaseManager {
         Purchases.logLevel = .warn
         Purchases.configure(withAPIKey: LicenseConfig.revenueCatPublicAPIKey)
         isConfigured = true
+        tracker.record(.configured, store: storeName)
+        // Listen for every entitlement change RevenueCat surfaces — app-initiated or not (renewals,
+        // refunds, Ask-to-Buy, other-device purchases, dashboard grants all arrive here).
+        customerInfoTask = Task { @MainActor [weak self] in
+            for await info in Purchases.shared.customerInfoStream {
+                self?.apply(info)
+            }
+        }
         Task { await refresh() }
     }
 
@@ -185,11 +198,26 @@ final class PurchaseManager {
         isPro = Self.isProActive(in: activeEntitlementIDs)
     }
 
+    /// Apply a validated active set **and record the lifecycle events** it implies: always a
+    /// `customerInfoUpdated`, plus `entitlementGranted` / `entitlementRevoked` when Pro flips. This is
+    /// the single funnel every RevenueCat/Apple-originated entitlement change passes through, so the
+    /// in-app tracker (and the analytics view) see unlocks/revokes regardless of where they came from.
+    func applyAndTrack(_ activeEntitlementIDs: Set<String>) {
+        let was = isPro
+        applyActiveEntitlements(activeEntitlementIDs)
+        tracker.record(.customerInfoUpdated, store: storeName)
+        if isPro && !was {
+            tracker.record(.entitlementGranted, store: storeName)
+        } else if !isPro && was {
+            tracker.record(.entitlementRevoked, store: storeName)
+        }
+    }
+
     // MARK: - Private
 
     private func apply(_ info: CustomerInfo) {
         // `.active` already contains only entitlements RevenueCat validated as currently active.
-        applyActiveEntitlements(Set(info.entitlements.active.keys))
+        applyAndTrack(Set(info.entitlements.active.keys))
     }
 
     private func report(_ error: Error, _ op: String) {
