@@ -19,12 +19,21 @@ Used by pipeline.py for the web-only App Store Connect steps (create app record,
 """
 import base64, json, subprocess, sys, time, os
 
+import re as _re
 LIB = open(os.path.join(os.path.dirname(__file__), "deepdom.js")).read()
 
+def _oneline(js):
+    """Strip // line-comments and collapse to one line so the payload can be injected DIRECTLY into
+    `do JavaScript` (no eval) — strict CSPs (e.g. RevenueCat) block eval(atob(...))."""
+    js = _re.sub(r'(^|\s)//[^\n]*', r'\1', js, flags=_re.M)
+    return js.replace("\n", " ")
+
+LIB1 = _oneline(LIB)
+
 def run(expr, inject=True):
-    payload = (LIB + "\n" if inject else "") + "String(" + expr + ")"
-    b64 = base64.b64encode(payload.encode()).decode()
-    script = 'tell application "Safari" to do JavaScript "eval(atob(\\"%s\\"))" in front document' % b64
+    payload = (LIB1 + " ; " if inject else "") + "String(" + expr + ")"
+    esc = payload.replace("\\", "\\\\").replace('"', '\\"')   # escape for the AppleScript string literal
+    script = 'tell application "Safari" to do JavaScript "%s" in front document' % esc
     r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
     if r.returncode != 0:
         raise RuntimeError(r.stderr.strip())
