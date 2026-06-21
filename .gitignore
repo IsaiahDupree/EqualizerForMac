@@ -36,3 +36,6 @@ fastlane/*.log
 # Python
 __pycache__/
 *.pyc
+
+# RevenueCat secret (local only)
+build/.rc_secret
