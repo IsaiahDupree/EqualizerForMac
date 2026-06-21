@@ -12,6 +12,7 @@ import glob, json, os, sys, urllib.request, urllib.error
 
 BASE = "https://api.revenuecat.com/v2"
 BUNDLE = os.environ.get("APP_BUNDLE_ID", "com.isaiahdupree.SonanceEQ")
+APP_NAME = os.environ.get("APP_NAME", "Sonance EQ")
 IAP = os.environ.get("IAP_PRODUCT_ID", "com.isaiahdupree.SonanceEQ.pro")
 ENTITLEMENT = "pro"
 OFFERING = "default"
@@ -55,8 +56,11 @@ def setup():
     pid = project_id()
     print(f"project {pid}")
     apps = api("GET", f"/projects/{pid}/apps?limit=50").get("items", [])
-    app = find(apps, "type", "app_store") or (apps[0] if apps else None)
-    if not app: sys.exit("✗ no App Store app in this project — add it in the dashboard first")
+    app = find(apps, "type", "app_store")
+    if not app:
+        app = api("POST", f"/projects/{pid}/apps",
+                  {"name": APP_NAME, "type": "app_store", "app_store": {"bundle_id": BUNDLE}})
+        print(f"  ✓ created App Store app ({app['id']})")
     print(f"  app: {app.get('name')} ({app['id']})  bundle={app.get('app_store',{}).get('bundle_id')}")
 
     ents = api("GET", f"/projects/{pid}/entitlements?limit=50").get("items", [])
