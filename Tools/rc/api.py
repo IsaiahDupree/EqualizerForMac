@@ -97,7 +97,8 @@ def setup():
         pkg = api("POST", f"/projects/{pid}/offerings/{off['id']}/packages",
                   {"lookup_key": "lifetime", "display_name": "Lifetime Pro"})
         print(f"  ✓ package 'lifetime'")
-    api("POST", f"/projects/{pid}/offerings/{off['id']}/packages/{pkg['id']}/actions/attach_products",
+    # packages are addressed top-level under the project (NOT nested under the offering in the URL)
+    api("POST", f"/projects/{pid}/packages/{pkg['id']}/actions/attach_products",
         {"products": [{"product_id": prod["id"], "eligibility_criteria": "all"}]})
     print(f"  ✓ attached product → package")
     print("✓ RevenueCat entitlement/product/offering wired. Public SDK key → LicenseConfig (see README).")

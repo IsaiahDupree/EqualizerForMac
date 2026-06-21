@@ -22,6 +22,8 @@
 	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.music</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.4</string>
 	<key>LSUIElement</key>
@@ -30,5 +32,7 @@
 	<string>Sonance EQ captures your Mac's audio output so it can apply your equalizer to everything you hear, and — only when you start a recording — save that audio to a file you choose. Audio is processed on your device and is never sent anywhere.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Isaiah Dupree</string>
+	<key>RevenueCatPublicKey</key>
+	<string>$(REVENUECAT_PUBLIC_KEY)</string>
 </dict>
 </plist>

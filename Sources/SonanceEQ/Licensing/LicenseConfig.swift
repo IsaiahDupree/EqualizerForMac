@@ -7,10 +7,17 @@ import Foundation
 /// so hardcoding them here is correct per RevenueCat's docs. The *secret* server key (used by the
 /// `revenuecat-mcp` tooling) never ships in the app.
 enum LicenseConfig {
-    /// RevenueCat public SDK key. Direct (Developer ID) and Mac App Store builds map to **different**
-    /// RevenueCat "apps" → different public keys; select per build in M3. Until then this sentinel keeps
-    /// the app fully unlocked with no network calls (see `PurchaseManager.start()`).
-    static let revenueCatPublicAPIKey = unconfiguredSentinel
+    /// RevenueCat public SDK key, **injected per build** via the `RevenueCatPublicKey` Info.plist value
+    /// (set by `REVENUECAT_PUBLIC_KEY` in the Release-MAS config — see project.yml). Debug/Release leave it
+    /// empty, so the sentinel keeps the app on the mock store (no network) for dev + tests. Public SDK keys
+    /// are designed to ship in the binary, so this is safe.
+    static let revenueCatPublicAPIKey: String = {
+        if let k = Bundle.main.object(forInfoDictionaryKey: "RevenueCatPublicKey") as? String,
+           k.hasPrefix("appl_") || k.hasPrefix("mac_") {
+            return k
+        }
+        return unconfiguredSentinel
+    }()
 
     /// Entitlement that unlocks Pro. Create in the RevenueCat dashboard in M3.
     static let proEntitlementID = "pro"

@@ -47,13 +47,13 @@ Build a Developer ID-signed .app (Release, hardened runtime)
 
 Direct distribution: build → notarize → DMG (one command)
 
-### mac mas_certificates
+### mac make_app
 
 ```sh
-[bundle exec] fastlane mac mas_certificates
+[bundle exec] fastlane mac make_app
 ```
 
-Fetch/create the Mac App Store signing certs (app + installer) via the API key (non-interactive)
+Create the macOS App Store Connect app record (idempotent)
 
 ### mac app_store
 
