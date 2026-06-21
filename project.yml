@@ -22,7 +22,7 @@ settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
     CODE_SIGN_STYLE: Automatic
     # No team set so anyone can open + run with their own signing identity.
     DEVELOPMENT_TEAM: ""
@@ -85,12 +85,15 @@ targets:
       properties:
         CFBundleDisplayName: Sonance EQ
         CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "1"
+        CFBundleVersion: "2"
         CFBundleIconName: AppIcon
         # Required by the Mac App Store (App Store Connect validation). Audio EQ → Music.
         LSApplicationCategoryType: public.app-category.music
         LSMinimumSystemVersion: "14.4"
         LSUIElement: false
+        # Export compliance: the app uses no non-exempt encryption, so every uploaded build
+        # self-declares it (avoids the per-build "usesNonExemptEncryption is null" submission block).
+        ITSAppUsesNonExemptEncryption: false
         NSHumanReadableCopyright: "© 2026 Isaiah Dupree"
         # RevenueCat public SDK key, injected from the build setting below (empty except Release-MAS).
         RevenueCatPublicKey: "$(REVENUECAT_PUBLIC_KEY)"

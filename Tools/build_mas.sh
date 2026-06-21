@@ -47,9 +47,11 @@ if ! security find-identity -v -p codesigning 2>/dev/null | grep -qiE "Apple Dis
   echo "    Create one at developer.apple.com → Certificates, then download + install it."
   missing=1
 fi
-if grep -q "REVENUECAT_PUBLIC_KEY_TODO" Sources/SonanceEQ/Licensing/LicenseConfig.swift; then
-  echo "  ⚠ LicenseConfig still has the placeholder RevenueCat key — the build will ship Pro-UNLOCKED."
-  echo "    Fine for a TestFlight smoke test; set the real MAS key before the paid release."
+# The live key is injected per-build via the Release-MAS REVENUECAT_PUBLIC_KEY build setting → Info.plist
+# → LicenseConfig (NOT hardcoded in LicenseConfig.swift anymore). An empty value ships the mock store.
+if ! grep -qE 'REVENUECAT_PUBLIC_KEY:\s*"(appl_|mac_)[A-Za-z0-9]+"' project.yml; then
+  echo "  ⚠ No live Release-MAS REVENUECAT_PUBLIC_KEY in project.yml — the build will ship the MOCK store"
+  echo "    (Pro unlockable with no real charge). Run Tools/rc/set_key.py <appl_…> before the paid release."
 fi
 ASC_KEY="${ASC_KEY:-$HOME/private_keys/AuthKey_${ASC_KEY_ID:-}.p8}"
 if [ "$UPLOAD" = "1" ]; then
@@ -71,6 +73,8 @@ xcodebuild archive \
 
 echo "▸ Exporting App Store package"
 rm -rf "$EXPORT_DIR"
+# Manual signing → the export must name the certificate + map the bundle id to its MAS profile,
+# otherwise xcodebuild errors "requires a provisioning profile".
 cat > build/ExportOptions-MAS.plist <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -78,6 +82,12 @@ cat > build/ExportOptions-MAS.plist <<PLIST
   <key>method</key><string>app-store</string>
   <key>teamID</key><string>$TEAM_ID</string>
   <key>destination</key><string>export</string>
+  <key>signingStyle</key><string>manual</string>
+  <key>signingCertificate</key><string>3rd Party Mac Developer Application</string>
+  <key>installerSigningCertificate</key><string>3rd Party Mac Developer Installer</string>
+  <key>provisioningProfiles</key><dict>
+    <key>com.isaiahdupree.SonanceEQ</key><string>Sonance EQ MAS</string>
+  </dict>
 </dict></plist>
 PLIST
 xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath "$EXPORT_DIR" \
