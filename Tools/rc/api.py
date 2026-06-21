@@ -97,10 +97,16 @@ def setup():
         pkg = api("POST", f"/projects/{pid}/offerings/{off['id']}/packages",
                   {"lookup_key": "lifetime", "display_name": "Lifetime Pro"})
         print(f"  ✓ package 'lifetime'")
-    # packages are addressed top-level under the project (NOT nested under the offering in the URL)
-    api("POST", f"/projects/{pid}/packages/{pkg['id']}/actions/attach_products",
-        {"products": [{"product_id": prod["id"], "eligibility_criteria": "all"}]})
-    print(f"  ✓ attached product → package")
+    # packages are addressed top-level under the project (NOT nested under the offering in the URL).
+    # Re-attaching an already-attached product 422s ("incompatible product from the same app") instead
+    # of no-op'ing, so treat that as already-wired to keep setup idempotent.
+    pkg_prods = api("GET", f"/projects/{pid}/packages/{pkg['id']}/products?limit=50").get("items", [])
+    if any((pp.get("product") or {}).get("id") == prod["id"] for pp in pkg_prods):
+        print(f"  · product already attached → package")
+    else:
+        api("POST", f"/projects/{pid}/packages/{pkg['id']}/actions/attach_products",
+            {"products": [{"product_id": prod["id"], "eligibility_criteria": "all"}]})
+        print(f"  ✓ attached product → package")
     print("✓ RevenueCat entitlement/product/offering wired. Public SDK key → LicenseConfig (see README).")
 
 if __name__ == "__main__":
