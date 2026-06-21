@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Sonance EQ — App Store review-status watcher.
+  Runs Tools/asc/monitor.sh every 2 hours; posts a macOS notification when the review state changes.
+  Install:   cp this → ~/Library/LaunchAgents/ ; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.isaiahdupree.sonance-asc-watch.plist
+  Remove:    launchctl bootout gui/$(id -u)/com.isaiahdupree.sonance-asc-watch
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.isaiahdupree.sonance-asc-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>$HOME/Documents/Software/EqualizerForMac/Tools/asc/monitor.sh</string>
+  </array>
+  <key>StartInterval</key><integer>7200</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/tmp/sonance-asc-watch.out.log</string>
+  <key>StandardErrorPath</key><string>/tmp/sonance-asc-watch.err.log</string>
+</dict>
+</plist>
