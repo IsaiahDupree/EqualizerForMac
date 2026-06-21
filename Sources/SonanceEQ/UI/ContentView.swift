@@ -6,6 +6,9 @@ struct ContentView: View {
     @State private var showingPaywall = false
     @State private var showingMixer = false
     @State private var showingRecorder = false
+    #if DEBUG
+    @State private var showingAnalytics = false
+    #endif
 
     /// Present the paywall and record the impression (top of the conversion funnel).
     private func presentPaywall() {
@@ -45,6 +48,9 @@ struct ContentView: View {
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
+        #if DEBUG
+        .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
+        #endif
         .onAppear(perform: openLaunchArgPanel)
     }
 
@@ -268,6 +274,11 @@ struct ContentView: View {
             Button("Export…") { requirePro(.importExport) { app.exportCurrentPreset() } }
                 .controlSize(.small)
             Spacer()
+            #if DEBUG
+            Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
+                .buttonStyle(.borderless)
+                .help("Purchase analytics (debug)")
+            #endif
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
                 .buttonStyle(.borderless)
                 .help("About Sonance EQ")
