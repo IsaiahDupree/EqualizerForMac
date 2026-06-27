@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// Sonance EQ Pro paywall. Drives `PurchaseManager` — in mock mode the buy/restore flow is fully
-/// functional (persists locally, no charge); with a real RevenueCat key it runs live StoreKit.
-struct PaywallView: View {
+/// Dev/fallback Pro paywall used when RevenueCat isn't configured (the **mock store** — offline dev,
+/// tests, screenshots). The shipping app shows RevenueCat's dashboard-managed paywall instead (see
+/// `ProPaywallSheet` → `RevenueCatUI.PaywallView`); this keeps the buy/restore flow working with no
+/// network. Drives `PurchaseManager` directly.
+struct MockPaywallView: View {
     @Bindable var app: AppState
     @Environment(\.dismiss) private var dismiss
 

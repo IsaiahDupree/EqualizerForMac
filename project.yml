@@ -39,6 +39,8 @@ targets:
     dependencies:
       - package: RevenueCat
         product: RevenueCat
+      - package: RevenueCat
+        product: RevenueCatUI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ

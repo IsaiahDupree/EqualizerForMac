@@ -44,7 +44,7 @@ struct ContentView: View {
         .padding(22)
         .frame(width: 560)
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
-        .sheet(isPresented: $showingPaywall) { PaywallView(app: app) }
+        .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
