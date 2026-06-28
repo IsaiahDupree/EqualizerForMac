@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Dev/fallback Pro paywall used when RevenueCat isn't configured (the **mock store** — offline dev,
-/// tests, screenshots). The shipping app shows RevenueCat's dashboard-managed paywall instead (see
-/// `ProPaywallSheet` → `RevenueCatUI.PaywallView`); this keeps the buy/restore flow working with no
-/// network. Drives `PurchaseManager` directly.
+/// Native Pro paywall — the fallback in `ProPaywallSheet`. Shown for the offline **mock store** (dev,
+/// tests, screenshots) AND for the **live store when no RevenueCat dashboard paywall is designed yet**.
+/// It drives `PurchaseManager` directly, so on the live store its buy button routes through the
+/// RevenueCat SDK (`Purchases.shared.purchase`) — meaning **payment data reports to RevenueCat even via
+/// this native paywall**. On the mock store it persists locally with no network.
 struct MockPaywallView: View {
     @Bindable var app: AppState
     @Environment(\.dismiss) private var dismiss
