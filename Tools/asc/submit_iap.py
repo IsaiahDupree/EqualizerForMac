@@ -8,9 +8,21 @@
 reviewed *bundled with an app version*, and the ASC API gives no way to do that — `reviewSubmissionItems`
 has no `inAppPurchaseV2` relationship, and this standalone `inAppPurchaseSubmissions` call returns 409
 "this in-app purchase cannot be reviewed" until at least one app version has shipped *with* the IAP.
-So the first time, bundle the IAP with a version in the **App Store Connect web UI** (version page →
-In-App Purchases → add the IAP → Submit). After that first approval, this script works for subsequent
-IAP-only submissions.
+After that first approval, this script works for subsequent IAP-only submissions.
+
+EXACT FIRST-IAP WEB FLOW (the step everyone misses — learned 2026-06-28):
+  1. Version page (.../distribution/macos/version/inflight) with the version EDITABLE (Prepare for
+     Submission / Developer Rejected — cancel any in-flight submission first to make it editable).
+  2. Scroll the page BODY to the "In-App Purchases and Subscriptions" section.
+  3. Click the **"Select In-App Purchases or Subscriptions"** button — NOT "Add for Review".
+     (Clicking "Add for Review" without selecting first submits the version ALONE, every time — this
+     was the repeated failure.)
+  4. Check the IAP in the picker; it then appears ATTACHED in that section.
+  5. THEN click "Add for Review" (top-right) -> the Draft Submission lists BOTH the build and the IAP
+     -> Submit for Review. Verify the IAP flips READY_TO_SUBMIT -> WAITING_FOR_REVIEW.
+Pre-req gotcha: the IAP review screenshot must be a real uploaded asset. A botched upload shows
+fileName="SOURCE"/uploaded=null and the IAP reads "Missing Metadata" in the UI even though the API says
+READY_TO_SUBMIT -> delete it and re-upload a valid PNG with a proper filename.
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(__file__))
