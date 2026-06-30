@@ -21,8 +21,8 @@ configs:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.0.2"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "1.0.3"
+    CURRENT_PROJECT_VERSION: "5"
     CODE_SIGN_STYLE: Automatic
     # No team set so anyone can open + run with their own signing identity.
     DEVELOPMENT_TEAM: ""
@@ -86,8 +86,8 @@ targets:
       path: Sources/SonanceEQ/Resources/Info.plist
       properties:
         CFBundleDisplayName: Sonance EQ
-        CFBundleShortVersionString: "1.0.2"
-        CFBundleVersion: "4"
+        CFBundleShortVersionString: "1.0.3"
+        CFBundleVersion: "5"
         CFBundleIconName: AppIcon
         # Required by the Mac App Store (App Store Connect validation). Audio EQ → Music.
         LSApplicationCategoryType: public.app-category.music
