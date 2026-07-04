@@ -60,7 +60,11 @@ final class MixerChannelTap {
         let desc = CATapDescription(stereoMixdownOfProcesses: [process])
         desc.name = "Sonance Mixer Tap"
         desc.uuid = UUID()
-        desc.muteBehavior = .mutedWhenTapped
+        // We ALWAYS re-inject a processed copy, so the app's dry output must be fully muted while our tap
+        // exists — otherwise the user hears the original AND our copy (doubling, verified live in Sonance
+        // Mixer). `.muted` is unconditional (unlike `.mutedWhenTapped`, unreliable for a single-process
+        // mixdown tap). The tap is torn down the moment the channel returns to passthrough.
+        desc.muteBehavior = .muted
         desc.isPrivate = true
 
         var newTap = AudioObjectID(kAudioObjectUnknown)

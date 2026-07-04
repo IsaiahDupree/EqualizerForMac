@@ -10,11 +10,19 @@ struct MixerChannel: Codable, Hashable, Identifiable {
 
     var id: String { bundleID }
 
-    /// Linear gain actually applied to this app's audio (0 when muted).
-    var gain: Float { muted ? 0 : max(0, min(volume, MixerChannel.maxVolume)) }
+    /// Linear gain actually applied to this app's audio (0 when muted). Guards against a non-finite
+    /// `volume` (NaN/inf) ever reaching the audio thread as a multiplier — that would poison the buffer.
+    var gain: Float {
+        guard !muted else { return 0 }
+        guard volume.isFinite else { return 1 }
+        return max(0, min(volume, MixerChannel.maxVolume))
+    }
 
     /// True when this channel changes nothing (unity, unmuted, default output) — no tap needed.
-    var isPassthrough: Bool { !muted && abs(volume - 1) < 0.001 && outputDeviceUID == nil }
+    /// A non-finite volume is treated as unity, so it never forces a tap with a poisoned gain.
+    var isPassthrough: Bool {
+        !muted && (!volume.isFinite || abs(volume - 1) < 0.001) && outputDeviceUID == nil
+    }
 
     static let maxVolume: Float = 1.25
 }
@@ -46,7 +54,7 @@ final class MixerState {
 
     func setVolume(_ volume: Float, for bundleID: String, name: String) {
         var c = channel(bundleID, name: name)
-        c.volume = max(0, min(volume, MixerChannel.maxVolume))
+        c.volume = volume.isFinite ? max(0, min(volume, MixerChannel.maxVolume)) : 1
         commit(c)
     }
 
