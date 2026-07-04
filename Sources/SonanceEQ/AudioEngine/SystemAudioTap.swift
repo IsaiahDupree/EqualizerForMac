@@ -94,6 +94,10 @@ final class SystemAudioTap {
         if let selfObject = try? AudioObjectID.system.translatePID(getpid()), selfObject.isValid {
             exclude = [selfObject]
         }
+        // Exclude sibling Sonance audio-tool apps (e.g. Sonance Mixer) so we never re-capture THEIR
+        // re-injected audio — otherwise, with both apps running, each processes the other's output and the
+        // user hears doubling / silence when toggling either app.
+        exclude += AudioProcesses.processObjectIDs(forBundleIDs: AudioProcesses.siblingBundleIDs)
         // Also exclude any apps the per-app mixer owns, so they're not double-tapped/double-muted.
         if !excludedBundleIDs.isEmpty {
             exclude += AudioProcesses.processObjectIDs(forBundleIDs: excludedBundleIDs)

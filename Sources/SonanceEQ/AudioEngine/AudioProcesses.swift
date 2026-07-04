@@ -20,6 +20,13 @@ enum EQTarget: Equatable {
 
 /// Enumerates Core Audio "process objects" so the user can pick which apps to equalize (per-app EQ).
 enum AudioProcesses {
+    /// Sibling Sonance audio-tool apps we must NEVER tap. They re-inject system/other-app audio, so tapping
+    /// one (or being tapped by it) creates a feedback/doubling loop when both apps run at once — the source
+    /// of the "sound doubles / goes silent when I toggle the other app" interference.
+    static let siblingBundleIDs: Set<String> = [
+        "com.isaiahdupree.SonanceEQ", "com.isaiahdupree.SonanceMixer",
+    ]
+
     /// All Core Audio process object IDs.
     static func processObjectIDs() -> [AudioObjectID] {
         (try? AudioObjectID.system.readArray(kAudioHardwarePropertyProcessObjectList) as [AudioObjectID]) ?? []
@@ -36,7 +43,7 @@ enum AudioProcesses {
             let pid: pid_t = (try? object.read(kAudioProcessPropertyPID, default: pid_t(-1))) ?? -1
             guard pid != selfPID else { continue }
             let bundleID = (try? object.readString(kAudioProcessPropertyBundleID)) ?? ""
-            guard !bundleID.isEmpty, !seen.contains(bundleID) else { continue }
+            guard !bundleID.isEmpty, !siblingBundleIDs.contains(bundleID), !seen.contains(bundleID) else { continue }
             seen.insert(bundleID)
             let name = NSRunningApplication(processIdentifier: pid)?.localizedName ?? bundleID
             apps.append(AudioApp(bundleID: bundleID, name: name))
