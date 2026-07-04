@@ -3,14 +3,42 @@ import CoreAudio
 import Foundation
 import OSLog
 
-/// Manages one `MixerChannelTap` per app that needs non-passthrough treatment (volume / mute / routing).
+/// One controllable per-app audio channel. Abstracted so `PerAppMixer`'s reconciliation state machine can
+/// be exercised without Core Audio hardware; `MixerChannelTap` is the real implementation.
+protocol MixerChannelControlling: AnyObject {
+    var isRunning: Bool { get }
+    var onFailure: ((String) -> Void)? { get set }
+    func start(processObjectID: AudioObjectID, outputDeviceUID: String?)
+    func setGain(_ value: Float)
+    func stop()
+}
+
+extension MixerChannelTap: MixerChannelControlling {}
+
+/// Manages one channel per app that needs non-passthrough treatment (volume / mute / routing).
 /// Apps at unity/unmuted/default-output are left alone (no tap). Resolves bundle ids to live process
-/// objects and reconciles the running taps to the desired channel set.
+/// objects and reconciles the running channels to the desired set. (Shared lineage with Sonance Mixer.)
+///
+/// The process resolver and channel factory are injectable so the reconciliation logic (drop-stale,
+/// rebuild-on-route-change, live-gain, teardown) is unit-testable with fakes.
 @MainActor
 final class PerAppMixer {
-    private var taps: [String: MixerChannelTap] = [:]
+    private var taps: [String: MixerChannelControlling] = [:]
     private var routing: [String: String?] = [:]   // bundleID → outputDeviceUID it was built with
     private let log = Logger(subsystem: kSubsystem, category: "PerAppMixer")
+
+    /// Resolve a bundle id to a live process object id (nil if the app isn't producing audio right now).
+    private let resolveProcess: (String) -> AudioObjectID?
+    /// Build a fresh channel controller for a bundle id.
+    private let makeChannel: (String) -> MixerChannelControlling
+
+    init(resolveProcess: @escaping (String) -> AudioObjectID? =
+             { AudioProcesses.processObjectIDs(forBundleIDs: [$0]).first },
+         makeChannel: @escaping (String) -> MixerChannelControlling =
+             { MixerChannelTap(bundleID: $0) }) {
+        self.resolveProcess = resolveProcess
+        self.makeChannel = makeChannel
+    }
 
     /// Reported (bundleID, message) when a channel can't be routed (so the UI can flag it).
     var onChannelFailure: ((String, String) -> Void)?
@@ -28,7 +56,7 @@ final class PerAppMixer {
 
         for (bundleID, channel) in wanted {
             // The app must be producing audio right now to be tapped.
-            guard let process = AudioProcesses.processObjectIDs(forBundleIDs: [bundleID]).first else {
+            guard let process = resolveProcess(bundleID) else {
                 taps[bundleID]?.stop(); taps[bundleID] = nil; routing[bundleID] = nil
                 continue
             }
@@ -46,6 +74,19 @@ final class PerAppMixer {
         }
     }
 
+    /// The system default output device changed. Rebuild every channel that *follows* the default (nil
+    /// output UID) so it moves to the new device — a `MixerChannelTap` resolves nil → current default only
+    /// at build time, so without this a default-routed app keeps playing to the OLD device. Channels pinned
+    /// to a specific device are left playing untouched.
+    func handleDefaultOutputChange(_ channels: [MixerChannel]) {
+        for (bundleID, uid) in routing where uid == nil {
+            taps[bundleID]?.stop()
+            taps[bundleID] = nil
+            routing[bundleID] = nil
+        }
+        apply(channels)   // rebuilds the dropped default-routed channels against the new default
+    }
+
     /// Tear down every channel (e.g. when the mixer is turned off).
     func stopAll() {
         taps.values.forEach { $0.stop() }
@@ -57,7 +98,7 @@ final class PerAppMixer {
     func refresh(_ channels: [MixerChannel]) { apply(channels) }
 
     private func startChannel(_ channel: MixerChannel, process: AudioObjectID) {
-        let tap = MixerChannelTap(bundleID: channel.bundleID)
+        let tap = makeChannel(channel.bundleID)
         tap.onFailure = { [weak self] message in
             Task { @MainActor in
                 self?.taps[channel.bundleID] = nil

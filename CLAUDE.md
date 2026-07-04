@@ -27,7 +27,10 @@ xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ -destination 'pla
 Tests live in `Tests/` (`@testable import SonanceEQ`). The module name is `SonanceEQ` (set via
 `PRODUCT_MODULE_NAME`; `PRODUCT_NAME` is `SonanceEQ` so the `.app`/exec match the target for `TEST_HOST`,
 while the user-facing name stays `Sonance EQ` via `CFBundleDisplayName`). Standalone DSP proofs also live
-in `Tools/verify_{biquad,fir,midside}.swift` (compile-and-run against the shipping sources).
+in `Tools/verify_{biquad,fir,midside}.swift` (compile-and-run against the shipping sources). The per-app
+mixer has two **integration** proofs — `Tools/verify_{device_switch,audio_flow}.swift` — that flip the real
+default output and build a real tap on a live process (assert `renderCount>0`, no phantom-aggregate leak,
+audio survives a device switch); they restore system state and SKIP when preconditions aren't met.
 Edit `project.yml`, never the `.xcodeproj`. Swift language mode is **5** (set in project.yml) to keep
 Core Audio IOProc closures simple; the one Swift-6 concurrency hotspot (EQEngine lock closure) is already clean.
 

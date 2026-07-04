@@ -22,6 +22,9 @@ final class MixerChannelTap {
     private let renderCount = OSAllocatedUnfairLock(initialState: 0)
     private(set) var isRunning = false
 
+    /// IOProc invocations delivered so far — a diagnostic/test hook proving audio is actually flowing.
+    var deliveredBlocks: Int { renderCount.withLock { $0 } }
+
     /// Called (main queue) if this channel's routing fails so the mixer can drop it.
     var onFailure: ((String) -> Void)?
 
@@ -84,7 +87,10 @@ final class MixerChannelTap {
 
         let description: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Sonance Mixer Output",
-            kAudioAggregateDeviceUIDKey: UUID().uuidString,
+            // A private aggregate is visible to its OWN creating process, so it shows up in our device
+            // enumeration. The UID MUST carry the "SonanceEQ" marker `AudioDevices` filters on, or these
+            // phantom devices leak into the app's Output picker (and can be picked as a routing target).
+            kAudioAggregateDeviceUIDKey: "SonanceEQ-Output-\(UUID().uuidString)",
             kAudioAggregateDeviceMainSubDeviceKey: outUID,
             kAudioAggregateDeviceIsPrivateKey: true,
             kAudioAggregateDeviceIsStackedKey: false,

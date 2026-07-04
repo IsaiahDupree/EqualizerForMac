@@ -138,7 +138,9 @@ final class SystemAudioTap {
         outputDeviceName = (try? outputDevice.readDeviceName()) ?? "Output"
 
         // 5. Build a private aggregate: real output as main/clock sub-device + the tap.
-        let aggregateUID = UUID().uuidString
+        // A private aggregate is visible to its OWN process, so the UID carries the "SonanceEQ" marker
+        // `AudioDevices` filters on — otherwise it phantoms into the per-app mixer's Output picker.
+        let aggregateUID = "SonanceEQ-Output-\(UUID().uuidString)"
         let description: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Sonance EQ Output",
             kAudioAggregateDeviceUIDKey: aggregateUID,

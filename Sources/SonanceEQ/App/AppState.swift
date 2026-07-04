@@ -1,4 +1,6 @@
 import AppKit
+import AudioToolbox
+import CoreAudio
 import Foundation
 import OSLog
 
@@ -61,6 +63,7 @@ final class AppState {
     private let mixerEngine = PerAppMixer()
     var mixerEnabled = false
     var availableDevices: [AudioDevice] = []
+    private var mixerDeviceListener: AudioObjectPropertyListenerBlock?
 
     // Audio recorder (Pro): capture system or per-app audio to a file
     private let recorder = AudioRecorder()
@@ -280,8 +283,13 @@ final class AppState {
     /// Turn the mixer on/off. Off tears down all per-app mixer taps and stops excluding them from the EQ.
     func setMixerEnabled(_ on: Bool) {
         mixerEnabled = on
-        if on { refreshApps(); refreshDevices(); applyMixer() }
-        else { mixerEngine.stopAll(); tap?.excludedBundleIDs = [] }
+        if on {
+            refreshApps(); refreshDevices(); applyMixer()
+            installMixerDeviceListener()
+        } else {
+            mixerEngine.stopAll(); tap?.excludedBundleIDs = []
+            removeMixerDeviceListener()
+        }
     }
 
     private func applyMixer() {
@@ -289,6 +297,39 @@ final class AppState {
         mixerEngine.apply(mixer.activeChannels)
         // Keep the global EQ tap from also tapping the apps the mixer now owns.
         tap?.excludedBundleIDs = Set(mixer.activeChannels.map(\.bundleID))
+    }
+
+    // Apps routed to "Default Output" must follow when the user switches the system default (plug/unplug
+    // headphones), or they keep playing to the old device. This listener rebuilds just the default-routed
+    // mixer channels; pinned channels stay put. (The global EQ tap has its own rebuild in SystemAudioTap.)
+
+    private func installMixerDeviceListener() {
+        guard mixerDeviceListener == nil else { return }
+        var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+                                                 mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
+            Task { @MainActor in self?.mixerDefaultOutputChanged() }
+        }
+        mixerDeviceListener = block
+        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address,
+                                            DispatchQueue.main, block)
+    }
+
+    private func removeMixerDeviceListener() {
+        guard let block = mixerDeviceListener else { return }
+        var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+                                                 mScope: kAudioObjectPropertyScopeGlobal,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address,
+                                               DispatchQueue.main, block)
+        mixerDeviceListener = nil
+    }
+
+    private func mixerDefaultOutputChanged() {
+        guard mixerEnabled else { return }
+        refreshDevices()
+        mixerEngine.handleDefaultOutputChange(mixer.activeChannels)
     }
 
     func setAppVolume(_ volume: Float, _ app: AudioApp) {
