@@ -8,6 +8,7 @@ final class AppState {
     let eq = EQEngine()
     let permission = AudioRecordingPermission()
     let license = PurchaseManager()
+    let review = ReviewPrompter()
 
     private var tap: SystemAudioTap?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
@@ -178,6 +179,7 @@ final class AppState {
     func apply(_ preset: [EQBand]) {
         bands = preset
         pushSettings()
+        review.positiveAction()
     }
 
     /// Load an AutoEq headphone correction: its parametric bands + its safety preamp.
@@ -188,6 +190,7 @@ final class AppState {
         preampDb = preset.preampDb
         activePresetName = preset.displayName
         pushSettings()
+        review.positiveAction()
     }
 
     /// Reset the chain currently being edited to flat.
