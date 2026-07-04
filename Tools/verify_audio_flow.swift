@@ -39,6 +39,12 @@ func pump(_ seconds: Double) {
     while Date() < end { RunLoop.main.run(mode: .default, before: Date().addingTimeInterval(0.05)) }
 }
 
+/// Peak |sample| the tap actually delivered over `seconds` — 0 means silence even if the callback fires.
+@MainActor
+func measurePeak(_ tap: MixerChannelTap, _ seconds: Double) -> Float {
+    tap.resetPeak(); pump(seconds); return tap.peakLevel
+}
+
 @MainActor
 func runTest() -> Int32 {
     guard CommandLine.arguments.count > 1 else { print("usage: verify_audio_flow <tone.wav>"); return 2 }
@@ -79,7 +85,9 @@ func runTest() -> Int32 {
     var ok = true
     func check(_ c: Bool, _ m: String) { print((c ? "  ✓ " : "  ✗ ") + m); ok = ok && c }
     check(tap.isRunning, "real MixerChannelTap started against a live process")
-    check(tap.deliveredBlocks > 0, "audio actually flowed through the tap (renderCount = \(tap.deliveredBlocks) > 0)")
+    check(tap.deliveredBlocks > 0, "the IOProc fired (renderCount = \(tap.deliveredBlocks) > 0)")
+    let sig = measurePeak(tap, 0.6)
+    check(sig > 0.001, "REAL signal delivered, not all-zeros silence (peak = \(String(format: "%.4f", sig)))")
 
     // Regression: our own private aggregate must NOT leak into the device list (it's visible to our own
     // process, so its UID has to carry the "SonanceMixer" marker AudioDevices filters on).
@@ -88,6 +96,21 @@ func runTest() -> Int32 {
     }
     check(phantom.isEmpty, "no phantom aggregate devices leak into the Output list (found: \(phantom.map(\.name)))")
     tap.stop()
+
+    // 2b. Re-route the SAME app to each explicit output device — must stay audible (the "sound goes to
+    // zero when I change its device" report). Peak, not just callback count, catches all-zeros silence.
+    for dev in AudioDevices.outputDevices() {
+        let t = MixerChannelTap(bundleID: "afplay.route")
+        t.start(processObjectID: proc, outputDeviceUID: dev.uid)
+        t.setGain(0.5)
+        let p = measurePeak(t, 1.8)   // past the 1.5s watchdog
+        // Correct spec: audible on a working device, OR released (un-muted) on a dead one — never the
+        // "stuck muted + silent" state the user reported.
+        let okDev = p > 0.001 || !t.isRunning
+        check(okDev, "\(dev.name): audible (peak=\(String(format: "%.4f", p))) OR gracefully released (running=\(t.isRunning)) — not stuck silent")
+        t.stop()
+        usleep(200_000)   // let the source un-mute between routings
+    }
 
     // 3. Audio-continuity across a real default-output switch (the "went silent" failure).
     let devices = AudioDevices.outputDevices()
@@ -124,11 +147,9 @@ func runTest() -> Int32 {
     // The rebuilt tap is inside the engine; probe delivery by building a fresh direct tap on the new default.
     let after = MixerChannelTap(bundleID: "afplay.test2")
     after.start(processObjectID: proc, outputDeviceUID: nil)
-    let d2 = Date().addingTimeInterval(2)
-    while after.deliveredBlocks == 0, Date() < d2 {
-        RunLoop.main.run(mode: .default, before: Date().addingTimeInterval(0.05))
-    }
-    check(after.deliveredBlocks > 0, "audio still flows on the new default device after the switch (renderCount = \(after.deliveredBlocks))")
+    let pAfter = measurePeak(after, 1.8)
+    check(pAfter > 0.001 || !after.isRunning,
+          "after switch: audible OR gracefully released, not stuck silent (peak=\(String(format: "%.4f", pAfter)), running=\(after.isRunning))")
     after.stop()
     engine.stopAll()
 

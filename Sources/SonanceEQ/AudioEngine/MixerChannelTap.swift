@@ -22,8 +22,14 @@ final class MixerChannelTap {
     private let renderCount = OSAllocatedUnfairLock(initialState: 0)
     private(set) var isRunning = false
 
-    /// IOProc invocations delivered so far — a diagnostic/test hook proving audio is actually flowing.
+    /// IOProc invocations delivered so far — a diagnostic/test hook proving the callback is firing.
     var deliveredBlocks: Int { renderCount.withLock { $0 } }
+
+    /// Peak |sample| seen in the output since the last `resetPeak()` — proves the audio isn't all-zeros
+    /// (the callback can keep firing while delivering silence after a device/sample-rate change).
+    private let peak = OSAllocatedUnfairLock(initialState: Float(0))
+    var peakLevel: Float { peak.withLock { $0 } }
+    func resetPeak() { peak.withLock { $0 = 0 } }
 
     /// Called (main queue) if this channel's routing fails so the mixer can drop it.
     var onFailure: ((String) -> Void)?
@@ -109,11 +115,14 @@ final class MixerChannelTap {
 
         let gainLock = gain
         let counter = renderCount
+        let peakLock = peak
         var newProc: AudioDeviceIOProcID?
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
             counter.withLock { $0 &+= 1 }
             let g = gainLock.withLock { $0 }
             MixerChannelTap.route(gain: g, input: inInput, output: outOutput)
+            let pk = MixerChannelTap.peak(of: outOutput)
+            peakLock.withLock { $0 = max($0, pk) }
         }
         guard status == noErr, let proc = newProc else { throw CoreAudioError.create("mixer IOProc", status) }
         procID = proc
@@ -141,10 +150,18 @@ final class MixerChannelTap {
     private func startWatchdog() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self, self.isRunning else { return }
-            guard self.renderCount.withLock({ $0 }) == 0 else { return }
-            self.log.error("mixer channel \(self.bundleID, privacy: .public) never delivered audio — stopping.")
+            let blocks = self.renderCount.withLock { $0 }
+            let level = self.peak.withLock { $0 }
+            let g = self.gain.withLock { $0 }
+            // Two dead-route cases, both of which must NOT leave the app stuck muted with no sound:
+            //   • no callbacks at all → the IOProc never started on this device.
+            //   • callbacks firing but pure silence while we're NOT muted (g > 0) → the destination device
+            //     isn't actually clocking/playing (e.g. an idle virtual device), so we pull no audio.
+            // Tearing the tap down un-mutes the source, so it reverts to playing on its normal output.
+            guard blocks == 0 || (g > 0 && level == 0) else { return }
+            self.log.error("mixer channel \(self.bundleID, privacy: .public) delivered no audio (blocks=\(blocks), peak=\(level, format: .fixed(precision: 4))) — stopping to restore sound.")
             self.stop()
-            self.onFailure?("Couldn't route this app's audio")
+            self.onFailure?("Couldn't route this app's audio to that device")
         }
     }
 
@@ -169,6 +186,21 @@ final class MixerChannelTap {
             let frames = outBytes / MemoryLayout<Float>.size
             scale(outData.assumingMemoryBound(to: Float.self), frames: frames, gain: gain)
         }
+    }
+
+    /// Peak |sample| across all output buffers (diagnostic — detects all-zeros silence). Audio-thread safe.
+    static func peak(of output: UnsafeMutablePointer<AudioBufferList>) -> Float {
+        let list = UnsafeMutableAudioBufferListPointer(output)
+        var maxv: Float = 0
+        for i in 0..<list.count {
+            guard let d = list[i].mData else { continue }
+            let n = Int(list[i].mDataByteSize) / MemoryLayout<Float>.size
+            guard n > 0 else { continue }
+            var m: Float = 0
+            vDSP_maxmgv(d.assumingMemoryBound(to: Float.self), 1, &m, vDSP_Length(n))
+            maxv = max(maxv, m)
+        }
+        return maxv
     }
 
     /// Multiply `frames` interleaved samples in place by `gain` (testable, no Core Audio).
