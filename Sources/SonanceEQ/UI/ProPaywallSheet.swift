@@ -29,8 +29,12 @@ struct ProPaywallSheet: View {
             } else if hasDashboardPaywall == false {
                 MockPaywallView(app: app)                        // live but no dashboard paywall yet
             } else {
-                ProgressView().controlSize(.small).padding(40)   // deciding
-                    .task { await decide() }
+                VStack(spacing: 12) {                            // deciding — cancellable so a slow
+                    ProgressView().controlSize(.small)           // offerings() fetch can't modal-lock
+                    Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                }
+                .padding(40)
+                .task { await decide() }
             }
         }
     }
