@@ -25,9 +25,15 @@ final class AppState {
             self.finishRecordingUI()
             self.errorMessage = "Recorder: \(message)"
         }
-        if CommandLine.arguments.contains("--demo") {
-            // Presentation/screenshot state: a shaped curve with Pro unlocked (no locks).
+        if LicenseConfig.isUnconfigured {
+            // Internal build (Debug/Release — not Release-MAS): no real RevenueCat account is
+            // wired up, so there's nothing to purchase. Ship permanently Pro-unlocked instead of
+            // gating on the mock store, so launching the built .app directly (no CLI flags) is
+            // already the unlocked, no-paywall experience for our own desktop use.
             license.mockUnlock()
+        }
+        if CommandLine.arguments.contains("--demo") {
+            // Presentation/screenshot state: a shaped curve.
             bands = Presets.loudness
             activePresetName = "Loudness"
         }
