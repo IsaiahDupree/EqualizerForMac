@@ -6,9 +6,7 @@ struct ContentView: View {
     @State private var showingPaywall = false
     @State private var showingMixer = false
     @State private var showingRecorder = false
-    #if DEBUG
     @State private var showingAnalytics = false
-    #endif
 
     /// Present the paywall and record the impression (top of the conversion funnel).
     private func presentPaywall() {
@@ -32,11 +30,7 @@ struct ContentView: View {
             preampRow
             phaseRow
             if let message = app.errorMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                ErrorBanner(message: message)
             }
             Divider()
             footer
@@ -48,19 +42,19 @@ struct ContentView: View {
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
-        #if DEBUG
         .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
-        #endif
         .onAppear(perform: openLaunchArgPanel)
     }
 
     /// Auto-present a panel from a launch argument (`--screen mixer|recorder`) for demos/screenshots.
+    /// Routed through the same `requirePro` gate as the Mixer/Record buttons so this can't be used
+    /// to open Pro-only panels without an entitlement (shows the paywall instead, same as a tap would).
     private func openLaunchArgPanel() {
         let args = CommandLine.arguments
         guard let i = args.firstIndex(of: "--screen"), i + 1 < args.count else { return }
         switch args[i + 1] {
-        case "mixer": showingMixer = true
-        case "recorder": showingRecorder = true
+        case "mixer": requirePro(.perAppEQ) { showingMixer = true }
+        case "recorder": requirePro(.audioRecorder) { showingRecorder = true }
         default: break
         }
     }
@@ -134,7 +128,14 @@ struct ContentView: View {
                     if !app.availableApps.isEmpty { Divider() }
                     ForEach(app.availableApps) { audioApp in
                         Button { app.toggleApp(audioApp.bundleID) } label: {
-                            Label(audioApp.name, systemImage: app.isAppSelected(audioApp.bundleID) ? "checkmark" : "")
+                            Label {
+                                HStack(spacing: 4) {
+                                    AudioAppIconView(audioApp: audioApp, size: 14)
+                                    Text(audioApp.name)
+                                }
+                            } icon: {
+                                if app.isAppSelected(audioApp.bundleID) { Image(systemName: "checkmark") }
+                            }
                         }
                     }
                     Divider()
@@ -274,11 +275,9 @@ struct ContentView: View {
             Button("Export…") { requirePro(.importExport) { app.exportCurrentPreset() } }
                 .controlSize(.small)
             Spacer()
-            #if DEBUG
             Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
                 .buttonStyle(.borderless)
-                .help("Purchase analytics (debug)")
-            #endif
+                .help("Purchase & diagnostics log — useful when reporting a problem")
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
                 .buttonStyle(.borderless)
                 .help("About Sonance EQ")

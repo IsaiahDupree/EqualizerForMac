@@ -6,6 +6,12 @@ import SwiftUI
 struct ResponseCurveView: View {
     @Bindable var app: AppState
     @State private var selectedBandID: UUID?
+    /// Coalesces `pushSettings()` calls while a handle is being dragged in Linear-Phase (Pro) mode. Plain
+    /// dragging is untouched (that push is cheap); Linear-Phase pushes trigger `FIRDesigner.design()`
+    /// (a fresh 2048-point DFT + O(bands × 1024) trig-heavy magnitude sampling per call — measured
+    /// ~0.5–7 ms depending on band count/build config), which a raw `DragGesture.onChanged` would
+    /// otherwise re-run on every callback (up to ~120/sec), stalling the drag on the main thread.
+    @State private var dragThrottle = DragPushThrottle()
 
     private let gainRange: Double = 15        // ± dB shown on the vertical axis
     private let fMin = 20.0, fMax = 20_000.0
@@ -68,7 +74,16 @@ struct ResponseCurveView: View {
                         if app.activeBands[i].type.usesGain {
                             app.activeBands[i].gain = Float(g.db(value.location.y).clamped(-gainRange, gainRange))
                         }
-                        app.pushSettings()
+                        if app.linearPhase {
+                            dragThrottle.push { app.pushSettings() }
+                        } else {
+                            app.pushSettings()
+                        }
+                    }
+                    .onEnded { _ in
+                        // Guarantee the final handle position always lands, even if it fell inside a
+                        // throttle window that got superseded before its trailing push fired.
+                        if app.linearPhase { dragThrottle.flush { app.pushSettings() } }
                     }
             )
     }
@@ -230,4 +245,41 @@ private struct CurveGeometry {
 
 private extension Comparable {
     func clamped(_ low: Self, _ high: Self) -> Self { min(max(self, low), high) }
+}
+
+/// Leading + trailing throttle: the first `push` in a burst runs immediately, subsequent ones inside
+/// `interval` are coalesced into a single trailing call, so a caller invoked many times per second
+/// (a drag gesture) only actually runs `commit` at roughly `1 / interval` Hz instead of once per call.
+/// `@MainActor`-only (SwiftUI `@State` on the main thread); `DispatchQueue.main.asyncAfter` schedules
+/// the trailing edge, so no additional locking is needed.
+@MainActor
+private final class DragPushThrottle {
+    private var lastCommit = Date.distantPast
+    private var pendingWork: DispatchWorkItem?
+    private let interval: TimeInterval = 0.05   // 20 Hz — well under the drag callback rate (~60–120 Hz)
+
+    func push(_ commit: @escaping () -> Void) {
+        pendingWork?.cancel()
+        let elapsed = Date().timeIntervalSince(lastCommit)
+        if elapsed >= interval {
+            lastCommit = Date()
+            commit()
+            return
+        }
+        let work = DispatchWorkItem { [weak self] in
+            self?.lastCommit = Date()
+            commit()
+        }
+        pendingWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + (interval - elapsed), execute: work)
+    }
+
+    /// Skip the throttle and commit immediately — call on gesture end so the final value is never
+    /// left stranded in a cancelled trailing edge.
+    func flush(_ commit: @escaping () -> Void) {
+        pendingWork?.cancel()
+        pendingWork = nil
+        lastCommit = Date()
+        commit()
+    }
 }

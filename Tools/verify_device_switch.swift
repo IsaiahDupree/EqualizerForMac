@@ -76,7 +76,9 @@ func runTest() -> Int32 {
     // Engine with fakes: one channel that follows the default, one pinned to a specific device.
     let factory = Factory()
     let playing: Set<String> = ["default.app", "pinned.app"]
-    let engine = PerAppMixer(resolveProcess: { playing.contains($0) ? AudioObjectID(1) : nil },
+    let engine = PerAppMixer(resolveProcesses: { ids in
+                                 Dictionary(uniqueKeysWithValues: ids.filter(playing.contains).map { ($0, AudioObjectID(1)) })
+                             },
                              makeChannel: { factory.make($0) })
     let channels = [
         MixerChannel(bundleID: "default.app", name: "Default", volume: 0.5, muted: false, outputDeviceUID: nil),

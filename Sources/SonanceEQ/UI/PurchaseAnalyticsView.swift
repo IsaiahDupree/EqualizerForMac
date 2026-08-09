@@ -1,8 +1,11 @@
 import SwiftUI
 
-/// Developer-facing window onto the purchase conversion funnel recorded by `PurchaseEventTracker`.
-/// Shows the headline rates, per-event counts, and the most recent events. DEBUG-only — this is our
-/// funnel data, not something an end user needs to see.
+/// Window onto the purchase conversion funnel recorded by `PurchaseEventTracker`. Shows the headline
+/// rates, per-event counts, and the most recent events (including failures, with the underlying error
+/// message). Shipped in every build (not DEBUG-only): with no remote crash/analytics reporting in this
+/// app, this on-device log — visible from the footer's chart icon — is the only way a customer can see,
+/// and relay to the developer (e.g. by screenshot), what actually happened around a failed purchase or
+/// restore.
 struct PurchaseAnalyticsView: View {
     @Bindable var app: AppState
     @Environment(\.dismiss) private var dismiss

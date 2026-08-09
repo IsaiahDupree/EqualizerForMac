@@ -27,16 +27,18 @@ final class PerAppMixer {
     private var routing: [String: String?] = [:]   // bundleID → outputDeviceUID it was built with
     private let log = Logger(subsystem: kSubsystem, category: "PerAppMixer")
 
-    /// Resolve a bundle id to a live process object id (nil if the app isn't producing audio right now).
-    private let resolveProcess: (String) -> AudioObjectID?
+    /// Resolve a set of bundle ids to their live process object ids (one shared enumeration for the whole
+    /// set — NOT one Core Audio scan per bundle id) — bundle ids absent from the result aren't producing
+    /// audio right now.
+    private let resolveProcesses: (Set<String>) -> [String: AudioObjectID]
     /// Build a fresh channel controller for a bundle id.
     private let makeChannel: (String) -> MixerChannelControlling
 
-    init(resolveProcess: @escaping (String) -> AudioObjectID? =
-             { AudioProcesses.processObjectIDs(forBundleIDs: [$0]).first },
+    init(resolveProcesses: @escaping (Set<String>) -> [String: AudioObjectID] =
+             { AudioProcesses.processObjectIDMap(forBundleIDs: $0) },
          makeChannel: @escaping (String) -> MixerChannelControlling =
              { MixerChannelTap(bundleID: $0) }) {
-        self.resolveProcess = resolveProcess
+        self.resolveProcesses = resolveProcesses
         self.makeChannel = makeChannel
     }
 
@@ -54,9 +56,13 @@ final class PerAppMixer {
             routing[bundleID] = nil
         }
 
+        // Resolve every wanted bundle id against ONE shared Core Audio process enumeration, instead of
+        // re-scanning the whole system once per channel (the N+1 this fixes).
+        let processes = resolveProcesses(Set(wanted.keys))
+
         for (bundleID, channel) in wanted {
             // The app must be producing audio right now to be tapped.
-            guard let process = resolveProcess(bundleID) else {
+            guard let process = processes[bundleID] else {
                 taps[bundleID]?.stop(); taps[bundleID] = nil; routing[bundleID] = nil
                 continue
             }

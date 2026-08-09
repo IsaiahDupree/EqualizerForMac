@@ -125,7 +125,10 @@ func runTest() -> Int32 {
     let devB = devices.first { $0.id != devA.id }!
     setDefault(devB.id); pump(0.3)
 
-    let engine = PerAppMixer(resolveProcess: { _ in processObject(forPID: player.processIdentifier) },
+    let engine = PerAppMixer(resolveProcesses: { ids in
+                                 guard let object = processObject(forPID: player.processIdentifier) else { return [:] }
+                                 return Dictionary(uniqueKeysWithValues: ids.map { ($0, object) })
+                             },
                              makeChannel: { MixerChannelTap(bundleID: $0) })
     let channel = MixerChannel(bundleID: "afplay.test", name: "afplay", volume: 0.5, muted: false, outputDeviceUID: nil)
     engine.apply([channel])

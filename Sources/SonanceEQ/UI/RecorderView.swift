@@ -11,6 +11,12 @@ struct RecorderView: View {
             header
             Divider()
             content
+            if let message = app.errorMessage {
+                Divider()
+                ErrorBanner(message: message)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+            }
             Divider()
             footer
         }
@@ -25,7 +31,7 @@ struct RecorderView: View {
                 Text("Capture what's playing to a file").font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
+            Button("Done") { closePanel() }.keyboardShortcut(.cancelAction)
         }
         .padding(12)
     }
@@ -60,7 +66,14 @@ struct RecorderView: View {
                     if !app.availableApps.isEmpty { Divider() }
                     ForEach(app.availableApps) { audioApp in
                         Button { app.toggleRecordApp(audioApp.bundleID) } label: {
-                            Label(audioApp.name, systemImage: app.isRecordAppSelected(audioApp.bundleID) ? "checkmark" : "")
+                            Label {
+                                HStack(spacing: 4) {
+                                    AudioAppIconView(audioApp: audioApp, size: 14)
+                                    Text(audioApp.name)
+                                }
+                            } icon: {
+                                if app.isRecordAppSelected(audioApp.bundleID) { Image(systemName: "checkmark") }
+                            }
                         }
                     }
                     Divider()
@@ -107,6 +120,13 @@ struct RecorderView: View {
             Spacer()
         }
         .padding(12)
+    }
+
+    /// Leaving the panel (Done, or Escape via the same button's `.cancelAction`) must never leave a
+    /// recording running invisibly in the background — stop it first, then dismiss.
+    private func closePanel() {
+        if app.isRecording { app.stopRecording() }
+        dismiss()
     }
 
     private func timeString(_ seconds: Double) -> String {

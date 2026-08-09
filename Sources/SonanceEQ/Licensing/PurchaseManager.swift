@@ -42,9 +42,27 @@ final class PurchaseManager {
     // from any thread, and it's only assigned once (on the main actor, in `start()`).
     nonisolated(unsafe) private var customerInfoTask: Task<Void, Never>?
 
-    init(defaults: UserDefaults = .standard, tracker: PurchaseEventTracker? = nil) {
+    /// The `.revenueCat` store's backend. Defaults to the real SDK; tests inject a fake (see
+    /// `PurchaseProviding`) to drive `purchasePro()` / `restore()` / `refresh()` through the live
+    /// branches without network or Apple registration.
+    private let purchaseProvider: PurchaseProviding
+
+    /// - Parameter startAsConfiguredRevenueCatStore: test-only seam. `start()` is the only production
+    ///   caller that flips `store` to `.revenueCat`, and it does so via the real, process-global
+    ///   `Purchases.configure(...)` — not safe to invoke repeatedly from unit tests. Passing `true` here
+    ///   instead begins the manager already on the `.revenueCat` store (paired with a fake
+    ///   `purchaseProvider`), so tests can exercise those branches directly without ever calling `start()`.
+    init(defaults: UserDefaults = .standard,
+         tracker: PurchaseEventTracker? = nil,
+         purchaseProvider: PurchaseProviding = RevenueCatProvider(),
+         startAsConfiguredRevenueCatStore: Bool = false) {
         self.defaults = defaults
         self.tracker = tracker ?? PurchaseEventTracker(defaults: defaults)
+        self.purchaseProvider = purchaseProvider
+        if startAsConfiguredRevenueCatStore {
+            self.store = .revenueCat
+            self.isConfigured = true
+        }
     }
 
     deinit { customerInfoTask?.cancel() }
@@ -67,8 +85,9 @@ final class PurchaseManager {
         tracker.record(.configured, store: storeName)
         // Listen for every entitlement change RevenueCat surfaces — app-initiated or not (renewals,
         // refunds, Ask-to-Buy, other-device purchases, dashboard grants all arrive here).
+        let provider = purchaseProvider
         customerInfoTask = Task { @MainActor [weak self] in
-            for await info in Purchases.shared.customerInfoStream {
+            for await info in provider.customerInfoStream {
                 self?.apply(info)
             }
         }
@@ -82,7 +101,7 @@ final class PurchaseManager {
             isPro = defaults.bool(forKey: mockKey)
         case .revenueCat:
             guard isConfigured else { return }
-            do { apply(try await Purchases.shared.customerInfo()) }
+            do { apply(try await purchaseProvider.customerInfo()) }
             catch { report(error, "customerInfo") }
         }
     }
@@ -110,14 +129,14 @@ final class PurchaseManager {
         case .revenueCat:
             guard isConfigured else { return }
             do {
-                let offerings = try await Purchases.shared.offerings()
+                let offerings = try await purchaseProvider.offerings()
                 let offering = offerings.current ?? offerings.offering(identifier: LicenseConfig.offeringID)
                 guard let package = offering?.availablePackages.first else {
                     lastError = "No purchase option is available right now."
                     tracker.record(.purchaseFailed, store: storeName, detail: lastError)
                     return
                 }
-                let result = try await Purchases.shared.purchase(package: package)
+                let result = try await purchaseProvider.purchase(package: package)
                 if result.userCancelled {
                     tracker.record(.purchaseCancelled, store: storeName)
                 } else {
@@ -142,7 +161,7 @@ final class PurchaseManager {
         case .revenueCat:
             guard isConfigured else { return }
             do {
-                apply(try await Purchases.shared.restorePurchases())
+                apply(try await purchaseProvider.restorePurchases())
                 tracker.record(isPro ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
             } catch {
                 report(error, "restore")

@@ -7,7 +7,16 @@ import Foundation
 struct AudioApp: Identifiable, Hashable {
     let bundleID: String
     let name: String
+    /// The app's own icon (from `NSRunningApplication.icon`), for picker UI. Every `AudioApp` we
+    /// construct comes from a resolved, user-facing `NSRunningApplication`, so this is only ever
+    /// nil in the rare case Launch Services has no icon to hand back.
+    let icon: NSImage?
     var id: String { bundleID }
+
+    // `NSImage` isn't `Hashable`, and `bundleID` already is the identity (see `id`), so hash/compare
+    // on that alone rather than deriving a synthesized conformance across all stored properties.
+    static func == (lhs: AudioApp, rhs: AudioApp) -> Bool { lhs.bundleID == rhs.bundleID }
+    func hash(into hasher: inout Hasher) { hasher.combine(bundleID) }
 }
 
 /// What the EQ is applied to: every app (a global tap) or a chosen set of apps (a mixdown tap).
@@ -44,9 +53,16 @@ enum AudioProcesses {
             guard pid != selfPID else { continue }
             let bundleID = (try? object.readString(kAudioProcessPropertyBundleID)) ?? ""
             guard !bundleID.isEmpty, !siblingBundleIDs.contains(bundleID), !seen.contains(bundleID) else { continue }
+            // Only surface processes Launch Services tracks as real, user-facing apps. Background Core
+            // Audio processes — system audio daemons, XPC services, telephony/Continuity helpers, etc. —
+            // either don't resolve to an `NSRunningApplication` at all, or resolve with a `.prohibited`
+            // activation policy (no Dock presence, no UI, can't be brought to front). Skip both instead
+            // of falling back to displaying their raw Core Audio bundle ID.
+            guard let runningApp = NSRunningApplication(processIdentifier: pid),
+                  runningApp.activationPolicy != .prohibited,
+                  let name = runningApp.localizedName else { continue }
             seen.insert(bundleID)
-            let name = NSRunningApplication(processIdentifier: pid)?.localizedName ?? bundleID
-            apps.append(AudioApp(bundleID: bundleID, name: name))
+            apps.append(AudioApp(bundleID: bundleID, name: name, icon: runningApp.icon))
         }
         return apps.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
@@ -57,5 +73,20 @@ enum AudioProcesses {
             let bundleID = (try? object.readString(kAudioProcessPropertyBundleID)) ?? ""
             return bundleIDs.contains(bundleID)
         }
+    }
+
+    /// Resolve many bundle IDs to their current process object IDs in a single system enumeration.
+    /// Callers that need to resolve N bundle IDs (e.g. `PerAppMixer.apply` reconciling N active channels)
+    /// MUST use this instead of calling `processObjectIDs(forBundleIDs:)` once per bundle ID — that would
+    /// re-run the full `kAudioHardwarePropertyProcessObjectList` Core Audio scan N times over.
+    static func processObjectIDMap(forBundleIDs bundleIDs: Set<String>) -> [String: AudioObjectID] {
+        guard !bundleIDs.isEmpty else { return [:] }
+        var result: [String: AudioObjectID] = [:]
+        for object in processObjectIDs() {
+            let bundleID = (try? object.readString(kAudioProcessPropertyBundleID)) ?? ""
+            guard bundleIDs.contains(bundleID), result[bundleID] == nil else { continue }
+            result[bundleID] = object   // first match wins, matching the `.first` semantics this replaces
+        }
+        return result
     }
 }

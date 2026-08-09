@@ -98,6 +98,37 @@ import Testing
     }
 }
 
+/// AppState wires `PerAppMixer.onChannelFailure` to reconcile the persisted `MixerState` (and the global
+/// EQ tap's exclusion set) after a per-app tap is torn down — otherwise the Mixer UI (mute icon / slider /
+/// output menu) keeps showing settings that no longer reflect reality once the app's audio has reverted to
+/// normal passthrough. This exercises that exact production wiring, not a reimplementation of it.
+@MainActor
+@Suite struct MixerFailureReconciliationTests {
+    @Test func channelFailureResetsMixerState() {
+        let app = AppState()
+        app.mixer.setMuted(true, for: "com.example.app", name: "Example")
+        #expect(app.mixer.channel("com.example.app", name: "Example").muted == true)
+
+        app.mixerEngine.onChannelFailure?("com.example.app", "tap watchdog fired")
+
+        #expect(app.mixer.channel("com.example.app", name: "Example").muted == false)
+        #expect(app.mixer.channels["com.example.app"] == nil)
+        #expect(app.errorMessage == "Mixer: tap watchdog fired")
+    }
+
+    @Test func channelFailureLeavesOtherChannelsUntouched() {
+        let app = AppState()
+        app.mixer.setMuted(true, for: "com.example.a", name: "A")
+        app.mixer.setMuted(true, for: "com.example.b", name: "B")
+
+        app.mixerEngine.onChannelFailure?("com.example.a", "tap watchdog fired")
+
+        #expect(app.mixer.channel("com.example.a", name: "A").muted == false)
+        #expect(app.mixer.channel("com.example.b", name: "B").muted == true)
+        app.mixer.reset("com.example.b")   // AppState.mixer persists to UserDefaults.standard — clean up
+    }
+}
+
 @Suite struct MixerScaleTests {
     private func scaled(_ input: [Float], gain: Float) -> [Float] {
         var s = input

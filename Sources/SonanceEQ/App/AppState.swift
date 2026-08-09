@@ -14,24 +14,44 @@ final class AppState {
 
     private var tap: SystemAudioTap?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
+    private let diagnostics = DiagnosticsReporter()
 
     init() {
+        diagnostics.start()
         license.start()
-        mixerEngine.onChannelFailure = { [weak self] _, message in
-            self?.errorMessage = "Mixer: \(message)"
+        mixerEngine.onChannelFailure = { [weak self] bundleID, message in
+            guard let self else { return }
+            // The tap is already torn down (PerAppMixer dropped its own state before calling us) and the
+            // app's audio has reverted to normal passthrough at the OS level. Reset the persisted channel
+            // too, so the Mixer UI (mute icon / slider / output menu) doesn't keep showing a mute/volume/
+            // routing that no longer reflects reality, and let the global EQ tap pick the app back up
+            // (applyMixer() recomputes `excludedBundleIDs` from the now-updated active channels).
+            self.mixer.reset(bundleID)
+            self.applyMixer()
+            self.errorMessage = "Mixer: \(message)"
         }
         recorder.onFailure = { [weak self] message in
             guard let self else { return }
             self.finishRecordingUI()
             self.errorMessage = "Recorder: \(message)"
         }
+        #if DEBUG
         if LicenseConfig.isUnconfigured {
-            // Internal build (Debug/Release — not Release-MAS): no real RevenueCat account is
-            // wired up, so there's nothing to purchase. Ship permanently Pro-unlocked instead of
-            // gating on the mock store, so launching the built .app directly (no CLI flags) is
-            // already the unlocked, no-paywall experience for our own desktop use.
+            // Local Debug build only (Xcode Run — never a distributed artifact): no real RevenueCat
+            // account is wired up, so there's nothing to purchase. Ship permanently Pro-unlocked
+            // instead of gating on the mock store, so launching the built .app directly (no CLI
+            // flags) is already the unlocked, no-paywall experience for our own desktop use.
+            //
+            // Deliberately NOT applied to Release/Release-MAS: those are the configs the
+            // distribution scripts (Tools/package_and_notarize.sh, Tools/build_mas.sh) and CI
+            // (.github/workflows/release.yml) ship to real users. An unconfigured key there must
+            // fall through to the normal locked-by-default mock store (see PurchaseManager.start()),
+            // not an unconditional free unlock — see docs/RELEASE.md before shipping the Direct
+            // channel: it still needs its own live RevenueCat key wired into project.yml the same
+            // way Release-MAS already has one, or Direct-channel Pro stays unpurchasable for real.
             license.mockUnlock()
         }
+        #endif
         if CommandLine.arguments.contains("--demo") {
             // Presentation/screenshot state: a shaped curve.
             bands = Presets.loudness
@@ -66,7 +86,9 @@ final class AppState {
 
     // Per-app mixer (Pro): independent volume / mute / output routing per app
     let mixer = MixerState()
-    private let mixerEngine = PerAppMixer()
+    // Internal (not private) so tests can drive `onChannelFailure` directly — see
+    // MixerTests.channelFailureResetsMixerState — the exact reconciliation path this closure guards.
+    let mixerEngine = PerAppMixer()
     var mixerEnabled = false
     var availableDevices: [AudioDevice] = []
     private var mixerDeviceListener: AudioObjectPropertyListenerBlock?

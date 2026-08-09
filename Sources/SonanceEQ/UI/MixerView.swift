@@ -10,6 +10,12 @@ struct MixerView: View {
             header
             Divider()
             content
+            if let message = app.errorMessage {
+                Divider()
+                ErrorBanner(message: message)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+            }
             Divider()
             footer
         }
@@ -50,7 +56,8 @@ struct MixerView: View {
         let channel = app.mixer.channel(audioApp.bundleID, name: audioApp.name)
         return VStack(spacing: 6) {
             HStack(spacing: 8) {
-                Text(audioApp.name).frame(width: 120, alignment: .leading).lineLimit(1)
+                AudioAppIconView(audioApp: audioApp)
+                Text(audioApp.name).frame(width: 104, alignment: .leading).lineLimit(1)
                 Button { app.setAppMuted(!channel.muted, audioApp) } label: {
                     Image(systemName: channel.muted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                         .foregroundStyle(channel.muted ? .red : .primary)
@@ -63,7 +70,7 @@ struct MixerView: View {
             }
             HStack(spacing: 8) {
                 Text("Output").font(.caption2).foregroundStyle(.secondary)
-                    .frame(width: 120, alignment: .leading)
+                    .frame(width: 128, alignment: .leading)
                 Menu(outputLabel(channel)) {
                     Button("Default Output") { app.setAppOutput(nil, audioApp) }
                     if !app.availableDevices.isEmpty { Divider() }
