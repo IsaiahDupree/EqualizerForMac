@@ -9,8 +9,6 @@ struct ContentView: View {
     #if DEBUG
     @State private var showingAnalytics = false
     #endif
-    @State private var errorDismissalTime: Date?
-
     /// Present the paywall and record the impression (top of the conversion funnel).
     private func presentPaywall() {
         app.license.paywallShown()
