@@ -9,6 +9,7 @@ struct ContentView: View {
     #if DEBUG
     @State private var showingAnalytics = false
     #endif
+    @State private var errorDismissalTime: Date?
 
     /// Present the paywall and record the impression (top of the conversion funnel).
     private func presentPaywall() {
@@ -32,11 +33,19 @@ struct ContentView: View {
             preampRow
             phaseRow
             if let message = app.errorMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button { app.errorMessage = nil } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Dismiss error")
+                }
             }
             Divider()
             footer
@@ -76,16 +85,19 @@ struct ContentView: View {
                     .foregroundStyle(app.isRunning ? .green : .secondary)
                     .lineLimit(1)
             }
+            .accessibilityElement(children: .combine)
             Spacer()
             if app.license.isPro {
                 Text("PRO").font(.caption2.bold())
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(.tint.opacity(0.2), in: Capsule())
+                    .accessibilityLabel("Pro version")
             } else {
                 Button { presentPaywall() } label: {
                     Label("Unlock Pro", systemImage: "lock.fill")
                 }
                 .controlSize(.small)
+                .accessibilityLabel("Unlock Sonance EQ Pro")
             }
             Toggle("Bypass", isOn: Binding(
                 get: { app.bypassed },
@@ -94,9 +106,11 @@ struct ContentView: View {
             .toggleStyle(.switch)
             .disabled(!app.isRunning)
             .help("Pass audio through unprocessed for an A/B comparison")
+            .accessibilityLabel(app.bypassed ? "Bypass enabled" : "Bypass disabled")
             Button(app.isRunning ? "Stop" : "Start EQ") { app.toggle() }
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
+                .accessibilityLabel(app.isRunning ? "Stop the equalizer" : "Start the equalizer")
         }
     }
 
@@ -125,7 +139,9 @@ struct ContentView: View {
     private var targetRow: some View {
         HStack(spacing: 8) {
             Image(systemName: "app.badge").foregroundStyle(.secondary)
+                .accessibilityLabel("Equalization target")
             Text("Equalize").font(.caption).foregroundStyle(.secondary)
+                .help("Choose which app(s) to apply the EQ to")
             if app.license.canUse(.perAppEQ) {
                 Menu {
                     Button { app.setAllApps() } label: {
@@ -176,6 +192,7 @@ struct ContentView: View {
             ForEach(Presets.all) { preset in
                 Button(preset.name) { app.apply(preset.bands) }
                     .controlSize(.small)
+                    .accessibilityLabel("Apply \(preset.name) preset")
             }
             Spacer()
             Button {
@@ -184,6 +201,7 @@ struct ContentView: View {
                 Label("Headphones", systemImage: app.license.canUse(.autoEqLibrary) ? "headphones" : "lock.fill")
             }
             .controlSize(.small)
+            .accessibilityLabel("Browse headphone profiles")
         }
     }
 
@@ -255,11 +273,13 @@ struct ContentView: View {
                 Text(String(format: "+%.0f ms latency", app.latencyMs))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .help("Approximate latency added by linear-phase processing")
             }
             Spacer()
             Text("System-wide · driverless")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
+                .help("Equalizes all apps without installing drivers")
         }
     }
 
@@ -269,10 +289,16 @@ struct ContentView: View {
         HStack {
             Button("Reset") { app.resetFlat() }
                 .controlSize(.small)
+                .keyboardShortcut("r", modifiers: .command)
+                .help("Reset to flat (Cmd+R)")
             Button("Import…") { requirePro(.importExport) { app.importPreset() } }
                 .controlSize(.small)
+                .keyboardShortcut("i", modifiers: .command)
+                .help("Import a preset file (Cmd+I)")
             Button("Export…") { requirePro(.importExport) { app.exportCurrentPreset() } }
                 .controlSize(.small)
+                .keyboardShortcut("e", modifiers: .command)
+                .help("Export the current preset (Cmd+E)")
             Spacer()
             #if DEBUG
             Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
