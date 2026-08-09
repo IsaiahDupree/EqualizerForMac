@@ -25,7 +25,9 @@ struct RecorderView: View {
                 Text("Capture what's playing to a file").font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Done") { dismiss() }.keyboardShortcut(.cancelAction)
+            Button("Done") { dismiss() }
+                .keyboardShortcut(.cancelAction)
+                .accessibilityLabel("Close recorder")
         }
         .padding(12)
     }
@@ -44,15 +46,21 @@ struct RecorderView: View {
                 }
                 .buttonStyle(.plain)
                 .help(app.isRecording ? "Stop recording" : "Choose a file and start recording")
+                .accessibilityLabel(app.isRecording ? "Stop recording" : "Start recording")
 
                 Text(timeString(app.recordingElapsed))
                     .font(.system(size: 22, weight: .medium, design: .monospaced))
                     .foregroundStyle(app.isRecording ? .primary : .secondary)
+                    .accessibilityLabel("Elapsed time")
+                    .accessibilityValue(timeString(app.recordingElapsed))
             }
 
             // Source + format (locked while recording).
             HStack(spacing: 12) {
-                Label("Source", systemImage: "speaker.wave.2").font(.caption).frame(width: 70, alignment: .leading)
+                Label("Source", systemImage: "speaker.wave.2")
+                    .font(.caption)
+                    .frame(width: 70, alignment: .leading)
+                    .accessibilityHidden(true)
                 Menu(app.recordTargetLabel) {
                     Button { app.setRecordAllApps() } label: {
                         Label("All Apps", systemImage: app.recordTarget.isAllApps ? "checkmark" : "")
@@ -67,11 +75,16 @@ struct RecorderView: View {
                     Button("Refresh list") { app.refreshApps() }
                 }
                 .fixedSize()
+                .accessibilityLabel("Recording source")
+                .accessibilityValue(app.recordTargetLabel)
             }
             .disabled(app.isRecording)
 
             HStack(spacing: 12) {
-                Label("Format", systemImage: "waveform").font(.caption).frame(width: 70, alignment: .leading)
+                Label("Format", systemImage: "waveform")
+                    .font(.caption)
+                    .frame(width: 70, alignment: .leading)
+                    .accessibilityHidden(true)
                 Picker("", selection: Binding(get: { app.recordingFormat },
                                               set: { app.recordingFormat = $0 })) {
                     ForEach(RecordingFormat.allCases) { fmt in
@@ -81,6 +94,8 @@ struct RecorderView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .fixedSize()
+                .accessibilityLabel("Recording format")
+                .accessibilityValue(app.recordingFormat.label)
             }
             .disabled(app.isRecording)
         }
@@ -93,6 +108,8 @@ struct RecorderView: View {
             if app.isRecording {
                 Label("Recording — playback is unaffected", systemImage: "dot.radiowaves.left.and.right")
                     .font(.caption2).foregroundStyle(.red)
+                    .accessibilityLabel("Recording in progress")
+                    .accessibilityValue("Recording — playback is unaffected")
             } else if app.lastRecordingURL != nil {
                 Button {
                     app.revealLastRecording()
@@ -100,9 +117,11 @@ struct RecorderView: View {
                     Label("Reveal last recording", systemImage: "folder")
                 }
                 .controlSize(.small)
+                .accessibilityLabel("Open last recording in Finder")
             } else {
                 Text("Saved where you choose · stays on your Mac")
                     .font(.caption2).foregroundStyle(.secondary)
+                    .accessibilityLabel("Recordings are saved locally on your Mac")
             }
             Spacer()
         }

@@ -126,6 +126,7 @@ struct ContentView: View {
         HStack(spacing: 8) {
             Image(systemName: "app.badge").foregroundStyle(.secondary)
             Text("Equalize").font(.caption).foregroundStyle(.secondary)
+                .accessibilityLabel("Select which apps to equalize")
             if app.license.canUse(.perAppEQ) {
                 Menu {
                     Button { app.setAllApps() } label: {
@@ -136,20 +137,32 @@ struct ContentView: View {
                         Button { app.toggleApp(audioApp.bundleID) } label: {
                             Label(audioApp.name, systemImage: app.isAppSelected(audioApp.bundleID) ? "checkmark" : "")
                         }
+                        .accessibilityLabel("Toggle \(audioApp.name) for equalization")
                     }
                     Divider()
                     Button("Refresh list") { app.refreshApps() }
+                        .accessibilityLabel("Refresh list of audio apps")
                 } label: {
-                    Text(app.targetLabel)
+                    if app.isRefreshingApps {
+                        HStack(spacing: 4) {
+                            ProgressView().scaleEffect(0.8, anchor: .center)
+                            Text(app.targetLabel)
+                        }
+                    } else {
+                        Text(app.targetLabel)
+                    }
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .onAppear { app.refreshApps() }
+                .accessibilityLabel("EQ target: \(app.targetLabel)")
+                .accessibilityHint("Choose which apps to apply equalization to")
             } else {
                 Button { presentPaywall() } label: {
                     Label("All Apps · per-app EQ is Pro", systemImage: "lock.fill")
                 }
                 .controlSize(.small)
+                .accessibilityLabel("Per-app EQ is a Pro feature")
             }
             Spacer()
             Button {
@@ -159,6 +172,8 @@ struct ContentView: View {
             }
             .controlSize(.small)
             .help("Independent volume and output device per app")
+            .keyboardShortcut("m")
+            .accessibilityLabel("Open App Mixer")
             Button {
                 requirePro(.audioRecorder) { showingRecorder = true }
             } label: {
@@ -166,6 +181,8 @@ struct ContentView: View {
             }
             .controlSize(.small)
             .help("Record system or per-app audio to a file")
+            .keyboardShortcut("r")
+            .accessibilityLabel("Open Audio Recorder")
         }
     }
 
@@ -176,6 +193,7 @@ struct ContentView: View {
             ForEach(Presets.all) { preset in
                 Button(preset.name) { app.apply(preset.bands) }
                     .controlSize(.small)
+                    .accessibilityLabel("Apply \(preset.name) preset")
             }
             Spacer()
             Button {
@@ -184,6 +202,10 @@ struct ContentView: View {
                 Label("Headphones", systemImage: app.license.canUse(.autoEqLibrary) ? "headphones" : "lock.fill")
             }
             .controlSize(.small)
+            .help("Browse 8,850+ AutoEq headphone presets")
+            .keyboardShortcut("h")
+            .accessibilityLabel("Browse Headphone Presets")
+            .accessibilityHint("Search and apply frequency-response corrections for your headphones")
         }
     }
 
@@ -192,13 +214,18 @@ struct ContentView: View {
     private var preampRow: some View {
         HStack(spacing: 12) {
             Text("Preamp").font(.caption).frame(width: 56, alignment: .leading)
+                .accessibilityLabel("Preamp gain control")
             Slider(
                 value: Binding(get: { app.preampDb }, set: { app.preampDb = $0; app.pushSettings() }),
                 in: -12...12
             )
+            .accessibilityLabel("Preamp gain")
+            .accessibilityValue(String(format: "%+.1f dB", app.preampDb))
+            .accessibilityHint("Adjust overall volume from -12 dB to +12 dB")
             Text(String(format: "%+.1f dB", app.preampDb))
                 .font(.system(size: 11, design: .monospaced))
                 .frame(width: 64, alignment: .trailing)
+                .accessibilityHidden(true)
         }
     }
 
@@ -215,8 +242,11 @@ struct ContentView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 130)
+                .accessibilityLabel("Edit channel")
+                .accessibilityValue(app.editTarget == .side ? "Side (stereo width)" : "Mid (center)")
                 Text("editing the \(app.editTarget == .side ? "Side (stereo width)" : "Mid (center)") channel")
                     .font(.caption2).foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
             Spacer()
             Toggle(isOn: Binding(get: { app.midSideEnabled },
@@ -226,6 +256,8 @@ struct ContentView: View {
             .toggleStyle(.switch)
             .controlSize(.small)
             .help("EQ the mono center and the stereo width with separate curves")
+            .accessibilityLabel("Mid-Side mode")
+            .accessibilityHint("Enable to separately equalize mono center and stereo width")
         }
     }
 
@@ -250,16 +282,21 @@ struct ContentView: View {
             .toggleStyle(.switch)
             .controlSize(.small)
             .help("Same EQ curve with zero phase distortion · adds a little latency")
+            .accessibilityLabel("Linear Phase mode")
+            .accessibilityValue(app.linearPhase ? "on, +\(Int(app.latencyMs)) ms latency" : "off")
+            .accessibilityHint("Enable for zero phase distortion at the cost of added latency")
 
             if app.linearPhase {
                 Text(String(format: "+%.0f ms latency", app.latencyMs))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
             Spacer()
             Text("System-wide · driverless")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
+                .accessibilityHidden(true)
         }
     }
 

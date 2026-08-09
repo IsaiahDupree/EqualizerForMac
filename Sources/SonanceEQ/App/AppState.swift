@@ -87,6 +87,9 @@ final class AppState {
     var showingAbout = false
     /// Name of the loaded headphone/AutoEq preset, if any (shown in the header).
     var activePresetName: String?
+    /// Loading state for app/device refresh operations.
+    var isRefreshingApps = false
+    var isRefreshingDevices = false
 
     private var sampleRate: Double { tap?.tapFormat?.mSampleRate ?? 48_000 }
 
@@ -249,7 +252,14 @@ final class AppState {
     // MARK: Per-app EQ
 
     /// Refresh the list of apps currently producing audio.
-    func refreshApps() { availableApps = AudioProcesses.runningOutputApps() }
+    func refreshApps() {
+        isRefreshingApps = true
+        Task {
+            availableApps = AudioProcesses.runningOutputApps()
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            isRefreshingApps = false
+        }
+    }
 
     /// Human-readable description of the current target (for the menu label).
     var targetLabel: String {
@@ -284,7 +294,14 @@ final class AppState {
 
     // MARK: Per-app mixer
 
-    func refreshDevices() { availableDevices = AudioDevices.outputDevices() }
+    func refreshDevices() {
+        isRefreshingDevices = true
+        Task {
+            availableDevices = AudioDevices.outputDevices()
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            isRefreshingDevices = false
+        }
+    }
 
     /// Turn the mixer on/off. Off tears down all per-app mixer taps and stops excluding them from the EQ.
     func setMixerEnabled(_ on: Bool) {
