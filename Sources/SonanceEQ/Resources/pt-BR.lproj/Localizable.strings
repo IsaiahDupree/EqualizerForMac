@@ -1,0 +1,65 @@
+/* Application UI Strings */
+"app.name" = "Sonance EQ";
+"app.title" = "Sonance EQ";
+"app.subtitle.active" = "Ativo";
+"app.subtitle.stopped" = "Parado";
+
+/* Header */
+"header.pro" = "PRO";
+"header.unlock" = "Desbloquear Pro";
+"header.bypass" = "Bypass";
+"header.bypass.help" = "Passar áudio não processado para comparação A/B";
+"header.start" = "Iniciar EQ";
+"header.stop" = "Parar";
+
+/* Permission Banner */
+"permission.banner.title" = "Permissão de captura de áudio é necessária para equalizar o áudio do sistema.";
+"permission.banner.button" = "Abrir Configurações";
+
+/* Target Row */
+"target.label" = "Equalizar";
+"target.allApps" = "Todos os Apps";
+"target.perAppEQ.locked" = "Todos os Apps · EQ por app é Pro";
+"target.mixer.help" = "Volume independente e dispositivo de saída por app";
+"target.recorder.help" = "Gravar áudio do sistema ou por app em um arquivo";
+"target.refresh" = "Atualizar lista";
+
+/* Buttons */
+"button.mixer" = "Mixer";
+"button.record" = "Gravar";
+"button.headphones" = "Fones";
+"button.close" = "Fechar";
+"button.about" = "Sobre Sonance EQ";
+
+/* Presets */
+"preset.flat" = "Plano";
+"preset.loudness" = "Volume";
+"preset.presence" = "Presença";
+"preset.punch" = "Punch";
+"preset.warmth" = "Calor";
+"preset.bright" = "Brilhante";
+
+/* EQ Controls */
+"control.preamp" = "Pré-amp";
+"control.stereo" = "Estéreo";
+"control.midSide" = "Meio-Lado";
+"control.linearPhase" = "Fase Linear";
+"control.stereo.help" = "Editar os canais estéreo (L/R)";
+"control.midSide.help" = "Editar os sinais mono e de diferença estéreo separadamente";
+
+/* About View */
+"about.version" = "Versão";
+"about.description" = "Um equalizador sem driver para macOS em nível de sistema.";
+"about.language" = "Idioma";
+"about.copyright" = "© 2026 Isaiah Dupree";
+"about.credit.headphones" = "Predefinições de fones";
+"about.credit.headphones.detail" = "AutoEq · Jaakko Pasanen (MIT)";
+"about.credit.purchases" = "Compras";
+"about.credit.purchases.detail" = "RevenueCat";
+"about.credit.icon" = "Ícone do app";
+"about.credit.icon.detail" = "Gerado com modelos de imagem do OpenAI";
+"about.credit.eqdesign" = "Design de EQ";
+"about.credit.eqdesign.detail" = "RBJ Audio EQ Cookbook · Apple Accelerate (vDSP)";
+
+/* Error Messages */
+"error.prefix" = "Erro";

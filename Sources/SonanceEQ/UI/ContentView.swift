@@ -64,7 +64,7 @@ struct ContentView: View {
     private var header: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Sonance EQ").font(.title2.bold())
+                Text("app.title", bundle: .main).font(.title2.bold())
                 Text(headerSubtitle)
                     .font(.caption)
                     .foregroundStyle(app.isRunning ? .green : .secondary)
@@ -72,23 +72,31 @@ struct ContentView: View {
             }
             Spacer()
             if app.license.isPro {
-                Text("PRO").font(.caption2.bold())
+                Text("header.pro", bundle: .main).font(.caption2.bold())
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(.tint.opacity(0.2), in: Capsule())
             } else {
                 Button { presentPaywall() } label: {
-                    Label("Unlock Pro", systemImage: "lock.fill")
+                    Label {
+                        Text("header.unlock", bundle: .main)
+                    } icon: {
+                        Image(systemName: "lock.fill")
+                    }
                 }
                 .controlSize(.small)
             }
-            Toggle("Bypass", isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { app.bypassed },
                 set: { app.bypassed = $0; app.pushSettings() }
-            ))
+            )) {
+                Text("header.bypass", bundle: .main)
+            }
             .toggleStyle(.switch)
             .disabled(!app.isRunning)
-            .help("Pass audio through unprocessed for an A/B comparison")
-            Button(app.isRunning ? "Stop" : "Start EQ") { app.toggle() }
+            .help("header.bypass.help")
+            Button { app.toggle() } label: {
+                Text(app.isRunning ? "header.stop" : "header.start", bundle: .main)
+            }
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
         }
@@ -105,10 +113,12 @@ struct ContentView: View {
     private var permissionBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
-            Text("Audio Capture permission is required to equalize system audio.")
+            Text("permission.banner.title", bundle: .main)
                 .font(.caption)
             Spacer()
-            Button("Open Settings") { app.openPrivacySettings() }
+            Button { app.openPrivacySettings() } label: {
+                Text("permission.banner.button", bundle: .main)
+            }
         }
         .padding(10)
         .background(.yellow.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
@@ -119,11 +129,15 @@ struct ContentView: View {
     private var targetRow: some View {
         HStack(spacing: 8) {
             Image(systemName: "app.badge").foregroundStyle(.secondary)
-            Text("Equalize").font(.caption).foregroundStyle(.secondary)
+            Text("target.label", bundle: .main).font(.caption).foregroundStyle(.secondary)
             if app.license.canUse(.perAppEQ) {
                 Menu {
                     Button { app.setAllApps() } label: {
-                        Label("All Apps", systemImage: app.eqTarget.isAllApps ? "checkmark" : "")
+                        Label {
+                            Text("target.allApps", bundle: .main)
+                        } icon: {
+                            Image(systemName: app.eqTarget.isAllApps ? "checkmark" : "")
+                        }
                     }
                     if !app.availableApps.isEmpty { Divider() }
                     ForEach(app.availableApps) { audioApp in
@@ -139,7 +153,9 @@ struct ContentView: View {
                         }
                     }
                     Divider()
-                    Button("Refresh list") { app.refreshApps() }
+                    Button { app.refreshApps() } label: {
+                        Text("target.refresh", bundle: .main)
+                    }
                 } label: {
                     Text(app.targetLabel)
                 }
@@ -148,7 +164,11 @@ struct ContentView: View {
                 .onAppear { app.refreshApps() }
             } else {
                 Button { presentPaywall() } label: {
-                    Label("All Apps · per-app EQ is Pro", systemImage: "lock.fill")
+                    Label {
+                        Text("target.perAppEQ.locked", bundle: .main)
+                    } icon: {
+                        Image(systemName: "lock.fill")
+                    }
                 }
                 .controlSize(.small)
             }
@@ -156,17 +176,25 @@ struct ContentView: View {
             Button {
                 requirePro(.perAppEQ) { showingMixer = true }
             } label: {
-                Label("Mixer", systemImage: app.license.canUse(.perAppEQ) ? "slider.vertical.3" : "lock.fill")
+                Label {
+                    Text("button.mixer", bundle: .main)
+                } icon: {
+                    Image(systemName: app.license.canUse(.perAppEQ) ? "slider.vertical.3" : "lock.fill")
+                }
             }
             .controlSize(.small)
-            .help("Independent volume and output device per app")
+            .help("target.mixer.help")
             Button {
                 requirePro(.audioRecorder) { showingRecorder = true }
             } label: {
-                Label("Record", systemImage: app.license.canUse(.audioRecorder) ? "record.circle" : "lock.fill")
+                Label {
+                    Text("button.record", bundle: .main)
+                } icon: {
+                    Image(systemName: app.license.canUse(.audioRecorder) ? "record.circle" : "lock.fill")
+                }
             }
             .controlSize(.small)
-            .help("Record system or per-app audio to a file")
+            .help("target.recorder.help")
         }
     }
 
@@ -182,7 +210,11 @@ struct ContentView: View {
             Button {
                 requirePro(.autoEqLibrary) { showingBrowser = true }
             } label: {
-                Label("Headphones", systemImage: app.license.canUse(.autoEqLibrary) ? "headphones" : "lock.fill")
+                Label {
+                    Text("button.headphones", bundle: .main)
+                } icon: {
+                    Image(systemName: app.license.canUse(.autoEqLibrary) ? "headphones" : "lock.fill")
+                }
             }
             .controlSize(.small)
         }
@@ -192,7 +224,7 @@ struct ContentView: View {
 
     private var preampRow: some View {
         HStack(spacing: 12) {
-            Text("Preamp").font(.caption).frame(width: 56, alignment: .leading)
+            Text("control.preamp", bundle: .main).font(.caption).frame(width: 56, alignment: .leading)
             Slider(
                 value: Binding(get: { app.preampDb }, set: { app.preampDb = $0; app.pushSettings() }),
                 in: -12...12
@@ -210,8 +242,8 @@ struct ContentView: View {
             if app.midSideEnabled {
                 Picker("", selection: Binding(get: { app.editTarget },
                                               set: { app.editTarget = $0 })) {
-                    Text("Mid").tag(AppState.ChannelTarget.mid)
-                    Text("Side").tag(AppState.ChannelTarget.side)
+                    Text("control.midSide", bundle: .main).tag(AppState.ChannelTarget.mid)
+                    Text("control.stereo", bundle: .main).tag(AppState.ChannelTarget.side)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -222,18 +254,18 @@ struct ContentView: View {
             Spacer()
             Toggle(isOn: Binding(get: { app.midSideEnabled },
                                  set: { if app.license.canUse(.parametricEQ) { app.setMidSide($0) } else { presentPaywall() } })) {
-                proLabel("Mid-Side", feature: .parametricEQ)
+                proLabel("control.midSide", feature: .parametricEQ)
             }
             .toggleStyle(.switch)
             .controlSize(.small)
-            .help("EQ the mono center and the stereo width with separate curves")
+            .help("control.midSide.help")
         }
     }
 
     /// A control label that shows a lock when its feature is gated.
-    private func proLabel(_ title: String, feature: ProFeature) -> some View {
+    private func proLabel(_ titleKey: LocalizedStringKey, feature: ProFeature) -> some View {
         HStack(spacing: 4) {
-            Text(title)
+            Text(titleKey)
             if !app.license.canUse(feature) {
                 Image(systemName: "lock.fill").font(.caption2).foregroundStyle(.secondary)
             }
@@ -246,7 +278,7 @@ struct ContentView: View {
         HStack(spacing: 8) {
             Toggle(isOn: Binding(get: { app.linearPhase },
                                  set: { if app.license.canUse(.parametricEQ) { app.linearPhase = $0; app.pushSettings() } else { presentPaywall() } })) {
-                proLabel("Linear Phase", feature: .parametricEQ)
+                proLabel("control.linearPhase", feature: .parametricEQ)
             }
             .toggleStyle(.switch)
             .controlSize(.small)

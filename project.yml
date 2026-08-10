@@ -36,6 +36,11 @@ targets:
       - path: Sources/SonanceEQ
         excludes:
           - "**/*.entitlements"
+    resources:
+      - path: Sources/SonanceEQ/Resources
+        includes:
+          - "*.strings"
+          - "**/*.lproj"
     dependencies:
       - package: RevenueCat
         product: RevenueCat

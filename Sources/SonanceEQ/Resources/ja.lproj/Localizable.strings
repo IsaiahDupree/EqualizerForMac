@@ -1,0 +1,65 @@
+/* Application UI Strings */
+"app.name" = "Sonance EQ";
+"app.title" = "Sonance EQ";
+"app.subtitle.active" = "動作中";
+"app.subtitle.stopped" = "停止中";
+
+/* Header */
+"header.pro" = "PRO";
+"header.unlock" = "Proをアンロック";
+"header.bypass" = "バイパス";
+"header.bypass.help" = "A/B比較用に未処理のオーディオをパスする";
+"header.start" = "EQを開始";
+"header.stop" = "停止";
+
+/* Permission Banner */
+"permission.banner.title" = "システムオーディオをイコライズするにはオーディオキャプチャの許可が必要です。";
+"permission.banner.button" = "設定を開く";
+
+/* Target Row */
+"target.label" = "イコライズ";
+"target.allApps" = "すべてのアプリ";
+"target.perAppEQ.locked" = "すべてのアプリ · アプリごとのEQはPro";
+"target.mixer.help" = "アプリごとに独立したボリュームと出力デバイス";
+"target.recorder.help" = "システムまたはアプリごとのオーディオをファイルに記録";
+"target.refresh" = "リストを更新";
+
+/* Buttons */
+"button.mixer" = "ミキサー";
+"button.record" = "録音";
+"button.headphones" = "ヘッドフォン";
+"button.close" = "閉じる";
+"button.about" = "Sonance EQについて";
+
+/* Presets */
+"preset.flat" = "フラット";
+"preset.loudness" = "ラウドネス";
+"preset.presence" = "プレゼンス";
+"preset.punch" = "パンチ";
+"preset.warmth" = "ウォーム";
+"preset.bright" = "ブライト";
+
+/* EQ Controls */
+"control.preamp" = "プリアンプ";
+"control.stereo" = "ステレオ";
+"control.midSide" = "ミッド-サイド";
+"control.linearPhase" = "線形位相";
+"control.stereo.help" = "ステレオ(L/R)チャンネルを編集";
+"control.midSide.help" = "モノラルとステレオ差信号を個別に編集";
+
+/* About View */
+"about.version" = "バージョン";
+"about.description" = "macOS用のシステム全体のドライバレスイコライザー。";
+"about.language" = "言語";
+"about.copyright" = "© 2026 Isaiah Dupree";
+"about.credit.headphones" = "ヘッドフォンプリセット";
+"about.credit.headphones.detail" = "AutoEq · Jaakko Pasanen (MIT)";
+"about.credit.purchases" = "購入";
+"about.credit.purchases.detail" = "RevenueCat";
+"about.credit.icon" = "アプリアイコン";
+"about.credit.icon.detail" = "OpenAIの画像モデルで生成";
+"about.credit.eqdesign" = "EQデザイン";
+"about.credit.eqdesign.detail" = "RBJ Audio EQ Cookbook · Apple Accelerate (vDSP)";
+
+/* Error Messages */
+"error.prefix" = "エラー";
