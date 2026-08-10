@@ -11,6 +11,8 @@ final class AppState {
     let permission = AudioRecordingPermission()
     let license = PurchaseManager()
     let review = ReviewPrompter()
+    let onboarding = OnboardingState()
+    let userPresets = UserPresetStore()
 
     private var tap: SystemAudioTap?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
@@ -230,6 +232,27 @@ final class AppState {
         activeBands = Presets.flat
         pushSettings()
     }
+
+    // MARK: User presets
+
+    /// Save the Mid chain + preamp under `name` as a reusable local preset. (User presets always
+    /// capture the Mid chain — Mid-Side users can still export/import the Side chain separately.)
+    @discardableResult
+    func saveCurrentAsPreset(name: String) -> UserPreset? {
+        let preset = userPresets.save(name: name, preampDb: preampDb, bands: bands)
+        if preset != nil { review.positiveAction() }
+        return preset
+    }
+
+    func applyUserPreset(_ preset: UserPreset) {
+        bands = preset.bands
+        preampDb = preset.preampDb
+        activePresetName = preset.name
+        pushSettings()
+        review.positiveAction()
+    }
+
+    func deleteUserPreset(_ id: UUID) { userPresets.delete(id) }
 
     // MARK: Import / Export
     // Dev builds use AppKit panels directly (not sandboxed). The Mac App Store build will swap these

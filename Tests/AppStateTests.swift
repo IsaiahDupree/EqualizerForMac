@@ -86,4 +86,30 @@ import Testing
         #expect(app.bands.count == 10)
         #expect(app.bands[0].gain > 0)
     }
+
+    @Test func savingCurrentAsPresetRoundTrips() {
+        let app = AppState()
+        let name = "Test Preset \(UUID().uuidString)"
+        app.bands[0].gain = 4
+        app.preampDb = -3
+        let saved = app.saveCurrentAsPreset(name: name)
+        defer { if let saved { app.deleteUserPreset(saved.id) } }
+        #expect(saved != nil)
+        #expect(app.userPresets.presets.contains { $0.name == name })
+
+        app.resetFlat()
+        app.preampDb = 0
+        app.applyUserPreset(saved!)
+        #expect(app.bands[0].gain == 4)
+        #expect(app.preampDb == -3)
+        #expect(app.activePresetName == name)
+    }
+
+    @Test func deletingUserPresetRemovesIt() {
+        let app = AppState()
+        let name = "Delete Me \(UUID().uuidString)"
+        let saved = app.saveCurrentAsPreset(name: name)!
+        app.deleteUserPreset(saved.id)
+        #expect(!app.userPresets.presets.contains { $0.id == saved.id })
+    }
 }

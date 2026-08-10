@@ -128,6 +128,8 @@ struct ResponseCurveView: View {
                     Image(systemName: "trash")
                 }
                 .buttonStyle(.borderless)
+                .help("Remove this band")
+                .accessibilityLabel("Remove band")
             }
             .frame(height: 22)
         } else {

@@ -7,6 +7,8 @@ struct ContentView: View {
     @State private var showingMixer = false
     @State private var showingRecorder = false
     @State private var showingAnalytics = false
+    @State private var showingSavePreset = false
+    @State private var newPresetName = ""
 
     /// Present the paywall and record the impression (top of the conversion funnel).
     private func presentPaywall() {
@@ -43,7 +45,25 @@ struct ContentView: View {
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
         .sheet(isPresented: $app.showingAbout) { AboutView() }
         .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
+        .sheet(isPresented: welcomeBinding) { WelcomeView(app: app) }
+        .alert("Save Preset", isPresented: $showingSavePreset) {
+            TextField("Preset name", text: $newPresetName)
+            Button("Cancel", role: .cancel) { newPresetName = "" }
+            Button("Save") {
+                app.saveCurrentAsPreset(name: newPresetName)
+                newPresetName = ""
+            }
+            .disabled(newPresetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("Saves the current curve and preamp so you can recall it later.")
+        }
         .onAppear(perform: openLaunchArgPanel)
+    }
+
+    /// First-run welcome sheet. Dismissing any way (button or clicking outside) marks it complete.
+    private var welcomeBinding: Binding<Bool> {
+        Binding(get: { !app.onboarding.hasCompleted },
+                set: { isPresented in if !isPresented { app.onboarding.complete() } })
     }
 
     /// Auto-present a panel from a launch argument (`--screen mixer|recorder`) for demos/screenshots.
@@ -178,6 +198,26 @@ struct ContentView: View {
                 Button(preset.name) { app.apply(preset.bands) }
                     .controlSize(.small)
             }
+            Menu {
+                if app.userPresets.presets.isEmpty {
+                    Text("No saved presets yet").foregroundStyle(.secondary)
+                } else {
+                    ForEach(app.userPresets.presets) { preset in
+                        Menu(preset.name) {
+                            Button("Apply") { app.applyUserPreset(preset) }
+                            Button("Delete", role: .destructive) { app.deleteUserPreset(preset.id) }
+                        }
+                    }
+                }
+                Divider()
+                Button("Save Current…") { newPresetName = ""; showingSavePreset = true }
+            } label: {
+                Label("My Presets", systemImage: "folder")
+            }
+            .controlSize(.small)
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("Your saved custom presets")
             Spacer()
             Button {
                 requirePro(.autoEqLibrary) { showingBrowser = true }
@@ -278,9 +318,11 @@ struct ContentView: View {
             Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
                 .buttonStyle(.borderless)
                 .help("Purchase & diagnostics log — useful when reporting a problem")
+                .accessibilityLabel("Purchase & diagnostics log")
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
                 .buttonStyle(.borderless)
                 .help("About Sonance EQ")
+                .accessibilityLabel("About Sonance EQ")
         }
     }
 }
