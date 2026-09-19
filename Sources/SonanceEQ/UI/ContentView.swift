@@ -278,6 +278,8 @@ struct ContentView: View {
             Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
                 .buttonStyle(.borderless)
                 .help("Purchase & diagnostics log — useful when reporting a problem")
+            SonanceSuiteMenu(current: .eq)
+                .controlSize(.small)
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
                 .buttonStyle(.borderless)
                 .help("About Sonance EQ")
