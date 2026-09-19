@@ -1,0 +1,9 @@
+{
+  "bundle_id": "com.isaiahdupree.SonanceEQ",
+  "name": "Sonance EQ",
+  "platform": "macos",
+  "configuration": "Release-MAS",
+  "profile_name": "Sonance EQ MAS",
+  "version": "1.0.5",
+  "build_number": "7"
+}
