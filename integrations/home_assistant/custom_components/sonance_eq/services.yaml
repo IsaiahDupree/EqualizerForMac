@@ -1,0 +1,83 @@
+sync_presets:
+  name: Sync Sonance presets
+  description: Creates or updates the Sonance EQ DSP preset library in Music Assistant.
+  fields:
+    config_entry_id:
+      name: Sonance connection
+      description: Required only when more than one Music Assistant server is configured.
+      selector:
+        config_entry:
+          integration: sonance_eq
+apply_preset:
+  name: Apply Sonance preset
+  description: Applies a Sonance EQ curve to a Music Assistant player.
+  fields:
+    entity_id:
+      name: Player
+      required: true
+      selector:
+        entity:
+          domain: media_player
+          integration: mass
+    preset:
+      name: Preset
+      required: true
+      selector:
+        select:
+          options:
+            - Flat
+            - Bass Boost
+            - Treble
+            - Vocal
+            - Loudness
+            - Warm Room
+            - Night
+            - Small Speaker
+            - Cinema
+    config_entry_id:
+      name: Sonance connection
+      selector:
+        config_entry:
+          integration: sonance_eq
+
+send_to_device:
+  name: Send to device
+  description: Optionally applies a Sonance preset, then starts media on a Home Assistant player.
+  fields:
+    entity_id:
+      name: Player
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    media_id:
+      name: Media URL or ID
+      description: An HTTP media URL, media-source URI, or Music Assistant provider URL/URI.
+      required: true
+      selector:
+        text:
+    media_type:
+      name: Media type
+      default: music
+      selector:
+        text:
+    preset:
+      name: EQ preset
+      description: EQ is available only when the selected player comes from Music Assistant.
+      selector:
+        select:
+          options:
+            - Flat
+            - Bass Boost
+            - Treble
+            - Vocal
+            - Loudness
+            - Warm Room
+            - Night
+            - Small Speaker
+            - Cinema
+    config_entry_id:
+      name: Sonance connection
+      selector:
+        config_entry:
+          integration: sonance_eq

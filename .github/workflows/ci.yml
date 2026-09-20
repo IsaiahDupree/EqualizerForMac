@@ -7,6 +7,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  home-assistant:
+    name: Home Assistant integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install integration test tools
+        run: python -m pip install aiohttp pytest ruff
+
+      - name: Lint and test the local Music Assistant client
+        run: |
+          ruff check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests
+          ruff format --check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests
+          python -m pytest integrations/home_assistant/tests -q
+          node --check integrations/home_assistant/www/sonance-home-card.js
+
   test:
     name: Build & Test (macOS)
     runs-on: macos-15   # Xcode 16 (Swift Testing); the app only uses macOS 14.4-era Core Audio APIs

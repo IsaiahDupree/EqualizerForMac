@@ -1,0 +1,23 @@
+{
+  "title": "Sonance EQ",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Sonance EQ to Music Assistant",
+        "description": "Use a local Music Assistant URL and an access token with player DSP read/write permission.",
+        "data": {
+          "url": "Music Assistant URL",
+          "token": "Music Assistant access token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to Music Assistant",
+      "invalid_auth": "The token is invalid or lacks DSP permissions",
+      "unsupported_version": "Music Assistant 2.10.1 or newer is required for Sonance DSP presets"
+    },
+    "abort": {
+      "already_configured": "This Music Assistant server is already configured"
+    }
+  }
+}
