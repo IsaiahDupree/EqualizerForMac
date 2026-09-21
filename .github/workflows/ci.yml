@@ -7,6 +7,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  smartthings:
+    name: SmartThings Edge driver
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/smartthings/sonance-powerzone
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install Lua test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.3 lua-socket luarocks
+          sudo luarocks --lua-version 5.3 install luacheck
+
+      - name: Test, lint, and package the Edge driver
+        run: |
+          npm test
+          npm run lint
+          npm run build
+
   homey:
     name: Homey Pro app
     runs-on: ubuntu-latest

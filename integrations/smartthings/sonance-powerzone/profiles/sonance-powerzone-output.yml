@@ -1,0 +1,69 @@
+name: sonance-powerzone-output
+components:
+  - id: main
+    label: Flat
+    capabilities:
+      - id: momentary
+        version: 1
+      - id: audioTrackData
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Speaker
+  - id: bassBoost
+    label: Bass Boost
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: treble
+    label: Treble
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: vocal
+    label: Vocal
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: loudness
+    label: Loudness
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: warmRoom
+    label: Warm Room
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: night
+    label: Night
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: smallSpeaker
+    label: Small Speaker
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker
+  - id: cinema
+    label: Cinema
+    capabilities:
+      - id: momentary
+        version: 1
+    categories:
+      - name: Speaker

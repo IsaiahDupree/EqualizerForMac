@@ -1,0 +1,7 @@
+name: Sonance PowerZone EQ
+packageKey: sonance-powerzone-eq
+permissions:
+  lan: {}
+  discovery: {}
+description: Local Sonance EQ preset control for PowerZone amplifier outputs
+vendorSupportInformation: https://github.com/IsaiahDupree/EqualizerForMac/issues

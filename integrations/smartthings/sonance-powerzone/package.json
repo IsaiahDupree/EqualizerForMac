@@ -1,0 +1,12 @@
+{
+  "name": "sonance-powerzone-smartthings-edge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local SmartThings Edge driver for Sonance PowerZone EQ",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "luacheck src test/*.lua",
+    "build": "npx --yes @smartthings/cli@2.1.2 edge:drivers:package --build-only /tmp/sonance-powerzone-edge.zip ."
+  },
+  "license": "MIT"
+}

@@ -12,7 +12,8 @@ uses a layered contract:
   through Music Assistant.
 - **Hardware DSP:** Sonance PowerZone output EQ applies downstream of every source, including direct
   Cast, AirPlay, Spotify Connect, HDMI/TV, analog, and Dante paths wired through that amplifier.
-- **Native control:** Homey Pro discovers PowerZone over mDNS and writes the physical output EQ directly.
+- **Native control:** Homey Pro and SmartThings hubs discover PowerZone over mDNS and write the physical
+  output EQ directly.
 - **Control bridge:** other hubs call a Home Assistant script/action over their supported local or
   cloud bridge. This exposes preset selection and playback but does not invent DSP inside a speaker.
 
@@ -24,7 +25,7 @@ uses a layered contract:
 | Google Home / Assistant | Expose generated HA PowerZone selects, scripts, scenes, or media players; use Google Cast/MA for audio | Voice/control; full DSP only in MA or downstream PowerZone | Supported. Google Home speaker bass/treble remains separate from Sonance EQ. |
 | Apple Home / Siri | HA HomeKit Bridge exposes scripts/scenes as switches and generated PowerZone selects as option controls; AirPlay through MA | Voice/control; stream DSP through MA; hardware DSP downstream | Supported through HA bridge. AirPlay itself does not standardize PEQ. |
 | Amazon Alexa / Echo | Expose HA scripts/scenes; commercial speaker makers may use Alexa Music/Connected Speaker APIs | Voice/control; Echo playback is not an open generic DSP endpoint | Control supported. Native speaker/product integration is partner/certification work, not a LAN API promise. |
-| Samsung SmartThings | Cloud, LAN, Matter, Zigbee, or Z-Wave device integration; call HA REST/script bridge | Control bridge | Supported architecture; a dedicated SmartThings capability/Edge driver is a packaging project. |
+| Samsung SmartThings | Native local Edge driver with mDNS discovery, one speaker device per PowerZone output, nine standard momentary preset actions, current-state reporting, and refresh; HA bridge remains optional | Native PowerZone DSP control | Implemented in [`integrations/smartthings`](../smartthings/README.md). Uses standard capabilities, so no custom namespace or public cloud relay is required. |
 | Homey Pro | Native SDK v3 app, `_pasconnect._tcp` discovery, per-output preset picker, and Advanced Flow action; HA bridge remains optional | Native PowerZone DSP control | Implemented in [`integrations/homey`](../homey/README.md). Local-only by design because Homey Cloud cannot access LAN mDNS. |
 | openHAB | Binding/Thing/Channel, REST action, or MQTT bridge | Control bridge | Supported without changing DSP core. |
 | Node-RED | HA nodes, authenticated REST calls, or MQTT | Automation bridge | Supported now through HA actions. |

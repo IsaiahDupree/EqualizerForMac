@@ -123,7 +123,9 @@ applied through either a selector or `apply_powerzone_preset` immediately synchr
   each voice phrase and call `select.select_option`; expose those scripts/scenes instead.
 - Homey Pro can use the native [`com.isaiahdupree.sonanceeq`](../homey/com.isaiahdupree.sonanceeq/README.md)
   app for direct mDNS discovery, one preset picker per physical output, and an Advanced Flow action.
-- SmartThings, openHAB, Hubitat, ioBroker, Node-RED, and Homey installations using HA as their control
+- SmartThings hubs can use the native local [Edge driver](../smartthings/sonance-powerzone/README.md) for
+  per-output preset actions and Automations without a cloud relay.
+- openHAB, Hubitat, ioBroker, Node-RED, and Homey or SmartThings installations using HA as their control
   plane can call the same standard entity action through Home Assistant's authenticated REST/WebSocket
   interfaces without knowing the amplifier protocol.
 - Dealer systems should continue using Sonance's official native driver when it already owns PowerZone
