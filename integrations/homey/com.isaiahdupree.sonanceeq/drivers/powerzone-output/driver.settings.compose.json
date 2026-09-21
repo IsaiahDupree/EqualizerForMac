@@ -1,0 +1,25 @@
+[
+  {
+    "id": "host",
+    "type": "text",
+    "label": {
+      "en": "PowerZone host"
+    },
+    "hint": {
+      "en": "Private LAN hostname or address. Public targets are rejected."
+    },
+    "value": "powerzone.local"
+  },
+  {
+    "id": "port",
+    "type": "number",
+    "label": {
+      "en": "Installer API port"
+    },
+    "value": 7621,
+    "attr": {
+      "min": 1,
+      "max": 65535
+    }
+  }
+]

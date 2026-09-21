@@ -1,0 +1,19 @@
+{
+  "type": "mdns-sd",
+  "mdns-sd": {
+    "name": "pasconnect",
+    "protocol": "tcp"
+  },
+  "id": "{{name}}",
+  "conditions": [
+    [
+      {
+        "field": "txt.api_version",
+        "match": {
+          "type": "regex",
+          "value": "^.+$"
+        }
+      }
+    ]
+  ]
+}

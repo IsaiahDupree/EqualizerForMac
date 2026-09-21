@@ -1,0 +1,21 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "EQ preset"
+  },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "icon": "/assets/icons/equalizer.svg",
+  "values": [
+    { "id": "flat", "title": { "en": "Flat" } },
+    { "id": "bass_boost", "title": { "en": "Bass Boost" } },
+    { "id": "treble", "title": { "en": "Treble" } },
+    { "id": "vocal", "title": { "en": "Vocal" } },
+    { "id": "loudness", "title": { "en": "Loudness" } },
+    { "id": "warm_room", "title": { "en": "Warm Room" } },
+    { "id": "night", "title": { "en": "Night" } },
+    { "id": "small_speaker", "title": { "en": "Small Speaker" } },
+    { "id": "cinema", "title": { "en": "Cinema" } }
+  ]
+}

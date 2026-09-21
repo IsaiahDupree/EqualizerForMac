@@ -7,6 +7,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  homey:
+    name: Homey Pro app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/homey/com.isaiahdupree.sonanceeq
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: integrations/homey/com.isaiahdupree.sonanceeq/package-lock.json
+
+      - name: Install Homey tooling
+        run: npm ci
+
+      - name: Test and validate the native app
+        run: |
+          npm test
+          npm run validate
+
   home-assistant:
     name: Home Assistant integration
     runs-on: ubuntu-latest

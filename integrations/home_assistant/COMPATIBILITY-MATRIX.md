@@ -12,6 +12,7 @@ uses a layered contract:
   through Music Assistant.
 - **Hardware DSP:** Sonance PowerZone output EQ applies downstream of every source, including direct
   Cast, AirPlay, Spotify Connect, HDMI/TV, analog, and Dante paths wired through that amplifier.
+- **Native control:** Homey Pro discovers PowerZone over mDNS and writes the physical output EQ directly.
 - **Control bridge:** other hubs call a Home Assistant script/action over their supported local or
   cloud bridge. This exposes preset selection and playback but does not invent DSP inside a speaker.
 
@@ -24,7 +25,7 @@ uses a layered contract:
 | Apple Home / Siri | HA HomeKit Bridge exposes scripts/scenes as switches and generated PowerZone selects as option controls; AirPlay through MA | Voice/control; stream DSP through MA; hardware DSP downstream | Supported through HA bridge. AirPlay itself does not standardize PEQ. |
 | Amazon Alexa / Echo | Expose HA scripts/scenes; commercial speaker makers may use Alexa Music/Connected Speaker APIs | Voice/control; Echo playback is not an open generic DSP endpoint | Control supported. Native speaker/product integration is partner/certification work, not a LAN API promise. |
 | Samsung SmartThings | Cloud, LAN, Matter, Zigbee, or Z-Wave device integration; call HA REST/script bridge | Control bridge | Supported architecture; a dedicated SmartThings capability/Edge driver is a packaging project. |
-| Homey | Homey app custom capabilities + Flow cards or HA bridge | Control bridge | Supported architecture; dedicated app can model preset as an enum and Apply/Send as Flow actions. |
+| Homey Pro | Native SDK v3 app, `_pasconnect._tcp` discovery, per-output preset picker, and Advanced Flow action; HA bridge remains optional | Native PowerZone DSP control | Implemented in [`integrations/homey`](../homey/README.md). Local-only by design because Homey Cloud cannot access LAN mDNS. |
 | openHAB | Binding/Thing/Channel, REST action, or MQTT bridge | Control bridge | Supported without changing DSP core. |
 | Node-RED | HA nodes, authenticated REST calls, or MQTT | Automation bridge | Supported now through HA actions. |
 | Hubitat / ioBroker | Authenticated HA REST or MQTT bridge | Control bridge | Protocol-compatible path; not claimed as a certified native app yet. |
@@ -40,7 +41,8 @@ Evidence:
 - [SmartThings device integration types](https://developer.smartthings.com/docs/devices/device-basics)
   include Matter, Thread, Wi-Fi/Ethernet, Zigbee, Z-Wave, LAN, cloud, direct, and mobile devices.
 - [Homey device capabilities](https://apps.developer.homey.app/the-basics/devices/capabilities)
-  support system/custom capabilities, media UI, and Flow integration.
+  support custom enum pickers and Flow integration; [Homey discovery](https://apps.developer.homey.app/wireless/wi-fi/discovery)
+  documents mDNS-SD and the Homey Pro-only LAN boundary.
 - [openHAB bindings](https://www.openhab.org/docs/developer/bindings/) expose Things, Channels, bidirectional
   handlers, rule actions, REST availability, and mDNS discovery; its
   [REST API](https://www.openhab.org/docs/configuration/restdocs) can invoke actions.

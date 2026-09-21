@@ -1,0 +1,16 @@
+{
+  "name": "com.isaiahdupree.sonanceeq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native Homey Pro integration for Sonance PowerZone output EQ",
+  "main": "app.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "validate": "homey app validate"
+  },
+  "author": "Isaiah Dupree",
+  "license": "MIT",
+  "devDependencies": {
+    "homey": "4.5.0"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "title": {
+    "en": "Set EQ preset"
+  },
+  "titleFormatted": {
+    "en": "Set EQ preset to [[preset]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=powerzone-output"
+    },
+    {
+      "type": "dropdown",
+      "name": "preset",
+      "title": {
+        "en": "Preset"
+      },
+      "values": [
+        { "id": "flat", "title": { "en": "Flat" } },
+        { "id": "bass_boost", "title": { "en": "Bass Boost" } },
+        { "id": "treble", "title": { "en": "Treble" } },
+        { "id": "vocal", "title": { "en": "Vocal" } },
+        { "id": "loudness", "title": { "en": "Loudness" } },
+        { "id": "warm_room", "title": { "en": "Warm Room" } },
+        { "id": "night", "title": { "en": "Night" } },
+        { "id": "small_speaker", "title": { "en": "Small Speaker" } },
+        { "id": "cinema", "title": { "en": "Cinema" } }
+      ]
+    }
+  ]
+}

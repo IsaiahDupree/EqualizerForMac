@@ -1,0 +1,33 @@
+{
+  "id": "com.isaiahdupree.sonanceeq",
+  "version": "0.1.0",
+  "compatibility": ">=12.0.1",
+  "runtime": "nodejs",
+  "platforms": ["local"],
+  "sdk": 3,
+  "brandColor": "#4D5CFF",
+  "name": {
+    "en": "Sonance EQ"
+  },
+  "description": {
+    "en": "Control safe EQ presets on Sonance PowerZone amplifier outputs."
+  },
+  "category": "music",
+  "tags": {
+    "en": ["Sonance", "PowerZone", "equalizer", "audio", "DSP"]
+  },
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "permissions": [],
+  "author": {
+    "name": "Isaiah Dupree"
+  },
+  "source": "https://github.com/IsaiahDupree/EqualizerForMac",
+  "support": "https://github.com/IsaiahDupree/EqualizerForMac/issues",
+  "bugs": {
+    "url": "https://github.com/IsaiahDupree/EqualizerForMac/issues"
+  }
+}

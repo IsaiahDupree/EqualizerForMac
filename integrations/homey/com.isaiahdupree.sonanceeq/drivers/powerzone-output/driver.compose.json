@@ -1,0 +1,27 @@
+{
+  "name": {
+    "en": "PowerZone output"
+  },
+  "class": "speaker",
+  "connectivity": ["lan"],
+  "capabilities": ["sonance_eq_preset"],
+  "icon": "{{driverAssetsPath}}/icon.svg",
+  "images": {
+    "small": "{{driverAssetsPath}}/images/small.png",
+    "large": "{{driverAssetsPath}}/images/large.png",
+    "xlarge": "{{driverAssetsPath}}/images/xlarge.png"
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ]
+}
