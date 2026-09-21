@@ -10,6 +10,13 @@ CONF_HOST = "host"
 CONF_PORT = "port"
 CONF_ENTRY_ID = "config_entry_id"
 
+CONF_API_VERSION = "api_version"
+CONF_FIRMWARE = "firmware"
+CONF_HARDWARE_ID = "hardware_id"
+CONF_MANUFACTURER = "manufacturer"
+CONF_MODEL = "model"
+CONF_SERIAL = "serial"
+
 BACKEND_HOME_ASSISTANT = "home_assistant"
 BACKEND_MUSIC_ASSISTANT = "music_assistant"
 BACKEND_POWERZONE = "powerzone"

@@ -17,6 +17,8 @@ The ecosystem research and product-by-product capability matrix live in
 - Nine presets: Flat, Bass Boost, Treble, Vocal, Loudness, Warm Room, Night, Small Speaker, Cinema.
 - Four Home Assistant actions: `sync_presets`, `apply_preset`, `apply_powerzone_preset`, and
   `send_to_device`.
+- One standard Home Assistant `select` entity per physical PowerZone output, using the installer-defined
+  output name. These are the portable control surface for dashboards, voice bridges, scenes, and other hubs.
 
 Boosting presets include compensating preamp headroom and a -2 dB safety limiter. Flat disables DSP
 instead of needlessly transcoding a bit-perfect stream.
@@ -60,7 +62,8 @@ preset: Flat
 
 The card discovers current `media_player` entities. Music Assistant players receive both Sonance DSP
 and playback. Any other player remains a valid playback destination. Direct hardware EQ is controlled
-from the `apply_powerzone_preset` action and remains active for every physical source through that amp.
+from either the generated output selectors or the `apply_powerzone_preset` action and remains active for
+every physical source through that amp.
 
 ## Automations
 
@@ -99,6 +102,30 @@ data:
   preset: Vocal
 ```
 
+The same operation through the standard entity API is easier to expose to other home platforms:
+
+```yaml
+action: select.select_option
+target:
+  entity_id: select.living_room_eq_preset
+data:
+  option: Vocal
+```
+
+PowerZone selectors read the real amplifier EQ once when loaded. If an installer programmed a curve that
+does not match a managed Sonance preset, the state stays unknown instead of being mislabeled. Presets
+applied through either a selector or `apply_powerzone_preset` immediately synchronize the entity state.
+
+## Voice assistants and other hubs
+
+- Expose the output `select` entities directly to Google Assistant or HomeKit Bridge where supported.
+- For Alexa or a bridge that does not present enumerated selects well, create a Home Assistant script for
+  each voice phrase and call `select.select_option`; expose those scripts/scenes instead.
+- SmartThings, Homey, openHAB, Hubitat, ioBroker, and Node-RED can call the same standard entity action
+  through Home Assistant's authenticated REST/WebSocket interfaces without knowing the amplifier protocol.
+- Dealer systems should continue using Sonance's official native driver when it already owns PowerZone
+  configuration. Avoid simultaneous writes from two automation controllers.
+
 PowerZone models report their output and user-EQ band counts at runtime. Ten-band models receive the
 original curve. Models with fewer bands receive a log-spaced adaptation. Direct-hardware gains are
 normalized so the loudest band is 0 dB; this preserves amplifier headroom without overwriting a
@@ -121,9 +148,21 @@ calibrated output gain or speaker-protection preset. Only the user output-EQ sta
 ## Test
 
 The client suite uses real local HTTP and TCP test servers. It exercises authenticated Music Assistant
-requests, preset upserts, the minimum secure server version, PowerZone protocol parsing, public-target
-rejection, output validation, safe band adaptation, and direct hardware writes:
+requests, preset upserts, the minimum secure server version, current `SYSTEM.DEVICE.*` PowerZone identity
+registers, protocol parsing, public-target rejection, output discovery, preset-state recognition, safe band
+adaptation, listener synchronization, and direct hardware writes:
 
 ```bash
 python3 -m pytest integrations/home_assistant/tests -q
 ```
+
+When a physical amplifier is available, run the read-only acceptance probe before enabling writes. It
+uses the same private-address and protocol validation as Home Assistant and reports device identity,
+output names, and whether each existing user-EQ curve matches a managed Sonance preset:
+
+```bash
+python3 integrations/home_assistant/scripts/powerzone_probe.py powerzone.local
+```
+
+The probe never changes amplifier state and records `writes_performed: false` in both success and failure
+reports.

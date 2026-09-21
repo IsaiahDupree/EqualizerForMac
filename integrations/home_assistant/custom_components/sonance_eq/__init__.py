@@ -4,12 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .client import (
-    MusicAssistantApiError,
-    MusicAssistantAuthError,
-    MusicAssistantClient,
-    MusicAssistantVersionError,
-)
 from .const import (
     ATTR_OUTPUT_ID,
     ATTR_ENTITY_ID,
@@ -40,11 +34,15 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant, ServiceCall
 
+    from .client import MusicAssistantClient
+
 
 def _configured_music_client(
     hass: HomeAssistant, entry_id: str | None
 ) -> MusicAssistantClient:
     """Resolve one loaded client, requiring a choice only when ambiguous."""
+    from .client import MusicAssistantClient
+
     entries = [
         entry
         for entry in hass.config_entries.async_entries(DOMAIN)
@@ -120,6 +118,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Entries created by 0.1 did not store a backend and were all Music Assistant.
     backend = entry.data.get(CONF_BACKEND, BACKEND_MUSIC_ASSISTANT)
     if backend == BACKEND_MUSIC_ASSISTANT:
+        from .client import (
+            MusicAssistantApiError,
+            MusicAssistantAuthError,
+            MusicAssistantClient,
+            MusicAssistantVersionError,
+        )
+
         entry.runtime_data = MusicAssistantClient(
             async_get_clientsession(hass), entry.data[CONF_URL], entry.data[CONF_TOKEN]
         )
@@ -154,12 +159,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         raise ConfigEntryError(f"Unsupported Sonance EQ backend: {backend}")
 
+    if backend == BACKEND_POWERZONE:
+        from homeassistant.const import Platform
+
+        await hass.config_entries.async_forward_entry_setups(entry, (Platform.SELECT,))
+
     if hass.services.has_service(DOMAIN, SERVICE_SYNC_PRESETS):
         return True
 
     base_schema = {vol.Optional(CONF_ENTRY_ID): cv.string}
 
     async def handle_sync(call: ServiceCall) -> None:
+        from .client import MusicAssistantApiError
+
         client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
         try:
             await client.sync_sonance_presets()
@@ -169,6 +181,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             raise HomeAssistantError(str(error)) from error
 
     async def handle_apply(call: ServiceCall) -> None:
+        from .client import MusicAssistantApiError
+
         client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
         player_id = _mass_player_id(hass, call.data[ATTR_ENTITY_ID])
         try:
@@ -191,6 +205,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entity_id = call.data[ATTR_ENTITY_ID]
         preset = call.data.get(ATTR_PRESET)
         if preset:
+            from .client import MusicAssistantApiError
+
             client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
             player_id = _mass_player_id(hass, entity_id)
             try:
@@ -263,6 +279,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload one Sonance EQ connection."""
+    backend = entry.data.get(CONF_BACKEND, BACKEND_MUSIC_ASSISTANT)
+    if backend == BACKEND_POWERZONE:
+        from homeassistant.const import Platform
+
+        if not await hass.config_entries.async_unload_platforms(
+            entry, (Platform.SELECT,)
+        ):
+            return False
     entry.runtime_data = None
     if len(hass.config_entries.async_entries(DOMAIN)) <= 1:
         for service in (

@@ -19,9 +19,9 @@ uses a layered contract:
 
 | Ecosystem | Integration path | Capability | Product decision |
 |---|---|---|---|
-| Home Assistant | Native custom integration and `sonance_eq.*` actions | Route + MA DSP + PowerZone DSP | Primary control plane. Routing-only mode no longer requires Music Assistant. |
-| Google Home / Assistant | Expose HA scripts, scenes, selects, or media players; use Google Cast/MA for audio | Voice/control; full DSP only in MA or downstream PowerZone | Supported. Google Home speaker bass/treble remains separate from Sonance EQ. |
-| Apple Home / Siri | HA HomeKit Bridge exposes scripts/scenes as switches and selects as option controls; AirPlay through MA | Voice/control; stream DSP through MA; hardware DSP downstream | Supported through HA bridge. AirPlay itself does not standardize PEQ. |
+| Home Assistant | Native custom integration, `sonance_eq.*` actions, and one standard preset `select` per PowerZone output | Route + MA DSP + PowerZone DSP | Primary control plane. Routing-only mode no longer requires Music Assistant. |
+| Google Home / Assistant | Expose generated HA PowerZone selects, scripts, scenes, or media players; use Google Cast/MA for audio | Voice/control; full DSP only in MA or downstream PowerZone | Supported. Google Home speaker bass/treble remains separate from Sonance EQ. |
+| Apple Home / Siri | HA HomeKit Bridge exposes scripts/scenes as switches and generated PowerZone selects as option controls; AirPlay through MA | Voice/control; stream DSP through MA; hardware DSP downstream | Supported through HA bridge. AirPlay itself does not standardize PEQ. |
 | Amazon Alexa / Echo | Expose HA scripts/scenes; commercial speaker makers may use Alexa Music/Connected Speaker APIs | Voice/control; Echo playback is not an open generic DSP endpoint | Control supported. Native speaker/product integration is partner/certification work, not a LAN API promise. |
 | Samsung SmartThings | Cloud, LAN, Matter, Zigbee, or Z-Wave device integration; call HA REST/script bridge | Control bridge | Supported architecture; a dedicated SmartThings capability/Edge driver is a packaging project. |
 | Homey | Homey app custom capabilities + Flow cards or HA bridge | Control bridge | Supported architecture; dedicated app can model preset as an enum and Apply/Send as Flow actions. |

@@ -32,9 +32,15 @@ from .const import (
     BACKEND_HOME_ASSISTANT,
     BACKEND_MUSIC_ASSISTANT,
     BACKEND_POWERZONE,
+    CONF_API_VERSION,
     CONF_BACKEND,
+    CONF_FIRMWARE,
+    CONF_HARDWARE_ID,
     CONF_HOST,
+    CONF_MANUFACTURER,
+    CONF_MODEL,
     CONF_PORT,
+    CONF_SERIAL,
     CONF_TOKEN,
     CONF_URL,
     DEFAULT_MUSIC_ASSISTANT_URL,
@@ -160,13 +166,17 @@ class SonanceEqConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     updates={CONF_HOST: host, CONF_PORT: port}
                 )
                 return self.async_create_entry(
-                    title=f"Sonance PowerZone · {host}",
+                    title=f"{info['manufacturer']} {info['model']} · {host}",
                     data={
                         CONF_BACKEND: BACKEND_POWERZONE,
                         CONF_HOST: host,
                         CONF_PORT: port,
-                        "api_version": info["api_version"],
-                        "serial": info["serial"],
+                        CONF_API_VERSION: info["api_version"],
+                        CONF_SERIAL: info["serial"],
+                        CONF_MANUFACTURER: info["manufacturer"],
+                        CONF_MODEL: info["model"],
+                        CONF_FIRMWARE: info["firmware"],
+                        CONF_HARDWARE_ID: info["hardware_id"],
                     },
                 )
 
@@ -206,19 +216,22 @@ class SonanceEqConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             updates={CONF_HOST: host, CONF_PORT: DEFAULT_POWERZONE_PORT},
             reload_on_update=True,
         )
-        model = discovery_info.properties.get("model", "PowerZone")
+        model = info["model"] or discovery_info.properties.get("model", "PowerZone")
         self._discovered_powerzone = {
             CONF_BACKEND: BACKEND_POWERZONE,
             CONF_HOST: host,
             CONF_PORT: DEFAULT_POWERZONE_PORT,
-            "api_version": info["api_version"],
-            "serial": info["serial"],
-            "model": model,
+            CONF_API_VERSION: info["api_version"],
+            CONF_SERIAL: info["serial"],
+            CONF_MANUFACTURER: info["manufacturer"],
+            CONF_MODEL: model,
+            CONF_FIRMWARE: info["firmware"],
+            CONF_HARDWARE_ID: info["hardware_id"],
         }
         self.context.update(
             {
                 "title_placeholders": {"name": f"{model} · {host}"},
-                "configuration_url": f"http://{host}",
+                "configuration_url": f"http://{'[' + host + ']' if ':' in host else host}",
             }
         )
         return await self.async_step_zeroconf_confirm()
@@ -233,19 +246,15 @@ class SonanceEqConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(
                 title=(
                     "Sonance "
-                    f"{self._discovered_powerzone['model']} · "
+                    f"{self._discovered_powerzone[CONF_MODEL]} · "
                     f"{self._discovered_powerzone[CONF_HOST]}"
                 ),
-                data={
-                    key: value
-                    for key, value in self._discovered_powerzone.items()
-                    if key != "model"
-                },
+                data=dict(self._discovered_powerzone),
             )
         return self.async_show_form(
             step_id="zeroconf_confirm",
             description_placeholders={
-                "name": str(self._discovered_powerzone["model"]),
+                "name": str(self._discovered_powerzone[CONF_MODEL]),
                 "host": str(self._discovered_powerzone[CONF_HOST]),
             },
         )

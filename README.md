@@ -24,7 +24,8 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ **Sonance Home** — Home Assistant integration, Music Assistant DSP preset sync, Cast/Nest
   “Send to device” action, and a responsive dashboard card. See
   [`integrations/home_assistant`](integrations/home_assistant/README.md), including direct Sonance
-  PowerZone hardware EQ and the [home ecosystem compatibility matrix](integrations/home_assistant/COMPATIBILITY-MATRIX.md).
+  PowerZone hardware EQ, bridge-ready per-output preset selectors, and the
+  [home ecosystem compatibility matrix](integrations/home_assistant/COMPATIBILITY-MATRIX.md).
 - 🔬 All DSP proven offline against the shipping sources: `Tools/verify_{biquad,fir,midside}.swift`, plus a **1,030-case** test suite (`Tests/`, Swift Testing) + pre-commit hook + CI.
 - 🚧 **M3 (mocked pre-Apple-registration):** Pro paywall + feature gating with a **mock RevenueCat store** (real buy/restore/persist UX, no Apple), **per-app EQ** (target specific apps via a mixdown tap), **AI-generated app icon**, Developer-ID notarize/DMG script. Pending registration: real RC keys + App Store Connect product, notarization run, MAS build.
 
