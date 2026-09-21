@@ -7,6 +7,7 @@ presets extend the same ten octave-spaced bands for speaker playback.
 from __future__ import annotations
 
 from copy import deepcopy
+import math
 from typing import Any
 
 ISO_CENTERS = (
@@ -99,3 +100,52 @@ def preset_payload(name: str) -> dict[str, Any]:
         if preset["name"] == f"Sonance · {normalized}":
             return deepcopy(preset)
     raise KeyError(name)
+
+
+def preset_gains(name: str) -> tuple[float, ...]:
+    """Return the ten source gains for one short or full Sonance preset name."""
+    normalized = name.removeprefix("Sonance · ")
+    try:
+        return _CURVES[normalized]
+    except KeyError as error:
+        raise KeyError(name) from error
+
+
+def powerzone_bands(name: str, band_count: int) -> list[dict[str, float | str]]:
+    """Adapt a Sonance curve to a PowerZone amp's available user EQ bands.
+
+    PowerZone models report their band count at runtime. Ten-band models receive
+    the original octave-spaced curve. Models with fewer bands receive evenly
+    spaced samples and broader filters. Positive gain is normalized to 0 dB so
+    applying a tonal preset cannot consume the amplifier's calibrated headroom.
+    """
+    if band_count < 1:
+        raise ValueError("PowerZone must expose at least one output EQ band")
+
+    gains = preset_gains(name)
+    if not any(gains):
+        return []
+
+    count = min(band_count, len(ISO_CENTERS))
+    if count == 1:
+        indices = [len(ISO_CENTERS) // 2]
+        q = 0.4
+    else:
+        indices = [
+            round(index * (len(ISO_CENTERS) - 1) / (count - 1))
+            for index in range(count)
+        ]
+        bandwidth_octaves = (len(ISO_CENTERS) - 1) / (count - 1)
+        ratio = 2**bandwidth_octaves
+        q = max(0.4, math.sqrt(ratio) / (ratio - 1))
+
+    headroom = max(0.0, max(gains[index] for index in indices))
+    return [
+        {
+            "type": "PARAMETRIC",
+            "frequency": ISO_CENTERS[index],
+            "q": round(q, 3),
+            "gain": gains[index] - headroom,
+        }
+        for index in indices
+    ]

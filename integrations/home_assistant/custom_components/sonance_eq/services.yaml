@@ -10,7 +10,7 @@ sync_presets:
           integration: sonance_eq
 apply_preset:
   name: Apply Sonance preset
-  description: Applies a Sonance EQ curve to a Music Assistant player.
+  description: Applies a Sonance EQ curve to a Music Assistant player. For a physical PowerZone output, use Apply PowerZone preset.
   fields:
     entity_id:
       name: Player
@@ -40,6 +40,42 @@ apply_preset:
         config_entry:
           integration: sonance_eq
 
+apply_powerzone_preset:
+  name: Apply PowerZone preset
+  description: Applies a headroom-safe Sonance curve directly to one PowerZone Connect amplifier output.
+  fields:
+    output_id:
+      name: Amplifier output
+      description: One-based physical output number reported by the amplifier.
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 64
+          step: 1
+          mode: box
+    preset:
+      name: Preset
+      required: true
+      selector:
+        select:
+          options:
+            - Flat
+            - Bass Boost
+            - Treble
+            - Vocal
+            - Loudness
+            - Warm Room
+            - Night
+            - Small Speaker
+            - Cinema
+    config_entry_id:
+      name: PowerZone connection
+      description: Required only when more than one PowerZone amplifier is configured.
+      selector:
+        config_entry:
+          integration: sonance_eq
+
 send_to_device:
   name: Send to device
   description: Optionally applies a Sonance preset, then starts media on a Home Assistant player.
@@ -63,7 +99,7 @@ send_to_device:
         text:
     preset:
       name: EQ preset
-      description: EQ is available only when the selected player comes from Music Assistant.
+      description: Stream-path EQ is available when the selected player comes from Music Assistant. Downstream PowerZone hardware EQ remains independent.
       selector:
         select:
           options:

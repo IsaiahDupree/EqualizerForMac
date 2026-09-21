@@ -3,21 +3,42 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect Sonance EQ to Music Assistant",
+        "title": "Choose how Sonance EQ connects",
+        "description": "Routing-only works with any Home Assistant media player. Music Assistant adds stream DSP. PowerZone controls Sonance amplifier output EQ directly.",
+        "data": {
+          "backend": "Connection type"
+        }
+      },
+      "music_assistant": {
+        "title": "Connect Music Assistant DSP",
         "description": "Use a local Music Assistant URL and an access token with player DSP read/write permission.",
         "data": {
           "url": "Music Assistant URL",
           "token": "Music Assistant access token"
         }
+      },
+      "powerzone": {
+        "title": "Connect Sonance PowerZone",
+        "description": "Use the amplifier's private LAN hostname or IP. The official control API is unauthenticated, so never expose port 7621 or /ws to the internet.",
+        "data": {
+          "host": "PowerZone hostname or IP",
+          "port": "Local control port"
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Add discovered Sonance PowerZone",
+        "description": "Connect to {name} at {host}. Only continue if this amplifier is on a trusted private network; its official control protocol has no authentication."
       }
     },
     "error": {
       "cannot_connect": "Could not connect to Music Assistant",
+      "cannot_connect_powerzone": "Could not verify a local PowerZone output-EQ API at this address",
       "invalid_auth": "The token is invalid or lacks DSP permissions",
       "unsupported_version": "Music Assistant 2.10.1 or newer is required for Sonance DSP presets"
     },
     "abort": {
-      "already_configured": "This Music Assistant server is already configured"
+      "already_configured": "This Sonance EQ connection is already configured",
+      "cannot_connect_powerzone": "The discovered device did not expose the required local PowerZone EQ API"
     }
   }
 }

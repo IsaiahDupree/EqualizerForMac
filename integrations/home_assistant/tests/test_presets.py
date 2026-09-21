@@ -14,6 +14,7 @@ from sonance_eq.presets import (
     ISO_CENTERS,
     PRESET_NAMES,
     SONANCE_PRESETS,
+    powerzone_bands,
     preset_payload,
 )
 
@@ -43,3 +44,17 @@ def test_preset_payload_is_isolated_and_accepts_full_name() -> None:
     second = preset_payload("Sonance · Vocal")
     first["config"]["enabled"] = False
     assert second["config"]["enabled"] is True
+
+
+def test_powerzone_adaptation_is_headroom_safe_and_respects_band_count() -> None:
+    assert powerzone_bands("Flat", 4) == []
+    four_band = powerzone_bands("Bass Boost", 4)
+    assert len(four_band) == 4
+    assert [band["frequency"] for band in four_band] == [31.25, 250.0, 2000.0, 16000.0]
+    assert max(float(band["gain"]) for band in four_band) == 0
+    assert all(0.4 <= float(band["q"]) <= 30 for band in four_band)
+
+    ten_band = powerzone_bands("Vocal", 20)
+    assert len(ten_band) == len(ISO_CENTERS)
+    assert [band["frequency"] for band in ten_band] == list(ISO_CENTERS)
+    assert max(float(band["gain"]) for band in ten_band) == 0

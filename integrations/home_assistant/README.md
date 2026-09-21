@@ -1,28 +1,36 @@
 # Sonance Home for Home Assistant
 
-Sonance Home carries the real Sonance EQ curves into Music Assistant's DSP pipeline, then gives
-Home Assistant one action for **preset + destination + playback**. It supports Google Nest,
-Chromecast Audio, Chromecast built-in speakers, Cast groups, and every other Music Assistant player.
+Sonance Home makes the real Sonance EQ curves available through three independent local paths:
+
+1. **Home Assistant routing** for every `media_player` that accepts `play_media`.
+2. **Music Assistant DSP** for Cast, AirPlay, Sonos, Squeezelite, DLNA, Snapcast, and its other players.
+3. **Native Sonance PowerZone output EQ** through the official amplifier control API.
+
+The ecosystem research and product-by-product capability matrix live in
+[`COMPATIBILITY-MATRIX.md`](COMPATIBILITY-MATRIX.md).
 
 ## What ships
 
-- `custom_components/sonance_eq`: authenticated local integration for Music Assistant DSP.
+- `custom_components/sonance_eq`: local Home Assistant, Music Assistant, and PowerZone integration.
 - `www/sonance-home-card.js`: a compact Lovelace card with player, media, and EQ selectors.
 - `install.sh`: copies both into an existing Home Assistant configuration directory.
 - Nine presets: Flat, Bass Boost, Treble, Vocal, Loudness, Warm Room, Night, Small Speaker, Cinema.
-- Three Home Assistant actions: `sync_presets`, `apply_preset`, and `send_to_device`.
+- Four Home Assistant actions: `sync_presets`, `apply_preset`, `apply_powerzone_preset`, and
+  `send_to_device`.
 
 Boosting presets include compensating preamp headroom and a -2 dB safety limiter. Flat disables DSP
 instead of needlessly transcoding a bit-perfect stream.
 
 ## Requirements
 
-- Home Assistant with the official Music Assistant integration.
-- Music Assistant **2.10.1 or newer**. This is the first stable line verified with the preset-apply
-  command and safety-limiter schema used here. It is also newer than the release that fixed the
+Home Assistant routing-only mode has no optional dependency. Add one or both DSP backends when needed:
+
+- **Music Assistant:** version **2.10.1 or newer** and an access token permitted to read/write player
+  DSP. This is newer than the release that fixed the
   [published authenticated API security issue](https://github.com/music-assistant/server/security/advisories/GHSA-cjp7-8r57-vc8f).
-- A Music Assistant access token permitted to read and write player DSP configuration.
-- Cast/Nest devices and Music Assistant on the same local network with multicast discovery working.
+- **Sonance PowerZone:** a PowerZone Connect/Connect PRO amplifier exposing the official API on the
+  private LAN (normally TCP 7621), with output EQ support. Compatible amplifiers are discovered through
+  their official `_pasconnect._tcp` mDNS service; manual host entry remains available.
 
 The token stays in Home Assistant's config-entry storage. It is sent only to the configured local
 Music Assistant URL as an `Authorization: Bearer` header and is never placed in a media URL or log.
@@ -39,7 +47,8 @@ Then:
 
 1. Restart Home Assistant.
 2. Open **Settings → Devices & services → Add integration → Sonance EQ**.
-3. Enter the local Music Assistant URL (normally `http://homeassistant.local:8095`) and access token.
+3. Choose Home Assistant routing, Music Assistant DSP, or Sonance PowerZone hardware. Add the
+   integration again to configure another backend or amplifier.
 4. In **Settings → Dashboards → Resources**, add `/local/sonance-home-card.js` as a JavaScript module.
 5. Add a manual card:
 
@@ -50,8 +59,8 @@ preset: Flat
 ```
 
 The card discovers current `media_player` entities. Music Assistant players receive both Sonance DSP
-and playback. Plain Google Cast entities remain valid playback destinations, but the card disables EQ
-for them because direct Cast audio does not pass through Music Assistant.
+and playback. Any other player remains a valid playback destination. Direct hardware EQ is controlled
+from the `apply_powerzone_preset` action and remains active for every physical source through that amp.
 
 ## Automations
 
@@ -81,6 +90,20 @@ Create or refresh all Sonance presets in Music Assistant:
 action: sonance_eq.sync_presets
 ```
 
+Apply a curve directly to physical output 2 of the configured PowerZone amplifier:
+
+```yaml
+action: sonance_eq.apply_powerzone_preset
+data:
+  output_id: 2
+  preset: Vocal
+```
+
+PowerZone models report their output and user-EQ band counts at runtime. Ten-band models receive the
+original curve. Models with fewer bands receive a log-spaced adaptation. Direct-hardware gains are
+normalized so the loudest band is 0 dB; this preserves amplifier headroom without overwriting a
+calibrated output gain or speaker-protection preset. Only the user output-EQ stage is changed.
+
 ## Honest limitations
 
 - A Spotify/YouTube Music app casting directly to a speaker bypasses Music Assistant and therefore
@@ -89,11 +112,17 @@ action: sonance_eq.sync_presets
   supported Music Assistant Universal/Sendspin grouping path; otherwise apply one group-safe curve.
 - Google Home's own bass/treble setting remains separate and stacks with Sonance DSP. Leave it flat
   when using Sonance presets unless the hardware needs a permanent correction.
+- Matter and Thread are device-control layers, not universal audio transports or EQ schemas. Use a
+  Home Assistant script/scene for voice and automation exposure.
+- The official PowerZone line protocol is unauthenticated. Sonance Home rejects public IP targets;
+  keep the amplifier on a trusted/isolated private LAN, block TCP 7621 and port 80 at the WAN edge,
+  and never port-forward them.
 
 ## Test
 
-The client suite uses a real local `aiohttp` server and exercises authenticated JSON requests, preset
-upserts, application, and the minimum secure Music Assistant version:
+The client suite uses real local HTTP and TCP test servers. It exercises authenticated Music Assistant
+requests, preset upserts, the minimum secure server version, PowerZone protocol parsing, public-target
+rejection, output validation, safe band adaptation, and direct hardware writes:
 
 ```bash
 python3 -m pytest integrations/home_assistant/tests -q
