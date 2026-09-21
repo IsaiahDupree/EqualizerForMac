@@ -7,6 +7,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  mqtt:
+    name: MQTT bridge
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations/mqtt/sonance-powerzone-mqtt
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: integrations/mqtt/sonance-powerzone-mqtt/package-lock.json
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+
   smartthings:
     name: SmartThings Edge driver
     runs-on: ubuntu-latest

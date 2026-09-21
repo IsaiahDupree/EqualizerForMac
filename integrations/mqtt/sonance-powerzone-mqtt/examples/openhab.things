@@ -1,0 +1,19 @@
+Bridge mqtt:broker:sonanceBroker "MQTT Broker" [
+  host="192.168.1.10",
+  secure=false,
+  username="sonance",
+  password="CHANGE_ME"
+] {
+  Thing topic kitchenEq "Kitchen Sonance EQ" [
+    availabilityTopic="sonance_eq/pz_serial/output/1/availability",
+    payloadAvailable="online",
+    payloadNotAvailable="offline"
+  ] {
+    Channels:
+      Type string : preset "EQ Preset" [
+        stateTopic="sonance_eq/pz_serial/output/1/preset/state",
+        commandTopic="sonance_eq/pz_serial/output/1/preset/set",
+        allowedStates="Flat,Bass Boost,Treble,Vocal,Loudness,Warm Room,Night,Small Speaker,Cinema"
+      ]
+  }
+}

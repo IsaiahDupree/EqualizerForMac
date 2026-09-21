@@ -14,6 +14,8 @@ uses a layered contract:
   Cast, AirPlay, Spotify Connect, HDMI/TV, analog, and Dante paths wired through that amplifier.
 - **Native control:** Homey Pro and SmartThings hubs discover PowerZone over mDNS and write the physical
   output EQ directly.
+- **Broker control:** the local MQTT bridge publishes retained state and accepts whitelisted preset
+  commands for ecosystems with generic MQTT support.
 - **Control bridge:** other hubs call a Home Assistant script/action over their supported local or
   cloud bridge. This exposes preset selection and playback but does not invent DSP inside a speaker.
 
@@ -27,9 +29,9 @@ uses a layered contract:
 | Amazon Alexa / Echo | Expose HA scripts/scenes; commercial speaker makers may use Alexa Music/Connected Speaker APIs | Voice/control; Echo playback is not an open generic DSP endpoint | Control supported. Native speaker/product integration is partner/certification work, not a LAN API promise. |
 | Samsung SmartThings | Native local Edge driver with mDNS discovery, one speaker device per PowerZone output, nine standard momentary preset actions, current-state reporting, and refresh; HA bridge remains optional | Native PowerZone DSP control | Implemented in [`integrations/smartthings`](../smartthings/README.md). Uses standard capabilities, so no custom namespace or public cloud relay is required. |
 | Homey Pro | Native SDK v3 app, `_pasconnect._tcp` discovery, per-output preset picker, and Advanced Flow action; HA bridge remains optional | Native PowerZone DSP control | Implemented in [`integrations/homey`](../homey/README.md). Local-only by design because Homey Cloud cannot access LAN mDNS. |
-| openHAB | Binding/Thing/Channel, REST action, or MQTT bridge | Control bridge | Supported without changing DSP core. |
-| Node-RED | HA nodes, authenticated REST calls, or MQTT | Automation bridge | Supported now through HA actions. |
-| Hubitat / ioBroker | Authenticated HA REST or MQTT bridge | Control bridge | Protocol-compatible path; not claimed as a certified native app yet. |
+| openHAB | Generic MQTT Thing with separate preset command/state and availability topics; HA REST remains optional | Native PowerZone DSP control through local bridge | Implemented in [`integrations/mqtt`](../mqtt/README.md), including an openHAB Thing example. |
+| Node-RED | Standard MQTT In/Out nodes using documented topics; HA nodes remain optional | Native PowerZone DSP control through local bridge | Implemented MQTT contract; no custom node is required. |
+| Hubitat / ioBroker | Standard/community MQTT client using documented topics; HA bridge remains optional | Native PowerZone DSP control through local bridge | Implemented MQTT contract. A certified marketplace app is not claimed. |
 | Control4, Crestron, Savant, RTI, URC, AMX, ELAN, QSC, Symetrix | Sonance-published PowerZone drivers; Sonance Home may coexist on the same LAN | Native amplifier control | Official Sonance driver path is preferred in dealer projects; avoid competing writes to the same output EQ. |
 | NICE and other Linkplay/WiiM installer systems | Vendor driver or HA/WiiM local API, then downstream PowerZone where present | Route/control; device-native EQ varies | Supported as a player/control family, not as a universal PEQ contract. |
 
@@ -49,6 +51,12 @@ Evidence:
   [REST API](https://www.openhab.org/docs/configuration/restdocs) can invoke actions.
 - [Node-RED concepts](https://nodered.org/docs/user-guide/concepts) include HTTP/event inputs and shared
   MQTT broker connections.
+- [Home Assistant MQTT discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) and
+  [MQTT Select](https://www.home-assistant.io/integrations/select.mqtt/) define the retained discovery,
+  command/state, options, attributes, origin, and availability contract used by the local bridge.
+- [openHAB's Generic MQTT binding](https://www.openhab.org/addons/bindings/mqtt.generic/) maps separate
+  state and command topics to String channels; the official
+  [ioBroker MQTT adapter](https://github.com/ioBroker/ioBroker.mqtt) supports broker or client mode.
 - [Sonance support](https://sonance.com/pages/support) publishes an installer API plus drivers for AMX,
   Control4, Crestron, ELAN, QSC, RTI, Savant, Symetrix, and URC.
 
@@ -59,7 +67,7 @@ Evidence:
 | Matter over Wi-Fi/Ethernet/Thread | Yes | No general whole-home audio transport | No | Use for triggers/devices around the audio system, not the audio path. |
 | Thread | IP mesh transport | No by itself | No | Border-router/network layer only. A Thread logo does not guarantee Matter. |
 | Zigbee / Z-Wave | Device control | No general high-quality audio | No | Buttons, remotes, occupancy, scenes, and automation triggers through the hub. |
-| MQTT | Pub/sub control and state | Technically possible but not the intended media transport | Custom topics only | Future optional bridge; HA REST/actions already provide a stable command surface. |
+| MQTT | Pub/sub control and retained state | Technically possible but not the intended media transport | Custom topics only | Local bridge implemented with per-output command/state, attributes, error, and two-level availability topics plus HA discovery. |
 | REST / WebSocket | Control and state | Can reference streams | API-specific | HA API, Music Assistant JSON API, and PowerZone line/WebSocket API are current bridges. |
 | mDNS / SSDP / UPnP | Discovery/control | Protocol-dependent | No universal PEQ | PowerZone uses `_pasconnect._tcp`; Cast/AirPlay/MA/DLNA use their own discovery. |
 | Google Cast | Yes | Yes | No portable PEQ | Route through Music Assistant for stream DSP or through PowerZone for hardware DSP. |

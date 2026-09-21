@@ -1,0 +1,24 @@
+{
+  "name": "sonance-powerzone-mqtt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local MQTT bridge for Sonance PowerZone output EQ",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:env": "node --env-file=.env src/index.js",
+    "test": "node --test test/*.test.js",
+    "lint": "node --check src/*.js && node --check test/*.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bonjour-service": "1.4.4",
+    "mqtt": "5.16.0"
+  },
+  "devDependencies": {
+    "aedes": "1.2.0"
+  }
+}

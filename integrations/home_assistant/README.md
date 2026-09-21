@@ -125,9 +125,10 @@ applied through either a selector or `apply_powerzone_preset` immediately synchr
   app for direct mDNS discovery, one preset picker per physical output, and an Advanced Flow action.
 - SmartThings hubs can use the native local [Edge driver](../smartthings/sonance-powerzone/README.md) for
   per-output preset actions and Automations without a cloud relay.
-- openHAB, Hubitat, ioBroker, Node-RED, and Homey or SmartThings installations using HA as their control
-  plane can call the same standard entity action through Home Assistant's authenticated REST/WebSocket
-  interfaces without knowing the amplifier protocol.
+- openHAB, Hubitat, ioBroker, Node-RED, and other broker clients can use the local
+  [MQTT bridge](../mqtt/sonance-powerzone-mqtt/README.md) without putting Home Assistant in the path.
+  Installations already using HA as their control plane can instead call the standard entity action
+  through Home Assistant's authenticated REST/WebSocket interfaces.
 - Dealer systems should continue using Sonance's official native driver when it already owns PowerZone
   configuration. Avoid simultaneous writes from two automation controllers.
 
