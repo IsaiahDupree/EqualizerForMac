@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from fnmatch import fnmatchcase
 import sys
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 COMPONENTS = Path(__file__).parents[1] / "custom_components"
@@ -12,8 +12,8 @@ SCRIPTS = Path(__file__).parents[1] / "scripts"
 sys.path.insert(0, str(COMPONENTS))
 sys.path.insert(0, str(SCRIPTS))
 
-from powerzone_probe import probe  # noqa: E402
-from sonance_eq.powerzone import (  # noqa: E402
+from powerzone_probe import probe
+from sonance_eq.powerzone import (
     PowerZoneApiError,
     PowerZoneClient,
     PowerZoneNetworkError,

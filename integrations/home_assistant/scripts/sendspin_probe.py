@@ -59,7 +59,9 @@ async def _resolve_private_endpoint(host: str, port: int) -> tuple[str, str]:
             type=socket.SOCK_STREAM,
         )
     except OSError as error:
-        raise SendspinProbeError(f"Cannot resolve Sendspin host {host}: {error}") from error
+        raise SendspinProbeError(
+            f"Cannot resolve Sendspin host {host}: {error}"
+        ) from error
 
     addresses = list(dict.fromkeys(answer[4][0] for answer in answers))
     if not addresses:
@@ -169,12 +171,16 @@ async def probe(
         )
         await asyncio.sleep(0.75)
         if not server.connected_clients:
-            raise SendspinProbeError("Sendspin handshake completed without a connected client")
+            raise SendspinProbeError(
+                "Sendspin handshake completed without a connected client"
+            )
 
         client = server.connected_clients[0]
         player_role = client.role("player@v1")
         if player_role is None:
-            raise SendspinProbeError("The endpoint did not negotiate the player@v1 role")
+            raise SendspinProbeError(
+                "The endpoint did not negotiate the player@v1 role"
+            )
         original_volume = player_role.volume
         group = client.group
 
@@ -198,7 +204,9 @@ async def probe(
         if silent_stream_test:
             pcm_format = AudioFormat(**PCM_FORMAT_VALUES)
             if not player_role.set_preferred_format(pcm_format, AudioCodec.PCM):
-                raise SendspinProbeError("The endpoint rejected 48 kHz 16-bit stereo PCM")
+                raise SendspinProbeError(
+                    "The endpoint rejected 48 kHz 16-bit stereo PCM"
+                )
             silence = bytes(
                 PCM_FORMAT_VALUES["sample_rate"]
                 * PCM_FORMAT_VALUES["channels"]
@@ -244,10 +252,13 @@ async def probe(
             "persistent_state_restored": player_role.volume == original_volume,
         }
     finally:
-        if player_role is not None and original_volume is not None:
-            if player_role.volume != original_volume:
-                player_role.set_volume(original_volume)
-                await _wait_for_volume(player_role, original_volume, timeout)
+        if (
+            player_role is not None
+            and original_volume is not None
+            and player_role.volume != original_volume
+        ):
+            player_role.set_volume(original_volume)
+            await _wait_for_volume(player_role, original_volume, timeout)
         if group is not None and group.has_active_stream:
             await group.stop()
         server.disconnect_from_client(url)

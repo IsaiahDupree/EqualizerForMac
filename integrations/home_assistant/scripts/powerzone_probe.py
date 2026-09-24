@@ -6,14 +6,14 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 COMPONENTS = Path(__file__).parents[1] / "custom_components"
 sys.path.insert(0, str(COMPONENTS))
 
-from sonance_eq.powerzone import PowerZoneApiError, PowerZoneClient  # noqa: E402
+from sonance_eq.powerzone import PowerZoneApiError, PowerZoneClient
 
 
 async def probe(host: str, port: int, timeout: float) -> dict[str, Any]:

@@ -13,7 +13,7 @@ from aiohttp.test_utils import TestServer
 COMPONENTS = Path(__file__).parents[1] / "custom_components"
 sys.path.insert(0, str(COMPONENTS))
 
-from sonance_eq.client import (  # noqa: E402
+from sonance_eq.client import (
     MusicAssistantAuthError,
     MusicAssistantClient,
     MusicAssistantVersionError,

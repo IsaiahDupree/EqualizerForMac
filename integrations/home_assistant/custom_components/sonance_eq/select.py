@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.core import callback
@@ -55,7 +55,7 @@ class PowerZonePresetSelect(SelectEntity):
 
     _attr_has_entity_name = True
     _attr_icon = "mdi:tune-variant"
-    _attr_options = list(PRESET_NAMES)
+    _attr_options: ClassVar[list[str]] = list(PRESET_NAMES)
     _attr_should_poll = False
 
     def __init__(

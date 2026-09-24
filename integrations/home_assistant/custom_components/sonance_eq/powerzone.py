@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
-from contextlib import suppress
 import ipaddress
 import socket
-from typing import Any, Iterable
+from collections.abc import Callable, Iterable
+from contextlib import suppress
+from typing import Any
 
 from .presets import PRESET_NAMES, powerzone_bands
 

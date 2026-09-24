@@ -1,7 +1,5 @@
 """DSP contract tests for Sonance's Music Assistant presets."""
 
-# ruff: noqa: E402
-
 from __future__ import annotations
 
 import sys

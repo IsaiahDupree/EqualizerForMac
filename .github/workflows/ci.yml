@@ -42,7 +42,7 @@ jobs:
       - name: Install Lua test tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.3 lua-socket luarocks
+          sudo apt-get install -y lua5.3 liblua5.3-dev lua-socket luarocks
           sudo luarocks --lua-version 5.3 install luacheck
 
       - name: Test, lint, and package the Edge driver
@@ -89,8 +89,8 @@ jobs:
 
       - name: Lint and test the local Music Assistant client
         run: |
-          ruff check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests
-          ruff format --check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests
+          ruff check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests integrations/home_assistant/scripts
+          ruff format --check integrations/home_assistant/custom_components/sonance_eq integrations/home_assistant/tests integrations/home_assistant/scripts
           python -m pytest integrations/home_assistant/tests -q
           node --check integrations/home_assistant/www/sonance-home-card.js
 

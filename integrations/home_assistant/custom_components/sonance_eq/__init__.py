@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .const import (
-    ATTR_OUTPUT_ID,
     ATTR_ENTITY_ID,
     ATTR_MEDIA_ID,
     ATTR_MEDIA_TYPE,
+    ATTR_OUTPUT_ID,
     ATTR_PRESET,
     BACKEND_HOME_ASSISTANT,
     BACKEND_MUSIC_ASSISTANT,
@@ -22,8 +22,8 @@ from .const import (
     DOMAIN,
     MASS_DOMAIN,
     MASS_UNIQUE_ID_PREFIX,
-    SERVICE_APPLY_PRESET,
     SERVICE_APPLY_POWERZONE_PRESET,
+    SERVICE_APPLY_PRESET,
     SERVICE_SEND_TO_DEVICE,
     SERVICE_SYNC_PRESETS,
 )
