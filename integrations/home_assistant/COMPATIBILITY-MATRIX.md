@@ -125,6 +125,16 @@ Representative official references:
   and [Connected Speaker/AVR integration](https://developer.amazon.com/en-US/alexa/devices/speakers/cloud-controlled-soundbars-avrs)
   show that native Alexa speaker integration is a commercial skill/device program.
 
+### Physical Sendspin acceptance
+
+On 2026-09-23, the guarded probe completed a real legacy-transition Sendspin handshake with a Home
+Assistant Voice unit running ESPHome 2025.12.2. The device negotiated `player@v1` and `controller@v1`,
+reported live volume/mute state, acknowledged a one-point volume change and restoration, played one
+second of 48 kHz 16-bit stereo digital silence, then acknowledged `stream/end` and returned to stopped.
+The unit advertised PCM, FLAC, and Opus. This proves discovery-independent local transport and control;
+it does not by itself prove that Sonance EQ was applied. Use Music Assistant DSP, PowerZone hardware
+DSP, or process the source PCM before Sendspin delivery for that guarantee.
+
 ## Native PowerZone contract
 
 The direct adapter follows Sonance's

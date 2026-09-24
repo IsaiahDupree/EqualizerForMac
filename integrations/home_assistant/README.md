@@ -172,3 +172,28 @@ python3 integrations/home_assistant/scripts/powerzone_probe.py powerzone.local
 
 The probe never changes amplifier state and records `writes_performed: false` in both success and failure
 reports.
+
+For a physical Sendspin player, create an isolated environment for the current reference client and run
+the read-only inspection first:
+
+```bash
+python3 -m venv /tmp/sonance-sendspin-probe
+/tmp/sonance-sendspin-probe/bin/pip install \
+  -r integrations/home_assistant/scripts/requirements-sendspin-probe.txt
+/tmp/sonance-sendspin-probe/bin/python \
+  integrations/home_assistant/scripts/sendspin_probe.py 192.168.1.109
+```
+
+Two opt-in checks exercise real hardware and restore state before disconnecting:
+
+```bash
+/tmp/sonance-sendspin-probe/bin/python \
+  integrations/home_assistant/scripts/sendspin_probe.py 192.168.1.109 \
+  --control-test --silent-stream-test
+```
+
+The control check moves volume by one point and restores it. The stream check sends one second of
+digital silence as 48 kHz, 16-bit stereo PCM, verifies the player enters playback, ends the stream, and
+verifies it returns to stopped. This validates the transport only; applying a Sonance curve still
+requires Music Assistant DSP, downstream PowerZone DSP, or a Sonance EQ audio source that processes the
+PCM before handing it to Sendspin.
