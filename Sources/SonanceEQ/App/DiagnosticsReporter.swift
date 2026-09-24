@@ -39,16 +39,6 @@ final class DiagnosticsReporter: NSObject, MXMetricManagerSubscriber {
         }
     }
 
-    /// Aggregated performance metrics, including counts for any `os_signpost` events we emit
-    /// (e.g. purchase/tap failures), delivered roughly daily.
-    func didReceive(_ payloads: [MXMetricPayload]) {
-        for payload in payloads {
-            for signpost in payload.signpostMetrics ?? [] {
-                log.notice("MetricKit signpost \(signpost.signpostCategory, privacy: .public).\(signpost.signpostName, privacy: .public) x\(signpost.totalCount)")
-            }
-        }
-    }
-
     // MARK: Private
 
     private func report(_ count: Int?, kind: String, window: String) {
