@@ -132,8 +132,16 @@ Assistant Voice unit running ESPHome 2025.12.2. The device negotiated `player@v1
 reported live volume/mute state, acknowledged a one-point volume change and restoration, played one
 second of 48 kHz 16-bit stereo digital silence, then acknowledged `stream/end` and returned to stopped.
 The unit advertised PCM, FLAC, and Opus. This proves discovery-independent local transport and control;
-it does not by itself prove that Sonance EQ was applied. Use Music Assistant DSP, PowerZone hardware
-DSP, or process the source PCM before Sendspin delivery for that guarantee.
+it does not by itself prove that Sonance EQ was applied.
+
+The follow-up source-side EQ acceptance processed a quiet one-second calibration multitone through the
+real Sonance Vocal ten-band biquad chain, compensating preamp, and -2 dBFS ceiling. The source and processed
+PCM hashes differed, the calculated center-band response ranged from -7.383 dB at 31.25 Hz to +1.147 dB
+at 1 kHz, and the 192,000-byte processed stream committed in 171 ms with 829 ms of scheduling lead. The
+physical unit acknowledged playback and stop while temporarily limited to volume 10, then acknowledged
+restoration to volume 58. This proves non-flat Sonance-processed PCM entered the physical Sendspin path.
+It does not prove the acoustic speaker/room response; that final layer requires a calibrated microphone
+measurement.
 
 ## Native PowerZone contract
 

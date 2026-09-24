@@ -12,8 +12,8 @@ SCRIPTS = Path(__file__).parents[1] / "scripts"
 sys.path.insert(0, str(COMPONENTS))
 sys.path.insert(0, str(SCRIPTS))
 
-from powerzone_probe import probe
-from sonance_eq.powerzone import (
+from powerzone_probe import probe  # noqa: E402
+from sonance_eq.powerzone import (  # noqa: E402
     PowerZoneApiError,
     PowerZoneClient,
     PowerZoneNetworkError,

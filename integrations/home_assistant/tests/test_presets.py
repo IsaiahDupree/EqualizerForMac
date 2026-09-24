@@ -8,7 +8,7 @@ from pathlib import Path
 COMPONENTS = Path(__file__).parents[1] / "custom_components"
 sys.path.insert(0, str(COMPONENTS))
 
-from sonance_eq.presets import (
+from sonance_eq.presets import (  # noqa: E402
     ISO_CENTERS,
     PRESET_NAMES,
     SONANCE_PRESETS,

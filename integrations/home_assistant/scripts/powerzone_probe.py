@@ -13,7 +13,7 @@ from typing import Any
 COMPONENTS = Path(__file__).parents[1] / "custom_components"
 sys.path.insert(0, str(COMPONENTS))
 
-from sonance_eq.powerzone import PowerZoneApiError, PowerZoneClient
+from sonance_eq.powerzone import PowerZoneApiError, PowerZoneClient  # noqa: E402
 
 
 async def probe(host: str, port: int, timeout: float) -> dict[str, Any]:

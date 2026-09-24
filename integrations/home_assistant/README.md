@@ -184,7 +184,7 @@ python3 -m venv /tmp/sonance-sendspin-probe
   integrations/home_assistant/scripts/sendspin_probe.py 192.168.1.109
 ```
 
-Two opt-in checks exercise real hardware and restore state before disconnecting:
+Three opt-in checks exercise real hardware and restore state before disconnecting:
 
 ```bash
 /tmp/sonance-sendspin-probe/bin/python \
@@ -197,3 +197,20 @@ digital silence as 48 kHz, 16-bit stereo PCM, verifies the player enters playbac
 verifies it returns to stopped. This validates the transport only; applying a Sonance curve still
 requires Music Assistant DSP, downstream PowerZone DSP, or a Sonance EQ audio source that processes the
 PCM before handing it to Sendspin.
+
+The guarded EQ check supplies that last source-side path for hardware acceptance. It generates a quiet,
+click-free calibration multitone, applies the same ten-band curve and compensating preamp used by the
+integration, enforces the -2 dBFS ceiling, temporarily lowers the player volume, and restores the original
+volume after the stream ends:
+
+```bash
+/tmp/sonance-sendspin-probe/bin/python \
+  integrations/home_assistant/scripts/sendspin_probe.py 192.168.1.109 \
+  --eq-stream-test Vocal --eq-test-volume 10
+```
+
+The JSON receipt includes distinct source/processed SHA-256 hashes, digital level measurements, the
+calculated response at all ten band centers, commit latency, scheduling lead, playback/stop acknowledgements,
+and volume restoration. This proves the digital curve was rendered into the PCM delivered to the physical
+player. It does not replace an acoustic sweep and calibrated measurement microphone for proving the sound
+pressure response of the speaker and room.

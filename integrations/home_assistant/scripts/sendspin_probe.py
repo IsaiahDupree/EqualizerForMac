@@ -2,22 +2,39 @@
 """Hardware acceptance probe for a private-LAN Sendspin player.
 
 The default probe only connects, negotiates roles, and reads player state. The
-two state-changing checks are opt-in, bounded, and restore the original state.
+three state-changing checks are opt-in, bounded, and restore the original state.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import ipaddress
 import json
 import socket
 import sys
+from pathlib import Path
 from typing import Any
+
+SCRIPTS = Path(__file__).parent
+sys.path.insert(0, str(SCRIPTS))
+
+COMPONENTS = Path(__file__).parents[1] / "custom_components"
+sys.path.insert(0, str(COMPONENTS))
+
+from sonance_eq.presets import PRESET_NAMES  # noqa: E402
 
 DEPENDENCY_ERROR: ImportError | None = None
 
 try:
+    from pcm_dsp import (
+        apply_preset,
+        calibration_signal,
+        frequency_response,
+        pcm16_bytes,
+        signal_stats,
+    )
     from aiosendspin.models import AudioCodec
     from aiosendspin.models.types import ConnectionReason
     from aiosendspin.noise import Identity
@@ -36,6 +53,7 @@ PCM_FORMAT_VALUES = {
     "bit_depth": 16,
     "channels": 2,
 }
+DEFAULT_EQ_TEST_VOLUME = 10
 
 
 class SendspinProbeError(Exception):
@@ -137,12 +155,16 @@ async def probe(
     *,
     control_test: bool,
     silent_stream_test: bool,
+    eq_stream_test: str | None,
+    eq_test_volume: int,
 ) -> dict[str, Any]:
     """Inspect a Sendspin player and optionally run reversible hardware checks."""
     if DEPENDENCY_ERROR is not None:
         raise SendspinProbeError(
             "Missing probe dependencies; install requirements-sendspin-probe.txt in a virtualenv"
         ) from DEPENDENCY_ERROR
+    if not 0 <= eq_test_volume <= 30:
+        raise SendspinProbeError("EQ test volume must be between 0 and 30")
 
     address, url = await _resolve_private_endpoint(host, port)
     loop = asyncio.get_running_loop()
@@ -160,7 +182,7 @@ async def probe(
     tests: dict[str, Any] = {}
     connection_reason = (
         ConnectionReason.PLAYBACK
-        if control_test or silent_stream_test
+        if control_test or silent_stream_test or eq_stream_test
         else ConnectionReason.DISCOVERY
     )
 
@@ -183,6 +205,10 @@ async def probe(
             )
         original_volume = player_role.volume
         group = client.group
+        if (control_test or eq_stream_test) and not isinstance(original_volume, int):
+            raise SendspinProbeError(
+                "The endpoint did not report a restorable integer volume"
+            )
 
         if control_test:
             probe_volume = original_volume - 1 if original_volume > 0 else 1
@@ -238,6 +264,78 @@ async def probe(
                     "Silent PCM stream did not start, stop, and preserve volume"
                 )
 
+        if eq_stream_test:
+            if eq_stream_test == "Flat":
+                raise SendspinProbeError(
+                    "EQ stream test requires a non-flat preset so processing is observable"
+                )
+            source = calibration_signal()
+            processed = apply_preset(source, eq_stream_test)
+            source_pcm = pcm16_bytes(source)
+            processed_pcm = pcm16_bytes(processed)
+            if source_pcm == processed_pcm or not any(processed_pcm):
+                raise SendspinProbeError(
+                    "EQ calibration did not produce distinct non-silent PCM"
+                )
+
+            safe_volume = min(original_volume, eq_test_volume)
+            player_role.set_volume(safe_volume)
+            lowered = await _wait_for_volume(player_role, safe_volume, timeout)
+            if not lowered:
+                raise SendspinProbeError(
+                    "Could not acknowledge the temporary EQ test volume"
+                )
+
+            pcm_format = AudioFormat(**PCM_FORMAT_VALUES)
+            if not player_role.set_preferred_format(pcm_format, AudioCodec.PCM):
+                raise SendspinProbeError(
+                    "The endpoint rejected 48 kHz 16-bit stereo PCM"
+                )
+            stream = group.start_stream()
+            stream.prepare_audio(processed_pcm, pcm_format)
+            commit_started = loop.time()
+            play_start_us = await stream.commit_audio()
+            commit_duration_ms = round((loop.time() - commit_started) * 1_000, 3)
+            schedule_lead_us = play_start_us - server.clock.now_us()
+            await asyncio.sleep(0.25)
+            started = player_role.stream_started and group.has_active_stream
+            await asyncio.sleep(1.75)
+            stopped = await group.stop()
+            await asyncio.sleep(0.25)
+            ended = not player_role.stream_started and not group.has_active_stream
+
+            player_role.set_volume(original_volume)
+            restored = await _wait_for_volume(player_role, original_volume, timeout)
+            tests["sonance_eq_pcm_stream"] = {
+                "preset": eq_stream_test,
+                "format": PCM_FORMAT_VALUES,
+                "duration_seconds": 1,
+                "bytes_sent": len(processed_pcm),
+                "source_sha256": hashlib.sha256(source_pcm).hexdigest(),
+                "processed_sha256": hashlib.sha256(processed_pcm).hexdigest(),
+                "source_level": signal_stats(source),
+                "processed_level": signal_stats(processed),
+                "calculated_response": frequency_response(eq_stream_test),
+                "temporary_volume": safe_volume,
+                "play_start_us": play_start_us,
+                "schedule_lead_at_commit_us": schedule_lead_us,
+                "commit_duration_ms": commit_duration_ms,
+                "started": started,
+                "stopped": stopped and ended,
+                "volume_restored_to": original_volume,
+                "restore_acknowledged": restored,
+            }
+            if (
+                schedule_lead_us < 0
+                or not started
+                or not stopped
+                or not ended
+                or not restored
+            ):
+                raise SendspinProbeError(
+                    "Processed PCM stream was late or did not start, stop, and restore volume"
+                )
+
         return {
             "status": "compatible",
             "endpoint": {
@@ -248,7 +346,9 @@ async def probe(
             },
             "device": _device_report(client, player_role),
             "tests": tests,
-            "writes_performed": control_test or silent_stream_test,
+            "writes_performed": control_test
+            or silent_stream_test
+            or bool(eq_stream_test),
             "persistent_state_restored": player_role.volume == original_volume,
         }
     finally:
@@ -286,6 +386,26 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Send one second of digital silence and verify start/stop state",
     )
+    parser.add_argument(
+        "--eq-stream-test",
+        choices=PRESET_NAMES,
+        metavar="PRESET",
+        help=(
+            "Process a quiet one-second calibration signal with a non-flat Sonance "
+            "preset and stream it to the player"
+        ),
+    )
+    parser.add_argument(
+        "--eq-test-volume",
+        type=int,
+        choices=range(0, 31),
+        default=DEFAULT_EQ_TEST_VOLUME,
+        metavar="0..30",
+        help=(
+            "Maximum temporary player volume for --eq-stream-test "
+            f"(default: {DEFAULT_EQ_TEST_VOLUME})"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -300,6 +420,8 @@ def main() -> int:
                 args.timeout,
                 control_test=args.control_test,
                 silent_stream_test=args.silent_stream_test,
+                eq_stream_test=args.eq_stream_test,
+                eq_test_volume=args.eq_test_volume,
             )
         )
     except (OSError, TimeoutError, SendspinProbeError, ValueError) as error:
@@ -310,7 +432,9 @@ def main() -> int:
                     "status": "incompatible_or_unreachable",
                     "error": detail,
                     "state_changing_tests_requested": (
-                        args.control_test or args.silent_stream_test
+                        args.control_test
+                        or args.silent_stream_test
+                        or bool(args.eq_stream_test)
                     ),
                 },
                 indent=2,
