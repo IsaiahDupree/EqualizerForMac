@@ -28,6 +28,12 @@ from sonance_eq.presets import PRESET_NAMES  # noqa: E402
 DEPENDENCY_ERROR: ImportError | None = None
 
 try:
+    from aiosendspin.models import AudioCodec
+    from aiosendspin.models.types import ConnectionReason
+    from aiosendspin.noise import Identity
+    from aiosendspin.noise.trust_store import InMemoryServerPairingStore
+    from aiosendspin.server import SendspinServer
+    from aiosendspin.server.audio import AudioFormat
     from pcm_dsp import (
         apply_preset,
         calibration_signal,
@@ -35,12 +41,6 @@ try:
         pcm16_bytes,
         signal_stats,
     )
-    from aiosendspin.models import AudioCodec
-    from aiosendspin.models.types import ConnectionReason
-    from aiosendspin.noise import Identity
-    from aiosendspin.noise.trust_store import InMemoryServerPairingStore
-    from aiosendspin.server import SendspinServer
-    from aiosendspin.server.audio import AudioFormat
 except ImportError as error:  # pragma: no cover - exercised by the CLI environment
     DEPENDENCY_ERROR = error
 
@@ -398,7 +398,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--eq-test-volume",
         type=int,
-        choices=range(0, 31),
+        choices=range(31),
         default=DEFAULT_EQ_TEST_VOLUME,
         metavar="0..30",
         help=(
