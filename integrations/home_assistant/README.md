@@ -15,8 +15,8 @@ The ecosystem research and product-by-product capability matrix live in
 - `www/sonance-home-card.js`: a compact Lovelace card with player, media, and EQ selectors.
 - `install.sh`: copies both into an existing Home Assistant configuration directory.
 - Nine presets: Flat, Bass Boost, Treble, Vocal, Loudness, Warm Room, Night, Small Speaker, Cinema.
-- Four Home Assistant actions: `sync_presets`, `apply_preset`, `apply_powerzone_preset`, and
-  `send_to_device`.
+- Four Home Assistant actions: `sync_presets`, `apply_preset`, `apply_powerzone_preset`, and the
+  queue-aware `send_to_device`.
 - One standard Home Assistant `select` entity per physical PowerZone output, using the installer-defined
   output name. These are the portable control surface for dashboards, voice bridges, scenes, and other hubs.
 
@@ -60,10 +60,11 @@ title: Sonance Home
 preset: Flat
 ```
 
-The card discovers current `media_player` entities. Music Assistant players receive both Sonance DSP
-and playback. Any other player remains a valid playback destination. Direct hardware EQ is controlled
-from either the generated output selectors or the `apply_powerzone_preset` action and remains active for
-every physical source through that amp.
+The card discovers current `media_player` entities and offers Play now, Replace, Play next, and Add queue
+behavior. Music Assistant players receive both Sonance DSP and playback. Any other player remains a valid
+playback destination when its integration supports the selected queue behavior. Direct hardware EQ is
+controlled from either the generated output selectors or the `apply_powerzone_preset` action and remains
+active for every physical source through that amp.
 
 ## Automations
 
@@ -84,8 +85,16 @@ data:
   entity_id: media_player.kitchen_speaker
   media_id: https://example.net/radio.mp3
   media_type: music
+  enqueue: replace
   preset: Warm Room
 ```
+
+Sonance preset and send actions are serialized per target player, so two simultaneous dashboard, voice,
+or automation calls through this integration cannot interleave one room's requested curve and media.
+Different rooms can still start in parallel. Home Assistant's native `media_player.play_media` path
+remains the playback authority; for Music Assistant entities it resolves the active queue and submits
+Music Assistant's native queue command. `media-source://` identifiers are resolved by Home Assistant
+before they reach Music Assistant.
 
 Create or refresh all Sonance presets in Music Assistant:
 
@@ -214,3 +223,6 @@ calculated response at all ten band centers, commit latency, scheduling lead, pl
 and volume restoration. This proves the digital curve was rendered into the PCM delivered to the physical
 player. It does not replace an acoustic sweep and calibrated measurement microphone for proving the sound
 pressure response of the speaker and room.
+
+Music Assistant is the production owner of Sendspin player connections. The direct probe is deliberately
+an acceptance and diagnostic tool, not a second always-on Sendspin server competing for the same players.

@@ -37,7 +37,7 @@ class SonanceHomeCard extends HTMLElement {
       select,input { width:100%; box-sizing:border-box; border:1px solid #315661; border-radius:10px;
         padding:11px 12px; background:#09232e; color:#fff; font:inherit; outline:none; }
       select:focus,input:focus { border-color:#38e8d6; box-shadow:0 0 0 2px #38e8d633; }
-      .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
       .actions { display:flex; gap:10px; padding-top:2px; }
       button { flex:1; border:0; border-radius:10px; padding:12px; cursor:pointer; font-weight:800; }
       .send { background:#38e8d6; color:#06242b; }
@@ -89,6 +89,10 @@ class SonanceHomeCard extends HTMLElement {
     this._mediaType = this._selectField("Media type", row);
     [["Music", "music"], ["Audio", "audio"], ["Video", "video"]]
       .forEach(([label, value]) => this._mediaType.add(new Option(label, value)));
+    this._enqueue = this._selectField("Queue", row);
+    [["Play now", "play"], ["Replace", "replace"], ["Play next", "next"], ["Add", "add"]]
+      .forEach(([label, value]) => this._enqueue.add(new Option(label, value)));
+    this._enqueue.value = this._config.enqueue || "play";
     body.append(row);
 
     this._notice = document.createElement("div");
@@ -175,6 +179,7 @@ class SonanceHomeCard extends HTMLElement {
       entity_id: this._player.value,
       media_id: media,
       media_type: this._mediaType.value,
+      enqueue: this._enqueue.value,
     };
     if (this._preset.value) data.preset = this._preset.value;
     await this._call("send_to_device", data, "Sent to device");

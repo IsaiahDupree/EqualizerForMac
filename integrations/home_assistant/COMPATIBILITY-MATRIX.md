@@ -1,6 +1,6 @@
 # Sonance Home ecosystem compatibility
 
-Research date: 2026-09-20. This document uses vendor and project documentation rather than assuming
+Research date: 2026-09-26. This document uses vendor and project documentation rather than assuming
 that a logo or generic smart-home protocol implies audio or DSP support.
 
 “Works with all home products” has to be defined by capability. No current standard makes arbitrary
@@ -18,6 +18,11 @@ uses a layered contract:
   commands for ecosystems with generic MQTT support.
 - **Control bridge:** other hubs call a Home Assistant script/action over their supported local or
   cloud bridge. This exposes preset selection and playback but does not invent DSP inside a speaker.
+
+Music Assistant is the production owner of Sendspin player connections. Its built-in provider performs
+the synchronized playback pipeline and per-player DSP, and only one Music Assistant server should own
+Sendspin on a network. The direct `sendspin_probe.py` client is therefore an acceptance/diagnostic tool,
+not a second always-on playback server.
 
 ## Control ecosystems
 
@@ -110,6 +115,10 @@ Representative official references:
 - [Music Assistant player support](https://www.music-assistant.io/player-support/) and
   [technical behavior](https://www.music-assistant.io/faq/tech-info/) cover Cast, Sonos, AirPlay,
   Squeezelite, DLNA, Snapcast, HA-imported players, native enqueue, and flow mode.
+- [Music Assistant Sendspin support](https://www.music-assistant.io/player-support/sendspin/) documents
+  the built-in provider, direct player endpoint, per-player audio settings, and single-server network
+  ownership. Its [provider architecture](https://github.com/music-assistant/server/blob/dev/music_assistant/providers/sendspin/README.md)
+  places per-player DSP in the Music Assistant playback pipeline.
 - [Music Assistant DSP](https://www.music-assistant.io/dsp/) is the stream-path DSP authority.
 - [Home Assistant Cast](https://www.home-assistant.io/integrations/cast/),
   [Sonos](https://www.home-assistant.io/integrations/sonos),
@@ -142,6 +151,10 @@ physical unit acknowledged playback and stop while temporarily limited to volume
 restoration to volume 58. This proves non-flat Sonance-processed PCM entered the physical Sendspin path.
 It does not prove the acoustic speaker/room response; that final layer requires a calibrated microphone
 measurement.
+
+The shipping Home Assistant action keeps playback on the Music Assistant integration's native entity
+path, which resolves the player's current queue before sending media. `send_to_device` also serializes
+preset application and playback per room and exposes Play now, Replace, Play next, and Add behavior.
 
 ## Native PowerZone contract
 

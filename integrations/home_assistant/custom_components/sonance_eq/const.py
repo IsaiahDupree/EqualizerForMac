@@ -30,10 +30,13 @@ SERVICE_SEND_TO_DEVICE = "send_to_device"
 SERVICE_SYNC_PRESETS = "sync_presets"
 
 ATTR_ENTITY_ID = "entity_id"
+ATTR_ENQUEUE = "enqueue"
 ATTR_MEDIA_ID = "media_id"
 ATTR_MEDIA_TYPE = "media_type"
 ATTR_OUTPUT_ID = "output_id"
 ATTR_PRESET = "preset"
+
+ENQUEUE_OPTIONS = ("play", "replace", "next", "add")
 
 MASS_DOMAIN = "mass"
 MASS_UNIQUE_ID_PREFIX = "mass_"

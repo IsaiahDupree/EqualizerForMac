@@ -78,7 +78,7 @@ apply_powerzone_preset:
 
 send_to_device:
   name: Send to device
-  description: Optionally applies a Sonance preset, then starts media on a Home Assistant player.
+  description: Optionally applies a Sonance preset, then sends media to a Home Assistant player with explicit queue behavior.
   fields:
     entity_id:
       name: Player
@@ -97,6 +97,21 @@ send_to_device:
       default: music
       selector:
         text:
+    enqueue:
+      name: Queue behavior
+      description: Play immediately, replace the queue, play next, or add to the end. Player support varies.
+      default: play
+      selector:
+        select:
+          options:
+            - label: Play now
+              value: play
+            - label: Replace queue
+              value: replace
+            - label: Play next
+              value: next
+            - label: Add to queue
+              value: add
     preset:
       name: EQ preset
       description: Stream-path EQ is available when the selected player comes from Music Assistant. Downstream PowerZone hardware EQ remains independent.

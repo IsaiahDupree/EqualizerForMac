@@ -22,7 +22,7 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ **Linear-phase FIR mode** (toggle) — same magnitude, zero phase distortion, ~21 ms latency; default off (minimum-phase IIR).
 - ✅ **Mid-Side mode** — EQ the mono center and the stereo width with independent curves.
 - ✅ **Sonance Home** — Home Assistant integration, Music Assistant DSP preset sync, Cast/Nest
-  “Send to device” action, a responsive dashboard card, a publish-valid native
+  queue-aware “Send to device” action, a responsive dashboard card, a publish-valid native
   [Homey Pro app](integrations/homey/com.isaiahdupree.sonanceeq/README.md), and a local
   [SmartThings Edge driver](integrations/smartthings/sonance-powerzone/README.md). A local
   [MQTT bridge](integrations/mqtt/sonance-powerzone-mqtt/README.md) adds a stable command/state layer for

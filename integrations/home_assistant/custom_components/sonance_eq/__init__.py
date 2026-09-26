@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from .const import (
+    ATTR_ENQUEUE,
     ATTR_ENTITY_ID,
     ATTR_MEDIA_ID,
     ATTR_MEDIA_TYPE,
@@ -20,6 +22,7 @@ from .const import (
     CONF_TOKEN,
     CONF_URL,
     DOMAIN,
+    ENQUEUE_OPTIONS,
     MASS_DOMAIN,
     MASS_UNIQUE_ID_PREFIX,
     SERVICE_APPLY_POWERZONE_PRESET,
@@ -164,6 +167,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         await hass.config_entries.async_forward_entry_setups(entry, (Platform.SELECT,))
 
+    send_locks: dict[str, asyncio.Lock] = hass.data.setdefault(DOMAIN, {}).setdefault(
+        "send_locks", {}
+    )
     if hass.services.has_service(DOMAIN, SERVICE_SYNC_PRESETS):
         return True
 
@@ -183,14 +189,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_apply(call: ServiceCall) -> None:
         from .client import MusicAssistantApiError
 
+        entity_id = call.data[ATTR_ENTITY_ID]
         client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
-        player_id = _mass_player_id(hass, call.data[ATTR_ENTITY_ID])
-        try:
-            await client.apply_preset(player_id, call.data[ATTR_PRESET])
-        except MusicAssistantApiError as error:
-            from homeassistant.exceptions import HomeAssistantError
+        player_id = _mass_player_id(hass, entity_id)
+        async with send_locks.setdefault(entity_id, asyncio.Lock()):
+            try:
+                await client.apply_preset(player_id, call.data[ATTR_PRESET])
+            except MusicAssistantApiError as error:
+                from homeassistant.exceptions import HomeAssistantError
 
-            raise HomeAssistantError(str(error)) from error
+                raise HomeAssistantError(str(error)) from error
 
     async def handle_apply_powerzone(call: ServiceCall) -> None:
         client = _configured_powerzone_client(hass, call.data.get(CONF_ENTRY_ID))
@@ -203,30 +211,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_send(call: ServiceCall) -> None:
         entity_id = call.data[ATTR_ENTITY_ID]
-        preset = call.data.get(ATTR_PRESET)
-        if preset:
-            from .client import MusicAssistantApiError
+        # Keep preset + playback ordered for concurrent dashboard, voice, and
+        # automation calls targeting the same room. Different rooms stay independent.
+        async with send_locks.setdefault(entity_id, asyncio.Lock()):
+            preset = call.data.get(ATTR_PRESET)
+            if preset:
+                from .client import MusicAssistantApiError
 
-            client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
-            player_id = _mass_player_id(hass, entity_id)
-            try:
-                await client.apply_preset(player_id, preset)
-            except MusicAssistantApiError as error:
-                from homeassistant.exceptions import HomeAssistantError
+                client = _configured_music_client(hass, call.data.get(CONF_ENTRY_ID))
+                player_id = _mass_player_id(hass, entity_id)
+                try:
+                    await client.apply_preset(player_id, preset)
+                except MusicAssistantApiError as error:
+                    from homeassistant.exceptions import HomeAssistantError
 
-                raise HomeAssistantError(str(error)) from error
+                    raise HomeAssistantError(str(error)) from error
 
-        await hass.services.async_call(
-            "media_player",
-            "play_media",
-            {
+            service_data = {
                 "entity_id": entity_id,
                 "media_content_id": call.data[ATTR_MEDIA_ID],
                 "media_content_type": call.data.get(ATTR_MEDIA_TYPE, "music"),
-            },
-            blocking=True,
-            context=call.context,
-        )
+                ATTR_ENQUEUE: call.data.get(ATTR_ENQUEUE, "play"),
+            }
+            await hass.services.async_call(
+                "media_player",
+                "play_media",
+                service_data,
+                blocking=True,
+                context=call.context,
+            )
 
     hass.services.async_register(
         DOMAIN,
@@ -270,6 +283,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 vol.Required(ATTR_ENTITY_ID): cv.entity_id,
                 vol.Required(ATTR_MEDIA_ID): cv.string,
                 vol.Optional(ATTR_MEDIA_TYPE, default="music"): cv.string,
+                vol.Optional(ATTR_ENQUEUE, default="play"): vol.In(ENQUEUE_OPTIONS),
                 vol.Optional(ATTR_PRESET): vol.In(PRESET_NAMES),
             }
         ),
@@ -296,4 +310,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             SERVICE_SEND_TO_DEVICE,
         ):
             hass.services.async_remove(DOMAIN, service)
+        hass.data.pop(DOMAIN, None)
     return True
