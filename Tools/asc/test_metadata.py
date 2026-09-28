@@ -23,6 +23,12 @@ class MetadataValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max 100"):
             metadata.validate_copy(invalid)
 
+    def test_developer_rejected_release_remains_editable(self):
+        self.assertIn("DEVELOPER_REJECTED", metadata.EDITABLE_VERSION_STATES)
+
+    def test_in_review_release_remains_locked(self):
+        self.assertNotIn("IN_REVIEW", metadata.EDITABLE_VERSION_STATES)
+
 
 if __name__ == "__main__":
     unittest.main()

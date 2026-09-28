@@ -3,7 +3,7 @@
 
 The source of truth for the next Sonance EQ release is kept here in English and French. The tool is
 fail-closed: local validation requires no credentials, live inspection is read-only with ``--dry-run``,
-and writes are allowed only for a version in PREPARE_FOR_SUBMISSION.
+and writes are allowed only for an App Store version state Apple keeps editable.
 
 Examples:
   python3 Tools/asc/metadata.py --validate-only
@@ -24,7 +24,13 @@ APP_NAME = "Sonance EQ"
 SUPPORT_URL = "https://github.com/IsaiahDupree/EqualizerForMac"
 MARKETING_URL = "https://isaiahdupree.github.io/sonance-apps/sonance-eq/"
 PRIVACY_URL = "https://isaiahdupree.github.io/sonance-apps/privacy/"
-EDITABLE_VERSION_STATES = {"PREPARE_FOR_SUBMISSION"}
+EDITABLE_VERSION_STATES = {
+    "PREPARE_FOR_SUBMISSION",
+    "DEVELOPER_REJECTED",
+    "REJECTED",
+    "METADATA_REJECTED",
+    "INVALID_BINARY",
+}
 
 
 @dataclass(frozen=True)
@@ -257,7 +263,7 @@ def fill_version(version: dict, *, apply: bool) -> None:
     print(f"  · version {version_string} [{state}]")
     if apply and state not in EDITABLE_VERSION_STATES:
         raise RuntimeError(
-            f"refusing to edit version {version_string} in {state}; expected PREPARE_FOR_SUBMISSION"
+            f"refusing to edit version {version_string} in locked state {state}"
         )
     existing = api(
         "GET",
@@ -296,8 +302,7 @@ def main() -> int:
     version_state = version["attributes"].get("appStoreState")
     if args.apply and version_state not in EDITABLE_VERSION_STATES:
         raise RuntimeError(
-            f"refusing to edit version {args.version} in {version_state}; "
-            "expected PREPARE_FOR_SUBMISSION"
+            f"refusing to edit version {args.version} in locked state {version_state}"
         )
     fill_app_info(app["id"], version_state, apply=args.apply)
     fill_version(version, apply=args.apply)
