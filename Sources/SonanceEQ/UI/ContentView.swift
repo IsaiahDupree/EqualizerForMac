@@ -41,9 +41,10 @@ struct ContentView: View {
         .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
-        .sheet(isPresented: $app.showingAbout) { AboutView() }
+        .sheet(isPresented: $app.showingAbout) { AboutView(updates: app.updates) }
         .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
         .onAppear(perform: openLaunchArgPanel)
+        .task { await app.updates.check() }
     }
 
     /// Auto-present a panel from a launch argument (`--screen mixer|recorder`) for demos/screenshots.
@@ -278,6 +279,16 @@ struct ContentView: View {
             Button { showingAnalytics = true } label: { Image(systemName: "chart.bar.xaxis") }
                 .buttonStyle(.borderless)
                 .help("Purchase & diagnostics log — useful when reporting a problem")
+            if let version = app.updates.availableVersion {
+                Button { app.updates.openAppStore() } label: {
+                    Label("Update", systemImage: "arrow.down.circle.fill")
+                        .font(.caption2.bold())
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+                .help("Sonance EQ \(version) is available in the Mac App Store")
+                .accessibilityLabel("Update Sonance EQ to version \(version)")
+            }
             SonanceSuiteMenu(current: .eq)
                 .controlSize(.small)
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }

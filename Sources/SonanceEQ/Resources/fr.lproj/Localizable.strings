@@ -29,6 +29,11 @@
 "Export…" = "Exporter…";
 "System-wide · driverless" = "Pour tout le système · sans pilote";
 "More Sonance" = "Plus d’apps Sonance";
+"Update" = "Mettre à jour";
+"Check for Updates" = "Rechercher les mises à jour";
+"Sonance EQ is up to date" = "Sonance EQ est à jour";
+"Version %@ is available" = "La version %@ est disponible";
+"Couldn’t check for updates. Try again." = "Impossible de rechercher les mises à jour. Réessayez.";
 
 "Search e.g. HD 600, AirPods, Moondrop…" = "Rechercher : HD 600, AirPods, Moondrop…";
 "All" = "Tout";

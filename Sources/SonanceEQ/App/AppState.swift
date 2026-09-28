@@ -11,6 +11,7 @@ final class AppState {
     let permission = AudioRecordingPermission()
     let license = PurchaseManager()
     let review = ReviewPrompter()
+    let updates = AppUpdateChecker()
 
     private var tap: SystemAudioTap?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")

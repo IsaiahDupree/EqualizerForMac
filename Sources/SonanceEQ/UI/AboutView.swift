@@ -4,6 +4,7 @@ import SwiftUI
 /// must be credited) plus version and acknowledgements.
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
+    @Bindable var updates: AppUpdateChecker
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
@@ -16,9 +17,26 @@ struct AboutView: View {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable().frame(width: 72, height: 72)
             Text("Sonance EQ").font(.title2.bold())
-            Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
+                Button {
+                    Task { await updates.check(force: true) }
+                } label: {
+                    if updates.state == .checking {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                    }
+                }
+                .buttonStyle(.borderless)
+                .disabled(updates.state == .checking)
+                .help("Check for Updates")
+                .accessibilityLabel("Check for Updates")
+            }
             Text("A system-wide, driverless equalizer for macOS.")
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
+
+            updateStatus
 
             Divider()
 
@@ -39,6 +57,27 @@ struct AboutView: View {
         }
         .padding(24)
         .frame(width: 360)
+    }
+
+    @ViewBuilder
+    private var updateStatus: some View {
+        switch updates.state {
+        case .idle, .checking:
+            EmptyView()
+        case .upToDate:
+            Label("Sonance EQ is up to date", systemImage: "checkmark.circle.fill")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case let .updateAvailable(version):
+            Button { updates.openAppStore() } label: {
+                Label("Version \(version) is available", systemImage: "arrow.down.circle.fill")
+            }
+            .controlSize(.small)
+        case .failed:
+            Text("Couldn’t check for updates. Try again.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func credit(_ title: String, _ detail: String, url: String? = nil) -> some View {
