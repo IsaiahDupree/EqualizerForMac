@@ -8,7 +8,9 @@ options:
 
 packages:
   RevenueCat:
-    url: https://github.com/RevenueCat/purchases-ios.git
+    # RevenueCat's distribution-only mirror avoids cloning the full SDK development history
+    # during deterministic App Store archives.
+    url: https://github.com/RevenueCat/purchases-ios-spm.git
     from: "5.0.0"
 
 # Three configurations: Debug + Release are the direct (Developer ID) builds (private TCC SPI on,
