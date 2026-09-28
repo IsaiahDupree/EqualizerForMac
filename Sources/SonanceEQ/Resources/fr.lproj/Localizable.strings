@@ -6,8 +6,13 @@
 "Linear-phase mode" = "Mode à phase linéaire";
 "Mid-Side EQ (center vs. width)" = "Égaliseur Mid-Side (centre et largeur)";
 "Import & export presets" = "Importer et exporter des préréglages";
+"Unlock Pro · %@" = "Débloquer Pro · %@";
+"Unlock Pro (mock) · %@" = "Débloquer Pro (test) · %@";
+"Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Boutique de test — aucun paiement réel. Configurez RevenueCat dans LicenseConfig pour activer les achats.";
 "Restore Purchase" = "Restaurer l’achat";
+"Relock (mock)" = "Reverrouiller (test)";
 "Not now" = "Plus tard";
+"Cancel" = "Annuler";
 
 "Bypass" = "Contourner";
 "Start EQ" = "Activer l’EQ";

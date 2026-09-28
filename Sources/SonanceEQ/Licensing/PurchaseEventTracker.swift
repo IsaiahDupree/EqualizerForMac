@@ -37,12 +37,16 @@ public struct TrackedEvent: Codable, Equatable, Sendable {
     public let event: PurchaseEvent
     public let store: String       // "mock" | "revenueCat"
     public let detail: String?     // product id on success, error message on failure
+    /// Locale active when the event occurred. Optional so existing v1 event logs decode unchanged.
+    public let locale: String?
     public let date: Date
 
-    public init(event: PurchaseEvent, store: String, detail: String? = nil, date: Date) {
+    public init(event: PurchaseEvent, store: String, detail: String? = nil,
+                locale: String? = nil, date: Date) {
         self.event = event
         self.store = store
         self.detail = detail
+        self.locale = locale
         self.date = date
     }
 }
@@ -64,6 +68,7 @@ final class PurchaseEventTracker {
 
     private let defaults: UserDefaults
     private let clock: () -> Date
+    private let localeIdentifier: () -> String
     private let log = Logger(subsystem: kSubsystem, category: "PurchaseTracking")
 
     /// The full event log, oldest → newest.
@@ -71,10 +76,12 @@ final class PurchaseEventTracker {
 
     init(defaults: UserDefaults = .standard,
          maxEvents: Int = 500,
-         clock: @escaping () -> Date = { Date() }) {
+         clock: @escaping () -> Date = { Date() },
+         localeIdentifier: @escaping () -> String = { Locale.current.identifier }) {
         self.defaults = defaults
         self.maxEvents = max(1, maxEvents)
         self.clock = clock
+        self.localeIdentifier = localeIdentifier
         self.events = Self.load(from: defaults)
     }
 
@@ -83,7 +90,8 @@ final class PurchaseEventTracker {
     /// Append an event and persist. Trims the oldest events past `maxEvents`.
     @discardableResult
     func record(_ event: PurchaseEvent, store: String, detail: String? = nil) -> TrackedEvent {
-        let entry = TrackedEvent(event: event, store: store, detail: detail, date: clock())
+        let entry = TrackedEvent(event: event, store: store, detail: detail,
+                                 locale: localeIdentifier(), date: clock())
         events.append(entry)
         if events.count > maxEvents {
             events.removeFirst(events.count - maxEvents)

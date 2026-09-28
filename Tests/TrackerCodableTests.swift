@@ -24,6 +24,7 @@ let codableCases: [CodableCase] = PurchaseEvent.allCases.flatMap { event in
     @Test(arguments: codableCases)
     func trackedEventRoundTrips(_ c: CodableCase) throws {
         let original = TrackedEvent(event: c.event, store: c.store, detail: c.detail,
+                                    locale: "fr_FR",
                                     date: Date(timeIntervalSince1970: 1_700_000_000))
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(TrackedEvent.self, from: data)
@@ -31,6 +32,7 @@ let codableCases: [CodableCase] = PurchaseEvent.allCases.flatMap { event in
         #expect(decoded.event == c.event)
         #expect(decoded.store == c.store)
         #expect(decoded.detail == c.detail)
+        #expect(decoded.locale == "fr_FR")
     }
 
     // 0...30 = 31 cases — a whole log array round-trips through UserDefaults.
@@ -68,5 +70,12 @@ let codableCases: [CodableCase] = PurchaseEvent.allCases.flatMap { event in
         // …and it can still record normally afterwards.
         tracker.record(.paywallShown, store: "mock")
         #expect(tracker.events.count == 1)
+    }
+
+    @Test func legacyEventWithoutLocaleStillDecodes() throws {
+        let data = Data(#"{"event":"paywallShown","store":"revenueCat","date":1700000000}"#.utf8)
+        let decoded = try JSONDecoder().decode(TrackedEvent.self, from: data)
+        #expect(decoded.event == .paywallShown)
+        #expect(decoded.locale == nil)
     }
 }

@@ -15,12 +15,14 @@ struct MockPaywallView: View {
     /// number. The mock store has no real product, so it keeps this fallback.
     @State private var priceText = "$9.99"
 
-    private let features: [(icon: String, text: String)] = [
-        ("headphones", "8,850 AutoEq headphone corrections"),
-        ("slider.horizontal.3", "Full parametric EQ — up to 32 bands"),
-        ("waveform.path", "Linear-phase mode"),
-        ("circle.lefthalf.filled", "Mid-Side EQ (center vs. width)"),
-        ("square.and.arrow.up.on.square", "Import & export presets"),
+    /// Keep these as `LocalizedStringKey` values. Passing runtime `String` values to `Label` would
+    /// render the English source text verbatim and silently bypass Localizable.strings.
+    private let features: [(id: String, icon: String, text: LocalizedStringKey)] = [
+        ("headphones", "headphones", "8,850 AutoEq headphone corrections"),
+        ("parametric", "slider.horizontal.3", "Full parametric EQ — up to 32 bands"),
+        ("linear-phase", "waveform.path", "Linear-phase mode"),
+        ("mid-side", "circle.lefthalf.filled", "Mid-Side EQ (center vs. width)"),
+        ("presets", "square.and.arrow.up.on.square", "Import & export presets"),
     ]
 
     var body: some View {
@@ -32,7 +34,7 @@ struct MockPaywallView: View {
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 9) {
-                ForEach(features, id: \.text) { f in
+                ForEach(features, id: \.id) { f in
                     Label(f.text, systemImage: f.icon)
                 }
             }
@@ -48,8 +50,14 @@ struct MockPaywallView: View {
             Button {
                 Task { await app.license.purchasePro(); if app.license.isPro { dismiss() } }
             } label: {
-                Text(app.license.store == .mock ? "Unlock Pro (mock) · \(priceText)" : "Unlock Pro · \(priceText)")
-                    .frame(maxWidth: .infinity)
+                Group {
+                    if app.license.store == .mock {
+                        Text("Unlock Pro (mock) · \(priceText)")
+                    } else {
+                        Text("Unlock Pro · \(priceText)")
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)

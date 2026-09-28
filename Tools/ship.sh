@@ -13,7 +13,7 @@
 #   Tools/ship.sh audit       # readiness checklist
 #   Tools/ship.sh submit      # submit for review (free app; IAP excluded)
 #   Tools/ship.sh all         # provision → … → audit  (stops before submit)
-set -uo pipefail
+set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 source Tools/asc/env.sh
 P=python3
@@ -24,7 +24,13 @@ s_app(){ stage "app record (browser)"; $P Tools/asc/create_app.py; }
 s_build(){ stage build; bash Tools/build_mas.sh; }
 s_upload(){ stage upload; xcrun altool --upload-app --type macos --file build/appstore/SonanceEQ.pkg \
               --apiKey "$ASC_API_KEY_ID" --apiIssuer "$ASC_API_ISSUER_ID"; }
-s_meta(){ stage metadata; $P Tools/asc/metadata.py; $P Tools/asc/screenshots.py; $P Tools/asc/iap.py 9.99; }
+s_meta(){
+  stage metadata
+  local version="${APP_VERSION:-$(sed -n 's/^[[:space:]]*MARKETING_VERSION: "\([^"]*\)"/\1/p' project.yml | head -1)}"
+  $P Tools/asc/metadata.py --version "$version" --apply
+  $P Tools/asc/screenshots.py
+  $P Tools/asc/iap.py 9.99
+}
 s_web(){ stage "web flows (browser)"; $P Tools/asc/web_flows.py all; }
 s_finalize(){ stage "finalize (content rights + export compliance)"; $P - <<'PY'
 import sys; sys.path.insert(0,"Tools/asc")

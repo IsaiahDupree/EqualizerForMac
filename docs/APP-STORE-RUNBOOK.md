@@ -42,6 +42,14 @@ Tools/ship.sh submit           # API: submit version for review (IAP intentional
 
 `Tools/ship.sh all` runs provision→audit and stops before submit.
 
+The metadata stage reads `MARKETING_VERSION` from `project.yml`, validates every Apple character/byte
+limit, and refuses to write unless that exact version is in `PREPARE_FOR_SUBMISSION`. Inspect it first:
+
+```bash
+python3 Tools/asc/metadata.py --validate-only
+python3 Tools/asc/metadata.py --version 1.0.6 --dry-run
+```
+
 ---
 
 ## 2. Browser automation — how it works (the load-bearing trick)

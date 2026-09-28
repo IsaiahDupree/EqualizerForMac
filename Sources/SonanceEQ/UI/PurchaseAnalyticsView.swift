@@ -111,6 +111,9 @@ struct PurchaseAnalyticsView: View {
                 Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }
             Spacer()
+            if let locale = e.locale {
+                Text(locale).font(.caption2).foregroundStyle(.tertiary)
+            }
             Text(e.store).font(.caption2).foregroundStyle(.tertiary)
             Text(Self.time.string(from: e.date)).font(.caption2.monospacedDigit()).foregroundStyle(.tertiary)
         }

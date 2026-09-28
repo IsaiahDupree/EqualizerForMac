@@ -18,6 +18,7 @@ import Testing
         #expect(tracker.lastEvent == entry)
         #expect(tracker.lastEvent?.event == event)
         #expect(tracker.lastEvent?.store == store)
+        #expect(tracker.lastEvent?.locale == "en_US")
         #expect(tracker.count(of: event) == 1)
     }
 
@@ -32,6 +33,7 @@ import Testing
         #expect(reloaded.events.count == 1)
         #expect(reloaded.lastEvent?.event == event)
         #expect(reloaded.lastEvent?.detail == detail)
+        #expect(reloaded.lastEvent?.locale == "en_US")
     }
 
     // 0...40 = 41 cases — count() equals the number recorded.

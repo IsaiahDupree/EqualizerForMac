@@ -17,7 +17,8 @@ enum LicensingTestKit {
     static func makeTracker(maxEvents: Int = 500) -> (tracker: PurchaseEventTracker, defaults: UserDefaults, suite: String) {
         let suite = "test.tracker.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
-        return (PurchaseEventTracker(defaults: defaults, maxEvents: maxEvents, clock: fixedClock()), defaults, suite)
+        return (PurchaseEventTracker(defaults: defaults, maxEvents: maxEvents, clock: fixedClock(),
+                                     localeIdentifier: { "en_US" }), defaults, suite)
     }
 
     /// A fresh, started `PurchaseManager` (mock store) over an isolated defaults suite.
@@ -25,7 +26,8 @@ enum LicensingTestKit {
     static func makeManager() -> (manager: PurchaseManager, defaults: UserDefaults, suite: String) {
         let suite = "test.purchases.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
-        let tracker = PurchaseEventTracker(defaults: defaults, clock: fixedClock())
+        let tracker = PurchaseEventTracker(defaults: defaults, clock: fixedClock(),
+                                           localeIdentifier: { "en_US" })
         let manager = PurchaseManager(defaults: defaults, tracker: tracker)
         manager.start()
         return (manager, defaults, suite)
