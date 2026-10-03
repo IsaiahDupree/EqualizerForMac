@@ -19,7 +19,7 @@ purchase intent in French storefronts.
 
 ## Treatment
 
-- Subtitle: `Égaliseur audio pour Mac` (24 characters)
+- Subtitle: `Égaliseur pour chaque app` (25 characters)
 - Keywords: 100/100 UTF-8 bytes, with no title/subtitle repetition
 - Refined French description and promotional text (staged only; keep 1.0.5 unchanged for baseline)
 - Complete French native paywall, including runtime feature rows, price CTA, restore, dismiss, and
@@ -27,7 +27,8 @@ purchase intent in French storefronts.
 - Active locale attached to each local purchase-funnel event for diagnostics
 
 The English treatment also removes duplicate indexed terms and changes the subtitle to
-`Tune every app on your Mac` (26 characters).
+`Tune every app's playback` (25 characters). These subtitles omit Apple product
+terms following the October 2 guideline 5.2.5 metadata rejection.
 
 ## Metrics and call rule
 

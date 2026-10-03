@@ -46,7 +46,7 @@ class AppStoreCopy:
 LOCALIZATIONS = {
     "en-US": AppStoreCopy(
         locale="en-US",
-        subtitle="Tune every app on your Mac",
+        subtitle="Tune every app's playback",
         description=(
             "Sonance EQ equalizes everything your Mac plays — Spotify, Safari and Chrome, Zoom, "
             "games, even system sounds — before it reaches your speakers or headphones. No audio "
@@ -79,7 +79,7 @@ LOCALIZATIONS = {
     ),
     "fr-FR": AppStoreCopy(
         locale="fr-FR",
-        subtitle="Égaliseur audio pour Mac",
+        subtitle="Égaliseur pour chaque app",
         description=(
             "Sonance EQ égalise tout ce que votre Mac lit — Spotify, Safari et Chrome, Zoom, les jeux "
             "et même les sons du système — avant que le signal n’atteigne vos enceintes ou votre "
