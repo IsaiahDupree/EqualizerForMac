@@ -24,3 +24,12 @@ remain release checks; source coverage does not prove linguistic quality.
 This source change has not been submitted to Apple or released. RevenueCat
 dashboard-designed paywalls require separate dashboard translation verification.
 The native fallback paywall uses the bundled translations.
+
+## Verified on 2026-10-09
+
+Xcode generated and compiled the native project. The actual bundled-language
+integration test and existing French test passed. The complete suite then passed
+247 tests (4,218 parameterized runs), with four existing opt-in StoreKit tests
+skipped. The source audit reports all eight target catalogs complete. Live
+StoreKit transactions, hosted paywalls, native-speaker review and rendered
+long-label acceptance were not validated. No Apple upload or release occurred.
