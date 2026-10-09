@@ -12,7 +12,10 @@ if [ "${SKIP_SONANCE_TESTS:-0}" = "1" ]; then
 fi
 
 # Only run for Swift / project changes — keep doc-only commits fast.
-if ! git diff --cached --name-only | grep -qE '\.swift$|project\.yml$'; then
+# Capture first: under pipefail, grep -q can close its pipe early and make Git
+# report SIGPIPE, incorrectly treating staged Swift files as a doc-only commit.
+sonance_changed_sources="$(git diff --cached --name-only -- '*.swift' project.yml)"
+if [ -z "$sonance_changed_sources" ]; then
   echo "[pre-commit] no Swift/project changes — skipping tests"
   exit 0
 fi
