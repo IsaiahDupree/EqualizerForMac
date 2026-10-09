@@ -1,4 +1,9 @@
 "Unlock Pro" = "Débloquer Pro";
+"Unlock Pro (mock)" = "Débloquer Pro (test)";
+"Try again" = "Réessayer";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "L’achat est terminé, mais Pro n’est pas actif. Essayez de restaurer l’achat.";
+"No active Pro purchase was found for this Apple Account." = "Aucun achat Pro actif n’a été trouvé pour ce compte Apple.";
+"No purchase option is available right now." = "Aucune option d’achat n’est disponible pour le moment.";
 "Sonance EQ Pro" = "Sonance EQ Pro";
 "Unlock the full equalizer — a one-time purchase." = "Débloquez l’égaliseur complet avec un achat unique.";
 "8,850 AutoEq headphone corrections" = "8 850 corrections AutoEq pour casques";

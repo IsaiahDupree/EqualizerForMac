@@ -1,4 +1,5 @@
 import Foundation
+import RevenueCat
 import StoreKit
 import StoreKitTest
 import Testing
@@ -14,8 +15,9 @@ private final class StoreKitTestBundleMarker {}
 ///
 /// Run it from Xcode (Edit Scheme → Test → Options → StoreKit Configuration: SonanceEQ.storekit) or:
 ///
-///   SONANCE_STOREKIT_TESTS=1 xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ \
-///     -destination 'platform=macOS,arch=arm64' -only-testing:SonanceEQTests/StoreKitIntegrationTests
+///   xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ-StoreKit \
+///     -destination 'platform=macOS,arch=arm64' -jobs 1 -parallel-testing-enabled NO \
+///     -only-testing:SonanceEQTests/StoreKitIntegrationTests
 let storeKitTestsEnabled = ProcessInfo.processInfo.environment["SONANCE_STOREKIT_TESTS"] == "1"
 
 private struct StoreKitTimeout: Error {}
@@ -47,6 +49,35 @@ private func withTimeout<T: Sendable>(_ seconds: Double,
 @MainActor
 @Suite(.serialized, .enabled(if: storeKitTestsEnabled), .timeLimit(.minutes(1)))
 struct StoreKitIntegrationTests {
+
+    /// This adapts observed, verified local Apple transactions to the public RevenueCat value
+    /// types used by the app's callback policy. It does not manufacture purchases or make a backend
+    /// request, and does not claim to verify RevenueCat's server receipt-to-entitlement mapping.
+    private func localCustomerInfo(userID: String, firstSeen: Date) async throws -> CustomerInfo {
+        let entitlements: [String: EntitlementInfo] = try await withTimeout(20) {
+            var entitlements: [String: EntitlementInfo] = [:]
+            for await result in Transaction.currentEntitlements {
+                if case .verified(let txn) = result,
+                   txn.productID == LicenseConfig.proProductID, txn.revocationDate == nil {
+                    entitlements[LicenseConfig.proEntitlementID] = EntitlementInfo(
+                        identifier: LicenseConfig.proEntitlementID, isActive: true,
+                        willRenew: false, periodType: .normal,
+                        latestPurchaseDate: txn.purchaseDate, originalPurchaseDate: txn.originalPurchaseDate,
+                        expirationDate: txn.expirationDate, store: .appStore,
+                        productIdentifier: txn.productID, isSandbox: txn.environment != .production,
+                        ownershipType: txn.ownershipType == .familyShared ? .familyShared : .purchased)
+                }
+            }
+            return entitlements
+        }
+        return CustomerInfo(entitlements: EntitlementInfos(entitlements: entitlements),
+                            requestDate: Date(), firstSeen: firstSeen, originalAppUserId: userID)
+    }
+
+    private func freshManager() -> (PurchaseManager, String) {
+        let suite = "test.storekit.callbacks.\(UUID().uuidString)"
+        return (PurchaseManager(defaults: UserDefaults(suiteName: suite)!), suite)
+    }
 
     private func newSession() throws -> SKTestSession {
         let url = try #require(Bundle(for: StoreKitTestBundleMarker.self)
@@ -158,5 +189,86 @@ struct StoreKitIntegrationTests {
 
         session.clearTransactions()
         #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+    }
+
+    @Test(arguments: [
+        ("USA", "en_US"), ("POL", "pl_PL"), ("VNM", "vi_VN"), ("CZE", "cs_CZ"),
+        ("ITA", "it_IT"), ("PRT", "pt_PT"), ("GRC", "el_GR"), ("HUN", "hu_HU"),
+        ("TWN", "zh_TW"), ("HKG", "zh_HK"), ("FRA", "fr_FR"),
+    ])
+    func approvedPackagePreservesRealStoreKitPrice(storefront: String, locale: String) async throws {
+        let session = try newSession()
+        session.storefront = storefront
+        session.locale = Locale(identifier: locale)
+        let product = try #require(try await Product.products(for: [LicenseConfig.proProductID]).first)
+        #expect(product.id == LicenseConfig.proProductID)
+        #expect(product.type == .nonConsumable)
+        #expect(!product.displayPrice.isEmpty)
+        let package = Package(identifier: product.id, packageType: .lifetime,
+                              storeProduct: StoreProduct(sk2Product: product),
+                              offeringIdentifier: LicenseConfig.offeringID, webCheckoutUrl: nil)
+        let offering = Offering(identifier: LicenseConfig.offeringID, serverDescription: product.displayName,
+                                availablePackages: [package], webCheckoutUrl: nil)
+        let selected = try #require(PurchaseManager.proPackage(in: offering))
+        #expect(selected === package)
+        #expect(selected.storeProduct.localizedPriceString == product.displayPrice)
+        #expect(PurchaseManager.isAuthorizedProPackage(selected))
+        #expect(PurchaseManager.proPackage(in: nil) == nil)
+        #expect(PurchaseManager.proPackage(in: Offering(identifier: LicenseConfig.offeringID,
+            serverDescription: product.displayName, availablePackages: [], webCheckoutUrl: nil)) == nil)
+    }
+
+    @Test func emptyRestoreReportsNoEntitlementAndKeepsEveryFeatureLocked() async throws {
+        let session = try newSession()
+        _ = session
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        let (pm, suite) = freshManager()
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let info = try await localCustomerInfo(userID: suite, firstSeen: Date())
+        #expect(!pm.completeRestore(info))
+        #expect(!pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .restoreNoEntitlement)
+        #expect(pm.lastError == EQText.string("No active Pro purchase was found for this Apple Account."))
+        for feature in ProFeature.allCases { #expect(!pm.canUse(feature)) }
+    }
+
+    @Test func purchaseRestoreAndRefundCallbacksUseVerifiedTransactionSnapshots() async throws {
+        let session = try newSession()
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        let (pm, suite) = freshManager()
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let firstSeen = Date()
+        let emptyBeforePurchase = try await localCustomerInfo(userID: suite, firstSeen: firstSeen)
+
+        let transaction = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+            == [LicenseConfig.proEntitlementID])
+        let purchased = try await localCustomerInfo(userID: suite, firstSeen: firstSeen)
+        #expect(pm.completePurchase(purchased))
+        #expect(pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .purchaseCompleted)
+        #expect(pm.lastError == nil)
+        #expect(pm.completeRestore(purchased))
+        #expect(pm.tracker.lastEvent?.event == .restoreCompleted)
+
+        // A delayed empty restore cannot claim success merely because a newer purchase unlocked Pro.
+        #expect(!pm.completeRestore(emptyBeforePurchase))
+        #expect(pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .restoreNoEntitlement)
+        #expect(!pm.completePurchase(emptyBeforePurchase))
+        #expect(pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .purchaseFailed)
+
+        try session.refundTransaction(identifier: UInt(transaction.id))
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        let refunded = try await localCustomerInfo(userID: suite, firstSeen: firstSeen)
+        #expect(!pm.completeRestore(refunded))
+        #expect(!pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .restoreNoEntitlement)
+        // A delayed purchase callback cannot re-unlock access after the newer refund snapshot.
+        #expect(!pm.completePurchase(purchased))
+        #expect(!pm.isPro)
+        #expect(pm.tracker.lastEvent?.event == .purchaseFailed)
+        for feature in ProFeature.allCases { #expect(!pm.canUse(feature)) }
     }
 }

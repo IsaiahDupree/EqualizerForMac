@@ -7,12 +7,16 @@ let kSubsystem = "com.isaiahdupree.SonanceEQ"
 @main
 struct SonanceEQApp: App {
     @State private var app = AppState()
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.requestReview) private var requestReview
 
     var body: some Scene {
         Window("Sonance EQ", id: "main") {
             ContentView(app: app)
                 .task { app.review.present = { requestReview() } }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { Task { await app.license.refresh() } }
+                }
         }
         .windowResizability(.contentSize)
         .commands {

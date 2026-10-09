@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "Bộ trộn đang tắt — bật để áp dụng";
 "Mixer: %@" = "Bộ trộn: %@";
 "More Sonance" = "Ứng dụng Sonance khác";
+"No active Pro purchase was found for this Apple Account." = "Không tìm thấy giao dịch mua Pro đang hoạt động cho Tài khoản Apple này.";
 "No apps are playing audio" = "Không có ứng dụng đang phát âm thanh";
 "No default output device" = "Không có thiết bị đầu ra mặc định";
 "No events yet — open the paywall or make a (mock) purchase." = "Chưa có sự kiện — mở màn hình mua hoặc mua thử nghiệm.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "Thư viện tai nghe là tính năng Pro.";
 "Treble" = "Âm cao";
 "Try a different model name." = "Hãy thử tên mẫu khác.";
+"Try again" = "Thử lại";
 "Unlock Pro" = "Mở khóa Pro";
+"Unlock Pro (mock)" = "Mở khóa Pro (thử nghiệm)";
 "Unlock Pro (mock) · %@" = "Mở khóa Pro (thử nghiệm) · %@";
 "Unlock Pro · %@" = "Mở khóa Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "Mở khóa bộ chỉnh âm đầy đủ — mua một lần.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "Đã có phiên bản %@";
 "Vocal" = "Giọng hát";
 "WAV (lossless)" = "WAV (không mất dữ liệu)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "Giao dịch mua đã hoàn tất nhưng Pro chưa hoạt động. Hãy thử khôi phục giao dịch mua.";
 "completed ÷ paywalls" = "hoàn tất ÷ màn hình mua";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "thất bại ÷ đã bắt đầu";

@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "混音器已關閉 — 請開啟以套用";
 "Mixer: %@" = "混音器：%@";
 "More Sonance" = "更多 Sonance App";
+"No active Pro purchase was found for this Apple Account." = "此 Apple 帳號沒有有效的 Pro 購買。";
 "No apps are playing audio" = "目前沒有 App 播放音訊";
 "No default output device" = "沒有預設輸出裝置";
 "No events yet — open the paywall or make a (mock) purchase." = "尚無事件 — 開啟購買畫面或進行測試購買。";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "耳機資料庫是 Pro 功能。";
 "Treble" = "高音";
 "Try a different model name." = "請嘗試其他型號名稱。";
+"Try again" = "再試一次";
 "Unlock Pro" = "解鎖 Pro";
+"Unlock Pro (mock)" = "解鎖 Pro（測試）";
 "Unlock Pro (mock) · %@" = "解鎖 Pro（測試）· %@";
 "Unlock Pro · %@" = "解鎖 Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "一次購買即可解鎖完整等化器。";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "%@ 版本已推出";
 "Vocal" = "人聲";
 "WAV (lossless)" = "WAV（無損）";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "購買已完成，但 Pro 尚未啟用。請嘗試回復購買。";
 "completed ÷ paywalls" = "完成 ÷ 購買畫面";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "失敗 ÷ 開始次數";

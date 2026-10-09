@@ -30,8 +30,8 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
   [`integrations/home_assistant`](integrations/home_assistant/README.md), including direct Sonance
   PowerZone hardware EQ, bridge-ready per-output preset selectors, and the
   [home ecosystem compatibility matrix](integrations/home_assistant/COMPATIBILITY-MATRIX.md).
-- 🔬 All DSP proven offline against the shipping sources: `Tools/verify_{biquad,fir,midside}.swift`, plus a **1,030-case** test suite (`Tests/`, Swift Testing) + pre-commit hook + CI.
-- 🚧 **M3 (mocked pre-Apple-registration):** Pro paywall + feature gating with a **mock RevenueCat store** (real buy/restore/persist UX, no Apple), **per-app EQ** (target specific apps via a mixdown tap), **AI-generated app icon**, Developer-ID notarize/DMG script. Pending registration: real RC keys + App Store Connect product, notarization run, MAS build.
+- 🔬 DSP proofs over the shipping sources: `Tools/verify_{biquad,fir,midside}.swift`. The hosted Swift Testing suite passed **4,218 runs**, plus **17 isolated local StoreKit runs**. See the [purchase verification receipt](docs/REVENUE-PURCHASE-VERIFICATION-2026-10-09.md).
+- ✅ **Mac App Store licensing:** `Release-MAS` uses the configured RevenueCat SDK and the one-time Pro SKU `com.isaiahdupree.SonanceEQ.pro`. The native paywall displays and purchases the same approved package; empty restores retain the recovery screen. Debug and direct `Release` builds still use the existing development store while their public key is empty. Live RevenueCat/dashboard acceptance remains a separate release check.
 
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).

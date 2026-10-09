@@ -10,10 +10,9 @@ struct MockPaywallView: View {
     @Bindable var app: AppState
     @Environment(\.dismiss) private var dismiss
 
-    /// The displayed price. Starts at the configured price and is replaced with the **real** StoreKit
-    /// price (via the RevenueCat offering) on the live store, so the button never shows a stale/wrong
-    /// number. The mock store has no real product, so it keeps this fallback.
-    @State private var priceText = "$9.99"
+    /// Only real StoreKit package prices appear on the live paywall.
+    @State private var package: Package?
+    @State private var loading = true
 
     /// Keep these as `LocalizedStringKey` values. Passing runtime `String` values to `Label` would
     /// render the English source text verbatim and silently bypass Localizable.strings.
@@ -48,23 +47,31 @@ struct MockPaywallView: View {
             }
 
             Button {
-                Task { await app.license.purchasePro(); if app.license.isPro { dismiss() } }
+                Task { if await app.license.purchasePro(package: package) { dismiss() } }
             } label: {
                 Group {
                     if app.license.store == .mock {
-                        Text("Unlock Pro (mock) · \(priceText)")
+                        Text("Unlock Pro (mock)")
+                    } else if let package {
+                        Text("Unlock Pro · \(package.storeProduct.localizedPriceString)")
                     } else {
-                        Text("Unlock Pro · \(priceText)")
+                        Text("Unlock Pro")
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
+            .disabled(app.license.isProcessing || (app.license.store == .revenueCat && package == nil))
+
+            if app.license.store == .revenueCat && package == nil {
+                if loading { ProgressView().controlSize(.small) }
+                else { Button("Try again") { Task { await loadPackage() } } }
+            }
 
             HStack {
                 Button("Restore Purchase") {
-                    Task { await app.license.restore(); if app.license.isPro { dismiss() } }
+                    Task { if await app.license.restore() { dismiss() } }
                 }
                 if app.license.store == .mock && app.license.isPro {
                     Spacer()
@@ -73,6 +80,7 @@ struct MockPaywallView: View {
                 }
             }
             .controlSize(.small)
+            .disabled(app.license.isProcessing)
 
             if let error = app.license.lastError {
                 Text(error).font(.caption2).foregroundStyle(.red)
@@ -82,12 +90,19 @@ struct MockPaywallView: View {
         }
         .padding(24)
         .frame(width: 380)
-        .task {
-            // On the live store, show the real StoreKit price from the RevenueCat offering.
-            if app.license.store == .revenueCat, app.license.isConfigured,
-               let product = try? await Purchases.shared.offerings().current?.availablePackages.first?.storeProduct {
-                priceText = product.localizedPriceString
-            }
+        .task { await loadPackage() }
+    }
+
+    private func loadPackage() async {
+        guard app.license.store == .revenueCat else { loading = false; return }
+        loading = true
+        defer { loading = false }
+        do {
+            package = try await app.license.loadProPackage()
+            app.license.lastError = nil
+        } catch {
+            package = nil
+            app.license.lastError = error.localizedDescription
         }
     }
 }

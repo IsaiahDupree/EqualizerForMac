@@ -133,3 +133,17 @@ schemes:
           isEnabled: false
     run:
       config: Debug
+
+  # An explicit serial local-StoreKit gate; ordinary tests keep StoreKit process-global state off.
+  SonanceEQ-StoreKit:
+    build:
+      targets:
+        SonanceEQ: all
+    test:
+      config: Debug
+      targets:
+        - SonanceEQTests
+      environmentVariables:
+        - variable: SONANCE_STOREKIT_TESTS
+          value: "1"
+          isEnabled: true

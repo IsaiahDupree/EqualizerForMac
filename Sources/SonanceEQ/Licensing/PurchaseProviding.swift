@@ -37,7 +37,11 @@ struct RevenueCatProvider: PurchaseProviding {
 
     func restorePurchases() async throws -> CustomerInfo { try await Purchases.shared.restorePurchases() }
 
-    func customerInfo() async throws -> CustomerInfo { try await Purchases.shared.customerInfo() }
+    // Foreground/manual refresh must observe revocations and other-device restores rather than
+    // returning the SDK's default cachedOrFetched result indefinitely.
+    func customerInfo() async throws -> CustomerInfo {
+        try await Purchases.shared.customerInfo(fetchPolicy: .fetchCurrent)
+    }
 
     var customerInfoStream: AsyncStream<CustomerInfo> { Purchases.shared.customerInfoStream }
 }

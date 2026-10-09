@@ -20,6 +20,13 @@ import Testing
             "Import & export presets": "Importer et exporter des préréglages",
             "Unlock Pro · %@": "Débloquer Pro · %@",
             "Unlock Pro (mock) · %@": "Débloquer Pro (test) · %@",
+            "Unlock Pro (mock)": "Débloquer Pro (test)",
+            "Try again": "Réessayer",
+            "No purchase option is available right now.": "Aucune option d’achat n’est disponible pour le moment.",
+            "Your purchase completed, but Pro is not active. Try Restore Purchase.":
+                "L’achat est terminé, mais Pro n’est pas actif. Essayez de restaurer l’achat.",
+            "No active Pro purchase was found for this Apple Account.":
+                "Aucun achat Pro actif n’a été trouvé pour ce compte Apple.",
             "Restore Purchase": "Restaurer l’achat",
             "Relock (mock)": "Reverrouiller (test)",
             "Not now": "Plus tard",

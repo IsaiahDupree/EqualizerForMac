@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "Mixer is off — flip On to apply";
 "Mixer: %@" = "Mixer: %@";
 "More Sonance" = "More Sonance";
+"No active Pro purchase was found for this Apple Account." = "No active Pro purchase was found for this Apple Account.";
 "No apps are playing audio" = "No apps are playing audio";
 "No default output device" = "No default output device";
 "No events yet — open the paywall or make a (mock) purchase." = "No events yet — open the paywall or make a (mock) purchase.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "The headphone library is a Pro feature.";
 "Treble" = "Treble";
 "Try a different model name." = "Try a different model name.";
+"Try again" = "Try again";
 "Unlock Pro" = "Unlock Pro";
+"Unlock Pro (mock)" = "Unlock Pro (mock)";
 "Unlock Pro (mock) · %@" = "Unlock Pro (mock) · %@";
 "Unlock Pro · %@" = "Unlock Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "Unlock the full equalizer — a one-time purchase.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "Version %@ is available";
 "Vocal" = "Vocal";
 "WAV (lossless)" = "WAV (lossless)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "Your purchase completed, but Pro is not active. Try Restore Purchase.";
 "completed ÷ paywalls" = "completed ÷ paywalls";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "failed ÷ started";

@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "A keverő ki van kapcsolva — kapcsolja be az alkalmazáshoz";
 "Mixer: %@" = "Keverő: %@";
 "More Sonance" = "További Sonance alkalmazások";
+"No active Pro purchase was found for this Apple Account." = "Ehhez az Apple-fiókhoz nem található aktív Pro-vásárlás.";
 "No apps are playing audio" = "Egy alkalmazás sem játszik le hangot";
 "No default output device" = "Nincs alapértelmezett kimeneti eszköz";
 "No events yet — open the paywall or make a (mock) purchase." = "Még nincs esemény — nyissa meg a vásárlási képernyőt vagy végezzen tesztvásárlást.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "A fejhallgató-könyvtár Pro funkció.";
 "Treble" = "Magas hangok";
 "Try a different model name." = "Próbáljon más modellnevet.";
+"Try again" = "Újrapróbálás";
 "Unlock Pro" = "Pro feloldása";
+"Unlock Pro (mock)" = "Pro feloldása (teszt)";
 "Unlock Pro (mock) · %@" = "Pro feloldása (teszt) · %@";
 "Unlock Pro · %@" = "Pro feloldása · %@";
 "Unlock the full equalizer — a one-time purchase." = "A teljes hangszínszabályzó feloldása egyszeri vásárlással.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "Elérhető a(z) %@ verzió";
 "Vocal" = "Ének";
 "WAV (lossless)" = "WAV (veszteségmentes)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "A vásárlás befejeződött, de a Pro nem aktív. Próbálja visszaállítani a vásárlást.";
 "completed ÷ paywalls" = "befejezett ÷ vásárlási képernyők";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "hibás ÷ elindított";

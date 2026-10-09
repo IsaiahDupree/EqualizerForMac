@@ -116,12 +116,26 @@ jobs:
             -project SonanceEQ.xcodeproj \
             -scheme SonanceEQ \
             -destination 'platform=macOS' \
+            -jobs 1 -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult
+
+      - name: Verify purchases and restores with local StoreKit
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project SonanceEQ.xcodeproj \
+            -scheme SonanceEQ-StoreKit \
+            -destination 'platform=macOS' \
+            -jobs 1 -parallel-testing-enabled NO \
+            -only-testing:SonanceEQTests/StoreKitIntegrationTests \
+            -resultBundlePath StoreKitResults.xcresult
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: TestResults.xcresult
+          path: |
+            TestResults.xcresult
+            StoreKitResults.xcresult
           if-no-files-found: ignore

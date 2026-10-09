@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "Mixér je vypnutý — zapněte jej pro použití";
 "Mixer: %@" = "Mixér: %@";
 "More Sonance" = "Další aplikace Sonance";
+"No active Pro purchase was found for this Apple Account." = "Pro tento účet Apple nebyl nalezen aktivní nákup Pro.";
 "No apps are playing audio" = "Žádná aplikace nepřehrává zvuk";
 "No default output device" = "Žádné výchozí výstupní zařízení";
 "No events yet — open the paywall or make a (mock) purchase." = "Zatím žádné události — otevřete nákupní obrazovku nebo proveďte testovací nákup.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "Knihovna sluchátek je funkce Pro.";
 "Treble" = "Výšky";
 "Try a different model name." = "Zkuste jiný název modelu.";
+"Try again" = "Zkusit znovu";
 "Unlock Pro" = "Odemknout Pro";
+"Unlock Pro (mock)" = "Odemknout Pro (test)";
 "Unlock Pro (mock) · %@" = "Odemknout Pro (test) · %@";
 "Unlock Pro · %@" = "Odemknout Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "Odemkněte celý ekvalizér — jednorázový nákup.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "Je dostupná verze %@";
 "Vocal" = "Vokály";
 "WAV (lossless)" = "WAV (bezeztrátový)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "Nákup byl dokončen, ale Pro není aktivní. Zkuste obnovit nákup.";
 "completed ÷ paywalls" = "dokončené ÷ nákupní obrazovky";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "neúspěšné ÷ zahájené";

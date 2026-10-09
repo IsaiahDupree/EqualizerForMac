@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "Il mixer è spento — attivalo per applicare le impostazioni";
 "Mixer: %@" = "Miscelatore: %@";
 "More Sonance" = "Altre app Sonance";
+"No active Pro purchase was found for this Apple Account." = "Nessun acquisto Pro attivo trovato per questo account Apple.";
 "No apps are playing audio" = "Nessuna app sta riproducendo audio";
 "No default output device" = "Nessun dispositivo di uscita predefinito";
 "No events yet — open the paywall or make a (mock) purchase." = "Nessun evento — apri la schermata acquisti o effettua un acquisto di prova.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "La libreria cuffie è una funzione Pro.";
 "Treble" = "Alti";
 "Try a different model name." = "Prova un altro nome di modello.";
+"Try again" = "Riprova";
 "Unlock Pro" = "Sblocca Pro";
+"Unlock Pro (mock)" = "Sblocca Pro (test)";
 "Unlock Pro (mock) · %@" = "Sblocca Pro (test) · %@";
 "Unlock Pro · %@" = "Sblocca Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "Sblocca l’equalizzatore completo con un acquisto unico.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "È disponibile la versione %@";
 "Vocal" = "Voce";
 "WAV (lossless)" = "WAV (senza perdita)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "L’acquisto è completato, ma Pro non è attivo. Prova a ripristinare l’acquisto.";
 "completed ÷ paywalls" = "completati ÷ schermate acquisti";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "falliti ÷ iniziati";

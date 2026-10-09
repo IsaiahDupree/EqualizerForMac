@@ -78,6 +78,7 @@
 "Mixer is off — flip On to apply" = "Ο μίκτης είναι ανενεργός — ενεργοποιήστε τον για εφαρμογή";
 "Mixer: %@" = "Μίκτης: %@";
 "More Sonance" = "Περισσότερα από τη Sonance";
+"No active Pro purchase was found for this Apple Account." = "Δεν βρέθηκε ενεργή αγορά Pro για αυτόν τον λογαριασμό Apple.";
 "No apps are playing audio" = "Καμία εφαρμογή δεν αναπαράγει ήχο";
 "No default output device" = "Δεν υπάρχει προεπιλεγμένη συσκευή εξόδου";
 "No events yet — open the paywall or make a (mock) purchase." = "Δεν υπάρχουν συμβάντα — ανοίξτε την οθόνη αγοράς ή κάντε δοκιμαστική αγορά.";
@@ -139,7 +140,9 @@
 "The headphone library is a Pro feature." = "Η βιβλιοθήκη ακουστικών είναι λειτουργία Pro.";
 "Treble" = "Πρίμα";
 "Try a different model name." = "Δοκιμάστε διαφορετικό όνομα μοντέλου.";
+"Try again" = "Δοκιμάστε ξανά";
 "Unlock Pro" = "Ξεκλείδωμα Pro";
+"Unlock Pro (mock)" = "Ξεκλείδωμα Pro (δοκιμή)";
 "Unlock Pro (mock) · %@" = "Ξεκλείδωμα Pro (δοκιμή) · %@";
 "Unlock Pro · %@" = "Ξεκλείδωμα Pro · %@";
 "Unlock the full equalizer — a one-time purchase." = "Ξεκλειδώστε τον πλήρη ισοσταθμιστή με εφάπαξ αγορά.";
@@ -150,6 +153,7 @@
 "Version %@ is available" = "Η έκδοση %@ είναι διαθέσιμη";
 "Vocal" = "Φωνή";
 "WAV (lossless)" = "WAV (χωρίς απώλειες)";
+"Your purchase completed, but Pro is not active. Try Restore Purchase." = "Η αγορά ολοκληρώθηκε, αλλά το Pro δεν είναι ενεργό. Δοκιμάστε επαναφορά αγοράς.";
 "completed ÷ paywalls" = "ολοκληρωμένες ÷ οθόνες αγοράς";
 "dB/oct" = "dB/oct";
 "failed ÷ started" = "αποτυχημένες ÷ εκκινήσεις";

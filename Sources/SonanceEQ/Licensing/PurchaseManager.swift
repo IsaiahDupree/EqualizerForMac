@@ -29,6 +29,9 @@ final class PurchaseManager {
     private(set) var isConfigured = false      // true once the live RevenueCat SDK is configured
     private(set) var store: Store = .mock
     var lastError: String?
+    private(set) var isProcessing = false
+    private var latestCustomerInfoDate: Date?
+    private var entitlementRevision = 0
 
     /// Mock-store purchase outcome (see `MockOutcome`). Ignored by the live RevenueCat store.
     var mockOutcome: MockOutcome = .success
@@ -101,14 +104,51 @@ final class PurchaseManager {
             isPro = defaults.bool(forKey: mockKey)
         case .revenueCat:
             guard isConfigured else { return }
-            do { apply(try await purchaseProvider.customerInfo()) }
-            catch { report(error, "customerInfo") }
+            let revision = entitlementRevision
+            do {
+                let info = try await purchaseProvider.customerInfo()
+                // A purchase/restore/stream update that arrived while this read was pending wins,
+                // even if RevenueCat timestamps both responses with the same requestDate.
+                if revision == entitlementRevision { apply(info) }
+            } catch {
+                if revision == entitlementRevision { report(error, "customerInfo") }
+            }
         }
     }
 
-    /// Buy the one-time Pro unlock.
-    func purchasePro() async {
+    /// Resolve only the approved one-time Pro SKU, never an offering's arbitrary first package.
+    static func proPackage(in offering: Offering?) -> Package? {
+        offering?.availablePackages.first(where: isAuthorizedProPackage)
+    }
+
+    static func isAuthorizedProPackage(_ package: Package) -> Bool {
+        package.storeProduct.productIdentifier == LicenseConfig.proProductID
+            && package.storeProduct.productType == .nonConsumable
+            && !package.storeProduct.localizedPriceString.isEmpty
+    }
+
+    func loadProOffering() async throws -> Offering {
+        guard store == .revenueCat, isConfigured else { throw ProPurchaseUnavailable() }
+        let offerings = try await purchaseProvider.offerings()
+        for offering in [offerings.current, offerings.offering(identifier: LicenseConfig.offeringID)].compactMap({ $0 }) {
+            if Self.proPackage(in: offering) != nil { return offering }
+        }
+        throw ProPurchaseUnavailable()
+    }
+
+    func loadProPackage() async throws -> Package {
+        guard let package = Self.proPackage(in: try await loadProOffering()) else { throw ProPurchaseUnavailable() }
+        return package
+    }
+
+    /// Pass the same package whose StoreKit price the native paywall displayed.
+    @discardableResult
+    func purchasePro(package displayedPackage: Package? = nil) async -> Bool {
+        guard !isProcessing else { return false }
+        isProcessing = true
+        defer { isProcessing = false }
         lastError = nil
+        var completed = false
         tracker.record(.purchaseStarted, store: storeName)
         switch store {
         case .mock:
@@ -116,6 +156,7 @@ final class PurchaseManager {
             case .success:
                 defaults.set(true, forKey: mockKey)
                 isPro = true
+                completed = true
                 tracker.record(.purchaseCompleted, store: storeName, detail: LicenseConfig.proProductID)
                 log.notice("MOCK purchase completed — Pro unlocked.")
             case .cancelled:
@@ -127,47 +168,81 @@ final class PurchaseManager {
                 log.error("MOCK purchase failed: \(message, privacy: .public)")
             }
         case .revenueCat:
-            guard isConfigured else { return }
             do {
-                let offerings = try await purchaseProvider.offerings()
-                let offering = offerings.current ?? offerings.offering(identifier: LicenseConfig.offeringID)
-                guard let package = offering?.availablePackages.first else {
-                    lastError = EQText.string("No purchase option is available right now.")
-                    tracker.record(.purchaseFailed, store: storeName, detail: lastError)
-                    return
-                }
+                guard isConfigured else { throw ProPurchaseUnavailable() }
+                let package: Package
+                if let displayedPackage { package = displayedPackage }
+                else { package = try await loadProPackage() }
+                guard Self.isAuthorizedProPackage(package) else { throw ProPurchaseUnavailable() }
                 let result = try await purchaseProvider.purchase(package: package)
                 if result.userCancelled {
                     tracker.record(.purchaseCancelled, store: storeName)
                 } else {
-                    apply(result.customerInfo)
-                    tracker.record(.purchaseCompleted, store: storeName, detail: LicenseConfig.proProductID)
+                    completed = completePurchase(result.customerInfo)
                 }
             } catch {
                 report(error, "purchase")
                 tracker.record(.purchaseFailed, store: storeName, detail: error.localizedDescription)
             }
         }
+        return completed
     }
 
     /// Restore a previous purchase.
-    func restore() async {
+    @discardableResult
+    func restore() async -> Bool {
+        guard !isProcessing else { return false }
+        isProcessing = true
+        defer { isProcessing = false }
         lastError = nil
+        var completed = false
         tracker.record(.restoreStarted, store: storeName)
         switch store {
         case .mock:
             isPro = defaults.bool(forKey: mockKey)
+            completed = isPro
             tracker.record(isPro ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
         case .revenueCat:
-            guard isConfigured else { return }
             do {
-                apply(try await purchaseProvider.restorePurchases())
-                tracker.record(isPro ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
+                guard isConfigured else { throw ProPurchaseUnavailable() }
+                completed = completeRestore(try await purchaseProvider.restorePurchases())
             } catch {
                 report(error, "restore")
                 tracker.record(.restoreFailed, store: storeName, detail: error.localizedDescription)
             }
         }
+        return completed
+    }
+
+    /// Both native and hosted callbacks apply their returned verified CustomerInfo immediately.
+    @discardableResult
+    func completePurchase(_ info: CustomerInfo) -> Bool {
+        apply(info)
+        let completed = Self.isProActive(in: Set(info.entitlements.active.keys)) && isPro
+        completePurchaseOutcome(completed: completed)
+        return completed
+    }
+
+    private func completePurchaseOutcome(completed: Bool) {
+        if completed {
+            lastError = nil
+            tracker.record(.purchaseCompleted, store: storeName, detail: LicenseConfig.proProductID)
+        } else {
+            lastError = EQText.string("Your purchase completed, but Pro is not active. Try Restore Purchase.")
+            tracker.record(.purchaseFailed, store: storeName, detail: lastError)
+        }
+    }
+
+    @discardableResult
+    func completeRestore(_ info: CustomerInfo) -> Bool {
+        apply(info)
+        return completeRestoreOutcome(completed: Self.isProActive(in: Set(info.entitlements.active.keys)) && isPro)
+    }
+
+    private func completeRestoreOutcome(completed: Bool) -> Bool {
+        lastError = completed ? nil : EQText.string("No active Pro purchase was found for this Apple Account.")
+        tracker.record(completed ? .restoreCompleted : .restoreNoEntitlement, store: storeName)
+        return completed
     }
 
     /// Record that the paywall was presented (the top of the conversion funnel).
@@ -222,6 +297,7 @@ final class PurchaseManager {
     /// the single funnel every RevenueCat/Apple-originated entitlement change passes through, so the
     /// in-app tracker (and the analytics view) see unlocks/revokes regardless of where they came from.
     func applyAndTrack(_ activeEntitlementIDs: Set<String>) {
+        entitlementRevision += 1
         let was = isPro
         applyActiveEntitlements(activeEntitlementIDs)
         tracker.record(.customerInfoUpdated, store: storeName)
@@ -235,7 +311,9 @@ final class PurchaseManager {
     // MARK: - Private
 
     private func apply(_ info: CustomerInfo) {
-        // `.active` already contains only entitlements RevenueCat validated as currently active.
+        // Ignore older cached reads that finish after a newer purchase/refund callback.
+        if let latestCustomerInfoDate, info.requestDate < latestCustomerInfoDate { return }
+        latestCustomerInfoDate = info.requestDate
         applyAndTrack(Set(info.entitlements.active.keys))
     }
 
@@ -261,4 +339,8 @@ enum ProIndicator: Equatable {
         case .locked:   return Self.lockedSymbol
         }
     }
+}
+
+private struct ProPurchaseUnavailable: LocalizedError {
+    var errorDescription: String? { EQText.string("No purchase option is available right now.") }
 }

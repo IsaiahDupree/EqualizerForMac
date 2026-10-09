@@ -9,6 +9,7 @@ struct PresetBrowserView: View {
     @State private var searchText = ""
     @State private var category: String?
     @State private var results: [AutoEqPreset] = []
+    @State private var showingPaywall = false
 
     private let store = PresetStore.shared
 
@@ -27,6 +28,7 @@ struct PresetBrowserView: View {
         }
         .frame(width: 460, height: 540)
         .onAppear(perform: refresh)
+        .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
     }
 
     // MARK: Header
@@ -122,7 +124,10 @@ struct PresetBrowserView: View {
             Spacer()
             Image(systemName: "lock.fill").font(.largeTitle).foregroundStyle(.secondary)
             Text("The headphone library is a Pro feature.").font(.callout)
-            Button("Unlock Pro") { Task { await app.license.purchasePro() } }
+            Button("Unlock Pro") {
+                app.license.paywallShown()
+                showingPaywall = true
+            }
                 .controlSize(.large)
             Spacer()
         }
