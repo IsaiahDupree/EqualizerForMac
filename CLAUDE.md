@@ -18,7 +18,7 @@ xcodebuild -project SonanceEQ.xcodeproj -scheme SonanceEQ -configuration Debug \
   -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build   # compile check
 ```
 
-Run the normal test suite (4,218 runs / 247 funcs; seven local StoreKit methods are quarantined),
+Run the normal test suite (4,227 runs / 256 funcs; seven local StoreKit methods are quarantined),
 using **Swift Testing**, hosted in the app so `Bundle.main`
 resolves `autoeq.sqlite`; do NOT pass `CODE_SIGNING_ALLOWED=NO` here — the host app must ad-hoc sign to launch:
 ```bash
@@ -53,6 +53,7 @@ Sources/SonanceEQ/
     AudioRecordingPermission.swift  TCC kTCCServiceAudioCapture via private SPI behind ENABLE_TCC_SPI
     AudioProcesses.swift        enumerate Core Audio process objects → running-audio apps (per-app EQ); resolve bundleIDs→objectIDs
     SystemAudioTap.swift        THE CORE: tap (global OR per-app mixdown via `target`) + private aggregate + IOProc re-injection + device-change rebuild; `retarget()` rebuilds on app-selection change
+    AudioRouteWatchdog.swift    per-route heartbeat + guarded/cancelable startup/rebuild timer; UI waits for current-route callbacks
   DSP/Biquad.swift              FilterType (8 shapes: PK/LSC/HSC/LP/HP/NO/BP/AP, +usesGain/supportsSlope) + BiquadCoeffs + RBJ coefficients
   DSP/FilterDesigner.swift      expands one EQBand → biquad section(s); variable-slope Low/High Cut = Butterworth cascade (6–96 dB/oct, up to 8 sections)
   DSP/EQEngine.swift            real-time engine; two chains (Mid/Side); control plane (update) vs audio plane (beginRender/process/processMidSide)
@@ -105,6 +106,11 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
    real device buffers. Copy in→out, then EQ the out buffers in place. `AudioDeviceStart`.
 5. On `kAudioHardwarePropertyDefaultOutputDevice` change → teardown + rebuild (works around the known
    "all-zeros after device/sample-rate/Bluetooth change" behavior).
+
+Startup/rebuild now use distinct callback heartbeats and guarded watchdog deadlines. The header shows
+`Routing audio…` until the current route's check passes; failed rebuilds take full Stop cleanup.
+Lifecycle tests do not prove audible output or device compatibility. SON-07 hardware acceptance remains
+open; see `docs/AUDIO-ROUTE-LIFECYCLE-2026-10-09.md`.
 
 ## Gotchas / known constraints (verified — see docs/RESEARCH.md)
 - "All audio" excludes **DRM/FairPlay** streams (some Apple Music/Netflix) — they pass through un-EQ'd. Set

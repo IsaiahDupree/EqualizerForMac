@@ -23,6 +23,7 @@
 "Start EQ" = "Activer l’EQ";
 "Stop" = "Arrêter";
 "Stopped" = "Arrêté";
+"Routing audio…" = "Routage audio…";
 "Active · %@" = "Actif · %@";
 "Audio Capture permission is required to equalize system audio." = "L’autorisation de capture audio est nécessaire pour égaliser le son du système.";
 "Open Settings" = "Ouvrir Réglages";

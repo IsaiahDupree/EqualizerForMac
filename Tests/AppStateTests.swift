@@ -4,6 +4,28 @@ import Testing
 
 @MainActor
 @Suite struct AppStateTests {
+    @Test func runningStateAloneDoesNotClaimAudioFlow() {
+        let app = AppState()
+        app.isRunning = true
+        #expect(!app.isAudioFlowing)
+        app.stop()
+        #expect(!app.isRunning)
+        #expect(!app.isAudioFlowing)
+    }
+
+    @Test func repeatedStartWhileRunningHasNoNewPermissionOrRouteAttempt() {
+        let app = AppState()
+        app.isRunning = true
+        app.errorMessage = "Existing route status"
+        let permissionBefore = app.permission.status
+        app.start()
+        #expect(app.isRunning)
+        #expect(app.errorMessage == "Existing route status")
+        #expect(app.permission.status == permissionBefore)
+        #expect(!app.isAudioFlowing)
+        app.stop()
+    }
+
     @Test func addBandAppendsToActiveChain() {
         let app = AppState()
         let before = app.bands.count

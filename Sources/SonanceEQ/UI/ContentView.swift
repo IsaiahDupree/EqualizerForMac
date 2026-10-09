@@ -68,7 +68,7 @@ struct ContentView: View {
                 Text("Sonance EQ").font(.title2.bold())
                 Text(headerSubtitle)
                     .font(.caption)
-                    .foregroundStyle(app.isRunning ? .green : .secondary)
+                    .foregroundStyle(app.isAudioFlowing ? .green : .secondary)
                     .lineLimit(1)
             }
             Spacer()
@@ -97,6 +97,7 @@ struct ContentView: View {
 
     private var headerSubtitle: String {
         if app.isRunning {
+            guard app.isAudioFlowing else { return EQText.string("Routing audio…") }
             if let preset = app.activePresetName { return EQText.format("Active · %@", preset) }
             return EQText.format("Active · %@", app.outputDeviceName)
         }

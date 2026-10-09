@@ -23,12 +23,14 @@ final class SystemAudioTap {
     private var procID: AudioDeviceIOProcID?
     private var deviceChangeBlock: AudioObjectPropertyListenerBlock?
 
-    /// Bumped on every IOProc call — the watchdog uses it to confirm audio is actually flowing.
-    private let renderCount = OSAllocatedUnfairLock(initialState: 0)
+    private let watchdog = AudioRouteWatchdog()
+    private var sessionGeneration: UInt64 = 0
 
     private(set) var tapFormat: AudioStreamBasicDescription?
     private(set) var outputDeviceName = "—"
     private(set) var isRunning = false
+    /// Current-route callback delivery, rather than merely a successful AudioDeviceStart.
+    var isAudioFlowing: Bool { isRunning && watchdog.state == .flowing }
 
     /// Which apps to equalize. `.allApps` = global tap; `.apps` = mixdown tap of those processes.
     var target: EQTarget = .allApps
@@ -44,6 +46,8 @@ final class SystemAudioTap {
 
     /// Called on the main queue when the engine rebuilds itself (e.g. output device changed).
     var onRebuild: ((Result<String, Error>) -> Void)?
+    /// Called on the control plane when the current route is awaiting audio, flowing, or stopped.
+    var onAudioFlowChange: (() -> Void)?
 
     init(eq: EQEngine) { self.eq = eq }
 
@@ -51,27 +55,36 @@ final class SystemAudioTap {
 
     func start() throws {
         guard !isRunning else { return }
+        sessionGeneration &+= 1
+        let heartbeat = beginRoute()
         do {
-            try build()
+            try build(heartbeat: heartbeat)
+            try installDefaultDeviceListener()
         } catch {
             // A partial build may have created the muted tap already — never leave the user's audio
             // muted with no re-injection. Tear everything down before surfacing the error.
-            teardown()
+            stop()
             throw error
         }
-        installDefaultDeviceListener()
-        renderCount.withLock { $0 = 0 }
         isRunning = true
         startWatchdog()
+    }
+
+    private func beginRoute() -> AudioRouteWatchdog.Heartbeat {
+        let heartbeat = watchdog.beginRoute()
+        onAudioFlowChange?()
+        return heartbeat
     }
 
     /// Fail-safe: if the IOProc never delivers audio (routing failed on this device), stop and report
     /// instead of leaving the user's apps muted with no sound. Only fires when audio truly never flows.
     private func startWatchdog() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+        watchdog.arm { [weak self] flowing in
             guard let self, self.isRunning else { return }
-            let rendered = self.renderCount.withLock { $0 }
-            guard rendered == 0 else { return }   // audio is flowing — all good
+            if flowing {
+                self.onAudioFlowChange?()
+                return
+            }
             self.log.error("Audio routing never started (IOProc idle) — stopping to restore sound.")
             self.stop()
             self.onRebuild?(.failure(CoreAudioError.create("Couldn't route audio on this output device", -1)))
@@ -79,16 +92,19 @@ final class SystemAudioTap {
     }
 
     func stop() {
+        sessionGeneration &+= 1
+        watchdog.stop()
         removeDefaultDeviceListener()
         teardown()
         isRunning = false
+        onAudioFlowChange?()
     }
 
     deinit { stop() }
 
     // MARK: Build / teardown
 
-    private func build() throws {
+    private func build(heartbeat: AudioRouteWatchdog.Heartbeat) throws {
         // 1. Exclude ourselves from the global tap to prevent feedback.
         var exclude: [AudioObjectID] = []
         if let selfObject = try? AudioObjectID.system.translatePID(getpid()), selfObject.isValid {
@@ -173,10 +189,9 @@ final class SystemAudioTap {
         // 6. Install the render block and start.
         let engine = eq
         var newProc: AudioDeviceIOProcID?
-        let counter = renderCount
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
-            counter.withLock { $0 &+= 1 }
             SystemAudioTap.route(engine, input: inInput, output: outOutput)
+            heartbeat.recordRender()
         }
         guard status == noErr, let proc = newProc else {
             throw CoreAudioError.create("AudioDeviceCreateIOProcIDWithBlock", status)
@@ -278,15 +293,18 @@ final class SystemAudioTap {
 
     // MARK: Output-device change handling
 
-    private func installDefaultDeviceListener() {
+    private func installDefaultDeviceListener() throws {
         var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
                                                  mScope: kAudioObjectPropertyScopeGlobal,
                                                  mElement: kAudioObjectPropertyElementMain)
+        let expectedSession = sessionGeneration
         let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            self?.rebuild()
+            guard let self, self.sessionGeneration == expectedSession else { return }
+            self.rebuild()
         }
+        let status = AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
+        guard status == noErr else { throw CoreAudioError.create("Default output device listener", status) }
         deviceChangeBlock = block
-        AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
     }
 
     private func removeDefaultDeviceListener() {
@@ -310,13 +328,15 @@ final class SystemAudioTap {
     private func rebuild() {
         guard isRunning else { return }
         log.info("Default output device changed — rebuilding tap")
+        let heartbeat = beginRoute()
         teardown()
         do {
-            try build()
+            try build(heartbeat: heartbeat)
+            startWatchdog()
             onRebuild?(.success(outputDeviceName))
         } catch {
             log.error("Rebuild failed: \(error.localizedDescription, privacy: .public)")
-            isRunning = false
+            stop()   // partial builds can own a muted tap, aggregate or IOProc
             onRebuild?(.failure(error))
         }
     }

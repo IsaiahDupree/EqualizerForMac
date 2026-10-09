@@ -120,6 +120,7 @@
 "Restore — nothing to restore" = "Khôi phục — không có giao dịch";
 "Reveal last recording" = "Hiển thị bản ghi gần nhất";
 "RevenueCat configured" = "Đã cấu hình RevenueCat";
+"Routing audio…" = "Đang định tuyến âm thanh…";
 "Same EQ curve with zero phase distortion · adds a little latency" = "Cùng đường cong EQ không méo pha · thêm một chút độ trễ";
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Cửa hàng thử nghiệm — không tính phí thật. Thiết lập khóa RevenueCat trong LicenseConfig để bật mua hàng.";
 "Saved where you choose · stays on your Mac" = "Lưu ở nơi bạn chọn · giữ trên máy Mac";

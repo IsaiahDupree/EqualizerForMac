@@ -120,6 +120,7 @@
 "Restore — nothing to restore" = "Visszaállítás — nincs visszaállítható vásárlás";
 "Reveal last recording" = "Utolsó felvétel megjelenítése";
 "RevenueCat configured" = "RevenueCat beállítva";
+"Routing audio…" = "Hang irányítása…";
 "Same EQ curve with zero phase distortion · adds a little latency" = "Azonos EQ-görbe fázistorzítás nélkül · kis késleltetéssel";
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Tesztáruház — nincs valódi fizetés. A vásárlásokhoz állítsa be a RevenueCat kulcsot a LicenseConfig fájlban.";
 "Saved where you choose · stays on your Mac" = "A választott helyre mentve · a Macen marad";

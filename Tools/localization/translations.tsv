@@ -17,6 +17,7 @@ Bypass|Pomiń korekcję|Bỏ qua chỉnh âm|Obejít korekci|Escludi EQ|Ignorar 
 Start EQ|Włącz EQ|Bật EQ|Spustit EQ|Avvia EQ|Iniciar EQ|Έναρξη EQ|EQ indítása|啟動等化
 Stop|Zatrzymaj|Dừng|Zastavit|Ferma|Parar|Διακοπή|Leállítás|停止
 Stopped|Zatrzymano|Đã dừng|Zastaveno|Fermo|Parado|Διακόπηκε|Leállítva|已停止
+Routing audio…|Uruchamianie dźwięku…|Đang định tuyến âm thanh…|Směrování zvuku…|Instradamento audio…|A encaminhar áudio…|Δρομολόγηση ήχου…|Hang irányítása…|正在路由音訊…
 Active · %@|Aktywne · %@|Đang hoạt động · %@|Aktivní · %@|Attivo · %@|Ativo · %@|Ενεργό · %@|Aktív · %@|運作中 · %@
 Audio Capture permission is required to equalize system audio.|Korekcja dźwięku systemowego wymaga dostępu do przechwytywania dźwięku.|Cần quyền thu âm hệ thống để chỉnh âm thanh hệ thống.|Pro ekvalizaci systémového zvuku je nutné povolit záznam zvuku.|Per equalizzare l’audio di sistema serve l’autorizzazione alla cattura audio.|É necessária permissão de captura de áudio para equalizar o som do sistema.|Απαιτείται άδεια καταγραφής ήχου για ισοστάθμιση του ήχου συστήματος.|A rendszerhang szabályozásához hangrögzítési engedély szükséges.|等化系統音訊需要音訊擷取權限。
 Open Settings|Otwórz ustawienia|Mở cài đặt|Otevřít nastavení|Apri impostazioni|Abrir definições|Άνοιγμα ρυθμίσεων|Beállítások megnyitása|開啟設定

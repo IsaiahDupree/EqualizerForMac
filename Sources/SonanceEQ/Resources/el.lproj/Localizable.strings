@@ -120,6 +120,7 @@
 "Restore — nothing to restore" = "Επαναφορά — δεν υπάρχει αγορά";
 "Reveal last recording" = "Εμφάνιση τελευταίας εγγραφής";
 "RevenueCat configured" = "Το RevenueCat ρυθμίστηκε";
+"Routing audio…" = "Δρομολόγηση ήχου…";
 "Same EQ curve with zero phase distortion · adds a little latency" = "Ίδια καμπύλη EQ χωρίς παραμόρφωση φάσης · μικρή καθυστέρηση";
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Δοκιμαστικό κατάστημα — χωρίς πραγματική χρέωση. Ορίστε κλειδί RevenueCat στο LicenseConfig για αγορές.";
 "Saved where you choose · stays on your Mac" = "Αποθήκευση όπου επιλέξετε · παραμένει στο Mac σας";

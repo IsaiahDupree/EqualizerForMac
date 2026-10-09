@@ -120,6 +120,7 @@
 "Restore — nothing to restore" = "Obnovení — není co obnovit";
 "Reveal last recording" = "Zobrazit poslední nahrávku";
 "RevenueCat configured" = "RevenueCat nakonfigurován";
+"Routing audio…" = "Směrování zvuku…";
 "Same EQ curve with zero phase distortion · adds a little latency" = "Stejná křivka EQ bez zkreslení fáze · přidá mírnou latenci";
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Testovací obchod — bez skutečných plateb. Pro nákupy nastavte klíč RevenueCat v LicenseConfig.";
 "Saved where you choose · stays on your Mac" = "Uloženo na vybraném místě · zůstává na Macu";

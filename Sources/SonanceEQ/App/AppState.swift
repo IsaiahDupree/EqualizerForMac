@@ -105,6 +105,10 @@ final class AppState {
 
     // UI state
     var isRunning = false
+    private var audioFlowing = false
+    // The notification drives observation; checking the tap also prevents an older queued
+    // notification from displaying Active while a newer route is still waiting for callbacks.
+    var isAudioFlowing: Bool { audioFlowing && tap?.isAudioFlowing == true }
     var outputDeviceName = "—"
     var errorMessage: String?
     var showingAbout = false
@@ -121,6 +125,7 @@ final class AppState {
     func toggle() { isRunning ? stop() : start() }
 
     func start() {
+        guard !isRunning else { return }
         errorMessage = nil
         switch permission.status {
         case .authorized:
@@ -137,15 +142,27 @@ final class AppState {
     }
 
     private func reallyStart() {
+        guard !isRunning else { return }   // two pending permission grants may both return
         pushSettings()
         let tap = SystemAudioTap(eq: eq)
-        tap.onRebuild = { [weak self] result in
+        audioFlowing = false
+        tap.onAudioFlowChange = { [weak self, weak tap] in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, let tap, self.tap === tap else { return }
+                // Read the current route, since another rebuild may have superseded this callback.
+                self.audioFlowing = tap.isAudioFlowing
+            }
+        }
+        tap.onRebuild = { [weak self, weak tap] result in
+            Task { @MainActor in
+                guard let self, let tap, self.tap === tap else { return }
+                self.audioFlowing = tap.isAudioFlowing
                 switch result {
-                case let .success(name):
-                    self.outputDeviceName = name
+                case .success:
+                    guard tap.isRunning else { return }
+                    self.outputDeviceName = tap.outputDeviceName
                 case let .failure(error):
+                    guard !tap.isRunning else { return }
                     self.isRunning = false
                     self.errorMessage = error.localizedDescription
                 }
@@ -168,6 +185,7 @@ final class AppState {
         tap?.stop()
         tap = nil
         isRunning = false
+        audioFlowing = false
     }
 
     // MARK: EQ edits

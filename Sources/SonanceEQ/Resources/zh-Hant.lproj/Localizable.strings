@@ -120,6 +120,7 @@
 "Restore — nothing to restore" = "回復 — 沒有可回復的購買";
 "Reveal last recording" = "顯示上次錄製";
 "RevenueCat configured" = "RevenueCat 已設定";
+"Routing audio…" = "正在路由音訊…";
 "Same EQ curve with zero phase distortion · adds a little latency" = "相同等化曲線，無相位失真 · 增加少許延遲";
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "測試商店 — 不會實際收費。請在 LicenseConfig 設定 RevenueCat 金鑰以啟用購買。";
 "Saved where you choose · stays on your Mac" = "儲存於指定位置 · 保留在 Mac 上";
