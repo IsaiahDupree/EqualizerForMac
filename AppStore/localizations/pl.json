@@ -1,0 +1,15 @@
+{
+  "locale": "pl",
+  "name": "Sonance EQ",
+  "subtitle": "Korektor dźwięku dla Maca",
+  "keywords": "korektor,dźwięk,słuchawki,bas,mac,eq",
+  "description": "Korektor dla całego systemu macOS, bez sterownika.\n\n8 850 korekcji słuchawek AutoEq\n\nPełny korektor parametryczny — do 32 pasm\n\nImport i eksport ustawień\n\nOdblokuj pełny korektor — jednorazowy zakup.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "PL"
+  ]
+}

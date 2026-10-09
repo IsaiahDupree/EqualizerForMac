@@ -35,7 +35,7 @@ struct PresetBrowserView: View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Headphone Presets").font(.headline)
-                Text("\(store.totalCount) corrections · AutoEq")
+                Text(EQText.format("%@ corrections · AutoEq", store.totalCount.formatted()))
                     .font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
@@ -73,7 +73,7 @@ struct PresetBrowserView: View {
 
     private func chip(_ label: String, value: String?) -> some View {
         let selected = category == value
-        return Button(label) { category = value; refresh() }
+        return Button(LocalizedStringKey(label)) { category = value; refresh() }
             .buttonStyle(.plain)
             .font(.caption.weight(selected ? .semibold : .regular))
             .padding(.horizontal, 10).padding(.vertical, 4)
@@ -106,7 +106,7 @@ struct PresetBrowserView: View {
                 Text(preset.source).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
-            Text(preset.category)
+            Text(LocalizedStringKey(preset.category.capitalized))
                 .font(.caption2).foregroundStyle(.secondary)
                 .padding(.horizontal, 6).padding(.vertical, 2)
                 .background(.quaternary.opacity(0.5), in: Capsule())

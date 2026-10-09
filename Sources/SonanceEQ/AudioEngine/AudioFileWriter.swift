@@ -13,9 +13,9 @@ enum RecordingFormat: String, CaseIterable, Identifiable, Codable {
 
     var label: String {
         switch self {
-        case .wav: return "WAV (lossless)"
+        case .wav: return EQText.string("WAV (lossless)")
         case .alac: return "Apple Lossless"
-        case .aac: return "AAC (compact)"
+        case .aac: return EQText.string("AAC (compact)")
         }
     }
 

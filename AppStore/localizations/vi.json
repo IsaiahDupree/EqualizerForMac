@@ -1,0 +1,15 @@
+{
+  "locale": "vi",
+  "name": "Sonance EQ",
+  "subtitle": "Chỉnh âm thanh cho Mac",
+  "keywords": "chỉnh âm,tai nghe,âm trầm,mac,eq",
+  "description": "Bộ chỉnh âm toàn hệ thống macOS, không cần trình điều khiển.\n\n8.850 cấu hình hiệu chỉnh tai nghe AutoEq\n\nBộ chỉnh âm tham số đầy đủ — tối đa 32 dải\n\nNhập và xuất cấu hình\n\nMở khóa bộ chỉnh âm đầy đủ — mua một lần.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "VN"
+  ]
+}

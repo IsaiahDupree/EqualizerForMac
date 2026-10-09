@@ -15,10 +15,10 @@ struct EQBand: Identifiable, Codable, Equatable {
     var freqLabel: String {
         if frequency >= 1000 {
             let k = frequency / 1000
-            return k == k.rounded() ? "\(Int(k))k" : String(format: "%.1fk", k)
+            return k == k.rounded() ? "\(Int(k))k" : String(format: "%.1fk", locale: Locale.current, k)
         }
         return "\(Int(frequency.rounded()))"
     }
 
-    var gainLabel: String { String(format: "%+.1f", gain) }
+    var gainLabel: String { String(format: "%+.1f", locale: Locale.current, gain) }
 }

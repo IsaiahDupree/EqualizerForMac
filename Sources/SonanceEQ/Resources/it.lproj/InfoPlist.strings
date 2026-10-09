@@ -1,0 +1,2 @@
+// Generated from Tools/localization/translations.tsv.
+"NSAudioCaptureUsageDescription" = "Sonance EQ acquisisce l’audio del Mac per equalizzarlo. La registrazione inizia solo quando la scegli e viene salvata nel file selezionato. L’audio resta sul Mac.";

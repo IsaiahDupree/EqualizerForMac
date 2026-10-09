@@ -132,7 +132,7 @@ final class PurchaseManager {
                 let offerings = try await purchaseProvider.offerings()
                 let offering = offerings.current ?? offerings.offering(identifier: LicenseConfig.offeringID)
                 guard let package = offering?.availablePackages.first else {
-                    lastError = "No purchase option is available right now."
+                    lastError = EQText.string("No purchase option is available right now.")
                     tracker.record(.purchaseFailed, store: storeName, detail: lastError)
                     return
                 }

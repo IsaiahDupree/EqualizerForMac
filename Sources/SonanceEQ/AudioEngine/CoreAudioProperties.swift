@@ -102,9 +102,9 @@ enum CoreAudioError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .property(sel, status):
-            return "Core Audio property '\(sel.fourCC)' failed (\(status))"
+            return String(format: NSLocalizedString("Core Audio property '%@' failed (%d)", comment: "Audio error with property and OS status"), locale: Locale.current, sel.fourCC, status)
         case let .create(what, status):
-            return "\(what) failed (\(status))"
+            return String(format: NSLocalizedString("%@ failed (%d)", comment: "Audio operation and OS status"), locale: Locale.current, NSLocalizedString(what, comment: "Audio operation"), status)
         }
     }
 }

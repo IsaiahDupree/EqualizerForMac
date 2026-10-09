@@ -1,0 +1,15 @@
+{
+  "locale": "cs",
+  "name": "Sonance EQ",
+  "subtitle": "Ekvalizér pro celý Mac",
+  "keywords": "ekvalizér,zvuk,sluchátka,basy,mac,eq",
+  "description": "Ekvalizér pro celý macOS bez ovladače.\n\n8 850 korekcí sluchátek AutoEq\n\nPlný parametrický ekvalizér — až 32 pásem\n\nImport a export předvoleb\n\nOdemkněte celý ekvalizér — jednorázový nákup.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "CZ"
+  ]
+}

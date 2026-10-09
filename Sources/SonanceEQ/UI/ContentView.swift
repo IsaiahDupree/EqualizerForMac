@@ -36,7 +36,7 @@ struct ContentView: View {
             footer
         }
         .padding(22)
-        .frame(width: 560)
+        .frame(minWidth: 560, idealWidth: 680, maxWidth: 760)
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
         .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
@@ -89,7 +89,7 @@ struct ContentView: View {
             .toggleStyle(.switch)
             .disabled(!app.isRunning)
             .help("Pass audio through unprocessed for an A/B comparison")
-            Button(app.isRunning ? "Stop" : "Start EQ") { app.toggle() }
+            Button(LocalizedStringKey(app.isRunning ? "Stop" : "Start EQ")) { app.toggle() }
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
         }
@@ -97,10 +97,10 @@ struct ContentView: View {
 
     private var headerSubtitle: String {
         if app.isRunning {
-            if let preset = app.activePresetName { return "Active · \(preset)" }
-            return "Active · \(app.outputDeviceName)"
+            if let preset = app.activePresetName { return EQText.format("Active · %@", preset) }
+            return EQText.format("Active · %@", app.outputDeviceName)
         }
-        return app.activePresetName ?? "Stopped"
+        return app.activePresetName ?? EQText.string("Stopped")
     }
 
     private var permissionBanner: some View {
@@ -176,7 +176,7 @@ struct ContentView: View {
     private var presetRow: some View {
         HStack(spacing: 8) {
             ForEach(Presets.all) { preset in
-                Button(preset.name) { app.apply(preset.bands) }
+                Button(LocalizedStringKey(preset.name)) { app.apply(preset.bands) }
                     .controlSize(.small)
             }
             Spacer()
@@ -193,12 +193,12 @@ struct ContentView: View {
 
     private var preampRow: some View {
         HStack(spacing: 12) {
-            Text("Preamp").font(.caption).frame(width: 56, alignment: .leading)
+            Text("Preamp").font(.caption).frame(minWidth: 56, idealWidth: 100, alignment: .leading)
             Slider(
                 value: Binding(get: { app.preampDb }, set: { app.preampDb = $0; app.pushSettings() }),
                 in: -12...12
             )
-            Text(String(format: "%+.1f dB", app.preampDb))
+            Text(String(format: "%+.1f dB", locale: Locale.current, app.preampDb))
                 .font(.system(size: 11, design: .monospaced))
                 .frame(width: 64, alignment: .trailing)
         }
@@ -217,7 +217,7 @@ struct ContentView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 130)
-                Text("editing the \(app.editTarget == .side ? "Side (stereo width)" : "Mid (center)") channel")
+                Text(app.editTarget == .side ? EQText.string("Editing the Side (stereo width) channel") : EQText.string("Editing the Mid (center) channel"))
                     .font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
@@ -234,7 +234,7 @@ struct ContentView: View {
     /// A control label that shows a lock when its feature is gated.
     private func proLabel(_ title: String, feature: ProFeature) -> some View {
         HStack(spacing: 4) {
-            Text(title)
+            Text(LocalizedStringKey(title))
             if !app.license.canUse(feature) {
                 Image(systemName: "lock.fill").font(.caption2).foregroundStyle(.secondary)
             }
@@ -254,7 +254,7 @@ struct ContentView: View {
             .help("Same EQ curve with zero phase distortion · adds a little latency")
 
             if app.linearPhase {
-                Text(String(format: "+%.0f ms latency", app.latencyMs))
+                Text(EQText.format("+%.0f ms latency", app.latencyMs))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -286,8 +286,8 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.mini)
-                .help("Sonance EQ \(version) is available in the Mac App Store")
-                .accessibilityLabel("Update Sonance EQ to version \(version)")
+                .help(EQText.format("Sonance EQ %@ is available in the Mac App Store", version))
+                .accessibilityLabel(EQText.format("Update Sonance EQ to version %@", version))
             }
             SonanceSuiteMenu(current: .eq)
                 .controlSize(.small)

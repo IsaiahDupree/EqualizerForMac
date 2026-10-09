@@ -114,12 +114,12 @@ struct ResponseCurveView: View {
                     HStack(spacing: 4) {
                         Text("Q").font(.caption2).foregroundStyle(.secondary)
                         Slider(value: bind(\.q, id: id, fallback: band.q), in: 0.1...10)
-                        Text(String(format: "%.2f", band.q))
+                        Text(String(format: "%.2f", locale: Locale.current, band.q))
                             .font(.caption2.monospaced()).frame(width: 32)
                     }
                 }
 
-                Text(band.type.usesGain ? String(format: "%+.1f dB", band.gain) : "—")
+                Text(band.type.usesGain ? String(format: "%+.1f dB", locale: Locale.current, band.gain) : "—")
                     .font(.caption2.monospaced()).frame(width: 52, alignment: .trailing)
 
                 Button(role: .destructive) {

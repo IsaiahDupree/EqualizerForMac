@@ -23,7 +23,7 @@ struct PurchaseAnalyticsView: View {
             HStack {
                 Text("Purchase Analytics").font(.title2.bold())
                 Spacer()
-                Text(app.license.store == .mock ? "MOCK STORE" : "LIVE")
+                Text(LocalizedStringKey(app.license.store == .mock ? "MOCK STORE" : "LIVE"))
                     .font(.caption2.bold())
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background((app.license.store == .mock ? Color.orange : Color.green).opacity(0.2),
@@ -43,7 +43,7 @@ struct PurchaseAnalyticsView: View {
                                 GridItem(.flexible(), alignment: .leading)], spacing: 4) {
                 ForEach(PurchaseEvent.allCases, id: \.self) { event in
                     HStack {
-                        Text(label(for: event)).font(.callout)
+                        Text(LocalizedStringKey(label(for: event))).font(.callout)
                         Spacer()
                         Text("\(tracker.count(of: event))").font(.callout.monospacedDigit().bold())
                     }
@@ -55,7 +55,7 @@ struct PurchaseAnalyticsView: View {
             HStack {
                 Text("Recent events").font(.headline)
                 Spacer()
-                Text("\(events.count) total").font(.caption).foregroundStyle(.secondary)
+                Text(EQText.format("%@ total", events.count.formatted())).font(.caption).foregroundStyle(.secondary)
             }
             if events.isEmpty {
                 Text("No events yet — open the paywall or make a (mock) purchase.")
@@ -92,11 +92,11 @@ struct PurchaseAnalyticsView: View {
 
     private func rateCard(_ title: String, _ value: Double?, hint: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value.map { String(format: "%.0f%%", $0 * 100) } ?? "—")
+            Text(LocalizedStringKey(title)).font(.caption).foregroundStyle(.secondary)
+            Text(value.map { $0.formatted(.percent.precision(.fractionLength(0))) } ?? "—")
                 .font(.title3.bold().monospacedDigit())
                 .foregroundStyle(value == nil ? .secondary : tint)
-            Text(hint).font(.caption2).foregroundStyle(.tertiary)
+            Text(LocalizedStringKey(hint)).font(.caption2).foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
@@ -106,7 +106,7 @@ struct PurchaseAnalyticsView: View {
     private func eventRow(_ e: TrackedEvent) -> some View {
         HStack(spacing: 8) {
             Image(systemName: glyph(for: e.event)).foregroundStyle(color(for: e.event)).frame(width: 16)
-            Text(label(for: e.event)).font(.caption)
+            Text(LocalizedStringKey(label(for: e.event))).font(.caption)
             if let detail = e.detail {
                 Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
             }

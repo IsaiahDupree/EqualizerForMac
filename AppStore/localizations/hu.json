@@ -1,0 +1,15 @@
+{
+  "locale": "hu",
+  "name": "Sonance EQ",
+  "subtitle": "Hangszínszabályzó Machez",
+  "keywords": "hangszínszabályzó,hang,fejhallgató,basszus,mac,eq",
+  "description": "Rendszerszintű hangszínszabályzó macOS-hez, illesztőprogram nélkül.\n\n8 850 AutoEq fejhallgató-korrekció\n\nTeljes parametrikus hangszínszabályzó — akár 32 sáv\n\nBeállítások importálása és exportálása\n\nA teljes hangszínszabályzó feloldása egyszeri vásárlással.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "HU"
+  ]
+}

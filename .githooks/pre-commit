@@ -26,7 +26,8 @@ echo "[pre-commit] xcodegen generate + xcodebuild test …"
 xcodegen generate >/dev/null
 if xcodebuild test \
       -project SonanceEQ.xcodeproj -scheme SonanceEQ \
-      -destination 'platform=macOS,arch=arm64' -quiet; then
+      -destination 'platform=macOS,arch=arm64' \
+      -jobs 1 -parallel-testing-enabled NO -quiet; then
   echo "[pre-commit] ✓ tests passed"
 else
   echo "[pre-commit] ✗ tests failed — commit aborted (use --no-verify to override)"

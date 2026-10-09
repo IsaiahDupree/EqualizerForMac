@@ -29,12 +29,12 @@ final class AppState {
             // (applyMixer() recomputes `excludedBundleIDs` from the now-updated active channels).
             self.mixer.reset(bundleID)
             self.applyMixer()
-            self.errorMessage = "Mixer: \(message)"
+            self.errorMessage = EQText.format("Mixer: %@", message)
         }
         recorder.onFailure = { [weak self] message in
             guard let self else { return }
             self.finishRecordingUI()
-            self.errorMessage = "Recorder: \(message)"
+            self.errorMessage = EQText.format("Recorder: %@", message)
         }
         #if DEBUG
         if LicenseConfig.isUnconfigured {
@@ -129,10 +129,10 @@ final class AppState {
             permission.request { [weak self] granted in
                 guard let self else { return }
                 if granted { self.reallyStart() }
-                else { self.errorMessage = "Audio Capture permission was denied." }
+                else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
             }
         case .denied:
-            errorMessage = "Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security."
+            errorMessage = EQText.string("Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security.")
         }
     }
 
@@ -247,7 +247,7 @@ final class AppState {
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(file).write(to: url)
         } catch {
-            errorMessage = "Export failed: \(error.localizedDescription)"
+            errorMessage = EQText.format("Export failed: %@", error.localizedDescription)
         }
     }
 
@@ -259,13 +259,13 @@ final class AppState {
         do {
             let file = try JSONDecoder().decode(PresetFile.self, from: Data(contentsOf: url))
             let imported = file.eqBands()
-            guard !imported.isEmpty else { errorMessage = "That file has no EQ bands."; return }
+            guard !imported.isEmpty else { errorMessage = EQText.string("That file has no EQ bands."); return }
             bands = imported
             preampDb = file.preampDb
             activePresetName = file.name
             pushSettings()
         } catch {
-            errorMessage = "Import failed: not a Sonance EQ preset."
+            errorMessage = EQText.string("Import failed: not a Sonance EQ preset.")
         }
     }
 
@@ -278,12 +278,12 @@ final class AppState {
     var targetLabel: String {
         switch eqTarget {
         case .allApps:
-            return "All Apps"
+            return EQText.string("All Apps")
         case let .apps(ids):
-            if ids.isEmpty { return "All Apps" }
+            if ids.isEmpty { return EQText.string("All Apps") }
             let names = availableApps.filter { ids.contains($0.bundleID) }.map(\.name)
             let shown = names.isEmpty ? Array(ids) : names
-            return shown.count == 1 ? shown[0] : "\(shown.count) apps"
+            return shown.count == 1 ? shown[0] : EQText.format("%@ apps", shown.count.formatted())
         }
     }
 
@@ -386,7 +386,7 @@ final class AppState {
         guard !isRecording else { return }
         errorMessage = nil
         guard permission.status != .denied else {
-            errorMessage = "Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security."
+            errorMessage = EQText.string("Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security.")
             return
         }
         let panel = NSSavePanel()
@@ -401,7 +401,7 @@ final class AppState {
             lastRecordingURL = url
             startRecordingTimer()
         } catch {
-            errorMessage = "Recorder: \(error.localizedDescription)"
+            errorMessage = EQText.format("Recorder: %@", error.localizedDescription)
         }
     }
 
@@ -446,12 +446,12 @@ final class AppState {
     var recordTargetLabel: String {
         switch recordTarget {
         case .allApps:
-            return "All Apps"
+            return EQText.string("All Apps")
         case let .apps(ids):
-            if ids.isEmpty { return "All Apps" }
+            if ids.isEmpty { return EQText.string("All Apps") }
             let names = availableApps.filter { ids.contains($0.bundleID) }.map(\.name)
             let shown = names.isEmpty ? Array(ids) : names
-            return shown.count == 1 ? shown[0] : "\(shown.count) apps"
+            return shown.count == 1 ? shown[0] : EQText.format("%@ apps", shown.count.formatted())
         }
     }
 

@@ -1,0 +1,15 @@
+{
+  "locale": "it",
+  "name": "Sonance EQ",
+  "subtitle": "Equalizzatore per il Mac",
+  "keywords": "equalizzatore,audio,cuffie,bassi,mac,eq",
+  "description": "Equalizzatore per tutto macOS, senza driver.\n\n8.850 correzioni per cuffie AutoEq\n\nEqualizzatore parametrico completo — fino a 32 bande\n\nImporta ed esporta preset\n\nSblocca l’equalizzatore completo con un acquisto unico.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "IT"
+  ]
+}

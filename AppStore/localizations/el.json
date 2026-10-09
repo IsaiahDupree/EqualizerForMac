@@ -1,0 +1,15 @@
+{
+  "locale": "el",
+  "name": "Sonance EQ",
+  "subtitle": "Ισοσταθμιστής για Mac",
+  "keywords": "ισοσταθμιστής,ήχος,ακουστικά,μπάσα,mac,eq",
+  "description": "Ισοσταθμιστής για όλο το macOS, χωρίς οδηγό.\n\n8.850 διορθώσεις ακουστικών AutoEq\n\nΠλήρης παραμετρικός ισοσταθμιστής — έως 32 ζώνες\n\nΕισαγωγή και εξαγωγή προεπιλογών\n\nΞεκλειδώστε τον πλήρη ισοσταθμιστή με εφάπαξ αγορά.",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "GR"
+  ]
+}

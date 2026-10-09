@@ -18,7 +18,7 @@ struct AboutView: View {
                 .resizable().frame(width: 72, height: 72)
             Text("Sonance EQ").font(.title2.bold())
             HStack(spacing: 6) {
-                Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
+                Text(EQText.format("Version %@", version)).font(.caption).foregroundStyle(.secondary)
                 Button {
                     Task { await updates.check(force: true) }
                 } label: {
@@ -70,7 +70,7 @@ struct AboutView: View {
                 .foregroundStyle(.secondary)
         case let .updateAvailable(version):
             Button { updates.openAppStore() } label: {
-                Label("Version \(version) is available", systemImage: "arrow.down.circle.fill")
+                Label(EQText.format("Version %@ is available", version), systemImage: "arrow.down.circle.fill")
             }
             .controlSize(.small)
         case .failed:
@@ -82,11 +82,11 @@ struct AboutView: View {
 
     private func credit(_ title: String, _ detail: String, url: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(title).foregroundStyle(.secondary).frame(width: 120, alignment: .leading)
+            Text(LocalizedStringKey(title)).foregroundStyle(.secondary).frame(width: 120, alignment: .leading)
             if let url, let link = URL(string: url) {
                 Link(detail, destination: link)
             } else {
-                Text(detail)
+                Text(LocalizedStringKey(detail))
             }
             Spacer()
         }

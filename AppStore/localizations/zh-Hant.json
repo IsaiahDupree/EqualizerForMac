@@ -1,0 +1,16 @@
+{
+  "locale": "zh-Hant",
+  "name": "Sonance EQ",
+  "subtitle": "Mac 全系統音訊等化器",
+  "keywords": "等化器,音訊,耳機,低音,Mac,EQ",
+  "description": "適用於 macOS 的全系統等化器，無須驅動程式。\n\n8,850 種 AutoEq 耳機校正\n\n完整參數等化器 — 最多 32 個頻段\n\n匯入與匯出預設\n\n一次購買即可解鎖完整等化器。",
+  "status": "draft_not_uploaded",
+  "native_speaker_review": "pending",
+  "screenshot_locale_review": "pending",
+  "dashboard_paywall_locale_review": "pending",
+  "prices": "provided_by_storekit_no_change",
+  "storefronts": [
+    "TW",
+    "HK"
+  ]
+}

@@ -90,8 +90,8 @@ struct MixerView: View {
     }
 
     private func outputLabel(_ channel: MixerChannel) -> String {
-        guard let uid = channel.outputDeviceUID else { return "Default Output" }
-        return app.availableDevices.first { $0.uid == uid }?.name ?? "Custom device"
+        guard let uid = channel.outputDeviceUID else { return EQText.string("Default Output") }
+        return app.availableDevices.first { $0.uid == uid }?.name ?? EQText.string("Custom device")
     }
 
     private var footer: some View {

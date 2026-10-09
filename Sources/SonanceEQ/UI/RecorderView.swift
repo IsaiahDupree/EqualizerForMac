@@ -49,7 +49,7 @@ struct RecorderView: View {
                         .symbolEffect(.pulse, isActive: app.isRecording)
                 }
                 .buttonStyle(.plain)
-                .help(app.isRecording ? "Stop recording" : "Choose a file and start recording")
+                .help(EQText.string(app.isRecording ? "Stop recording" : "Choose a file and start recording"))
 
                 Text(timeString(app.recordingElapsed))
                     .font(.system(size: 22, weight: .medium, design: .monospaced))

@@ -1,0 +1,2 @@
+// Generated from Tools/localization/translations.tsv.
+"NSAudioCaptureUsageDescription" = "Sonance EQ 擷取 Mac 音訊以套用等化。僅在您選擇錄製時開始，並儲存至您指定的檔案。音訊保留在 Mac 上。";
