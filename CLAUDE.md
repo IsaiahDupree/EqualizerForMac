@@ -95,6 +95,10 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 - **Distribution acceptance:** the Mac App Store public SDK key and one-time SKU are configured already.
   The shell MAS builders and fastlane stop on invalid resolved settings, live product/entitlement/offerings
   configuration, or a mismatched archived app key/version. See `docs/MAS-PURCHASE-CONFIGURATION.md`.
+  `Tools/rc/api.py setup` is a read-only preview. It requires explicit Sonance project credentials,
+  project ID and app ID, checks the exact bundle and resolved public SDK key, and rejects conflicting
+  product/package bindings. Only `setup --apply` enables writes; it never creates or modifies apps.
+  `Tools/asc/env.sh` does not discover or export a RevenueCat secret. See `Tools/rc/README.md`.
   Verify the actual RevenueCat offering and receipt-to-`pro` mapping before a release; local StoreKit
   tests cannot prove that backend hop. Direct Developer-ID licensing/notarization remain separate.
 

@@ -1,0 +1,13 @@
+{
+  "object": "list",
+  "next_page": null,
+  "url": "https://api.revenuecat.com/v2/projects/projf143188e/offerings",
+  "items": [
+    {
+      "object": "offering",
+      "id": "ofrngb598c684b4",
+      "lookup_key": "default",
+      "is_current": true
+    }
+  ]
+}

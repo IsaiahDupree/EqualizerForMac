@@ -1,0 +1,31 @@
+{
+  "purpose": "Actual EverReach configuration as a negative control for the Sonance setup boundary; no customer data or credentials. Projections retain identity fields, not private store configuration.",
+  "captured_at": "2026-10-10T01:50:32.777277+00:00",
+  "source_project": "projf143188e",
+  "captures": {
+    "apps.json": {
+      "request_path": "/v2/projects/projf143188e/apps?limit=100",
+      "status": 200,
+      "provider_body_sha256": "569cfa2b2e1cc9e9b9764f4ca30a17b4a468718b7d4953dc35013600863000b8",
+      "projection_sha256": "8790d376d6db793a0b2ef075eda3ce2e75bce66316957da88cf8cb1f615133c0"
+    },
+    "products.json": {
+      "request_path": "/v2/projects/projf143188e/products?limit=100",
+      "status": 200,
+      "provider_body_sha256": "84e2da45eb98deb0b185e5ed0c561d16c88337c01b74a804978843e592a123e0",
+      "projection_sha256": "0f2ce277b6beaf4904082d9daa4dad88de33977d95d9d52cb986b735f35ecff8"
+    },
+    "package-products.json": {
+      "request_path": "/v2/projects/projf143188e/packages/pkgecc4077bfcb/products?limit=100",
+      "status": 200,
+      "provider_body_sha256": "1800775872b74a5a80d821cf03aadb29bed588798a47af37f5f7aae0de009f86",
+      "projection_sha256": "f1c945f437873ee0470fc82b7af686580a3da4457255e224ab292bfdb04ab237"
+    },
+    "offerings.json": {
+      "request_path": "/v2/projects/projf143188e/offerings?limit=100",
+      "status": 200,
+      "provider_body_sha256": "88742c252e40c36913ddb92d55db03244fe7d4e5234eeb230921ba09070fc943",
+      "projection_sha256": "05edc16d7ef0c43c02cb588ad75a05b46c28f74420fd8e8f2493559564208691"
+    }
+  }
+}

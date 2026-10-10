@@ -119,12 +119,12 @@ jobs:
             -jobs 1 -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult
 
-      - name: Verify App Store purchase configuration checks
+      - name: Verify App Store and RevenueCat configuration checks
         run: |
           python3 -m venv "$RUNNER_TEMP/sonance-purchase-gate-env"
           "$RUNNER_TEMP/sonance-purchase-gate-env/bin/python" -m pip install aiohttp
           "$RUNNER_TEMP/sonance-purchase-gate-env/bin/python" -m unittest discover \
-            -s Tools/tests -p test_mas_purchase_config.py -v
+            -s Tools/tests -p 'test_*.py' -v
 
       - name: Verify purchases and restores with local StoreKit
         run: |
