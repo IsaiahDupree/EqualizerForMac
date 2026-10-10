@@ -99,6 +99,11 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
   project ID and app ID, checks the exact bundle and resolved public SDK key, and rejects conflicting
   product/package bindings. Only `setup --apply` enables writes; it never creates or modifies apps.
   `Tools/asc/env.sh` does not discover or export a RevenueCat secret. See `Tools/rc/README.md`.
+  `Tools/ship.sh` and `Tools/asc/pipeline.py` now delegate to AppFleet from their own checkout,
+  independent of the caller's working directory. No arguments runs read-only doctor; ship/all
+  preview by default. Existing uploads require an explicit PKG and build number. `--yes` enables
+  AppFleet's signature/profile validation, upload, VALID processing and attachment. Preview checks
+  package purchase metadata but does not establish distribution signing. See `docs/APPFLEET-HANDOFF.md`.
   Verify the actual RevenueCat offering and receipt-to-`pro` mapping before a release; local StoreKit
   tests cannot prove that backend hop. Direct Developer-ID licensing/notarization remain separate.
 
