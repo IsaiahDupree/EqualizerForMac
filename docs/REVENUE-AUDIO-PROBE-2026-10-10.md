@@ -27,3 +27,9 @@ The required pre-commit Xcode test hook was attempted but failed during RevenueC
 compilation with `No space left on device`; tests were canceled and the commit
 was aborted. The hook was not bypassed. Changes remain local, not pushed or
 deployed. Storage recovery is required before the full test/commit acceptance.
+
+Follow-up at 15:05 Eastern: available disk recovered without this agent deleting
+files. The required serial Xcode hook passed: 256 test functions, 4,227 runs,
+zero failures, seven opt-in functions skipped. Source commit `522acad` contains
+the diagnostic repair. This closes source/test acceptance only; the live probe
+hang and device/audibility evidence remain open. No App Store deployment occurred.
