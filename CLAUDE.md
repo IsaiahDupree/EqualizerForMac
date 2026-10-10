@@ -104,6 +104,10 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
   preview by default. Existing uploads require an explicit PKG and build number. `--yes` enables
   AppFleet's signature/profile validation, upload, VALID processing and attachment. Preview checks
   package purchase metadata but does not establish distribution signing. See `docs/APPFLEET-HANDOFF.md`.
+  Source version/build baseline is 1.0.7 (10). Both Info.plist identity fields expand Xcode settings;
+  the preflight rejects literal versions or a conflicting appstore.json. CI checks actual default
+  and incremented native metadata. These unsigned metadata probes disable optimization and are
+  not distribution acceptance. See `docs/RELEASE-VERSION-BINDING.md`.
   Verify the actual RevenueCat offering and receipt-to-`pro` mapping before a release; local StoreKit
   tests cannot prove that backend hop. Direct Developer-ID licensing/notarization remain separate.
 

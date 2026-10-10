@@ -80,7 +80,27 @@ def validate_settings(settings, repo=REPO):
     entitlements = plistlib.loads(source.read_bytes())
     require(entitlements.get("com.apple.security.app-sandbox") is True, "Sandbox entitlement is missing")
     require(entitlements.get("com.apple.security.network.client") is True, "Purchase network entitlement is missing")
+    validate_version_source(settings, repo)
     return key
+
+
+def validate_version_source(settings, repo=REPO):
+    """An incremented AppFleet build must reach the app's processed Info.plist."""
+    root = repo.resolve()
+    source = (repo / settings.get("INFOPLIST_FILE", "")).resolve()
+    expected = (repo / "Sources/SonanceEQ/Resources/Info.plist").resolve()
+    require(source == expected and source.is_relative_to(root), "Wrong app metadata source")
+    require(source.is_file() and source.stat().st_size <= MAX_BYTES, "Missing or oversized metadata source")
+    values = plistlib.loads(source.read_bytes())
+    for field, reference in (("CFBundleShortVersionString", "$(MARKETING_VERSION)"),
+                             ("CFBundleVersion", "$(CURRENT_PROJECT_VERSION)")):
+        require(values.get(field) == reference, "App metadata must expand the build setting: " + field)
+    config = decode_json((repo / "appstore.json").read_bytes())
+    require(isinstance(config, dict) and config.get("bundle_id") == BUNDLE, "Wrong release manifest bundle")
+    for field, setting in (("version", "MARKETING_VERSION"), ("build_number", "CURRENT_PROJECT_VERSION")):
+        declared = config.get(field)
+        require(isinstance(declared, str) and declared == settings.get(setting),
+                "Release manifest and resolved build setting disagree: " + setting)
 
 
 def validate_bundle_metadata(metadata, settings):

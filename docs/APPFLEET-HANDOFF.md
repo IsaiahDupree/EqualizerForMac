@@ -24,6 +24,9 @@ Tools/ship.sh upload --artifact /absolute/path/to/SonanceEQ.pkg --build-number 9
 ```
 
 The source command pins Sonance's scheme, bundle, Mac platform and Release-MAS configuration.
+The version/build metadata expands the resolved Xcode settings, and the source
+manifest must match their baseline. See [release version binding](RELEASE-VERSION-BINDING.md)
+for the incremented native metadata regression and its distribution limits.
 `ship` and `all` preview by default. `upload` requires an explicit existing `.pkg` and exact
 positive numeric build; it never falls back to a package in another directory. Read-only
 doctor/status reject write or artifact options. The shell entry works outside a Git checkout.
