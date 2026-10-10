@@ -13,6 +13,14 @@ final class AudioRecordingPermission {
     enum Status { case unknown, denied, authorized }
 
     private(set) var status: Status = .unknown
+    /// Whether `status` can observe a grant, rather than assuming the public prompt path.
+    var supportsPreflight: Bool {
+        #if ENABLE_TCC_SPI
+        return Self.preflight != nil
+        #else
+        return false
+        #endif
+    }
     private let log = Logger(subsystem: kSubsystem, category: "Permission")
 
     init() {

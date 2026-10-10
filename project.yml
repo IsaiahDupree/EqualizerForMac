@@ -147,3 +147,18 @@ schemes:
         - variable: SONANCE_STOREKIT_TESTS
           value: "1"
           isEnabled: true
+
+  # Opt-in, serial real Core Audio routing; restores the system's original output.
+  SonanceEQ-AudioHardware:
+    build:
+      targets:
+        SonanceEQ: all
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - SonanceEQTests
+      environmentVariables:
+        - variable: SONANCE_AUDIO_HARDWARE_TESTS
+          value: "1"
+          isEnabled: true
