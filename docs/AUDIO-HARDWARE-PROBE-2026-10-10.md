@@ -95,6 +95,12 @@ accepts optional `SONANCE_SOURCE_PACKAGES_DIR` and `SONANCE_DERIVED_DATA_DIR`
 paths, preserving the same pinned SDK and full test selection. That cache path
 was used for the successful run. Swift compilation remains bounded to one job.
 
+The separate `SonanceEQ-StoreKit` gate also passed seven methods / 17 runs with
+no skips on the final source. It uses Apple's local StoreKit test session; it
+does not verify RevenueCat's backend receipt mapping or a production storefront.
+The reused RevenueCat SDK checkout matched the resolved 5.91.0 pin and commit
+`d654b8b85143c29e5bb73d0ff92f5f5766fbbedc`.
+
 ## Acceptance boundary
 
 The receipt always keeps `audibility_verified`, `audio_samples_saved` and
