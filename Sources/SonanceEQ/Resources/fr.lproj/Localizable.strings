@@ -75,3 +75,13 @@
 "Recording — playback is unaffected" = "Enregistrement — la lecture continue normalement";
 "Reveal last recording" = "Afficher le dernier enregistrement";
 "Saved where you choose · stays on your Mac" = "Enregistré à l’endroit choisi · reste sur votre Mac";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Achats Pro (App Store)";
+"Refunds excluded" = "Remboursements exclus";
+"Pro purchases on this Mac" = "Achats Pro sur ce Mac";
+"%@ test purchases · %@ refunds" = "%@ achats de test · %@ remboursements";
+"Device history; campaign conversion unavailable." = "Historique de cet appareil ; conversion de campagne indisponible.";
+"Purchase history unavailable" = "Historique des achats indisponible";
+"Refresh purchase history" = "Actualiser l’historique des achats";
+"Pro unlock confirmed" = "Déverrouillage Pro confirmé";

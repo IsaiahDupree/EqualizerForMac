@@ -161,3 +161,13 @@
 "restored ÷ attempts" = "khôi phục ÷ lần thử";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Giao dịch mua Pro (App Store)";
+"Refunds excluded" = "Không tính giao dịch đã hoàn tiền";
+"Pro purchases on this Mac" = "Giao dịch mua Pro trên máy Mac này";
+"%@ test purchases · %@ refunds" = "%@ giao dịch mua thử nghiệm · %@ giao dịch hoàn tiền";
+"Device history; campaign conversion unavailable." = "Lịch sử trên thiết bị; chưa có dữ liệu chuyển đổi chiến dịch.";
+"Purchase history unavailable" = "Không có lịch sử giao dịch mua";
+"Refresh purchase history" = "Làm mới lịch sử giao dịch mua";
+"Pro unlock confirmed" = "Đã xác nhận mở khóa Pro";

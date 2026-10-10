@@ -161,3 +161,13 @@
 "restored ÷ attempts" = "回復 ÷ 嘗試次數";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Pro 購買（App Store）";
+"Refunds excluded" = "不含退款";
+"Pro purchases on this Mac" = "此 Mac 上的 Pro 購買";
+"%@ test purchases · %@ refunds" = "%@ 筆測試購買 · %@ 筆退款";
+"Device history; campaign conversion unavailable." = "裝置歷史記錄；尚無行銷活動轉換資料。";
+"Purchase history unavailable" = "無法取得購買記錄";
+"Refresh purchase history" = "重新整理購買記錄";
+"Pro unlock confirmed" = "已確認解鎖 Pro";

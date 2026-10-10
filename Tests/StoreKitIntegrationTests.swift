@@ -271,4 +271,176 @@ struct StoreKitIntegrationTests {
         #expect(pm.tracker.lastEvent?.event == .purchaseFailed)
         for feature in ProFeature.allCases { #expect(!pm.canUse(feature)) }
     }
+
+    @Test func actualEmptyHistoryHasNoTransactionEvidenceUntilRead() async throws {
+        let session = try newSession()
+        _ = session
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        let suite = "test.storekit.evidence.empty.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        #expect(tracker.storePurchaseSnapshot == nil)
+        let read = await tracker.refreshStorePurchases()
+        #expect(read.state == .complete)
+        #expect(read.productionPurchaseCount == 0)
+        #expect(read.testPurchaseCount == 0)
+        #expect(read.revokedPurchaseCount == 0)
+        #expect(read.transactions.isEmpty)
+    }
+
+    @Test func verifiedHistoryDeduplicatesCallbacksAndSurvivesRelaunch() async throws {
+        let session = try newSession()
+        let transaction = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        let (pm, suite) = freshManager()
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let info = try await localCustomerInfo(userID: suite, firstSeen: Date())
+        pm.tracker.record(.paywallShown, store: "revenueCat")
+        #expect(pm.completePurchase(info))
+        #expect(pm.completePurchase(info))
+        #expect(pm.completeRestore(info))
+        // Reproduce the old inflated callback ratio over one actual Apple transaction.
+        #expect(pm.tracker.count(of: .purchaseCompleted) == 2)
+        #expect(pm.tracker.conversionRate == 2)
+        let read = await pm.tracker.refreshStorePurchases()
+        #expect(read.state == .complete)
+        #expect(read.productionPurchaseCount == 0)
+        #expect(read.testPurchaseCount == 1)
+        #expect(read.revokedPurchaseCount == 0)
+        let evidence = try #require(read.transactions.first)
+        #expect(read.transactions.count == 1)
+        #expect(evidence.productID == transaction.productID)
+        #expect(evidence.originalPurchasedAt == transaction.originalPurchaseDate)
+        #expect(evidence.environment == "xcode")
+        #expect(evidence.ownership == "purchased")
+        #expect(evidence.transactionKey.count == 64)
+        #expect(evidence.transactionKey != String(transaction.originalID))
+
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        let data = try #require(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey))
+        let objects = try #require(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        #expect(objects.count == 1)
+        #expect(Set(try #require(objects.first).keys) == ["transactionKey", "productID", "purchasedAt",
+            "originalPurchasedAt", "signedAt", "environment", "ownership"])
+        #expect(objects.first?["transactionID"] == nil)
+        #expect(objects.first?["originalID"] == nil)
+        #expect(objects.first?["jws"] == nil)
+        #expect(objects.first?["customerID"] == nil)
+        let relaunched = PurchaseEventTracker(defaults: defaults)
+        #expect(relaunched.cachedStorePurchases == read.transactions)
+        #expect(relaunched.storePurchaseSnapshot == nil) // a persisted projection is not a fresh read
+        let repeated = await relaunched.refreshStorePurchases()
+        #expect(repeated.transactions == read.transactions)
+        #expect(repeated.testPurchaseCount == 1)
+        #expect(repeated.productionPurchaseCount == 0)
+        relaunched.clear()
+        #expect(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey) == nil)
+        #expect(relaunched.storePurchaseSnapshot == nil)
+        #expect(relaunched.cachedStorePurchases.isEmpty)
+        #expect(relaunched.events.isEmpty)
+    }
+
+    @Test func refundedVerifiedHistoryDoesNotCountAsAnOwnedPurchase() async throws {
+        let session = try newSession()
+        let transaction = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        let suite = "test.storekit.evidence.refund.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        let bought = await tracker.refreshStorePurchases()
+        #expect(bought.testPurchaseCount == 1)
+        try session.refundTransaction(identifier: UInt(transaction.id))
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        let refunded = await tracker.refreshStorePurchases()
+        #expect(refunded.state == .complete)
+        #expect(refunded.testPurchaseCount == 0)
+        #expect(refunded.productionPurchaseCount == 0)
+        #expect(refunded.revokedPurchaseCount == 1)
+        #expect(refunded.transactions.count == 1)
+        #expect(refunded.transactions.first?.transactionKey == bought.transactions.first?.transactionKey)
+        #expect(refunded.transactions.first?.revokedAt != nil)
+        #expect(tracker.cachedStorePurchases == refunded.transactions)
+    }
+
+    @Test func truncatedActualHistoryStaysUnknownAndPreservesCompleteCache() async throws {
+        let session = try newSession()
+        let first = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        try session.refundTransaction(identifier: UInt(first.id))
+        #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
+        _ = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        let suite = "test.storekit.evidence.partial.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        let complete = await tracker.refreshStorePurchases()
+        #expect(complete.state == .complete)
+        #expect(complete.recordsRead >= 2)
+        let saved = try #require(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey))
+        let partial = await tracker.refreshStorePurchases(limit: 1)
+        #expect(partial.state == .partial)
+        #expect(partial.recordsRead == 1)
+        #expect(partial.productionPurchaseCount == nil)
+        #expect(partial.testPurchaseCount == nil)
+        #expect(partial.revokedPurchaseCount == nil)
+        #expect(tracker.cachedStorePurchases == complete.transactions)
+        #expect(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey) == saved)
+    }
+
+    @Test func cancelledActualReadCannotReportZeroPurchases() async throws {
+        let session = try newSession()
+        _ = session
+        let task = Task { await StorePurchaseEvidenceReader.read() }
+        task.cancel()
+        let read = await task.value
+        #expect(read.state == .cancelled)
+        #expect(read.productionPurchaseCount == nil)
+        #expect(read.testPurchaseCount == nil)
+        #expect(read.revokedPurchaseCount == nil)
+    }
+
+    @Test func concurrentActualReadsShareOneSnapshot() async throws {
+        let session = try newSession()
+        _ = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        let suite = "test.storekit.evidence.concurrent.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        async let first = tracker.refreshStorePurchases()
+        async let second = tracker.refreshStorePurchases()
+        let (a, b) = await (first, second)
+        #expect(a.state == .complete)
+        #expect(b.state == .complete)
+        #expect(a.observedAt == b.observedAt)
+        #expect(a.transactions == b.transactions)
+        #expect(a.testPurchaseCount == 1)
+        #expect(tracker.cachedStorePurchases == a.transactions)
+    }
+
+    @Test func clearCannotBeUndoneByAnInFlightHistoryRead() async throws {
+        let session = try newSession()
+        _ = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        #expect(try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+                == [LicenseConfig.proEntitlementID])
+        let suite = "test.storekit.evidence.clear.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        let read = Task { await tracker.refreshStorePurchases() }
+        await Task.yield()
+        tracker.clear()
+        _ = await read.value
+        #expect(tracker.cachedStorePurchases.isEmpty)
+        #expect(tracker.storePurchaseSnapshot == nil)
+        #expect(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey) == nil)
+    }
 }

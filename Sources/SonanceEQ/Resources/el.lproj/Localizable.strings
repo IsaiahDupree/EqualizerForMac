@@ -161,3 +161,13 @@
 "restored ÷ attempts" = "επαναφορές ÷ προσπάθειες";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Αγορές Pro (App Store)";
+"Refunds excluded" = "Εξαιρούνται οι επιστροφές χρημάτων";
+"Pro purchases on this Mac" = "Αγορές Pro σε αυτό το Mac";
+"%@ test purchases · %@ refunds" = "%@ δοκιμαστικές αγορές · %@ επιστροφές χρημάτων";
+"Device history; campaign conversion unavailable." = "Ιστορικό συσκευής· η μετατροπή καμπάνιας δεν είναι διαθέσιμη.";
+"Purchase history unavailable" = "Το ιστορικό αγορών δεν είναι διαθέσιμο";
+"Refresh purchase history" = "Ανανέωση ιστορικού αγορών";
+"Pro unlock confirmed" = "Το ξεκλείδωμα Pro επιβεβαιώθηκε";

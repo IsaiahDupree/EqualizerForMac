@@ -161,3 +161,13 @@
 "restored ÷ attempts" = "przywrócone ÷ próby";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Zakupy Pro (App Store)";
+"Refunds excluded" = "Bez zwrotów";
+"Pro purchases on this Mac" = "Zakupy Pro na tym Macu";
+"%@ test purchases · %@ refunds" = "%@ zakupów testowych · %@ zwrotów";
+"Device history; campaign conversion unavailable." = "Historia urządzenia; konwersja kampanii niedostępna.";
+"Purchase history unavailable" = "Historia zakupów niedostępna";
+"Refresh purchase history" = "Odśwież historię zakupów";
+"Pro unlock confirmed" = "Odblokowanie Pro potwierdzone";
