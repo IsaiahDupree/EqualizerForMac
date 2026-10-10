@@ -40,19 +40,21 @@ fi
 
 echo "▸ Generating project"
 xcodegen generate
+python3 Tools/verify_mas_purchase_config.py
 
 echo "▸ Archiving (sandboxed, public permission flow — NO ENABLE_TCC_SPI)"
-xcodebuild -project "$APP_NAME.xcodeproj" -scheme "$APP_NAME" -configuration Release \
+xcodebuild -project "$APP_NAME.xcodeproj" -scheme "$APP_NAME" -configuration Release-MAS \
   -archivePath "$ARCHIVE" \
   -destination 'generic/platform=macOS' \
+  -jobs 1 SWIFT_COMPILATION_MODE=singlefile OTHER_SWIFT_FLAGS=-j1 \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="$DIST_IDENTITY" \
   PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME" \
   DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
   ENABLE_APP_SANDBOX=YES \
-  ENABLE_HARDENED_RUNTIME=NO \
-  SWIFT_ACTIVE_COMPILATION_CONDITIONS="" \
   clean archive
+python3 Tools/verify_mas_purchase_config.py \
+  --app "$ARCHIVE/Products/Applications/$APP_NAME.app" --metadata-only
 
 echo "▸ Exporting .pkg (app-store)"
 cat > build/ExportOptions-appstore.plist <<PLIST

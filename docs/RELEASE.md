@@ -87,12 +87,16 @@ export DEVELOPMENT_TEAM="<TEAMID>"
 ./Tools/submit_appstore.sh             # archive (sandboxed) → .pkg → validate → upload
 ```
 Then finish the submission (screenshots, metadata, review notes) in App Store Connect. RevenueCat IAP also
-needs the live key in `LicenseConfig` and the product attached (see CLAUDE.md → Licensing).
+needs the live key in the resolved `Release-MAS` build and the product attached.
+Both shell builders and fastlane now check the actual build settings, live RevenueCat
+configuration and archived app metadata. See [the purchase configuration contract](MAS-PURCHASE-CONFIGURATION.md).
 
 ---
 
 ## RevenueCat (both paths, for the paid unlock)
 1. Create the Sonance EQ app(s) in RevenueCat (Direct vs MAS may be separate apps/keys).
 2. Add a `pro` entitlement; attach the one-time product `com.isaiahdupree.SonanceEQ.pro`.
-3. Put the **public** SDK key in `Sources/SonanceEQ/Licensing/LicenseConfig.swift` → the mock store
-   auto-switches to the live RevenueCat path (no other code change).
+3. Configure the **public** SDK key in the `Release-MAS` `REVENUECAT_PUBLIC_KEY`
+   build setting in `project.yml`; it is embedded through `Info.plist` and read by
+   `LicenseConfig`. Debug/direct configurations retain their existing development
+   store while their key is empty. Direct licensing needs its own acceptance.

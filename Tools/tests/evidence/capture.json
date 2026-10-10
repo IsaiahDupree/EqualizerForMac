@@ -1,0 +1,17 @@
+{
+  "kind": "actual_provider_configuration_capture",
+  "bundle_id": "com.isaiahdupree.SonanceEQ",
+  "provider": "RevenueCat",
+  "method": "GET",
+  "origin": "https://api.revenuecat.com",
+  "observed_at": [
+    "2026-10-10T01:13:58.073418+00:00",
+    "2026-10-10T01:14:26.664467+00:00"
+  ],
+  "body_sha256": {
+    "mapping.json": "4c46639485e27cff983a9b96213efc90586c94fc12adbbc7b4406adf452f01d9",
+    "offerings.json": "fb1c0230d37388d606f9564cf01417bf3decbd4f35e8f2803ab9c9e2f282af6c"
+  },
+  "scope": "Non-identifying product configuration only; no customer, price or purchase evidence.",
+  "public_sdk_sha256": "039633ec9877258e0512cac53a09fef2a36798b5eb438be9c6c3f714799044af"
+}

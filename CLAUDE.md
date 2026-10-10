@@ -93,6 +93,8 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 - **Packaging:** `Tools/package_and_notarize.sh` (Developer-ID build→codesign→notarize→staple→DMG) is ready; it
   preflights and tells you which Apple creds are missing (`DEVELOPER_ID`, notary profile/Apple-ID).
 - **Distribution acceptance:** the Mac App Store public SDK key and one-time SKU are configured already.
+  The shell MAS builders and fastlane stop on invalid resolved settings, live product/entitlement/offerings
+  configuration, or a mismatched archived app key/version. See `docs/MAS-PURCHASE-CONFIGURATION.md`.
   Verify the actual RevenueCat offering and receipt-to-`pro` mapping before a release; local StoreKit
   tests cannot prove that backend hop. Direct Developer-ID licensing/notarization remain separate.
 
