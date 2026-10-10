@@ -40,7 +40,10 @@ Each run checkpoints a private JSON receipt under
 0700 and receipt files are mode 0600. Its contract is
 `sonance_system_audio_hardware_observation_v1`.
 
-`stage` and `updated_at` identify the last checkpoint. `status: running` means
+`process_id`, `stage` and `updated_at` identify the owner and last checkpoint.
+Verify that the PID is still alive with the recorded executable before operating
+on a run; a retained `running` receipt does not establish process liveness.
+`status: running` means
 the run is incomplete, including a synchronous Core Audio call that outlives
 the test's one-minute allowance. Only a completed `status: succeeded` receipt
 can support the callback/cleanup scope. A failed or interrupted run is not
@@ -76,6 +79,21 @@ alone does not explain it. No callback or output-switch success was observed.
 Core Audio logged deactivation of that host's private aggregate after test-host
 exit; the system's default output remained Mac mini Speakers. That observation
 does not turn the interrupted receipt into a completed cleanup pass.
+
+A fourth run again passed permission preflight and timed out at
+`starting_tap`, retaining receipt `F40F3272-6071-4685-B4ED-39F9C0D5C829.json`.
+The attempted external system-sound diagnostic began at 08:19:33 UTC, after
+the Xcode run had finished at 08:19:32 UTC. It is invalid as startup evidence;
+neither quiet-source nor active-source behavior is established by that attempt.
+All original failures and the invalid diagnostic remain preserved privately.
+
+The normal pre-commit suite passed 256 methods / 4,227 runs with no failures.
+Its eight disabled methods were the seven existing opt-in StoreKit methods and
+this opt-in hardware method. This regression pass does not supersede the failed
+hardware gate. An initial fresh-worktree SDK checkout failed; the hook now
+accepts optional `SONANCE_SOURCE_PACKAGES_DIR` and `SONANCE_DERIVED_DATA_DIR`
+paths, preserving the same pinned SDK and full test selection. That cache path
+was used for the successful run. Swift compilation remains bounded to one job.
 
 ## Acceptance boundary
 

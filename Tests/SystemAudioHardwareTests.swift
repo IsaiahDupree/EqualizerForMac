@@ -63,7 +63,7 @@ struct SystemAudioHardwareTests {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true,
             attributes: [.posixPermissions: 0o700])
         let lockPath = root.appendingPathComponent("audio-route.lock").path
-        let lockFD = open(lockPath, O_CREAT | O_RDWR | O_NOFOLLOW, 0o600)
+        let lockFD = open(lockPath, O_CREAT | O_RDWR | O_NOFOLLOW | O_CLOEXEC, 0o600)
         guard lockFD >= 0 else { throw ProbeFailure(reason: "audio_resource_lock_unavailable") }
         defer { close(lockFD) }
         guard flock(lockFD, LOCK_EX | LOCK_NB) == 0 else {
@@ -75,6 +75,7 @@ struct SystemAudioHardwareTests {
         var receipt: [String: Any] = [
             "contract": "sonance_system_audio_hardware_observation_v1",
             "started_at": ISO8601DateFormatter().string(from: Date()),
+            "process_id": Int(getpid()),
             "os": ProcessInfo.processInfo.operatingSystemVersionString,
             "bundle_id": Bundle.main.bundleIdentifier ?? "unknown",
             "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? "unknown",
@@ -103,6 +104,7 @@ struct SystemAudioHardwareTests {
         do {
             try checkpoint("binary_evidence")
             receipt["build_artifacts"] = try binaryEvidence()
+            try checkpoint("checking_running_apps")
             // A second real Sonance instance must not be globally tapped/muted by this probe.
             let otherApps = AudioProcesses.siblingBundleIDs.flatMap {
                 NSRunningApplication.runningApplications(withBundleIdentifier: $0)
@@ -110,6 +112,7 @@ struct SystemAudioHardwareTests {
             guard otherApps.isEmpty else { throw ProbeFailure(reason: "another_sonance_audio_app_is_running") }
             // Debug's shipping preflight only observes an existing grant. Never request a new
             // permission in an unattended hardware run: a code-signature change can invalidate it.
+            try checkpoint("observing_permission")
             let permission = AudioRecordingPermission()
             receipt["permission_preflight_available"] = permission.supportsPreflight
             receipt["audio_capture_permission"] = String(describing: permission.status)
