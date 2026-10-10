@@ -87,22 +87,36 @@ guard report("AudioHardwareCreateAggregateDevice", AudioHardwareCreateAggregateD
 // 5. Install an IOProc and start it; count render callbacks for 1.5 s.
 let renderCount = UnsafeMutablePointer<Int>.allocate(capacity: 1)
 renderCount.initialize(to: 0)
+let callbackQueue = DispatchQueue(label: "probe.io")
 var procID: AudioDeviceIOProcID?
-let createStatus = AudioDeviceCreateIOProcIDWithBlock(&procID, aggID, DispatchQueue(label: "probe.io")) { _, _, _, _, _ in
+let createStatus = AudioDeviceCreateIOProcIDWithBlock(&procID, aggID, callbackQueue) { _, _, _, _, _ in
     renderCount.pointee += 1
 }
 guard report("AudioDeviceCreateIOProcIDWithBlock", createStatus), let proc = procID else {
+    renderCount.deinitialize(count: 1)
+    renderCount.deallocate()
     AudioHardwareDestroyAggregateDevice(aggID); AudioHardwareDestroyProcessTap(tapID); exit(3)
 }
 let startOK = report("AudioDeviceStart", AudioDeviceStart(aggID, proc))
 Thread.sleep(forTimeInterval: 1.5)
-print("    render callbacks in 1.5s: \(renderCount.pointee)")
 
 // 6. Teardown.
-AudioDeviceStop(aggID, proc)
-AudioDeviceDestroyIOProcID(aggID, proc)
-AudioHardwareDestroyAggregateDevice(aggID)
-AudioHardwareDestroyProcessTap(tapID)
+let stopOK = report("AudioDeviceStop", AudioDeviceStop(aggID, proc))
+let destroyProcOK = report("AudioDeviceDestroyIOProcID", AudioDeviceDestroyIOProcID(aggID, proc))
+// Drain callbacks on their serial queue before reading or releasing the counter.
+let callbacks = callbackQueue.sync { renderCount.pointee }
+if stopOK && destroyProcOK {
+    renderCount.deinitialize(count: 1)
+    renderCount.deallocate()
+}
+let destroyAggregateOK = report("AudioHardwareDestroyAggregateDevice", AudioHardwareDestroyAggregateDevice(aggID))
+let destroyTapOK = report("AudioHardwareDestroyProcessTap", AudioHardwareDestroyProcessTap(tapID))
+print("    render callbacks in 1.5s: \(callbacks)")
 
-print(startOK ? "RESULT: full tap loop ran [\(label)]" : "RESULT: start failed [\(label)]")
-exit(startOK ? 0 : 4)
+guard startOK else { print("RESULT: start failed [\(label)]"); exit(4) }
+guard callbacks > 0 else { print("RESULT: no callback delivery [\(label)]"); exit(5) }
+guard stopOK && destroyProcOK && destroyAggregateOK && destroyTapOK else {
+    print("RESULT: callback delivery observed but cleanup failed [\(label)]"); exit(6)
+}
+print("RESULT: callback delivery and cleanup verified [\(label)]; audibility and shipping-app behavior untested")
+exit(0)
