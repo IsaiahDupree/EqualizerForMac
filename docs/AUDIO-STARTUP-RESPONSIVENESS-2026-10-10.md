@@ -45,6 +45,13 @@ stopped cleanup is pending. It retains the existing route controller rather
 than creating a second capture pipeline. No background retry or unbounded worker
 pool is introduced. All three new messages are in the nine shipping catalogs.
 
+The actual development-window check also exposed a pending-permission UI gap:
+Start returned while the window still said Stopped/Start EQ. A pending permission
+request now retains Start intent, exposes Stop and shares the ten-second user
+deadline. Stop invalidates its generation. A delayed grant can update permission
+state, but cannot restart cancelled intent; another request is withheld until
+the original reply arrives. No test automatically grants a permission.
+
 This does not interrupt a Core Audio IPC or guarantee that an OS destruction
 call succeeds. It does not grant/reset Audio Capture permission, dismiss another
 app's notification or restart the shared Core Audio daemon. Callback delivery

@@ -14,6 +14,9 @@ final class AppState {
     let updates = AppUpdateChecker()
 
     private var tap: SystemAudioTap?
+    private var startGeneration: UInt64 = 0
+    private var permissionRequestInFlight = false
+    private var permissionDeadline: DispatchWorkItem?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
     private let diagnostics = DiagnosticsReporter()
 
@@ -127,14 +130,34 @@ final class AppState {
 
     func start() {
         guard !isRunning else { return }
+        guard !permissionRequestInFlight else { return }
         guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
+        startGeneration &+= 1
         switch permission.status {
         case .authorized:
             reallyStart()
         case .unknown:
+            let expectedGeneration = startGeneration
+            permissionRequestInFlight = true
+            audioRouteFinishing = true
+            isRunning = true // pending intent keeps Stop available before any capture starts
+            let deadline = DispatchWorkItem { [weak self] in
+                guard let self, self.startGeneration == expectedGeneration,
+                      self.permissionRequestInFlight, self.isRunning else { return }
+                self.stop()
+                self.errorMessage = EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+            }
+            permissionDeadline = deadline
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: deadline)
             permission.request { [weak self] granted in
                 guard let self else { return }
+                self.permissionRequestInFlight = false
+                self.permissionDeadline?.cancel()
+                self.permissionDeadline = nil
+                self.audioRouteFinishing = self.tap?.isFinishingOperation ?? false
+                guard self.startGeneration == expectedGeneration, self.isRunning else { return }
+                self.isRunning = false
                 if granted { self.reallyStart() }
                 else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
             }
@@ -152,12 +175,12 @@ final class AppState {
         tap.onAudioFlowChange = { [weak self, weak tap] in
             guard let self, let tap, self.tap === tap else { return }
             self.audioFlowing = tap.isAudioFlowing
-            self.audioRouteFinishing = tap.isFinishingOperation
+            self.audioRouteFinishing = self.permissionRequestInFlight || tap.isFinishingOperation
         }
         tap.onRebuild = { [weak self, weak tap] result in
             guard let self, let tap, self.tap === tap else { return }
             self.audioFlowing = tap.isAudioFlowing
-            self.audioRouteFinishing = tap.isFinishingOperation
+            self.audioRouteFinishing = self.permissionRequestInFlight || tap.isFinishingOperation
             switch result {
             case .success:
                 guard tap.isRunning else { return }
@@ -183,11 +206,14 @@ final class AppState {
     }
 
     func stop() {
+        startGeneration &+= 1
+        permissionDeadline?.cancel()
+        permissionDeadline = nil
         tap?.stop()
         // Retain its operation slot while an OS call/cleanup may still be pending.
         isRunning = false
         audioFlowing = false
-        audioRouteFinishing = tap?.isFinishingOperation ?? false
+        audioRouteFinishing = permissionRequestInFlight || tap?.isFinishingOperation == true
     }
 
     // MARK: EQ edits
