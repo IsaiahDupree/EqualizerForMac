@@ -77,22 +77,35 @@ export NOTARY_ISSUER="<ISSUER-UUID>"
 **public** permission flow (the MAS build compiles **without** `ENABLE_TCC_SPI`). This is unverified and is
 the main reason to ship Direct first.
 
+Use AppFleet through the checkout-local entry point. Apple credentials are read from AppFleet's
+approved runtime configuration and private-key folders; this wrapper does not source the legacy
+Apple environment helper.
+
 ```bash
-export ASC_API_KEY_ID="<KEYID>"
-export ASC_API_ISSUER="<ISSUER-UUID>"
-export ASC_APP_ID="<app record id from App Store Connect>"
-export DIST_IDENTITY="Apple Distribution: <Your Name> (<TEAMID>)"
-export PROVISIONING_PROFILE_NAME="<MAS profile name>"
-export DEVELOPMENT_TEAM="<TEAMID>"
-./Tools/submit_appstore.sh             # archive (sandboxed) → .pkg → validate → upload
+./Tools/ship.sh doctor
+./Tools/ship.sh status
+./Tools/ship.sh ship                   # source release preview; no Apple writes
+./Tools/ship.sh ship --yes             # AppFleet build → upload → VALID → attach
+
+# Resume from an explicitly selected signed package and its exact build:
+./Tools/ship.sh upload --artifact /absolute/path/to/SonanceEQ.pkg --build-number 9
+# Add --yes when the previewed release is authorized.
 ```
+No package folder is inferred. The wrapper runs from the checkout containing the script,
+even when invoked elsewhere. Existing-package previews verify embedded purchase metadata;
+AppFleet checks actual signatures, Apple team, profiles, version and build before any Apple write.
+See [the handoff contract](APPFLEET-HANDOFF.md) for migration from the old staged CLI.
 Then finish the submission (screenshots, metadata, review notes) in App Store Connect. RevenueCat IAP also
-needs the live key in `LicenseConfig` and the product attached (see CLAUDE.md → Licensing).
+needs the live key in the resolved `Release-MAS` build and the product attached.
+The older standalone shell builders and fastlane check actual build settings, live RevenueCat
+configuration and archived app metadata. See [the purchase configuration contract](MAS-PURCHASE-CONFIGURATION.md).
 
 ---
 
 ## RevenueCat (both paths, for the paid unlock)
 1. Create the Sonance EQ app(s) in RevenueCat (Direct vs MAS may be separate apps/keys).
 2. Add a `pro` entitlement; attach the one-time product `com.isaiahdupree.SonanceEQ.pro`.
-3. Put the **public** SDK key in `Sources/SonanceEQ/Licensing/LicenseConfig.swift` → the mock store
-   auto-switches to the live RevenueCat path (no other code change).
+3. Configure the **public** SDK key in the `Release-MAS` `REVENUECAT_PUBLIC_KEY`
+   build setting in `project.yml`; it is embedded through `Info.plist` and read by
+   `LicenseConfig`. Debug/direct configurations retain their existing development
+   store while their key is empty. Direct licensing needs its own acceptance.

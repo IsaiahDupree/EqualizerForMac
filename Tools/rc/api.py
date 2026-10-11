@@ -1,120 +1,304 @@
 #!/usr/bin/env python3
-"""api.py — RevenueCat v2 REST client. Handles the CLI-automatable half of wiring Sonance EQ:
-apps, entitlements, products (attached to the App Store IAP), offerings + packages — everything
-*inside* a project. Project creation itself is dashboard-only (see browser flow / README).
+"""Explicitly scoped RevenueCat configuration. setup previews; setup --apply writes.
 
-Auth: a project-scoped secret key (sk_…). Provide via RC_SECRET_KEY, or it's read from the first
-~/Documents/Software/*/.env that has one (living off the land). Set RC_PROJECT_ID to target a project.
-
-CLI:  projects | apps | setup        (setup = entitlement + product + offering for Sonance EQ)
+Only RC_SECRET_KEY is read for authentication. RC_PROJECT_ID and RC_APP_ID must
+identify the existing Sonance App Store app; no app or project is auto-created.
 """
-import glob, json, os, sys, urllib.request, urllib.error
+import argparse
+import hashlib
+import http.client
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+from urllib.parse import parse_qs, urlencode, urlsplit
 
-BASE = "https://api.revenuecat.com/v2"
-BUNDLE = os.environ.get("APP_BUNDLE_ID", "com.isaiahdupree.SonanceEQ")
-APP_NAME = os.environ.get("APP_NAME", "Sonance EQ")
-IAP = os.environ.get("IAP_PRODUCT_ID", "com.isaiahdupree.SonanceEQ.pro")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import verify_mas_purchase_config as gate
+
+BUNDLE = gate.BUNDLE
+IAP = gate.PRODUCT
 ENTITLEMENT = "pro"
 OFFERING = "default"
+PACKAGE = "lifetime"
+MAX_PAGES = 20
+MAX_ROWS = 2000
+
+
+def identifier(value, name):
+    gate.require(isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,255}", value),
+                 "Explicit valid " + name + " is required")
+    return value
+
 
 def secret():
-    k = os.environ.get("RC_SECRET_KEY")
-    if k: return k
-    for f in glob.glob(os.path.expanduser("~/Documents/Software/*/.env")):
-        try:
-            for line in open(f):
-                if "sk_" in line:
-                    import re
-                    m = re.search(r"sk_[A-Za-z0-9]+", line)
-                    if m: return m.group(0)
-        except Exception: pass
-    sys.exit("✗ no RevenueCat secret key (set RC_SECRET_KEY)")
+    value = os.environ.get("RC_SECRET_KEY", "")
+    gate.require(re.fullmatch(r"sk_[A-Za-z0-9]{8,256}", value) is not None,
+                 "Set RC_SECRET_KEY explicitly to the Sonance project secret; no credential search is performed")
+    return value
 
-def api(method, path, body=None):
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(BASE + path, data=data, method=method,
-        headers={"Authorization": "Bearer " + secret(), "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=45) as r:
-            return json.load(r) if r.length != 0 else {}
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"RC {method} {path} → {e.code}: {e.read().decode()[:300]}")
-
-def projects(): return api("GET", "/projects?limit=20").get("items", [])
 
 def project_id():
-    pid = os.environ.get("RC_PROJECT_ID")
-    if pid: return pid
-    ps = projects()
-    if len(ps) == 1: return ps[0]["id"]
-    sys.exit(f"✗ set RC_PROJECT_ID — projects: {[(p['name'], p['id']) for p in ps]}")
+    return identifier(os.environ.get("RC_PROJECT_ID"), "RC_PROJECT_ID")
 
-def find(items, key, val):
-    return next((i for i in items if i.get(key) == val), None)
 
-def setup():
-    pid = project_id()
-    print(f"project {pid}")
-    apps = api("GET", f"/projects/{pid}/apps?limit=50").get("items", [])
-    app = find(apps, "type", "app_store")
-    if not app:
-        app = api("POST", f"/projects/{pid}/apps",
-                  {"name": APP_NAME, "type": "app_store", "app_store": {"bundle_id": BUNDLE}})
-        print(f"  ✓ created App Store app ({app['id']})")
-    print(f"  app: {app.get('name')} ({app['id']})  bundle={app.get('app_store',{}).get('bundle_id')}")
+class Client:
+    def __init__(self, key, pid=None, apply=False):
+        self._key = key
+        self.pid = pid
+        self.apply = apply
+        self.deadline = time.monotonic() + 90
+        self.observations = []
+        self.requests = []
 
-    ents = api("GET", f"/projects/{pid}/entitlements?limit=50").get("items", [])
-    ent = find(ents, "lookup_key", ENTITLEMENT)
-    if not ent:
-        ent = api("POST", f"/projects/{pid}/entitlements",
-                  {"lookup_key": ENTITLEMENT, "display_name": "Pro"})
-        print(f"  ✓ entitlement '{ENTITLEMENT}'")
-    else: print(f"  · entitlement '{ENTITLEMENT}' exists")
+    def request(self, method, path, body=None, connection=None):
+        parsed = urlsplit(path)
+        gate.require(not parsed.scheme and not parsed.netloc and not parsed.fragment,
+                     "Only fixed-origin configuration paths are allowed")
+        gate.require(path.startswith("/v2/projects") and ".." not in path and "%" not in parsed.path,
+                     "Unsupported RevenueCat configuration path")
+        scope = "/v2/projects/" + self.pid if self.pid else None
+        gate.require(parsed.path == "/v2/projects" or
+                     (scope is not None and re.fullmatch(re.escape(scope) +
+                      r"/(?:apps|products|entitlements|offerings|packages)(?:/[A-Za-z0-9_-]+)?"
+                      r"(?:/(?:products|packages|public_api_keys|actions/attach_products))?", parsed.path)),
+                     "Configuration endpoint is outside the explicit project")
+        gate.require(method == "GET" or (method == "POST" and self.apply and scope is not None
+                     and parsed.path.startswith(scope + "/") and "/apps" not in parsed.path),
+                     "Writes require setup --apply and cannot create or modify apps")
+        remaining = self.deadline - time.monotonic()
+        gate.require(remaining > 0, "Configuration operation exceeded 90 seconds")
+        connection = connection or http.client.HTTPSConnection("api.revenuecat.com", timeout=min(5, remaining))
+        raw_body = json.dumps(body).encode() if body is not None else None
+        try:
+            with gate.request_deadline(min(12, remaining)):
+                self.requests.append({"method": method, "path": path})
+                connection.request(method, path, body=raw_body, headers={
+                    "Authorization": "Bearer " + self._key,
+                    "Content-Type": "application/json", "Accept": "application/json"})
+                response = connection.getresponse()
+                gate.require(200 <= response.status < 300, "RevenueCat configuration HTTP " + str(response.status))
+                length = response.getheader("Content-Length")
+                gate.require(length is None or (length.isdecimal() and int(length) <= gate.MAX_BYTES),
+                             "Configuration response exceeds size limit")
+                raw = response.read(gate.MAX_BYTES + 1)
+                gate.require(not raw or response.getheader("Content-Type", "").split(";")[0] == "application/json",
+                             "Configuration response is not JSON")
+                value = gate.decode_json(raw) if raw else {}
+                gate.require(isinstance(value, dict), "Invalid configuration object")
+                self.observations.append({"method": method, "path": path, "status": response.status,
+                                          "body_sha256": hashlib.sha256(raw).hexdigest()})
+                return value
+        finally:
+            connection.close()
 
-    prods = api("GET", f"/projects/{pid}/products?limit=100").get("items", [])
-    prod = find(prods, "store_identifier", IAP)
-    if not prod:
-        prod = api("POST", f"/projects/{pid}/products",
-                   {"store_identifier": IAP, "app_id": app["id"], "type": "non_consumable"})
-        print(f"  ✓ product {IAP}")
-    else: print(f"  · product {IAP} exists")
+    def collection(self, path):
+        rows, seen = [], set()
+        cursor = None
+        for _ in range(MAX_PAGES):
+            query = {"limit": 100}
+            if cursor:
+                query["starting_after"] = cursor
+            page = self.request("GET", path + "?" + urlencode(query))
+            gate.require(page.get("object") == "list" and isinstance(page.get("items"), list)
+                         and "next_page" in page, "Incomplete configuration collection")
+            batch = page["items"]
+            gate.require(len(batch) <= 100 and len(rows) + len(batch) <= MAX_ROWS,
+                         "Configuration collection exceeds capacity")
+            for row in batch:
+                gate.require(isinstance(row, dict), "Invalid configuration row")
+                identity = resource_id(row)
+                gate.require(identity not in seen, "Duplicate configuration identity")
+                seen.add(identity)
+            rows.extend(batch)
+            next_page = page["next_page"]
+            if next_page is None:
+                return rows
+            gate.require(isinstance(next_page, str) and bool(batch), "Invalid configuration continuation")
+            parsed = urlsplit(next_page)
+            gate.require(parsed.path == path and not parsed.fragment and
+                         (not parsed.scheme and not parsed.netloc or
+                          parsed.scheme == "https" and parsed.netloc == "api.revenuecat.com"),
+                         "Continuation changed origin or configuration scope")
+            args = parse_qs(parsed.query, keep_blank_values=True)
+            cursor = resource_id(batch[-1])
+            gate.require(set(args) <= {"starting_after", "limit"} and args.get("starting_after") == [cursor]
+                         and ("limit" not in args or args["limit"] == ["100"]), "Invalid configuration cursor")
+        raise gate.ConfigurationError("Configuration collection is incomplete at the page limit")
 
-    api("POST", f"/projects/{pid}/entitlements/{ent['id']}/actions/attach_products",
-        {"product_ids": [prod["id"]]})
-    print(f"  ✓ attached product → entitlement")
 
-    offs = api("GET", f"/projects/{pid}/offerings?limit=50").get("items", [])
-    off = find(offs, "lookup_key", OFFERING)
-    if not off:
-        off = api("POST", f"/projects/{pid}/offerings",
-                  {"lookup_key": OFFERING, "display_name": "Default"})
-        print(f"  ✓ offering '{OFFERING}'")
-    else: print(f"  · offering '{OFFERING}' exists")
+def resource_id(row):
+    product = row.get("product")
+    return identifier(row.get("id") or (product.get("id") if isinstance(product, dict) else None), "resource identity")
 
-    pkgs = api("GET", f"/projects/{pid}/offerings/{off['id']}/packages?limit=50").get("items", [])
-    pkg = find(pkgs, "lookup_key", "lifetime")
-    if not pkg:
-        pkg = api("POST", f"/projects/{pid}/offerings/{off['id']}/packages",
-                  {"lookup_key": "lifetime", "display_name": "Lifetime Pro"})
-        print(f"  ✓ package 'lifetime'")
-    # packages are addressed top-level under the project (NOT nested under the offering in the URL).
-    # Re-attaching an already-attached product 422s ("incompatible product from the same app") instead
-    # of no-op'ing, so treat that as already-wired to keep setup idempotent.
-    pkg_prods = api("GET", f"/projects/{pid}/packages/{pkg['id']}/products?limit=50").get("items", [])
-    if any((pp.get("product") or {}).get("id") == prod["id"] for pp in pkg_prods):
-        print(f"  · product already attached → package")
-    else:
-        api("POST", f"/projects/{pid}/packages/{pkg['id']}/actions/attach_products",
-            {"products": [{"product_id": prod["id"], "eligibility_criteria": "all"}]})
-        print(f"  ✓ attached product → package")
-    print("✓ RevenueCat entitlement/product/offering wired. Public SDK key → LicenseConfig (see README).")
+
+def unique(items, field, value):
+    matches = [item for item in items if item.get(field) == value]
+    gate.require(len(matches) <= 1, "Ambiguous configuration lookup: " + field)
+    return matches[0] if matches else None
+
+
+def validate_app(app, pid, aid, bundle=BUNDLE):
+    gate.require(isinstance(app, dict) and app.get("id") == aid and app.get("project_id") == pid,
+                 "App does not belong to the explicit project/app selection")
+    store = app.get("type")
+    gate.require(store in ("app_store", "mac_app_store") and
+                 isinstance(app.get(store), dict) and app[store].get("bundle_id") == bundle,
+                 "Selected app is not the Sonance App Store bundle")
+    return app
+
+
+def validate_product(product, aid, sku=IAP, kind="non_consumable"):
+    purchase_type = product.get("type") if isinstance(product, dict) else None
+    if kind == "non_consumable" and purchase_type == "one_time":
+        details = product.get("one_time")
+        purchase_type = "non_consumable" if isinstance(details, dict) and details.get("is_consumable") is False else None
+    gate.require(isinstance(product, dict) and product.get("app_id") == aid
+                 and product.get("store_identifier") == sku and purchase_type == kind,
+                 "Product app, SKU or purchase type conflicts with the approved product")
+    identifier(product.get("id"), "product identity")
+    gate.require(product.get("state") == "active", "Approved product is not active")
+    return product
+
+
+def validate_package_products(rows, aid, product):
+    linked = False
+    for row in rows:
+        other = row.get("product")
+        gate.require(isinstance(other, dict), "Invalid package product association")
+        identifier(other.get("app_id"), "associated app identity")
+        if other["app_id"] == aid:
+            gate.require(product is not None and other.get("id") == product["id"]
+                         and other.get("store_identifier") == product["store_identifier"]
+                         and other.get("type") == product["type"] and row.get("eligibility_criteria") == "all",
+                         "Package contains a conflicting product for the selected app")
+            linked = True
+    return linked
+
+
+def default_offering(rows):
+    gate.require(all(isinstance(row.get("is_current"), bool) for row in rows),
+                 "Offering selection is unknown")
+    current = [row for row in rows if row["is_current"]]
+    off = unique(rows, "lookup_key", OFFERING)
+    gate.require(len(current) <= 1 and (not current or off is not None and current[0]["id"] == off["id"]),
+                 "Another offering is current; setup cannot change the app's offering selection")
+    return off
+
+
+def preflight(client, aid):
+    pid = client.pid
+    base = "/v2/projects/" + pid
+    app = unique(client.collection(base + "/apps"), "id", aid)
+    validate_app(app, pid, aid)
+    settings = gate.read_settings()
+    public_key = gate.validate_settings(settings)
+    keys = client.collection(base + "/apps/" + aid + "/public_api_keys")
+    matches = [key for key in keys if key.get("key") == public_key]
+    gate.require(len(matches) == 1 and matches[0].get("app_id") == aid
+                 and matches[0].get("environment") == "production",
+                 "Resolved App Store SDK key does not belong to the selected app")
+    product = unique(client.collection(base + "/products"), "store_identifier", IAP)
+    if product:
+        validate_product(product, aid)
+    ent = unique(client.collection(base + "/entitlements"), "lookup_key", ENTITLEMENT)
+    if ent:
+        gate.require(ent.get("project_id") == pid, "Entitlement is outside the selected project")
+    off = default_offering(client.collection(base + "/offerings"))
+    pkg = unique(client.collection(base + "/offerings/" + off["id"] + "/packages"),
+                 "lookup_key", PACKAGE) if off else None
+    ent_links = client.collection(base + "/entitlements/" + ent["id"] + "/products") if ent else []
+    for linked in ent_links:
+        identifier(linked.get("app_id"), "entitlement product app identity")
+        if linked["app_id"] == aid:
+            gate.require(product is not None and linked.get("id") == product["id"],
+                         "Pro entitlement contains a conflicting product for the selected app")
+            validate_product(linked, aid)
+    ent_attached = product is not None and any(link.get("id") == product["id"] for link in ent_links)
+    pkg_links = client.collection(base + "/packages/" + pkg["id"] + "/products") if pkg else []
+    pkg_attached = validate_package_products(pkg_links, aid, product)
+    actions = ["create_" + name for name, row in (("product", product), ("entitlement", ent),
+                                                ("offering", off), ("package", pkg)) if row is None]
+    if not ent_attached:
+        actions.append("attach_product_to_pro")
+    if not pkg_attached:
+        actions.append("attach_product_to_lifetime")
+    return {"app": app, "product": product, "entitlement": ent, "offering": off, "package": pkg,
+            "actions": actions, "public_sdk_sha256": hashlib.sha256(public_key.encode()).hexdigest()}
+
+
+def setup(client, aid):
+    state = preflight(client, aid)
+    base = "/v2/projects/" + client.pid
+
+    def write(path, body):
+        # Recheck the existing app immediately before every provider mutation.
+        validate_app(client.request("GET", base + "/apps/" + aid), client.pid, aid)
+        return client.request("POST", path, body)
+
+    if client.apply and state["actions"]:
+        product = state["product"] or write(base + "/products", {
+            "store_identifier": IAP, "app_id": aid, "type": "non_consumable"})
+        validate_product(product, aid)
+        ent = state["entitlement"] or write(base + "/entitlements", {"lookup_key": ENTITLEMENT, "display_name": "Pro"})
+        gate.require(ent.get("lookup_key") == ENTITLEMENT and ent.get("project_id") == client.pid,
+                     "Created entitlement has unexpected identity")
+        identifier(ent.get("id"), "entitlement identity")
+        off = state["offering"] or write(base + "/offerings", {"lookup_key": OFFERING, "display_name": "Default"})
+        gate.require(off.get("lookup_key") == OFFERING, "Created offering has unexpected identity")
+        identifier(off.get("id"), "offering identity")
+        pkg = state["package"] or write(base + "/offerings/" + off["id"] + "/packages", {
+            "lookup_key": PACKAGE, "display_name": "Lifetime Pro"})
+        gate.require(pkg.get("lookup_key") == PACKAGE, "Created package has unexpected identity")
+        identifier(pkg.get("id"), "package identity")
+        if "attach_product_to_pro" in state["actions"]:
+            write(base + "/entitlements/" + ent["id"] + "/actions/attach_products", {"product_ids": [product["id"]]})
+        if "attach_product_to_lifetime" in state["actions"]:
+            write(base + "/packages/" + pkg["id"] + "/actions/attach_products", {
+                "products": [{"product_id": product["id"], "eligibility_criteria": "all"}]})
+        state = preflight(client, aid)
+        gate.require(not state["actions"], "Configuration writes did not produce the requested bindings")
+    return {"schema": "sonance_revenuecat_setup_v1", "status": "configuration_verified" if not state["actions"] else "preview",
+            "dry_run": not client.apply, "project_id": client.pid, "app_id": aid, "bundle_id": BUNDLE,
+            "product": IAP, "pending_actions": state["actions"], "public_sdk_sha256": state["public_sdk_sha256"],
+            "provider_observations": client.observations, "customer_payment_verified": False,
+            "provider_write_attempts": sum(request["method"] == "POST" for request in client.requests),
+            "receipt_to_entitlement_verified": False, "release_acceptance": "pending"}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=("projects", "apps", "setup"), nargs="?", default="projects")
+    parser.add_argument("--apply", action="store_true", help="Apply a validated setup plan; default is read-only")
+    args = parser.parse_args()
+    client = None
+    try:
+        gate.require(not args.apply or args.command == "setup", "--apply is only supported for setup")
+        key = secret()
+        pid = project_id() if args.command != "projects" else None
+        client = Client(key, pid, apply=args.apply)
+        if args.command == "projects":
+            value = [{"id": row["id"], "name": row.get("name")} for row in client.collection("/v2/projects")]
+        elif args.command == "apps":
+            value = [{"id": row["id"], "type": row.get("type"), "name": row.get("name"),
+                      "bundle_id": (row.get("app_store") or row.get("mac_app_store") or {}).get("bundle_id")}
+                     for row in client.collection("/v2/projects/" + pid + "/apps")]
+        else:
+            aid = identifier(os.environ.get("RC_APP_ID"), "RC_APP_ID")
+            value = setup(client, aid)
+        print(json.dumps(value, indent=2))
+        return 0
+    except (gate.ConfigurationError, OSError, http.client.HTTPException, json.JSONDecodeError) as error:
+        # Do not echo provider error bodies, request headers or credentials.
+        detail = str(error) if isinstance(error, gate.ConfigurationError) else type(error).__name__
+        print(json.dumps({"schema": "sonance_revenuecat_setup_v1", "status": "blocked", "reason": detail,
+                          "provider_observations": client.observations if client else [],
+                          "provider_write_attempts": sum(request["method"] == "POST" for request in client.requests) if client else 0,
+                          "release_acceptance": "pending"}))
+        return 2
+
 
 if __name__ == "__main__":
-    cmd = sys.argv[1] if len(sys.argv) > 1 else "projects"
-    if cmd == "projects":
-        for p in projects(): print(p["id"], p["name"])
-    elif cmd == "apps":
-        for a in api("GET", f"/projects/{project_id()}/apps?limit=50").get("items", []):
-            print(a["id"], a.get("type"), a.get("name"), a.get("app_store", {}).get("bundle_id", ""))
-    elif cmd == "setup":
-        setup()
+    sys.exit(main())

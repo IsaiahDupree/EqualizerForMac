@@ -164,3 +164,13 @@
 "restored ÷ attempts" = "obnovené ÷ pokusy";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
+
+// Verified on-device purchase history
+"Pro purchases (App Store)" = "Nákupy Pro (App Store)";
+"Refunds excluded" = "Bez vrácených plateb";
+"Pro purchases on this Mac" = "Nákupy Pro na tomto Macu";
+"%@ test purchases · %@ refunds" = "%@ testovacích nákupů · %@ vrácených plateb";
+"Device history; campaign conversion unavailable." = "Historie zařízení; konverze kampaně není dostupná.";
+"Purchase history unavailable" = "Historie nákupů není dostupná";
+"Refresh purchase history" = "Obnovit historii nákupů";
+"Pro unlock confirmed" = "Odemčení Pro potvrzeno";

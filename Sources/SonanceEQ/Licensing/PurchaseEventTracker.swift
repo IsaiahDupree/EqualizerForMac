@@ -62,6 +62,7 @@ public struct TrackedEvent: Codable, Equatable, Sendable {
 final class PurchaseEventTracker {
     /// Versioned storage key — bump the suffix if `TrackedEvent`'s shape ever changes incompatibly.
     static let storageKey = "sonance.purchaseEvents.v1"
+    static let storeEvidenceKey = "sonance.storePurchaseEvidence.v1"
 
     /// Newest-kept cap. Older events roll off the front once the log exceeds this.
     let maxEvents: Int
@@ -73,6 +74,12 @@ final class PurchaseEventTracker {
 
     /// The full event log, oldest → newest.
     private(set) var events: [TrackedEvent]
+    /// Cached projections are retained for diagnostics; only a fresh complete StoreKit read
+    /// supplies purchase counts. Historical callback logs are never promoted to transactions.
+    private(set) var cachedStorePurchases: [StorePurchaseEvidence]
+    private(set) var storePurchaseSnapshot: StorePurchaseSnapshot?
+    private var storeReadTask: Task<StorePurchaseSnapshot, Never>?
+    private var evidenceRevision = 0
 
     init(defaults: UserDefaults = .standard,
          maxEvents: Int = 500,
@@ -83,6 +90,8 @@ final class PurchaseEventTracker {
         self.clock = clock
         self.localeIdentifier = localeIdentifier
         self.events = Self.load(from: defaults)
+        self.cachedStorePurchases = defaults.data(forKey: Self.storeEvidenceKey)
+            .flatMap { try? JSONDecoder().decode([StorePurchaseEvidence].self, from: $0) } ?? []
     }
 
     // MARK: Recording
@@ -104,7 +113,43 @@ final class PurchaseEventTracker {
     /// Forget everything (used by tests and a future "reset analytics" affordance).
     func clear() {
         events.removeAll()
+        evidenceRevision += 1
+        storeReadTask?.cancel()
+        storeReadTask = nil
+        cachedStorePurchases.removeAll()
+        storePurchaseSnapshot = nil
+        defaults.removeObject(forKey: Self.storeEvidenceKey)
         persist()
+    }
+
+    /// Coalesce reads of the actual Apple history. No remote analytics or licensing write occurs.
+    @discardableResult
+    func refreshStorePurchases(limit: Int = 500) async -> StorePurchaseSnapshot {
+        let revision = evidenceRevision
+        if let pending = storeReadTask {
+            let snapshot = await pending.value
+            guard revision == evidenceRevision else {
+                return StorePurchaseSnapshot(state: .cancelled, observedAt: Date(),
+                                             transactions: [], recordsRead: 0, unverifiedRecords: 0)
+            }
+            return snapshot
+        }
+        let task = Task { await StorePurchaseEvidenceReader.read(limit: limit) }
+        storeReadTask = task
+        let snapshot = await task.value
+        guard revision == evidenceRevision else {
+            return StorePurchaseSnapshot(state: .cancelled, observedAt: Date(),
+                                         transactions: [], recordsRead: 0, unverifiedRecords: 0)
+        }
+        storeReadTask = nil
+        storePurchaseSnapshot = snapshot
+        if snapshot.state == .complete {
+            cachedStorePurchases = snapshot.transactions
+            if let data = try? JSONEncoder().encode(cachedStorePurchases) {
+                defaults.set(data, forKey: Self.storeEvidenceKey)
+            }
+        }
+        return snapshot
     }
 
     // MARK: Queries
@@ -122,7 +167,9 @@ final class PurchaseEventTracker {
         events.filter { $0.event == event }
     }
 
-    /// Completed purchases ÷ paywall impressions. `nil` when the paywall was never shown
+    /// Legacy callback diagnostic: successful unlock callbacks ÷ paywall impressions.
+    /// Repeated callbacks can repeat the numerator; this is not transaction conversion and is
+    /// no longer used as the Purchase Analytics headline. `nil` when the paywall was never shown
     /// (division-by-zero guard — "no impressions" is not "0% conversion").
     var conversionRate: Double? {
         let shown = count(of: .paywallShown)

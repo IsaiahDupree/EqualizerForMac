@@ -23,8 +23,8 @@ configs:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.0.6"
-    CURRENT_PROJECT_VERSION: "9"
+    MARKETING_VERSION: "1.0.7"
+    CURRENT_PROJECT_VERSION: "10"
     CODE_SIGN_STYLE: Automatic
     # No team set so anyone can open + run with their own signing identity.
     DEVELOPMENT_TEAM: ""
@@ -86,8 +86,8 @@ targets:
       path: Sources/SonanceEQ/Resources/Info.plist
       properties:
         CFBundleDisplayName: Sonance EQ
-        CFBundleShortVersionString: "1.0.6"
-        CFBundleVersion: "9"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleIconName: AppIcon
         # Required by the Mac App Store (App Store Connect validation). Audio EQ → Music.
         LSApplicationCategoryType: public.app-category.music
@@ -145,5 +145,20 @@ schemes:
         - SonanceEQTests
       environmentVariables:
         - variable: SONANCE_STOREKIT_TESTS
+          value: "1"
+          isEnabled: true
+
+  # Opt-in, serial real Core Audio routing; restores the system's original output.
+  SonanceEQ-AudioHardware:
+    build:
+      targets:
+        SonanceEQ: all
+    test:
+      config: Debug
+      debugEnabled: false
+      targets:
+        - SonanceEQTests
+      environmentVariables:
+        - variable: SONANCE_AUDIO_HARDWARE_TESTS
           value: "1"
           isEnabled: true

@@ -13,7 +13,7 @@
 #   2. An "Apple Distribution" (or "3rd Party Mac Developer Application") cert + a Mac App Store
 #      provisioning profile for com.isaiahdupree.SonanceEQ in your keychain.
 #   3. The App Store Connect app record + the non-consumable IAP already created (docs/APP-STORE.md).
-#   4. A real RevenueCat public key pasted into LicenseConfig (else the app ships Pro-unlocked).
+#   4. A live RevenueCat public key in the resolved Release-MAS build configuration.
 #
 # Config via env:
 #   TEAM_ID         your Apple Developer team id (required for export signing)
@@ -47,12 +47,6 @@ if ! security find-identity -v -p codesigning 2>/dev/null | grep -qiE "Apple Dis
   echo "    Create one at developer.apple.com → Certificates, then download + install it."
   missing=1
 fi
-# The live key is injected per-build via the Release-MAS REVENUECAT_PUBLIC_KEY build setting → Info.plist
-# → LicenseConfig (NOT hardcoded in LicenseConfig.swift anymore). An empty value ships the mock store.
-if ! grep -qE 'REVENUECAT_PUBLIC_KEY:\s*"(appl_|mac_)[A-Za-z0-9]+"' project.yml; then
-  echo "  ⚠ No live Release-MAS REVENUECAT_PUBLIC_KEY in project.yml — the build will ship the MOCK store"
-  echo "    (Pro unlockable with no real charge). Run Tools/rc/set_key.py <appl_…> before the paid release."
-fi
 ASC_KEY="${ASC_KEY:-$HOME/private_keys/AuthKey_${ASC_KEY_ID:-}.p8}"
 if [ "$UPLOAD" = "1" ]; then
   { [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER:-}" ] && [ -f "$ASC_KEY" ]; } || {
@@ -63,13 +57,17 @@ echo "  ✓ preflight passed"
 
 echo "▸ Generating project"
 xcodegen generate >/dev/null
+python3 Tools/verify_mas_purchase_config.py
 
 echo "▸ Archiving ($CONFIG)"
 rm -rf "$ARCHIVE"
 xcodebuild archive \
   -project SonanceEQ.xcodeproj -scheme "$SCHEME" -configuration "$CONFIG" \
   -destination 'generic/platform=macOS' -archivePath "$ARCHIVE" \
+  -jobs 1 SWIFT_COMPILATION_MODE=singlefile OTHER_SWIFT_FLAGS=-j1 \
   DEVELOPMENT_TEAM="$TEAM_ID"
+python3 Tools/verify_mas_purchase_config.py \
+  --app "$ARCHIVE/Products/Applications/SonanceEQ.app" --metadata-only
 
 echo "▸ Exporting App Store package"
 rm -rf "$EXPORT_DIR"

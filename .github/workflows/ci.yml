@@ -119,6 +119,52 @@ jobs:
             -jobs 1 -parallel-testing-enabled NO \
             -resultBundlePath TestResults.xcresult
 
+      - name: Build real App Store metadata with incremented version and build
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          config = json.loads(Path("appstore.json").read_text())
+          parts = config["version"].split(".")
+          parts[-1] = str(int(parts[-1]) + 1)
+          values = {
+              "SONANCE_VERSION_BINDING_TEST_VERSION": ".".join(parts),
+              "SONANCE_VERSION_BINDING_TEST_BUILD": str(int(config["build_number"]) + 1),
+              "SONANCE_VERSION_BINDING_TEST_APP": os.environ["RUNNER_TEMP"] + "/SonanceVersionBinding/Build/Products/Release-MAS/SonanceEQ.app",
+              "SONANCE_PURCHASE_GATE_TEST_APP": os.environ["RUNNER_TEMP"] + "/SonanceDefaultMAS.app",
+          }
+          with Path(os.environ["GITHUB_ENV"]).open("a") as output:
+              for key, value in values.items():
+                  output.write(f"{key}={value}\n")
+          PY
+
+      - name: Compile default and incremented App Store candidates
+        run: |
+          set -euo pipefail
+          xcodebuild build -project SonanceEQ.xcodeproj -scheme SonanceEQ \
+            -configuration Release-MAS -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/SonanceVersionBinding" -jobs 1 \
+            SWIFT_COMPILATION_MODE=singlefile OTHER_SWIFT_FLAGS=-j1 \
+            CODE_SIGNING_ALLOWED=NO DEBUG_INFORMATION_FORMAT=dwarf ONLY_ACTIVE_ARCH=YES \
+            SWIFT_OPTIMIZATION_LEVEL=-Onone
+          ditto "$SONANCE_VERSION_BINDING_TEST_APP" "$SONANCE_PURCHASE_GATE_TEST_APP"
+          xcodebuild build -project SonanceEQ.xcodeproj -scheme SonanceEQ \
+            -configuration Release-MAS -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/SonanceVersionBinding" -jobs 1 \
+            SWIFT_COMPILATION_MODE=singlefile OTHER_SWIFT_FLAGS=-j1 \
+            CODE_SIGNING_ALLOWED=NO DEBUG_INFORMATION_FORMAT=dwarf ONLY_ACTIVE_ARCH=YES \
+            SWIFT_OPTIMIZATION_LEVEL=-Onone \
+            "MARKETING_VERSION=$SONANCE_VERSION_BINDING_TEST_VERSION" \
+            "CURRENT_PROJECT_VERSION=$SONANCE_VERSION_BINDING_TEST_BUILD"
+
+      - name: Verify App Store and RevenueCat configuration checks
+        run: |
+          python3 -m venv "$RUNNER_TEMP/sonance-purchase-gate-env"
+          "$RUNNER_TEMP/sonance-purchase-gate-env/bin/python" -m pip install aiohttp
+          "$RUNNER_TEMP/sonance-purchase-gate-env/bin/python" -m unittest discover \
+            -s Tools/tests -p 'test_*.py' -v
+
       - name: Verify purchases and restores with local StoreKit
         run: |
           set -o pipefail

@@ -18,7 +18,7 @@ xcodebuild -project SonanceEQ.xcodeproj -scheme SonanceEQ -configuration Debug \
   -destination 'platform=macOS,arch=arm64' CODE_SIGNING_ALLOWED=NO build   # compile check
 ```
 
-Run the normal test suite (4,227 runs / 256 funcs; seven local StoreKit methods are quarantined),
+Run the normal test suite (4,227 runs / 256 funcs; fourteen local StoreKit methods are quarantined),
 using **Swift Testing**, hosted in the app so `Bundle.main`
 resolves `autoeq.sqlite`; do NOT pass `CODE_SIGNING_ALLOWED=NO` here — the host app must ad-hoc sign to launch:
 ```bash
@@ -30,7 +30,7 @@ xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ-StoreKit \
   -destination 'platform=macOS,arch=arm64' -jobs 1 -parallel-testing-enabled NO \
   -only-testing:SonanceEQTests/StoreKitIntegrationTests
 ```
-This gate passed seven methods / 17 runs. It uses actual local Apple products and verified transactions;
+This gate passed fourteen methods / 24 runs. It uses actual local Apple products and verified transactions;
 it does not verify RevenueCat's backend receipt mapping or a hosted dashboard paywall. See
 `docs/REVENUE-PURCHASE-VERIFICATION-2026-10-09.md` for the exact scope and release acceptance checklist.
 Tests live in `Tests/` (`@testable import SonanceEQ`). The module name is `SonanceEQ` (set via
@@ -71,6 +71,7 @@ Sources/SonanceEQ/
   UI/MockPaywallView.swift      Native Pro paywall; live price and purchase share the same package
   Licensing/LicenseConfig.swift  M3-fillable RevenueCat IDs (public key/entitlement/offering/product) + ProFeature enum
   Licensing/PurchaseManager.swift @MainActor @Observable; configures RevenueCat, tracks isPro, purchase/restore. Empty key uses the existing local development store.
+  Licensing/StorePurchaseEvidence.swift Read-only verified Apple history; exact Pro SKU/bundle, hashed original identity, separate production/test/refund counts
   UI/ContentView.swift          faders, presets, preamp, bypass, permission banner
   Resources/                    Info.plist + entitlements (generated/maintained via project.yml)
 
@@ -92,6 +93,21 @@ references/                     git-ignored study-only clones (AudioCap, eqMac, 
 - **Packaging:** `Tools/package_and_notarize.sh` (Developer-ID build→codesign→notarize→staple→DMG) is ready; it
   preflights and tells you which Apple creds are missing (`DEVELOPER_ID`, notary profile/Apple-ID).
 - **Distribution acceptance:** the Mac App Store public SDK key and one-time SKU are configured already.
+  The shell MAS builders and fastlane stop on invalid resolved settings, live product/entitlement/offerings
+  configuration, or a mismatched archived app key/version. See `docs/MAS-PURCHASE-CONFIGURATION.md`.
+  `Tools/rc/api.py setup` is a read-only preview. It requires explicit Sonance project credentials,
+  project ID and app ID, checks the exact bundle and resolved public SDK key, and rejects conflicting
+  product/package bindings. Only `setup --apply` enables writes; it never creates or modifies apps.
+  `Tools/asc/env.sh` does not discover or export a RevenueCat secret. See `Tools/rc/README.md`.
+  `Tools/ship.sh` and `Tools/asc/pipeline.py` now delegate to AppFleet from their own checkout,
+  independent of the caller's working directory. No arguments runs read-only doctor; ship/all
+  preview by default. Existing uploads require an explicit PKG and build number. `--yes` enables
+  AppFleet's signature/profile validation, upload, VALID processing and attachment. Preview checks
+  package purchase metadata but does not establish distribution signing. See `docs/APPFLEET-HANDOFF.md`.
+  Source version/build baseline is 1.0.7 (10). Both Info.plist identity fields expand Xcode settings;
+  the preflight rejects literal versions or a conflicting appstore.json. CI checks actual default
+  and incremented native metadata. These unsigned metadata probes disable optimization and are
+  not distribution acceptance. See `docs/RELEASE-VERSION-BINDING.md`.
   Verify the actual RevenueCat offering and receipt-to-`pro` mapping before a release; local StoreKit
   tests cannot prove that backend hop. Direct Developer-ID licensing/notarization remain separate.
 
@@ -141,6 +157,14 @@ open; see `docs/AUDIO-ROUTE-LIFECYCLE-2026-10-09.md`.
   `Release-MAS` has the configured real RevenueCat key and approved one-time SKU; Debug/direct builds
   retain the local development store while their key is empty. Live provider/dashboard acceptance and
   direct notarization are separate checks; see the dated purchase verification receipt.
+
+The Purchase Analytics headline uses verified on-device StoreKit transactions, not unlock callbacks.
+Its local projection is separate from RevenueCat licensing and never changes Pro access. Cached or
+partial history cannot supply fresh counts; test transactions, repeated callbacks, family sharing and
+refunds cannot increase the production owned-purchase headline. Device transaction history does not
+establish campaign conversion or operating profit. See `docs/PURCHASE-MEASUREMENT.md` for the read,
+persistence and evidence contract. Run every method in the opt-in StoreKit scheme after changes here;
+the regular suite intentionally quarantines those methods.
 
 ## Reference
 - Apple SDK headers (ground truth): `…/MacOSX26.0.sdk/.../CoreAudio.framework/Headers/{AudioHardwareTapping,CATapDescription,AudioHardware}.h`

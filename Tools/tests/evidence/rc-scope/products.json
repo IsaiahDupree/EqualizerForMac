@@ -1,0 +1,31 @@
+{
+  "object": "list",
+  "next_page": null,
+  "url": "https://api.revenuecat.com/v2/projects/projf143188e/products",
+  "items": [
+    {
+      "object": "product",
+      "id": "prod771c7f1b29",
+      "app_id": "app1684cd36ac",
+      "store_identifier": "Test_EverReach_Core",
+      "type": "subscription",
+      "state": "active"
+    },
+    {
+      "object": "product",
+      "id": "prod8c59cd35b9",
+      "app_id": "app3063e75cd7",
+      "store_identifier": "com.everreach.core.monthly",
+      "type": "subscription",
+      "state": "active"
+    },
+    {
+      "object": "product",
+      "id": "prod92523273de",
+      "app_id": "app3063e75cd7",
+      "store_identifier": "com.everreach.core.yearly",
+      "type": "subscription",
+      "state": "active"
+    }
+  ]
+}

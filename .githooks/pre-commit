@@ -27,10 +27,25 @@ fi
 
 echo "[pre-commit] xcodegen generate + xcodebuild test …"
 xcodegen generate >/dev/null
-if xcodebuild test \
-      -project SonanceEQ.xcodeproj -scheme SonanceEQ \
-      -destination 'platform=macOS,arch=arm64' \
-      -jobs 1 -parallel-testing-enabled NO -quiet; then
+sonance_build_args=(test
+      -project SonanceEQ.xcodeproj -scheme SonanceEQ
+      -destination 'platform=macOS,arch=arm64'
+      -jobs 1 -parallel-testing-enabled NO -quiet
+      'OTHER_SWIFT_FLAGS=$(inherited) -j1')
+# Reuse an explicitly selected, pinned SDK checkout when a fresh worktree's package
+# checkout fails. Xcode still validates Package.resolved; no tests are excluded.
+if [ -n "${SONANCE_SOURCE_PACKAGES_DIR:-}" ]; then
+  if [ ! -d "$SONANCE_SOURCE_PACKAGES_DIR" ]; then
+    echo "[pre-commit] selected source package cache does not exist"
+    exit 1
+  fi
+  sonance_build_args+=(-clonedSourcePackagesDirPath "$SONANCE_SOURCE_PACKAGES_DIR"
+                      -disableAutomaticPackageResolution)
+fi
+if [ -n "${SONANCE_DERIVED_DATA_DIR:-}" ]; then
+  sonance_build_args+=(-derivedDataPath "$SONANCE_DERIVED_DATA_DIR")
+fi
+if xcodebuild "${sonance_build_args[@]}"; then
   echo "[pre-commit] ✓ tests passed"
 else
   echo "[pre-commit] ✗ tests failed — commit aborted (use --no-verify to override)"

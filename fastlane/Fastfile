@@ -19,7 +19,7 @@ end
 
 # Regenerate the (git-ignored) Xcode project from project.yml before building.
 def regenerate
-  sh("cd .. && command -v xcodegen >/dev/null && xcodegen generate || true")
+  sh("cd .. && command -v xcodegen >/dev/null && xcodegen generate")
 end
 
 platform :mac do
@@ -81,15 +81,20 @@ platform :mac do
   desc "Mac App Store: build sandboxed .pkg (Release-MAS) and upload via the API key"
   lane :app_store do
     regenerate
+    sh("cd .. && python3 Tools/verify_mas_purchase_config.py")
     build_mac_app(
       project: "../SonanceEQ.xcodeproj",
       scheme: "SonanceEQ",
       # The dedicated MAS config: sandbox on, hardened runtime on, public permission flow (no TCC SPI),
       # MAS entitlements. Tap loop verified to run sandboxed (Tools/sandbox_tap_probe.swift).
       configuration: "Release-MAS",
+      archive_path: "../build/SonanceEQ-MAS.xcarchive",
+      xcargs: "-jobs 1 SWIFT_COMPILATION_MODE=singlefile OTHER_SWIFT_FLAGS=-j1",
       export_method: "app-store",
       output_directory: "../build/appstore"
     )
+    sh("cd .. && python3 Tools/verify_mas_purchase_config.py " \
+       "--app build/SonanceEQ-MAS.xcarchive/Products/Applications/SonanceEQ.app --metadata-only")
     upload_to_app_store(
       api_key: asc_key,
       platform: "osx",

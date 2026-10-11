@@ -12,7 +12,8 @@ struct PurchaseAnalyticsView: View {
 
     /// Snapshot of the log (the tracker isn't `@Observable`, so we pull state explicitly and refresh).
     @State private var events: [TrackedEvent] = []
-    @State private var conversion: Double?
+    @State private var purchaseSnapshot: StorePurchaseSnapshot?
+    @State private var isReadingPurchases = false
     @State private var restoreRate: Double?
     @State private var failureRate: Double?
 
@@ -31,9 +32,33 @@ struct PurchaseAnalyticsView: View {
             }
 
             HStack(spacing: 10) {
-                rateCard("Conversion", conversion, hint: "completed ÷ paywalls", tint: .green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Pro purchases (App Store)").font(.caption).foregroundStyle(.secondary)
+                    Text(purchaseSnapshot?.productionPurchaseCount.map { $0.formatted() } ?? "—")
+                        .font(.title3.bold().monospacedDigit())
+                    Text("Refunds excluded").font(.caption2).foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
                 rateCard("Restore", restoreRate, hint: "restored ÷ attempts", tint: .blue)
                 rateCard("Failure", failureRate, hint: "failed ÷ started", tint: .red)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Pro purchases on this Mac").font(.caption.bold())
+                Text(EQText.format("%@ test purchases · %@ refunds",
+                    purchaseSnapshot?.testPurchaseCount.map { $0.formatted() } ?? "—",
+                    purchaseSnapshot?.revokedPurchaseCount.map { $0.formatted() } ?? "—"))
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("Device history; campaign conversion unavailable.")
+                    .font(.caption2).foregroundStyle(.secondary)
+                if !isReadingPurchases && purchaseSnapshot?.state != .complete {
+                    Text("Purchase history unavailable").font(.caption2).foregroundStyle(.secondary)
+                }
+                Button("Refresh purchase history") { Task { await refreshPurchases() } }
+                    .controlSize(.small)
+                    .disabled(isReadingPurchases || app.license.store != .revenueCat)
             }
 
             Divider()
@@ -76,6 +101,7 @@ struct PurchaseAnalyticsView: View {
             HStack {
                 Button(role: .destructive) {
                     tracker.clear()
+                    purchaseSnapshot = nil
                     refresh()
                 } label: { Label("Clear log", systemImage: "trash") }
                 .controlSize(.small)
@@ -86,6 +112,7 @@ struct PurchaseAnalyticsView: View {
         .padding(22)
         .frame(width: 460)
         .onAppear(perform: refresh)
+        .task { await refreshPurchases() }
     }
 
     // MARK: Pieces
@@ -121,16 +148,22 @@ struct PurchaseAnalyticsView: View {
 
     private func refresh() {
         events = tracker.events
-        conversion = tracker.conversionRate
         restoreRate = tracker.restoreSuccessRate
         failureRate = tracker.purchaseFailureRate
+    }
+
+    private func refreshPurchases() async {
+        guard app.license.store == .revenueCat, !isReadingPurchases else { return }
+        isReadingPurchases = true
+        defer { isReadingPurchases = false }
+        purchaseSnapshot = await tracker.refreshStorePurchases()
     }
 
     private func label(for event: PurchaseEvent) -> String {
         switch event {
         case .paywallShown:       return "Paywall shown"
         case .purchaseStarted:    return "Purchase started"
-        case .purchaseCompleted:  return "Purchase completed"
+        case .purchaseCompleted:  return "Pro unlock confirmed"
         case .purchaseCancelled:  return "Purchase cancelled"
         case .purchaseFailed:     return "Purchase failed"
         case .restoreStarted:     return "Restore started"
