@@ -18,8 +18,13 @@ private final class SystemAudioHardwareBundleMarker {}
 struct SystemAudioHardwareTests {
     private struct ProbeFailure: Error { let reason: String }
 
-    private func pause() async throws {
-        try await Task.sleep(nanoseconds: 2_000_000_000)
+    /// Allow the ten-second OS setup deadline and its 1.5-second callback check.
+    /// Exact route/name/rebuild assertions below still decide hardware acceptance.
+    private func waitForRoute(_ ready: () -> Bool) async throws {
+        let until = ContinuousClock.now.advanced(by: .seconds(12))
+        while !ready() && ContinuousClock.now < until {
+            try await Task.sleep(for: .milliseconds(25))
+        }
     }
 
     /// Stop now returns cancelled intent immediately; inspect OS ownership only
@@ -157,7 +162,7 @@ struct SystemAudioHardwareTests {
             try checkpoint("starting_tap")
             try tap.start()
             try checkpoint("waiting_for_initial_callbacks")
-            try await pause()
+            try await waitForRoute { tap.isAudioFlowing }
             guard tap.isAudioFlowing else { throw ProbeFailure(reason: "initial_route_callbacks_unavailable") }
             observations.append(["stage": "start", "output": tap.outputDeviceName,
                 "callback_flow_verified": tap.isAudioFlowing,
@@ -179,7 +184,9 @@ struct SystemAudioHardwareTests {
                 try setDefault(device)
                 lastOwnedUID = device.uid
                 try checkpoint("waiting_for_replacement_callbacks")
-                try await pause()
+                try await waitForRoute {
+                    tap.isAudioFlowing && rebuildCount > beforeCount && tap.outputDeviceName == device.name
+                }
                 let flowing = tap.isAudioFlowing && rebuildCount > beforeCount && tap.outputDeviceName == device.name
                 observations.append(["stage": "switch", "output": device.name, "uid": device.uid,
                     "callback_flow_verified": flowing, "running": tap.isRunning,
@@ -200,7 +207,7 @@ struct SystemAudioHardwareTests {
             }
             try checkpoint("restarting_tap")
             try tap.start()
-            try await pause()
+            try await waitForRoute { tap.isAudioFlowing }
             guard tap.isAudioFlowing else { throw ProbeFailure(reason: "restart_route_callbacks_unavailable") }
             observations.append(["stage": "restart", "output": tap.outputDeviceName,
                                  "callback_flow_verified": tap.isAudioFlowing])

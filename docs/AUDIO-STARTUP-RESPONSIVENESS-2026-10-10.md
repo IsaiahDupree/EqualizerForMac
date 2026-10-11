@@ -72,6 +72,33 @@ source adjustments retain the same tests; the required full pre-commit test
 hook validates the final source. Exact result bundles and logs remain outside
 Git under `/tmp/sonance-startup-focused-20261010*`.
 
+The branch includes upstream `ef150eb` and its 1.0.7/build 10 metadata, verified
+purchase-history projection and bounded hardware supervisor. Lifecycle checkpoints
+still run on the main actor with the original receipt assertions. Hardware checks
+wait for asynchronous callback state and drained cleanup before inspecting OS
+ownership; they retain their original output/rebuild/aggregate assertions and
+the supervisor's outer deadline. Permission-less hardware runs still fail before
+capture, and skipped hardware methods do not establish a device result.
+
+The integrated ordinary native suite passed 262 functions / 4,233 runs with zero
+failures. Fifteen opt-in methods were skipped: fourteen StoreKit and one hardware.
+The separate required local StoreKit selection then passed fourteen methods /
+24 runs with zero failures or skips; this is local Apple test evidence, not a
+paid customer's transaction or RevenueCat backend acceptance.
+
+The actual 1.0.7/build 10 development window showed Stopped → Routing audio…
+with an enabled Stop → Finishing audio routing… with a disabled Start. About
+opened while the request was pending and confirmed 1.0.7/build 10. Normal native
+Quit was followed by a process-inventory read with no Sonance host remaining.
+No permission was granted, audio was recorded or output device switched. The
+Computer Use tool denied access to macOS UserNotificationCenter; resolving that
+system dialog needs the owner. Audibility and routing success remain unverified.
+
+The redacted branch Git secret scan passed. A separate whole-directory scan
+flagged an untracked study clone's CocoaPods `SPEC CHECKSUMS` SHA-1 as an API key;
+the structured redacted report confirmed the checksum section and 40-hex format.
+No reference-clone bytes or credentials were staged, and no scan rule was disabled.
+
 The remaining acceptance is a reproducible signed current artifact, its observed
 existing capture authorization, and a bounded callback/stop/restart/output-switch
 run on attached hardware with human audibility confirmation. Built-in, wired,
