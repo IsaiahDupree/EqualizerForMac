@@ -46,6 +46,12 @@ final class SystemAudioTap {
                 self.rebuild()
             }
         }
+        route.onLifecycleStage = { [weak self] expectedGeneration, stage in
+            DispatchQueue.main.async {
+                guard let self, self.routeGeneration == expectedGeneration else { return }
+                self.onLifecycleStage?(stage)
+            }
+        }
     }
 
     /// Admission is immediate; success/failure arrives through onRebuild. A previous
@@ -187,7 +193,9 @@ private final class SystemAudioRoute: @unchecked Sendable {
     private var sessionGeneration: UInt64 = 0
     private var tapFormat: AudioStreamBasicDescription?
     private var outputDeviceName = "—"
+    private var routeGeneration: UInt64 = 0
     var onDeviceChange: ((UInt64) -> Void)?
+    var onLifecycleStage: ((UInt64, String) -> Void)?
 
     init(eq: EQEngine, controlQueue: DispatchQueue) {
         self.eq = eq
@@ -199,6 +207,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
                generation: UInt64,
                cancellation: AudioRouteOperation<RouteSnapshot?>.Cancellation) throws -> RouteSnapshot {
         stop()
+        routeGeneration = generation
         try cancellation.check()
         try build(target: target, excludedBundleIDs: excludedBundleIDs,
                   heartbeat: heartbeat, cancellation: cancellation)
@@ -254,7 +263,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         desc.isPrivate = true
 
         var newTap = AudioObjectID(kAudioObjectUnknown)
-        onLifecycleStage?("create_process_tap")
+        onLifecycleStage?(routeGeneration, "create_process_tap")
         var status = AudioHardwareCreateProcessTap(desc, &newTap)
         guard status == noErr, newTap.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateProcessTap (check Audio Capture permission)", status)
@@ -263,14 +272,14 @@ private final class SystemAudioRoute: @unchecked Sendable {
         try cancellation.check()
 
         // 3. Read the tap's format and prime the EQ.
-        onLifecycleStage?("read_tap_format")
+        onLifecycleStage?(routeGeneration, "read_tap_format")
         let format = try tapID.readTapStreamFormat()
         tapFormat = format
         try cancellation.check()
         eq.resetState()
 
         // 4. Resolve the real output device we re-route into.
-        onLifecycleStage?("resolve_output")
+        onLifecycleStage?(routeGeneration, "resolve_output")
         let outputDevice = try AudioObjectID.system.readDefaultOutputDevice()
         guard outputDevice.isValid else { throw CoreAudioError.create("No default output device", -1) }
         let outputUID = try outputDevice.readDeviceUID()
@@ -300,7 +309,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         ]
 
         var newAggregate = AudioObjectID(kAudioObjectUnknown)
-        onLifecycleStage?("create_aggregate")
+        onLifecycleStage?(routeGeneration, "create_aggregate")
         status = AudioHardwareCreateAggregateDevice(description as CFDictionary, &newAggregate)
         guard status == noErr, newAggregate.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateAggregateDevice", status)
@@ -311,7 +320,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         // 6. Install the render block and start.
         let engine = eq
         var newProc: AudioDeviceIOProcID?
-        onLifecycleStage?("create_io_proc")
+        onLifecycleStage?(routeGeneration, "create_io_proc")
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
             SystemAudioRoute.route(engine, input: inInput, output: outOutput)
             heartbeat.recordRender()
@@ -322,7 +331,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         procID = proc
         try cancellation.check()
 
-        onLifecycleStage?("start_device")
+        onLifecycleStage?(routeGeneration, "start_device")
         status = AudioDeviceStart(aggregateID, proc)
         guard status == noErr else { throw CoreAudioError.create("AudioDeviceStart", status) }
         try cancellation.check()

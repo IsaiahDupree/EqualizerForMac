@@ -22,6 +22,17 @@ struct SystemAudioHardwareTests {
         try await Task.sleep(nanoseconds: 2_000_000_000)
     }
 
+    /// Stop now returns cancelled intent immediately; inspect OS ownership only
+    /// after its serial operation slot has actually drained. The supervisor still
+    /// bounds an OS call that cannot be interrupted.
+    private func waitForCleanup(_ tap: SystemAudioTap) async -> Bool {
+        let until = ContinuousClock.now.advanced(by: .seconds(5))
+        while tap.isFinishingOperation && ContinuousClock.now < until {
+            try? await Task.sleep(for: .milliseconds(25))
+        }
+        return !tap.isFinishingOperation
+    }
+
     private func defaultUID() throws -> String {
         try AudioObjectID.system.readDefaultOutputDevice().readDeviceUID()
     }
@@ -178,6 +189,7 @@ struct SystemAudioHardwareTests {
             }
             try checkpoint("stopping_tap")
             tap.stop()
+            guard await waitForCleanup(tap) else { throw ProbeFailure(reason: "stop_cleanup_still_pending") }
             guard !(tap.isRunning || tap.isAudioFlowing), try aggregates() == baselineAggregates else {
                 throw ProbeFailure(reason: "stop_did_not_release_owned_route")
             }
@@ -198,7 +210,10 @@ struct SystemAudioHardwareTests {
         // Evidence storage failure must never prevent audio/output cleanup.
         try? checkpoint("cleanup")
         tap.stop()
-        if let original {
+        let cleanupFinished = await waitForCleanup(tap)
+        receipt["route_operation_finished"] = cleanupFinished
+        if !cleanupFinished { cleanupErrors.append("route_operation_cleanup_still_pending") }
+        if let original, cleanupFinished {
             do {
                 let current = try defaultUID()
                 if current != original.uid {
