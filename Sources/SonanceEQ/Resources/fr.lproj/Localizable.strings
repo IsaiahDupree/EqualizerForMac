@@ -85,3 +85,6 @@
 "Purchase history unavailable" = "Historique des achats indisponible";
 "Refresh purchase history" = "Actualiser l’historique des achats";
 "Pro unlock confirmed" = "Déverrouillage Pro confirmé";
+"Audio routing is still finishing. Try again when it stops." = "Le routage audio est encore en cours de fermeture. Réessayez lorsqu’il sera arrêté.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "Le routage audio a pris trop de temps. Vérifiez l’autorisation de capture audio, puis réessayez.";
+"Finishing audio routing…" = "Finalisation du routage audio…";

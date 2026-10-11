@@ -92,6 +92,7 @@ struct ContentView: View {
             Button(LocalizedStringKey(app.isRunning ? "Stop" : "Start EQ")) { app.toggle() }
                 .keyboardShortcut(.defaultAction)
                 .controlSize(.large)
+                .disabled(!app.isRunning && app.audioRouteFinishing)
         }
     }
 
@@ -101,6 +102,7 @@ struct ContentView: View {
             if let preset = app.activePresetName { return EQText.format("Active · %@", preset) }
             return EQText.format("Active · %@", app.outputDeviceName)
         }
+        if app.audioRouteFinishing { return EQText.string("Finishing audio routing…") }
         return app.activePresetName ?? EQText.string("Stopped")
     }
 

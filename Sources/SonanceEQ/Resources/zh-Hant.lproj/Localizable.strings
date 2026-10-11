@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "等化系統音訊需要音訊擷取權限。";
 "Audio Capture permission was denied." = "音訊擷取權限遭拒。";
 "Audio Recorder" = "音訊錄製器";
+"Audio routing is still finishing. Try again when it stops." = "音訊路由仍在結束中。停止後請再試一次。";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "音訊路由耗時過長。請檢查音訊擷取權限後再試一次。";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap（請檢查音訊擷取權限）";
 "Band" = "頻段";
 "Bass Boost" = "低音增強";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "匯出失敗：%@";
 "Export…" = "匯出⋯";
 "Failure" = "失敗率";
+"Finishing audio routing…" = "正在結束音訊路由…";
 "Flat" = "平坦";
 "Format" = "格式";
 "Full parametric EQ — up to 32 bands" = "完整參數等化器 — 最多 32 個頻段";

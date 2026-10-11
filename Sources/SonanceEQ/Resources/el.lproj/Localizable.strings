@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "Απαιτείται άδεια καταγραφής ήχου για ισοστάθμιση του ήχου συστήματος.";
 "Audio Capture permission was denied." = "Η άδεια καταγραφής ήχου απορρίφθηκε.";
 "Audio Recorder" = "Καταγραφή ήχου";
+"Audio routing is still finishing. Try again when it stops." = "Η δρομολόγηση ήχου ολοκληρώνεται ακόμη. Δοκιμάστε ξανά όταν σταματήσει.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "Η δρομολόγηση ήχου διήρκεσε πολύ. Ελέγξτε την άδεια καταγραφής ήχου και δοκιμάστε ξανά.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (ελέγξτε την άδεια ήχου)";
 "Band" = "Ζώνη";
 "Bass Boost" = "Ενίσχυση μπάσων";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "Η εξαγωγή απέτυχε: %@";
 "Export…" = "Εξαγωγή…";
 "Failure" = "Αποτυχία";
+"Finishing audio routing…" = "Ολοκλήρωση δρομολόγησης ήχου…";
 "Flat" = "Επίπεδο";
 "Format" = "Μορφή";
 "Full parametric EQ — up to 32 bands" = "Πλήρης παραμετρικός ισοσταθμιστής — έως 32 ζώνες";

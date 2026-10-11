@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "É necessária permissão de captura de áudio para equalizar o som do sistema.";
 "Audio Capture permission was denied." = "A permissão de captura de áudio foi recusada.";
 "Audio Recorder" = "Gravador de áudio";
+"Audio routing is still finishing. Try again when it stops." = "O encaminhamento de áudio ainda está a terminar. Tente novamente quando parar.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "O encaminhamento de áudio demorou demasiado. Verifique a permissão de captura de áudio e tente novamente.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (verifique a permissão de áudio)";
 "Band" = "Banda";
 "Bass Boost" = "Reforço de graves";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "A exportação falhou: %@";
 "Export…" = "Exportar…";
 "Failure" = "Falhas";
+"Finishing audio routing…" = "A terminar o encaminhamento de áudio…";
 "Flat" = "Plano";
 "Format" = "Formato";
 "Full parametric EQ — up to 32 bands" = "Equalizador paramétrico completo — até 32 bandas";
