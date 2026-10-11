@@ -48,6 +48,8 @@ final class SystemAudioTap {
     var onRebuild: ((Result<String, Error>) -> Void)?
     /// Called on the control plane when the current route is awaiting audio, flowing, or stopped.
     var onAudioFlowChange: (() -> Void)?
+    /// Control-plane diagnostics only; never called from the real-time render block.
+    var onLifecycleStage: ((String) -> Void)?
 
     init(eq: EQEngine) { self.eq = eq }
 
@@ -140,6 +142,7 @@ final class SystemAudioTap {
         desc.isPrivate = true
 
         var newTap = AudioObjectID(kAudioObjectUnknown)
+        onLifecycleStage?("create_process_tap")
         var status = AudioHardwareCreateProcessTap(desc, &newTap)
         guard status == noErr, newTap.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateProcessTap (check Audio Capture permission)", status)
@@ -147,11 +150,13 @@ final class SystemAudioTap {
         tapID = newTap
 
         // 3. Read the tap's format and prime the EQ.
+        onLifecycleStage?("read_tap_format")
         let format = try tapID.readTapStreamFormat()
         tapFormat = format
         eq.resetState()
 
         // 4. Resolve the real output device we re-route into.
+        onLifecycleStage?("resolve_output")
         let outputDevice = try AudioObjectID.system.readDefaultOutputDevice()
         guard outputDevice.isValid else { throw CoreAudioError.create("No default output device", -1) }
         let outputUID = try outputDevice.readDeviceUID()
@@ -180,6 +185,7 @@ final class SystemAudioTap {
         ]
 
         var newAggregate = AudioObjectID(kAudioObjectUnknown)
+        onLifecycleStage?("create_aggregate")
         status = AudioHardwareCreateAggregateDevice(description as CFDictionary, &newAggregate)
         guard status == noErr, newAggregate.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateAggregateDevice", status)
@@ -189,6 +195,7 @@ final class SystemAudioTap {
         // 6. Install the render block and start.
         let engine = eq
         var newProc: AudioDeviceIOProcID?
+        onLifecycleStage?("create_io_proc")
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
             SystemAudioTap.route(engine, input: inInput, output: outOutput)
             heartbeat.recordRender()
@@ -198,6 +205,7 @@ final class SystemAudioTap {
         }
         procID = proc
 
+        onLifecycleStage?("start_device")
         status = AudioDeviceStart(aggregateID, proc)
         guard status == noErr else { throw CoreAudioError.create("AudioDeviceStart", status) }
 
