@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "Cần quyền thu âm hệ thống để chỉnh âm thanh hệ thống.";
 "Audio Capture permission was denied." = "Quyền thu âm hệ thống đã bị từ chối.";
 "Audio Recorder" = "Trình ghi âm";
+"Audio routing is still finishing. Try again when it stops." = "Định tuyến âm thanh vẫn đang hoàn tất. Hãy thử lại khi quá trình dừng.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "Định tuyến âm thanh mất quá nhiều thời gian. Hãy kiểm tra quyền thu âm thanh rồi thử lại.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (kiểm tra quyền thu âm)";
 "Band" = "Dải tần";
 "Bass Boost" = "Tăng âm trầm";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "Xuất thất bại: %@";
 "Export…" = "Xuất…";
 "Failure" = "Lỗi";
+"Finishing audio routing…" = "Đang kết thúc định tuyến âm thanh…";
 "Flat" = "Phẳng";
 "Format" = "Định dạng";
 "Full parametric EQ — up to 32 bands" = "Bộ chỉnh âm tham số đầy đủ — tối đa 32 dải";

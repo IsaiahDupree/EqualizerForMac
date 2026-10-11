@@ -106,6 +106,7 @@ final class AppState {
     // UI state
     var isRunning = false
     private var audioFlowing = false
+    private(set) var audioRouteFinishing = false
     // The notification drives observation; checking the tap also prevents an older queued
     // notification from displaying Active while a newer route is still waiting for callbacks.
     var isAudioFlowing: Bool { audioFlowing && tap?.isAudioFlowing == true }
@@ -126,6 +127,7 @@ final class AppState {
 
     func start() {
         guard !isRunning else { return }
+        guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
         switch permission.status {
         case .authorized:
@@ -144,28 +146,26 @@ final class AppState {
     private func reallyStart() {
         guard !isRunning else { return }   // two pending permission grants may both return
         pushSettings()
-        let tap = SystemAudioTap(eq: eq)
+        let tap = self.tap ?? SystemAudioTap(eq: eq)
+        self.tap = tap
         audioFlowing = false
         tap.onAudioFlowChange = { [weak self, weak tap] in
-            Task { @MainActor in
-                guard let self, let tap, self.tap === tap else { return }
-                // Read the current route, since another rebuild may have superseded this callback.
-                self.audioFlowing = tap.isAudioFlowing
-            }
+            guard let self, let tap, self.tap === tap else { return }
+            self.audioFlowing = tap.isAudioFlowing
+            self.audioRouteFinishing = tap.isFinishingOperation
         }
         tap.onRebuild = { [weak self, weak tap] result in
-            Task { @MainActor in
-                guard let self, let tap, self.tap === tap else { return }
-                self.audioFlowing = tap.isAudioFlowing
-                switch result {
-                case .success:
-                    guard tap.isRunning else { return }
-                    self.outputDeviceName = tap.outputDeviceName
-                case let .failure(error):
-                    guard !tap.isRunning else { return }
-                    self.isRunning = false
-                    self.errorMessage = error.localizedDescription
-                }
+            guard let self, let tap, self.tap === tap else { return }
+            self.audioFlowing = tap.isAudioFlowing
+            self.audioRouteFinishing = tap.isFinishingOperation
+            switch result {
+            case .success:
+                guard tap.isRunning else { return }
+                self.outputDeviceName = tap.outputDeviceName
+            case let .failure(error):
+                guard !tap.isRunning else { return }
+                self.isRunning = false
+                self.errorMessage = error.localizedDescription
             }
         }
         tap.target = eqTarget
@@ -173,6 +173,7 @@ final class AppState {
         do {
             try tap.start()
             self.tap = tap
+            self.audioRouteFinishing = tap.isFinishingOperation
             self.outputDeviceName = tap.outputDeviceName
             self.isRunning = true
         } catch {
@@ -183,9 +184,10 @@ final class AppState {
 
     func stop() {
         tap?.stop()
-        tap = nil
+        // Retain its operation slot while an OS call/cleanup may still be pending.
         isRunning = false
         audioFlowing = false
+        audioRouteFinishing = tap?.isFinishingOperation ?? false
     }
 
     // MARK: EQ edits

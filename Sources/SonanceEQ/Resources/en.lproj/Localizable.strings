@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "Audio Capture permission is required to equalize system audio.";
 "Audio Capture permission was denied." = "Audio Capture permission was denied.";
 "Audio Recorder" = "Audio Recorder";
+"Audio routing is still finishing. Try again when it stops." = "Audio routing is still finishing. Try again when it stops.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "Audio routing took too long. Check Audio Capture permission, then try again.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (check Audio Capture permission)";
 "Band" = "Band";
 "Bass Boost" = "Bass Boost";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "Export failed: %@";
 "Export…" = "Export…";
 "Failure" = "Failure";
+"Finishing audio routing…" = "Finishing audio routing…";
 "Flat" = "Flat";
 "Format" = "Format";
 "Full parametric EQ — up to 32 bands" = "Full parametric EQ — up to 32 bands";
