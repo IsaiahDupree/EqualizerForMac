@@ -3,7 +3,8 @@ import os
 
 /// Checks one route's audio callbacks on the control plane. Each build owns a new heartbeat, so
 /// callbacks or queued timeouts from a previous route cannot make a replacement route look healthy.
-/// Lifecycle methods run on the main queue; only Heartbeat.recordRender() runs on the audio queue.
+/// Lifecycle methods run on the main queue; only Heartbeat.recordRender() runs on the audio queue,
+/// after AudioBufferRouter has accepted and processed a complete nonempty buffer layout.
 final class AudioRouteWatchdog {
     enum State { case stopped, waiting, flowing, failed }
 

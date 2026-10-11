@@ -129,6 +129,14 @@ Startup/rebuild now use distinct callback heartbeats and guarded watchdog deadli
 Lifecycle tests do not prove audible output or device compatibility. SON-07 hardware acceptance remains
 open; see `docs/AUDIO-ROUTE-LIFECYCLE-2026-10-09.md`.
 
+The global IOProc uses `AudioBufferRouter`: only validated, nonempty, fully processed Float32
+buffer layouts increment the startup heartbeat. Unsupported layouts are silenced; valid silence
+still counts as buffer delivery, not audibility. Mid-Side/FIR blocks are chunked at the engine's
+scratch capacity. Run `/bin/zsh Tools/verify_audio_buffers.sh` for the same 26 real-buffer cases
+as `AudioBufferRouterTests`, with Address Sanitizer. An explicit `--no-sanitizer` run retains
+the assertions and guard checks but cannot claim sanitizer coverage. See
+`docs/AUDIO-RENDER-BUFFER-SAFETY-2026-10-11.md`.
+
 Blocking route setup/rebuild/destruction now runs on one serial worker. Main-actor snapshots and
 intent drive the UI; never restore synchronous Core Audio IPC on the window's main thread.
 Stop cancels intent immediately, and pending cleanup disables another Start. The ten-second
