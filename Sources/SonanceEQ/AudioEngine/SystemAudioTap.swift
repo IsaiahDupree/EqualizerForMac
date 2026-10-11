@@ -322,8 +322,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         var newProc: AudioDeviceIOProcID?
         onLifecycleStage?(routeGeneration, "create_io_proc")
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
-            SystemAudioRoute.route(engine, input: inInput, output: outOutput)
-            heartbeat.recordRender()
+            AudioBufferRouter.render(engine, input: inInput, output: outOutput, heartbeat: heartbeat)
         }
         guard status == noErr, let proc = newProc else {
             throw CoreAudioError.create("AudioDeviceCreateIOProcIDWithBlock", status)
@@ -354,76 +353,6 @@ private final class SystemAudioRoute: @unchecked Sendable {
             tapID = AudioObjectID(kAudioObjectUnknown)
         }
         tapFormat = nil
-    }
-
-    // MARK: Render (audio thread)
-
-    /// Copy tapped input into the output buffers, then EQ in place.
-    /// Handles both interleaved (1 buffer, N channels) and planar (N buffers, 1 channel) layouts.
-    private static func route(_ eq: EQEngine,
-                              input: UnsafePointer<AudioBufferList>,
-                              output: UnsafeMutablePointer<AudioBufferList>) {
-        eq.beginRender()
-
-        let inList = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
-        let outList = UnsafeMutableAudioBufferListPointer(output)
-
-        // 1. Copy each tap input buffer into the matching output buffer (silence if absent).
-        for i in 0..<outList.count {
-            let outBuffer = outList[i]
-            guard let outData = outBuffer.mData else { continue }
-            let outBytes = Int(outBuffer.mDataByteSize)
-            if i < inList.count, let inData = inList[i].mData {
-                let copyBytes = min(outBytes, Int(inList[i].mDataByteSize))
-                memcpy(outData, inData, copyBytes)
-                if copyBytes < outBytes {
-                    memset(outData.advanced(by: copyBytes), 0, outBytes - copyBytes)
-                }
-            } else {
-                memset(outData, 0, outBytes)
-            }
-        }
-
-        // 2a. Mid-Side decoding needs the L/R pair together.
-        if eq.isMidSide, let pair = stereoPair(outList) {
-            eq.processMidSide(left: pair.left, right: pair.right, frames: pair.frames,
-                              strideL: pair.strideL, strideR: pair.strideR)
-            return
-        }
-
-        // 2b. Otherwise EQ each channel of each output buffer in place.
-        var channelOffset = 0
-        for i in 0..<outList.count {
-            let outBuffer = outList[i]
-            guard let outData = outBuffer.mData else { continue }
-            let channels = Int(outBuffer.mNumberChannels)
-            guard channels > 0 else { continue }
-            let frames = Int(outBuffer.mDataByteSize) / (MemoryLayout<Float>.size * channels)
-            let samples = outData.assumingMemoryBound(to: Float.self)
-            for ch in 0..<channels {
-                eq.process(channel: channelOffset + ch, data: samples + ch, frames: frames, stride: channels)
-            }
-            channelOffset += channels
-        }
-    }
-
-    /// Returns L/R pointers + strides if the output is exactly 2 channels (interleaved or planar), else nil.
-    private static func stereoPair(_ outList: UnsafeMutableAudioBufferListPointer)
-        -> (left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
-            frames: Int, strideL: Int, strideR: Int)? {
-        // Interleaved: 1 buffer, 2 channels.
-        if outList.count == 1, outList[0].mNumberChannels == 2, let d = outList[0].mData {
-            let base = d.assumingMemoryBound(to: Float.self)
-            let frames = Int(outList[0].mDataByteSize) / (MemoryLayout<Float>.size * 2)
-            return (base, base + 1, frames, 2, 2)
-        }
-        // Planar: 2 buffers, 1 channel each.
-        if outList.count == 2, outList[0].mNumberChannels == 1, outList[1].mNumberChannels == 1,
-           let l = outList[0].mData, let r = outList[1].mData {
-            let frames = Int(outList[0].mDataByteSize) / MemoryLayout<Float>.size
-            return (l.assumingMemoryBound(to: Float.self), r.assumingMemoryBound(to: Float.self), frames, 1, 1)
-        }
-        return nil
     }
 
     // MARK: Output-device change handling

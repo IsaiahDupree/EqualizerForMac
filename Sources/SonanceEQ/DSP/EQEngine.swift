@@ -21,7 +21,7 @@ final class EQEngine {
     static let maxBands = 32
     private static let coeffsPerSection = 5            // b0, b1, b2, a1, a2
     private static var coeffCount: Int { coeffsPerSection * maxBands }
-    private static let maxFrames = 8192
+    static let maxFrames = 8192
 
     private let interpolationRate: Float = 0.005
     private let coeffThreshold: Float = 1.0e-7

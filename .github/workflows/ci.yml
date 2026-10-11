@@ -103,6 +103,9 @@ jobs:
       - name: Xcode version
         run: xcodebuild -version
 
+      - name: Check shipping audio buffers with Address Sanitizer
+        run: /bin/zsh Tools/verify_audio_buffers.sh
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
