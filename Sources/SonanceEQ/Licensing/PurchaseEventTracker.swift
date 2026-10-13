@@ -80,6 +80,10 @@ final class PurchaseEventTracker {
     private(set) var storePurchaseSnapshot: StorePurchaseSnapshot?
     private var storeReadTask: Task<StorePurchaseSnapshot, Never>?
     private var evidenceRevision = 0
+    /// A complete actual StoreKit read can feed consented product observations;
+    /// legacy callback events never supply this observer.
+    var onStorePurchaseSnapshot: ((StorePurchaseSnapshot) -> Void)?
+    var onRecordedEvent: ((TrackedEvent) -> Void)?
 
     init(defaults: UserDefaults = .standard,
          maxEvents: Int = 500,
@@ -107,6 +111,7 @@ final class PurchaseEventTracker {
         }
         persist()
         log.notice("\(event.rawValue, privacy: .public) store=\(store, privacy: .public)")
+        onRecordedEvent?(entry)
         return entry
     }
 
@@ -149,6 +154,7 @@ final class PurchaseEventTracker {
                 defaults.set(data, forKey: Self.storeEvidenceKey)
             }
         }
+        onStorePurchaseSnapshot?(snapshot)
         return snapshot
     }
 

@@ -41,7 +41,7 @@ struct ContentView: View {
         .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
         .sheet(isPresented: $showingRecorder) { RecorderView(app: app) }
-        .sheet(isPresented: $app.showingAbout) { AboutView(updates: app.updates) }
+        .sheet(isPresented: $app.showingAbout) { AboutView(updates: app.updates, journey: app.journey) }
         .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
         .onAppear(perform: openLaunchArgPanel)
         .task { await app.updates.check() }

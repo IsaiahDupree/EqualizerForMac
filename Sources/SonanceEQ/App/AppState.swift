@@ -12,6 +12,7 @@ final class AppState {
     let license = PurchaseManager()
     let review = ReviewPrompter()
     let updates = AppUpdateChecker()
+    let journey = ProductJourneyTracker()
 
     private var tap: SystemAudioTap?
     private var startGeneration: UInt64 = 0
@@ -22,6 +23,15 @@ final class AppState {
 
     init() {
         diagnostics.start()
+        license.tracker.onStorePurchaseSnapshot = { [weak journey] snapshot in
+            journey?.observe(snapshot)
+            Task { [weak journey] in await journey?.flush() }
+        }
+        license.tracker.onRecordedEvent = { [weak self] entry in
+            guard let self, self.journey.optedIn, entry.store == "revenueCat",
+                  entry.event == .purchaseCompleted || entry.event == .restoreCompleted else { return }
+            Task { [weak self] in await self?.license.tracker.refreshStorePurchases() }
+        }
         license.start()
         mixerEngine.onChannelFailure = { [weak self] bundleID, message in
             guard let self else { return }
@@ -175,6 +185,8 @@ final class AppState {
         tap.onAudioFlowChange = { [weak self, weak tap] in
             guard let self, let tap, self.tap === tap else { return }
             self.audioFlowing = tap.isAudioFlowing
+            self.journey.observeAudioFlow(tap.isAudioFlowing)
+            Task { [weak self] in await self?.journey.flush() }
             self.audioRouteFinishing = self.permissionRequestInFlight || tap.isFinishingOperation
         }
         tap.onRebuild = { [weak self, weak tap] result in

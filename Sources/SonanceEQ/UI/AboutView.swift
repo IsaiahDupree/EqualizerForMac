@@ -5,6 +5,7 @@ import SwiftUI
 struct AboutView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var updates: AppUpdateChecker
+    @Bindable var journey: ProductJourneyTracker
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0"
@@ -51,6 +52,19 @@ struct AboutView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Divider()
+            if journey.configured || journey.optedIn {
+                Toggle("Share usage metrics", isOn: Binding(
+                    get: { journey.optedIn },
+                    set: { enabled in
+                        journey.setConsent(enabled)
+                        if enabled { journey.observeSession(); Task { await journey.flush() } }
+                    }))
+                    .font(.caption)
+                Text("Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics.")
+                    .font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Divider()
+            }
             Text("© 2026 Isaiah Dupree").font(.caption2).foregroundStyle(.secondary)
 
             Button("Close") { dismiss() }.keyboardShortcut(.defaultAction)
