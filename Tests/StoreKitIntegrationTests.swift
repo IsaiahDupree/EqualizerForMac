@@ -289,6 +289,34 @@ struct StoreKitIntegrationTests {
         #expect(read.transactions.isEmpty)
     }
 
+    @Test func nativeJourneyUsesVerifiedLocalTransactionsAndKeepsTestEnvironment() async throws {
+        let suite = "test.storekit.nativeJourney.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        let journey = ProductJourneyTracker(defaults: defaults, configuration: nil)
+        journey.setConsent(true)
+        let session = try newSession()
+        let transaction = try await session.buyProduct(identifier: LicenseConfig.proProductID)
+        _ = try await awaitEntitlements { $0.contains(LicenseConfig.proEntitlementID) }
+        let tracker = PurchaseEventTracker(defaults: defaults)
+        tracker.onStorePurchaseSnapshot = { journey.observe($0) }
+        let snapshot = await tracker.refreshStorePurchases()
+        #expect(snapshot.state == .complete)
+        #expect(snapshot.testPurchaseCount == 1)
+        #expect(snapshot.productionPurchaseCount == 0)
+        let evidence = try #require(snapshot.transactions.first)
+        #expect(evidence.environment == "xcode")
+        #expect(evidence.productID == transaction.productID)
+        #expect(journey.pendingCount == 1)
+        journey.observe(snapshot)
+        #expect(journey.pendingCount == 1)
+
+        // A new opt-in cannot relabel an already-owned transaction as a fresh sale.
+        journey.setConsent(false); journey.setConsent(true)
+        journey.observe(snapshot)
+        #expect(journey.pendingCount == 0)
+    }
+
     @Test func verifiedHistoryDeduplicatesCallbacksAndSurvivesRelaunch() async throws {
         let session = try newSession()
         let transaction = try await session.buyProduct(identifier: LicenseConfig.proProductID)

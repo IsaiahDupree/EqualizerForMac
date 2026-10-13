@@ -3,110 +3,229 @@ import CoreAudio
 import Foundation
 import OSLog
 
-/// Captures all system audio with a Core Audio process tap, runs it through the EQ,
-/// and writes the processed result back out to the real output device — no driver.
-///
-/// Pipeline:
-///   apps → [global tap, muted-when-tapped] → private aggregate device
-///        → IOProc (copy tap input → EQ → output) → real output device → speakers
-///
-/// We exclude our own process from the tap so the re-injected audio is never re-captured
-/// (feedback). The aggregate uses the real output device as its main/clock sub-device so
-/// there is a single shared clock and no drift.
+private struct RouteSnapshot {
+    let format: AudioStreamBasicDescription?
+    let outputName: String
+}
+
+/// Owns route intent and callback health on the main actor. Core Audio's synchronous
+/// permission/device IPC runs only on one serial worker, including rebuild and Stop.
+@MainActor
 final class SystemAudioTap {
-    private let eq: EQEngine
-    private let log = Logger(subsystem: kSubsystem, category: "SystemAudioTap")
-    private let ioQueue = DispatchQueue(label: "\(kSubsystem).io", qos: .userInteractive)
-
-    private var tapID = AudioObjectID(kAudioObjectUnknown)
-    private var aggregateID = AudioObjectID(kAudioObjectUnknown)
-    private var procID: AudioDeviceIOProcID?
-    private var deviceChangeBlock: AudioObjectPropertyListenerBlock?
-
+    private let operation = AudioRouteOperation<RouteSnapshot?>(label: "\(kSubsystem).route-control")
+    private let route: SystemAudioRoute
     private let watchdog = AudioRouteWatchdog()
-    private var sessionGeneration: UInt64 = 0
+    private var desiredRunning = false
+    private var pendingRebuild = false
+    private var needsCleanup = false
+    private var routeGeneration: UInt64 = 0
 
     private(set) var tapFormat: AudioStreamBasicDescription?
     private(set) var outputDeviceName = "—"
     private(set) var isRunning = false
-    /// Current-route callback delivery, rather than merely a successful AudioDeviceStart.
     var isAudioFlowing: Bool { isRunning && watchdog.state == .flowing }
+    var isFinishingOperation: Bool { operation.inFlight }
 
-    /// Which apps to equalize. `.allApps` = global tap; `.apps` = mixdown tap of those processes.
     var target: EQTarget = .allApps
-
-    /// Bundle ids the per-app mixer is handling — the global EQ tap excludes them so an app is never
-    /// tapped (and muted) twice. Setting this while running rebuilds the tap. Only affects global taps.
     var excludedBundleIDs: Set<String> = [] {
         didSet {
-            guard isRunning, oldValue != excludedBundleIDs else { return }
+            guard desiredRunning, oldValue != excludedBundleIDs else { return }
             rebuild()
         }
     }
-
-    /// Called on the main queue when the engine rebuilds itself (e.g. output device changed).
     var onRebuild: ((Result<String, Error>) -> Void)?
-    /// Called on the control plane when the current route is awaiting audio, flowing, or stopped.
     var onAudioFlowChange: (() -> Void)?
     /// Control-plane diagnostics only; never called from the real-time render block.
     var onLifecycleStage: ((String) -> Void)?
 
-    init(eq: EQEngine) { self.eq = eq }
-
-    // MARK: Lifecycle
-
-    func start() throws {
-        guard !isRunning else { return }
-        sessionGeneration &+= 1
-        let heartbeat = beginRoute()
-        do {
-            try build(heartbeat: heartbeat)
-            try installDefaultDeviceListener()
-        } catch {
-            // A partial build may have created the muted tap already — never leave the user's audio
-            // muted with no re-injection. Tear everything down before surfacing the error.
-            stop()
-            throw error
-        }
-        isRunning = true
-        startWatchdog()
-    }
-
-    private func beginRoute() -> AudioRouteWatchdog.Heartbeat {
-        let heartbeat = watchdog.beginRoute()
-        onAudioFlowChange?()
-        return heartbeat
-    }
-
-    /// Fail-safe: if the IOProc never delivers audio (routing failed on this device), stop and report
-    /// instead of leaving the user's apps muted with no sound. Only fires when audio truly never flows.
-    private func startWatchdog() {
-        watchdog.arm { [weak self] flowing in
-            guard let self, self.isRunning else { return }
-            if flowing {
-                self.onAudioFlowChange?()
-                return
+    init(eq: EQEngine) {
+        route = SystemAudioRoute(eq: eq, controlQueue: operation.queue)
+        route.onDeviceChange = { [weak self] expectedGeneration in
+            DispatchQueue.main.async {
+                guard let self, self.routeGeneration == expectedGeneration else { return }
+                self.rebuild()
             }
-            self.log.error("Audio routing never started (IOProc idle) — stopping to restore sound.")
-            self.stop()
-            self.onRebuild?(.failure(CoreAudioError.create("Couldn't route audio on this output device", -1)))
         }
+        route.onLifecycleStage = { [weak self] expectedGeneration, stage in
+            DispatchQueue.main.async {
+                guard let self, self.routeGeneration == expectedGeneration else { return }
+                self.onLifecycleStage?(stage)
+            }
+        }
+    }
+
+    /// Admission is immediate; success/failure arrives through onRebuild. A previous
+    /// timed-out or stopped operation must actually finish cleanup before another start.
+    func start() throws {
+        guard !desiredRunning else { return }
+        guard !operation.inFlight else {
+            throw RouteError.finishing
+        }
+        desiredRunning = true
+        submitRoute()
+    }
+
+    func stop() {
+        routeGeneration &+= 1
+        desiredRunning = false
+        pendingRebuild = false
+        clearFlow()
+        if operation.inFlight {
+            operation.cancel()
+        } else if needsCleanup {
+            let route = route
+            operation.run(work: { _ in route.stop(); return nil }, cleanup: { route.stop() },
+                          outcome: { [weak self] result in
+                guard let self else { return }
+                if case let .failure(error) = result, !(error is CancellationError) {
+                    self.onRebuild?(.failure(error))
+                }
+            }, finished: { [weak self] in
+                self?.needsCleanup = false
+                self?.onAudioFlowChange?()
+            })
+        }
+    }
+
+    func retarget(_ newTarget: EQTarget) {
+        guard target != newTarget else { return }
+        target = newTarget
+        rebuild()
+    }
+
+    private func rebuild() {
+        guard desiredRunning else { return }
+        if operation.inFlight {
+            pendingRebuild = true
+        } else {
+            submitRoute()
+        }
+    }
+
+    private func submitRoute() {
+        routeGeneration &+= 1
+        let generation = routeGeneration
+        let heartbeat = watchdog.beginRoute()
+        isRunning = false
+        tapFormat = nil
+        onAudioFlowChange?()
+        needsCleanup = true
+        let route = route
+        let target = target
+        let excluded = excludedBundleIDs
+        operation.run(work: { cancellation in
+            try route.start(target: target, excludedBundleIDs: excluded,
+                            heartbeat: heartbeat, generation: generation, cancellation: cancellation)
+        }, cleanup: { route.stop() }, outcome: { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case let .success(snapshot):
+                guard self.desiredRunning, let snapshot else { return }
+                if self.pendingRebuild {
+                    self.pendingRebuild = false
+                    self.submitRoute()
+                    return
+                }
+                self.tapFormat = snapshot.format
+                self.outputDeviceName = snapshot.outputName
+                self.isRunning = true
+                self.watchdog.arm { [weak self] flowing in
+                    guard let self, self.desiredRunning else { return }
+                    if flowing {
+                        self.onAudioFlowChange?()
+                    } else {
+                        self.stop()
+                        self.onRebuild?(.failure(CoreAudioError.create("Couldn't route audio on this output device", -1)))
+                    }
+                }
+                self.onRebuild?(.success(snapshot.outputName))
+            case let .failure(error):
+                if error is CancellationError, !self.desiredRunning { return }
+                self.desiredRunning = false
+                self.pendingRebuild = false
+                self.clearFlow()
+                let reported = error is AudioRouteOperation<RouteSnapshot?>.Failure
+                    ? RouteError.timedOut : error
+                self.onRebuild?(.failure(reported))
+            }
+        }, finished: { [weak self] in
+            guard let self else { return }
+            if !self.desiredRunning { self.needsCleanup = false }
+            self.onAudioFlowChange?()
+        })
+    }
+
+    private func clearFlow() {
+        watchdog.stop()
+        isRunning = false
+        tapFormat = nil
+        onAudioFlowChange?()
+    }
+
+    deinit {
+        // Never perform potentially blocking OS destruction on the main thread.
+        let route = route
+        operation.queue.async { route.stop() }
+    }
+
+    private enum RouteError: LocalizedError {
+        case finishing, timedOut
+        var errorDescription: String? {
+            switch self {
+            case .finishing: return EQText.string("Audio routing is still finishing. Try again when it stops.")
+            case .timedOut: return EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+            }
+        }
+    }
+}
+
+/// Resources and OS calls are confined to the route-control queue. Only the
+/// heartbeat crosses onto the render queue; immutable snapshots return to the UI.
+private final class SystemAudioRoute: @unchecked Sendable {
+    private let eq: EQEngine
+    private let log = Logger(subsystem: kSubsystem, category: "SystemAudioTap")
+    private let ioQueue = DispatchQueue(label: "\(kSubsystem).io", qos: .userInteractive)
+    private let controlQueue: DispatchQueue
+    private var tapID = AudioObjectID(kAudioObjectUnknown)
+    private var aggregateID = AudioObjectID(kAudioObjectUnknown)
+    private var procID: AudioDeviceIOProcID?
+    private var deviceChangeBlock: AudioObjectPropertyListenerBlock?
+    private var sessionGeneration: UInt64 = 0
+    private var tapFormat: AudioStreamBasicDescription?
+    private var outputDeviceName = "—"
+    private var routeGeneration: UInt64 = 0
+    var onDeviceChange: ((UInt64) -> Void)?
+    var onLifecycleStage: ((UInt64, String) -> Void)?
+
+    init(eq: EQEngine, controlQueue: DispatchQueue) {
+        self.eq = eq
+        self.controlQueue = controlQueue
+    }
+
+    func start(target: EQTarget, excludedBundleIDs: Set<String>,
+               heartbeat: AudioRouteWatchdog.Heartbeat,
+               generation: UInt64,
+               cancellation: AudioRouteOperation<RouteSnapshot?>.Cancellation) throws -> RouteSnapshot {
+        stop()
+        routeGeneration = generation
+        try cancellation.check()
+        try build(target: target, excludedBundleIDs: excludedBundleIDs,
+                  heartbeat: heartbeat, cancellation: cancellation)
+        try installDefaultDeviceListener(routeGeneration: generation)
+        try cancellation.check()
+        return RouteSnapshot(format: tapFormat, outputName: outputDeviceName)
     }
 
     func stop() {
         sessionGeneration &+= 1
-        watchdog.stop()
         removeDefaultDeviceListener()
         teardown()
-        isRunning = false
-        onAudioFlowChange?()
     }
 
-    deinit { stop() }
-
-    // MARK: Build / teardown
-
-    private func build(heartbeat: AudioRouteWatchdog.Heartbeat) throws {
+    private func build(target: EQTarget, excludedBundleIDs: Set<String>,
+                       heartbeat: AudioRouteWatchdog.Heartbeat,
+                       cancellation: AudioRouteOperation<RouteSnapshot?>.Cancellation) throws {
+        try cancellation.check()
         // 1. Exclude ourselves from the global tap to prevent feedback.
         var exclude: [AudioObjectID] = []
         if let selfObject = try? AudioObjectID.system.translatePID(getpid()), selfObject.isValid {
@@ -120,6 +239,8 @@ final class SystemAudioTap {
         if !excludedBundleIDs.isEmpty {
             exclude += AudioProcesses.processObjectIDs(forBundleIDs: excludedBundleIDs)
         }
+
+        try cancellation.check()
 
         // 2. Create the tap. Global (all apps) excludes ourselves to prevent feedback; a per-app tap is
         //    a mixdown of just the chosen processes (we're not in it, so no feedback). If the chosen apps
@@ -142,25 +263,28 @@ final class SystemAudioTap {
         desc.isPrivate = true
 
         var newTap = AudioObjectID(kAudioObjectUnknown)
-        onLifecycleStage?("create_process_tap")
+        onLifecycleStage?(routeGeneration, "create_process_tap")
         var status = AudioHardwareCreateProcessTap(desc, &newTap)
         guard status == noErr, newTap.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateProcessTap (check Audio Capture permission)", status)
         }
         tapID = newTap
+        try cancellation.check()
 
         // 3. Read the tap's format and prime the EQ.
-        onLifecycleStage?("read_tap_format")
+        onLifecycleStage?(routeGeneration, "read_tap_format")
         let format = try tapID.readTapStreamFormat()
         tapFormat = format
+        try cancellation.check()
         eq.resetState()
 
         // 4. Resolve the real output device we re-route into.
-        onLifecycleStage?("resolve_output")
+        onLifecycleStage?(routeGeneration, "resolve_output")
         let outputDevice = try AudioObjectID.system.readDefaultOutputDevice()
         guard outputDevice.isValid else { throw CoreAudioError.create("No default output device", -1) }
         let outputUID = try outputDevice.readDeviceUID()
         outputDeviceName = (try? outputDevice.readDeviceName()) ?? "Output"
+        try cancellation.check()
 
         // 5. Build a private aggregate: real output as main/clock sub-device + the tap.
         // A private aggregate is visible to its OWN process, so the UID carries the "SonanceEQ" marker
@@ -185,29 +309,31 @@ final class SystemAudioTap {
         ]
 
         var newAggregate = AudioObjectID(kAudioObjectUnknown)
-        onLifecycleStage?("create_aggregate")
+        onLifecycleStage?(routeGeneration, "create_aggregate")
         status = AudioHardwareCreateAggregateDevice(description as CFDictionary, &newAggregate)
         guard status == noErr, newAggregate.isValid else {
             throw CoreAudioError.create("AudioHardwareCreateAggregateDevice", status)
         }
         aggregateID = newAggregate
+        try cancellation.check()
 
         // 6. Install the render block and start.
         let engine = eq
         var newProc: AudioDeviceIOProcID?
-        onLifecycleStage?("create_io_proc")
+        onLifecycleStage?(routeGeneration, "create_io_proc")
         status = AudioDeviceCreateIOProcIDWithBlock(&newProc, aggregateID, ioQueue) { _, inInput, _, outOutput, _ in
-            SystemAudioTap.route(engine, input: inInput, output: outOutput)
-            heartbeat.recordRender()
+            AudioBufferRouter.render(engine, input: inInput, output: outOutput, heartbeat: heartbeat)
         }
         guard status == noErr, let proc = newProc else {
             throw CoreAudioError.create("AudioDeviceCreateIOProcIDWithBlock", status)
         }
         procID = proc
+        try cancellation.check()
 
-        onLifecycleStage?("start_device")
+        onLifecycleStage?(routeGeneration, "start_device")
         status = AudioDeviceStart(aggregateID, proc)
         guard status == noErr else { throw CoreAudioError.create("AudioDeviceStart", status) }
+        try cancellation.check()
 
         log.info("Tap running → \(self.outputDeviceName, privacy: .public) @ \(format.mSampleRate, privacy: .public) Hz, \(format.mChannelsPerFrame, privacy: .public) ch")
     }
@@ -229,88 +355,18 @@ final class SystemAudioTap {
         tapFormat = nil
     }
 
-    // MARK: Render (audio thread)
-
-    /// Copy tapped input into the output buffers, then EQ in place.
-    /// Handles both interleaved (1 buffer, N channels) and planar (N buffers, 1 channel) layouts.
-    private static func route(_ eq: EQEngine,
-                              input: UnsafePointer<AudioBufferList>,
-                              output: UnsafeMutablePointer<AudioBufferList>) {
-        eq.beginRender()
-
-        let inList = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
-        let outList = UnsafeMutableAudioBufferListPointer(output)
-
-        // 1. Copy each tap input buffer into the matching output buffer (silence if absent).
-        for i in 0..<outList.count {
-            let outBuffer = outList[i]
-            guard let outData = outBuffer.mData else { continue }
-            let outBytes = Int(outBuffer.mDataByteSize)
-            if i < inList.count, let inData = inList[i].mData {
-                let copyBytes = min(outBytes, Int(inList[i].mDataByteSize))
-                memcpy(outData, inData, copyBytes)
-                if copyBytes < outBytes {
-                    memset(outData.advanced(by: copyBytes), 0, outBytes - copyBytes)
-                }
-            } else {
-                memset(outData, 0, outBytes)
-            }
-        }
-
-        // 2a. Mid-Side decoding needs the L/R pair together.
-        if eq.isMidSide, let pair = stereoPair(outList) {
-            eq.processMidSide(left: pair.left, right: pair.right, frames: pair.frames,
-                              strideL: pair.strideL, strideR: pair.strideR)
-            return
-        }
-
-        // 2b. Otherwise EQ each channel of each output buffer in place.
-        var channelOffset = 0
-        for i in 0..<outList.count {
-            let outBuffer = outList[i]
-            guard let outData = outBuffer.mData else { continue }
-            let channels = Int(outBuffer.mNumberChannels)
-            guard channels > 0 else { continue }
-            let frames = Int(outBuffer.mDataByteSize) / (MemoryLayout<Float>.size * channels)
-            let samples = outData.assumingMemoryBound(to: Float.self)
-            for ch in 0..<channels {
-                eq.process(channel: channelOffset + ch, data: samples + ch, frames: frames, stride: channels)
-            }
-            channelOffset += channels
-        }
-    }
-
-    /// Returns L/R pointers + strides if the output is exactly 2 channels (interleaved or planar), else nil.
-    private static func stereoPair(_ outList: UnsafeMutableAudioBufferListPointer)
-        -> (left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>,
-            frames: Int, strideL: Int, strideR: Int)? {
-        // Interleaved: 1 buffer, 2 channels.
-        if outList.count == 1, outList[0].mNumberChannels == 2, let d = outList[0].mData {
-            let base = d.assumingMemoryBound(to: Float.self)
-            let frames = Int(outList[0].mDataByteSize) / (MemoryLayout<Float>.size * 2)
-            return (base, base + 1, frames, 2, 2)
-        }
-        // Planar: 2 buffers, 1 channel each.
-        if outList.count == 2, outList[0].mNumberChannels == 1, outList[1].mNumberChannels == 1,
-           let l = outList[0].mData, let r = outList[1].mData {
-            let frames = Int(outList[0].mDataByteSize) / MemoryLayout<Float>.size
-            return (l.assumingMemoryBound(to: Float.self), r.assumingMemoryBound(to: Float.self), frames, 1, 1)
-        }
-        return nil
-    }
-
     // MARK: Output-device change handling
 
-    private func installDefaultDeviceListener() throws {
+    private func installDefaultDeviceListener(routeGeneration: UInt64) throws {
         var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
                                                  mScope: kAudioObjectPropertyScopeGlobal,
                                                  mElement: kAudioObjectPropertyElementMain)
         let expectedSession = sessionGeneration
         let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
             guard let self, self.sessionGeneration == expectedSession else { return }
-            self.rebuild()
+            self.onDeviceChange?(routeGeneration)
         }
-        let status = AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
+        let status = AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, block)
         guard status == noErr else { throw CoreAudioError.create("Default output device listener", status) }
         deviceChangeBlock = block
     }
@@ -320,32 +376,8 @@ final class SystemAudioTap {
         var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
                                                  mScope: kAudioObjectPropertyScopeGlobal,
                                                  mElement: kAudioObjectPropertyElementMain)
-        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, DispatchQueue.main, block)
+        AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &address, controlQueue, block)
         deviceChangeBlock = nil
     }
 
-    /// Change which apps are equalized, rebuilding the tap if running.
-    func retarget(_ newTarget: EQTarget) {
-        target = newTarget
-        guard isRunning else { return }
-        rebuild()
-    }
-
-    /// Rebuild the tap + aggregate after the output device or its format changes
-    /// (works around the known "all zeros after device/sample-rate change" behavior).
-    private func rebuild() {
-        guard isRunning else { return }
-        log.info("Default output device changed — rebuilding tap")
-        let heartbeat = beginRoute()
-        teardown()
-        do {
-            try build(heartbeat: heartbeat)
-            startWatchdog()
-            onRebuild?(.success(outputDeviceName))
-        } catch {
-            log.error("Rebuild failed: \(error.localizedDescription, privacy: .public)")
-            stop()   // partial builds can own a muted tap, aggregate or IOProc
-            onRebuild?(.failure(error))
-        }
-    }
 }

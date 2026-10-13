@@ -1,0 +1,15 @@
+# Consented native product observations
+
+Sonance can now observe sessions, valid current-route callbacks and new locally verified StoreKit purchases under one random app identity, with explicit opt-in and a bounded persistent outbox. The observer is wired to the existing route and StoreKit reader. Unlock/restore callbacks only request that reader; they never become purchase evidence themselves. Audio samples, names, emails, raw transaction IDs, receipts and prices are not transmitted.
+
+The native Foundation sender uses the official [PostHog batch contract](https://posthog.com/docs/api/capture). It refuses redirects, personal reader keys and origins outside the configured US/EU ingestion hosts. Requests have a five-second resource budget. Stable event UUIDs survive retries; HTTP acceptance is separate from provider ingestion. No SDK, autocapture, replay or person profile is added. The [privacy manifest](https://developer.apple.com/documentation/bundleresources/describing-data-use-in-privacy-manifests) declares the optional pseudonymous identity, interaction and purchase-history data.
+
+Opt-out cancels the instance's transport and clears its unsent queue and app identity. The outbox holds at most 100 observations and exposes discarded counts, so it cannot claim a complete history. Failed delivery keeps pending observations. Delivery is disabled until an actual public project token and matching ingestion origin are configured; no reader credential belongs in the app.
+
+The `sonanceeq://campaign` route accepts only a bounded, unambiguous Sonance click/campaign proposal. Its identities use `proposed_*`, never canonical `cie_*` fields. The existing owner must confirm original redirect/publication receipts before attribution can be joined; receipt verification is still outstanding. Scheme URLs can be forged and never prove acquisition by themselves.
+
+Complete Apple history is the only transaction source. Only non-revoked purchased ownership of the exact Pro product, after consent, can enqueue a purchase. Older restores, family sharing, incomplete reads and entitlement callbacks cannot create new purchase events. Sandbox/Xcode records retain test classification. This is local transaction evidence, not settlement, a distinct buyer count or profit.
+
+Validation: six real local persistence/HTTP integration checks passed. The separate real Apple StoreKit gate passed 15 methods, including the new actual transaction-to-outbox check, deduplication and rejection of old history after a new opt-in. Full native pre-commit regression and current signed hardware acceptance are recorded separately after execution.
+
+Remaining acceptance: actual Sonance project mapping/public capture configuration, approved daemon reader credentials for that exact project, original handoff receipt binding, current signed Audio Capture approval, physical callback/output/Stop/restart and human audibility evidence, plus current research, original publication and commercial/finance windows. No public release, measured campaign or new revenue is established by this branch.

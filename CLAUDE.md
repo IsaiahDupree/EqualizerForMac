@@ -54,6 +54,7 @@ Sources/SonanceEQ/
     AudioProcesses.swift        enumerate Core Audio process objects → running-audio apps (per-app EQ); resolve bundleIDs→objectIDs
     SystemAudioTap.swift        THE CORE: tap (global OR per-app mixdown via `target`) + private aggregate + IOProc re-injection + device-change rebuild; `retarget()` rebuilds on app-selection change
     AudioRouteWatchdog.swift    per-route heartbeat + guarded/cancelable startup/rebuild timer; UI waits for current-route callbacks
+    AudioRouteOperation.swift   one serial OS-operation slot, main-queue timeout and cancellation; slot remains occupied until real cleanup finishes
   DSP/Biquad.swift              FilterType (8 shapes: PK/LSC/HSC/LP/HP/NO/BP/AP, +usesGain/supportsSlope) + BiquadCoeffs + RBJ coefficients
   DSP/FilterDesigner.swift      expands one EQBand → biquad section(s); variable-slope Low/High Cut = Butterworth cascade (6–96 dB/oct, up to 8 sections)
   DSP/EQEngine.swift            real-time engine; two chains (Mid/Side); control plane (update) vs audio plane (beginRender/process/processMidSide)
@@ -127,6 +128,21 @@ Startup/rebuild now use distinct callback heartbeats and guarded watchdog deadli
 `Routing audio…` until the current route's check passes; failed rebuilds take full Stop cleanup.
 Lifecycle tests do not prove audible output or device compatibility. SON-07 hardware acceptance remains
 open; see `docs/AUDIO-ROUTE-LIFECYCLE-2026-10-09.md`.
+
+The global IOProc uses `AudioBufferRouter`: only validated, nonempty, fully processed Float32
+buffer layouts increment the startup heartbeat. Unsupported layouts are silenced; valid silence
+still counts as buffer delivery, not audibility. Mid-Side/FIR blocks are chunked at the engine's
+scratch capacity. Run `/bin/zsh Tools/verify_audio_buffers.sh` for the same 26 real-buffer cases
+as `AudioBufferRouterTests`, with Address Sanitizer. An explicit `--no-sanitizer` run retains
+the assertions and guard checks but cannot claim sanitizer coverage. See
+`docs/AUDIO-RENDER-BUFFER-SAFETY-2026-10-11.md`.
+
+Blocking route setup/rebuild/destruction now runs on one serial worker. Main-actor snapshots and
+intent drive the UI; never restore synchronous Core Audio IPC on the window's main thread.
+Stop cancels intent immediately, and pending cleanup disables another Start. The ten-second
+deadline cannot interrupt an OS call; keep its slot until cleanup actually completes. A delayed
+permission reply cannot restart cancelled intent. Diagnostics cross back to the main actor with
+route generations. See `docs/AUDIO-STARTUP-RESPONSIVENESS-2026-10-10.md`.
 
 ## Gotchas / known constraints (verified — see docs/RESEARCH.md)
 - "All audio" excludes **DRM/FairPlay** streams (some Apple Music/Netflix) — they pass through un-EQ'd. Set
