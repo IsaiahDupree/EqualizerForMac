@@ -2,6 +2,12 @@
 
 Data-driven, because we now have real numbers. Written 2026-07-03.
 
+## Customer review update — 2026-10-21
+
+App Store Connect's customer-review API now returns one USA review (1 star, Aug 11, 2026); the reviewer reports that routing failed on a MacBook both with and without a Scarlett 2i2. No developer response is recorded. The `0` ratings/reviews figure below is the original June 20–July 2 snapshot, not a current count. Public storefront lookup currently reports zero rating counts, which is a separate feed.
+
+Current Sonance EQ source includes `NSAudioCaptureUsageDescription`. Apple's Core Audio tap guidance says macOS prompts for system-audio recording access the first time an aggregate device containing a tap starts ([Core Audio tap capture](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps)). PR #4 added route-start and buffer-safety changes, but neither those source changes nor the review identifies whether the reported failure came from permission, the built-in output, the Scarlett route, or another setup detail. Treat this as unresolved until a clean-account first-run permission check and audible route acceptance are recorded on a MacBook with the built-in output and Scarlett tested separately. No fix or release is claimed from the review text alone.
+
 ## The funnel (Jun 20 – Jul 2, from Sales Reports API)
 
 | Stage | Number | Verdict |
