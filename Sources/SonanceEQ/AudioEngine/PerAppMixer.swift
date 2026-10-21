@@ -25,6 +25,9 @@ extension MixerChannelTap: MixerChannelControlling {}
 final class PerAppMixer {
     private var taps: [String: MixerChannelControlling] = [:]
     private var routing: [String: String?] = [:]   // bundleID → outputDeviceUID it was built with
+    /// A failed channel is not retried by the discovery timer. Explicit settings changes, stopped playback,
+    /// a system output change, or restarting the mixer can retry it.
+    private var failedConfigurations: [String: MixerChannel] = [:]
     private let log = Logger(subsystem: kSubsystem, category: "PerAppMixer")
 
     /// Resolve a set of bundle ids to their live process object ids (one shared enumeration for the whole
@@ -45,8 +48,11 @@ final class PerAppMixer {
     /// Reported (bundleID, message) when a channel can't be routed (so the UI can flag it).
     var onChannelFailure: ((String, String) -> Void)?
 
-    /// Reconcile running taps to `channels`. Idempotent — safe to call on every change.
-    func apply(_ channels: [MixerChannel]) {
+    /// Apply an explicit user/settings change; this is also the retry path for a previously failed tap.
+    func apply(_ channels: [MixerChannel]) { reconcile(channels, retryFailed: true) }
+
+    /// Reconcile taps without retrying an unchanged channel that already failed.
+    private func reconcile(_ channels: [MixerChannel], retryFailed: Bool) {
         let wanted = Dictionary(uniqueKeysWithValues: channels.map { ($0.bundleID, $0) })
 
         // Drop taps no longer wanted.
@@ -54,6 +60,9 @@ final class PerAppMixer {
             tap.stop()
             taps[bundleID] = nil
             routing[bundleID] = nil
+        }
+        for bundleID in Array(failedConfigurations.keys) where wanted[bundleID] == nil {
+            failedConfigurations[bundleID] = nil
         }
 
         // Resolve every wanted bundle id against ONE shared Core Audio process enumeration, instead of
@@ -64,7 +73,12 @@ final class PerAppMixer {
             // The app must be producing audio right now to be tapped.
             guard let process = processes[bundleID] else {
                 taps[bundleID]?.stop(); taps[bundleID] = nil; routing[bundleID] = nil
+                failedConfigurations[bundleID] = nil
                 continue
+            }
+            if let failed = failedConfigurations[bundleID] {
+                if failed == channel && !retryFailed { continue }
+                failedConfigurations[bundleID] = nil
             }
             if let existing = taps[bundleID] {
                 // Output-device changes need a rebuild; volume/mute are live.
@@ -90,6 +104,9 @@ final class PerAppMixer {
             taps[bundleID] = nil
             routing[bundleID] = nil
         }
+        for bundleID in Array(failedConfigurations.keys) where failedConfigurations[bundleID]?.outputDeviceUID == nil {
+            failedConfigurations[bundleID] = nil
+        }
         apply(channels)   // rebuilds the dropped default-routed channels against the new default
     }
 
@@ -98,15 +115,17 @@ final class PerAppMixer {
         taps.values.forEach { $0.stop() }
         taps.removeAll()
         routing.removeAll()
+        failedConfigurations.removeAll()
     }
 
     /// Re-scan: apps may have started/stopped producing audio. Call periodically while the mixer is on.
-    func refresh(_ channels: [MixerChannel]) { apply(channels) }
+    func refresh(_ channels: [MixerChannel]) { reconcile(channels, retryFailed: false) }
 
     private func startChannel(_ channel: MixerChannel, process: AudioObjectID) {
         let tap = makeChannel(channel.bundleID)
         tap.onFailure = { [weak self] message in
             Task { @MainActor in
+                self?.failedConfigurations[channel.bundleID] = channel
                 self?.taps[channel.bundleID] = nil
                 self?.routing[channel.bundleID] = nil
                 self?.onChannelFailure?(channel.bundleID, message)
