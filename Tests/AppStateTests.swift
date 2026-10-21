@@ -13,6 +13,17 @@ import Testing
         #expect(!app.isAudioFlowing)
     }
 
+    @Test func processTapPermissionFailureSuggestsSettingsRecovery() {
+        let permissionFailure = CoreAudioError.create(
+            "AudioHardwareCreateProcessTap (check Audio Capture permission)", -1
+        )
+        let deviceFailure = CoreAudioError.create("Couldn't route audio on this output device", -1)
+
+        #expect(permissionFailure.suggestsAudioCapturePermissionRecovery)
+        #expect(!deviceFailure.suggestsAudioCapturePermissionRecovery)
+        #expect(!CoreAudioError.property(0, -1).suggestsAudioCapturePermissionRecovery)
+    }
+
     @Test func repeatedStartWhileRunningHasNoNewPermissionOrRouteAttempt() {
         let app = AppState()
         app.isRunning = true

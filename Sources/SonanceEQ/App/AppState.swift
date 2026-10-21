@@ -17,6 +17,7 @@ final class AppState {
     private var tap: SystemAudioTap?
     private var startGeneration: UInt64 = 0
     private var permissionRequestInFlight = false
+    private(set) var permissionRecoverySuggested = false
     private var permissionDeadline: DispatchWorkItem?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
     private let diagnostics = DiagnosticsReporter()
@@ -143,6 +144,7 @@ final class AppState {
         guard !permissionRequestInFlight else { return }
         guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
+        permissionRecoverySuggested = false
         startGeneration &+= 1
         switch permission.status {
         case .authorized:
@@ -156,7 +158,7 @@ final class AppState {
                 guard let self, self.startGeneration == expectedGeneration,
                       self.permissionRequestInFlight, self.isRunning else { return }
                 self.stop()
-                self.errorMessage = EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+                self.errorMessage = EQText.string("Audio Capture permission request timed out. Check the permission in System Settings, then try again.")
             }
             permissionDeadline = deadline
             DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: deadline)
@@ -169,9 +171,13 @@ final class AppState {
                 guard self.startGeneration == expectedGeneration, self.isRunning else { return }
                 self.isRunning = false
                 if granted { self.reallyStart() }
-                else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
+                else {
+                    self.permissionRecoverySuggested = true
+                    self.errorMessage = EQText.string("Audio Capture permission was denied.")
+                }
             }
         case .denied:
+            permissionRecoverySuggested = true
             errorMessage = EQText.string("Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security.")
         }
     }
@@ -196,10 +202,12 @@ final class AppState {
             switch result {
             case .success:
                 guard tap.isRunning else { return }
+                self.permissionRecoverySuggested = false
                 self.outputDeviceName = tap.outputDeviceName
             case let .failure(error):
                 guard !tap.isRunning else { return }
                 self.isRunning = false
+                self.permissionRecoverySuggested = (error as? CoreAudioError)?.suggestsAudioCapturePermissionRecovery ?? false
                 self.errorMessage = error.localizedDescription
             }
         }
@@ -212,6 +220,7 @@ final class AppState {
             self.outputDeviceName = tap.outputDeviceName
             self.isRunning = true
         } catch {
+            permissionRecoverySuggested = (error as? CoreAudioError)?.suggestsAudioCapturePermissionRecovery ?? false
             self.errorMessage = error.localizedDescription
             log.error("Start failed: \(error.localizedDescription, privacy: .public)")
         }

@@ -86,5 +86,6 @@
 "Refresh purchase history" = "Actualiser l’historique des achats";
 "Pro unlock confirmed" = "Déverrouillage Pro confirmé";
 "Audio routing is still finishing. Try again when it stops." = "Le routage audio est encore en cours de fermeture. Réessayez lorsqu’il sera arrêté.";
-"Audio routing took too long. Check Audio Capture permission, then try again." = "Le routage audio a pris trop de temps. Vérifiez l’autorisation de capture audio, puis réessayez.";
+"Audio routing timed out. Check Audio Capture permission and available output devices, then try again." = "Le routage audio a expiré. Vérifiez l’autorisation de capture audio et les périphériques de sortie disponibles, puis réessayez.";
+"Audio Capture permission request timed out. Check the permission in System Settings, then try again." = "La demande d’autorisation de capture audio a expiré. Vérifiez l’autorisation dans Réglages Système, puis réessayez.";
 "Finishing audio routing…" = "Finalisation du routage audio…";
