@@ -20,7 +20,7 @@ final class FIRProcessor {
     static let length = 2048                    // FIR taps (power of two)
     static let maxChannels = EQEngine.maxChannels
     static let slots = 2                         // 0 = Mid/main, 1 = Side
-    private static let maxFrames = 8192          // largest IOProc block we'll convolve in one pass
+    private static let maxFrames = EQEngine.maxFrames // same bounded chunk as the global router
 
     private let L = length
     private let hist: UnsafeMutablePointer<Float>      // maxChannels × (L-1) previous input samples

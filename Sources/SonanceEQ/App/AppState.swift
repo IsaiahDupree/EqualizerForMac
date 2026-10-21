@@ -12,13 +12,26 @@ final class AppState {
     let license = PurchaseManager()
     let review = ReviewPrompter()
     let updates = AppUpdateChecker()
+    let journey = ProductJourneyTracker()
 
     private var tap: SystemAudioTap?
+    private var startGeneration: UInt64 = 0
+    private var permissionRequestInFlight = false
+    private var permissionDeadline: DispatchWorkItem?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
     private let diagnostics = DiagnosticsReporter()
 
     init() {
         diagnostics.start()
+        license.tracker.onStorePurchaseSnapshot = { [weak journey] snapshot in
+            journey?.observe(snapshot)
+            Task { [weak journey] in await journey?.flush() }
+        }
+        license.tracker.onRecordedEvent = { [weak self] entry in
+            guard let self, self.journey.optedIn, entry.store == "revenueCat",
+                  entry.event == .purchaseCompleted || entry.event == .restoreCompleted else { return }
+            Task { [weak self] in await self?.license.tracker.refreshStorePurchases() }
+        }
         license.start()
         mixerEngine.onChannelFailure = { [weak self] bundleID, message in
             guard let self else { return }
@@ -106,6 +119,7 @@ final class AppState {
     // UI state
     var isRunning = false
     private var audioFlowing = false
+    private(set) var audioRouteFinishing = false
     // The notification drives observation; checking the tap also prevents an older queued
     // notification from displaying Active while a newer route is still waiting for callbacks.
     var isAudioFlowing: Bool { audioFlowing && tap?.isAudioFlowing == true }
@@ -126,13 +140,34 @@ final class AppState {
 
     func start() {
         guard !isRunning else { return }
+        guard !permissionRequestInFlight else { return }
+        guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
+        startGeneration &+= 1
         switch permission.status {
         case .authorized:
             reallyStart()
         case .unknown:
+            let expectedGeneration = startGeneration
+            permissionRequestInFlight = true
+            audioRouteFinishing = true
+            isRunning = true // pending intent keeps Stop available before any capture starts
+            let deadline = DispatchWorkItem { [weak self] in
+                guard let self, self.startGeneration == expectedGeneration,
+                      self.permissionRequestInFlight, self.isRunning else { return }
+                self.stop()
+                self.errorMessage = EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+            }
+            permissionDeadline = deadline
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: deadline)
             permission.request { [weak self] granted in
                 guard let self else { return }
+                self.permissionRequestInFlight = false
+                self.permissionDeadline?.cancel()
+                self.permissionDeadline = nil
+                self.audioRouteFinishing = self.tap?.isFinishingOperation ?? false
+                guard self.startGeneration == expectedGeneration, self.isRunning else { return }
+                self.isRunning = false
                 if granted { self.reallyStart() }
                 else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
             }
@@ -144,28 +179,28 @@ final class AppState {
     private func reallyStart() {
         guard !isRunning else { return }   // two pending permission grants may both return
         pushSettings()
-        let tap = SystemAudioTap(eq: eq)
+        let tap = self.tap ?? SystemAudioTap(eq: eq)
+        self.tap = tap
         audioFlowing = false
         tap.onAudioFlowChange = { [weak self, weak tap] in
-            Task { @MainActor in
-                guard let self, let tap, self.tap === tap else { return }
-                // Read the current route, since another rebuild may have superseded this callback.
-                self.audioFlowing = tap.isAudioFlowing
-            }
+            guard let self, let tap, self.tap === tap else { return }
+            self.audioFlowing = tap.isAudioFlowing
+            self.journey.observeAudioFlow(tap.isAudioFlowing)
+            Task { [weak self] in await self?.journey.flush() }
+            self.audioRouteFinishing = self.permissionRequestInFlight || tap.isFinishingOperation
         }
         tap.onRebuild = { [weak self, weak tap] result in
-            Task { @MainActor in
-                guard let self, let tap, self.tap === tap else { return }
-                self.audioFlowing = tap.isAudioFlowing
-                switch result {
-                case .success:
-                    guard tap.isRunning else { return }
-                    self.outputDeviceName = tap.outputDeviceName
-                case let .failure(error):
-                    guard !tap.isRunning else { return }
-                    self.isRunning = false
-                    self.errorMessage = error.localizedDescription
-                }
+            guard let self, let tap, self.tap === tap else { return }
+            self.audioFlowing = tap.isAudioFlowing
+            self.audioRouteFinishing = self.permissionRequestInFlight || tap.isFinishingOperation
+            switch result {
+            case .success:
+                guard tap.isRunning else { return }
+                self.outputDeviceName = tap.outputDeviceName
+            case let .failure(error):
+                guard !tap.isRunning else { return }
+                self.isRunning = false
+                self.errorMessage = error.localizedDescription
             }
         }
         tap.target = eqTarget
@@ -173,6 +208,7 @@ final class AppState {
         do {
             try tap.start()
             self.tap = tap
+            self.audioRouteFinishing = tap.isFinishingOperation
             self.outputDeviceName = tap.outputDeviceName
             self.isRunning = true
         } catch {
@@ -182,10 +218,14 @@ final class AppState {
     }
 
     func stop() {
+        startGeneration &+= 1
+        permissionDeadline?.cancel()
+        permissionDeadline = nil
         tap?.stop()
-        tap = nil
+        // Retain its operation slot while an OS call/cleanup may still be pending.
         isRunning = false
         audioFlowing = false
+        audioRouteFinishing = permissionRequestInFlight || tap?.isFinishingOperation == true
     }
 
     // MARK: EQ edits

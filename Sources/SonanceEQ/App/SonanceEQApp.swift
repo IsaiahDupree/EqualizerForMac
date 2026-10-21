@@ -14,6 +14,13 @@ struct SonanceEQApp: App {
         Window("Sonance EQ", id: "main") {
             ContentView(app: app)
                 .task { app.review.present = { requestReview() } }
+                .task {
+                    app.journey.observeSession()
+                    await app.journey.flush()
+                }
+                .onOpenURL { url in
+                    if app.journey.receive(url) { Task { await app.journey.flush() } }
+                }
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { Task { await app.license.refresh() } }
                 }

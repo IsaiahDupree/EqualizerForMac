@@ -20,6 +20,8 @@
 "Audio Capture permission is required to equalize system audio." = "A rendszerhang szabályozásához hangrögzítési engedély szükséges.";
 "Audio Capture permission was denied." = "A hangrögzítési engedélyt megtagadták.";
 "Audio Recorder" = "Hangrögzítő";
+"Audio routing is still finishing. Try again when it stops." = "A hangirányítás még befejeződik. Próbálja újra, amikor leáll.";
+"Audio routing took too long. Check Audio Capture permission, then try again." = "A hangirányítás túl sokáig tartott. Ellenőrizze a hangrögzítési engedélyt, majd próbálja újra.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (ellenőrizze az engedélyt)";
 "Band" = "Sáv";
 "Bass Boost" = "Basszuskiemelés";
@@ -53,6 +55,7 @@
 "Export failed: %@" = "Sikertelen exportálás: %@";
 "Export…" = "Exportálás…";
 "Failure" = "Hibaarány";
+"Finishing audio routing…" = "Hangirányítás befejezése…";
 "Flat" = "Semleges";
 "Format" = "Formátum";
 "Full parametric EQ — up to 32 bands" = "Teljes parametrikus hangszínszabályzó — akár 32 sáv";
