@@ -5,8 +5,8 @@ Updated: 2026-10-21
 ## Store and customer evidence
 
 - Public Mac App Store version: 1.0.6, build 9 (App Store Connect portfolio snapshot, checked 2026-10-21).
-- The U.S. public review feed contains one one-star review dated 2026-08-11, titled “Failed to work on my MacBook.” The reviewer reports inability to route audio, including with a Scarlett 2i2. This is a single reported configuration, not a reproduced defect or proof that all MacBook or Scarlett configurations fail.
-- The review feed is a U.S. storefront view and does not represent all regions or private support feedback.
+- A read-only public review-feed sweep checked 28 currently public apps across 13 major storefronts on 2026-10-21: 323 feed requests succeeded and 41 returned HTTP 403. Sonance EQ's feed succeeded in all 13 checked storefronts and returned one one-star U.S. review dated 2026-08-11, titled “Failed to work on my MacBook.” The reviewer reports inability to route audio, including with a Scarlett 2i2. This is a single reported configuration, not a reproduced defect or proof that all MacBook or Scarlett configurations fail.
+- The storefront sweep does not include every App Store territory or private support feedback.
 - No current app-specific production usage dataset was verified for Sonance EQ in this pass. Downloads, retention, and route success rates remain unknown.
 
 ## Source and release state
