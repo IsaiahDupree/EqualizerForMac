@@ -22,7 +22,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 14) {
             header
-            if app.permission.status == .denied { permissionBanner }
+            if app.permission.status == .denied || app.permissionRecoverySuggested { permissionBanner }
             targetRow
             presetRow
             stereoRow
