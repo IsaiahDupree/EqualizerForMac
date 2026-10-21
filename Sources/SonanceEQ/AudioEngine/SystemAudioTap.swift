@@ -173,7 +173,7 @@ final class SystemAudioTap {
         var errorDescription: String? {
             switch self {
             case .finishing: return EQText.string("Audio routing is still finishing. Try again when it stops.")
-            case .timedOut: return EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+            case .timedOut: return EQText.string("Audio routing timed out. Check Audio Capture permission and available output devices, then try again.")
             }
         }
     }

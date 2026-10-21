@@ -158,7 +158,7 @@ final class AppState {
                 guard let self, self.startGeneration == expectedGeneration,
                       self.permissionRequestInFlight, self.isRunning else { return }
                 self.stop()
-                self.errorMessage = EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+                self.errorMessage = EQText.string("Audio Capture permission request timed out. Check the permission in System Settings, then try again.")
             }
             permissionDeadline = deadline
             DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: deadline)

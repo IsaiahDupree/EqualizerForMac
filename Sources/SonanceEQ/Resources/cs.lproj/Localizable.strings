@@ -21,7 +21,8 @@
 "Audio Capture permission was denied." = "Povolení záznamu zvuku bylo zamítnuto.";
 "Audio Recorder" = "Záznam zvuku";
 "Audio routing is still finishing. Try again when it stops." = "Směrování zvuku se ještě dokončuje. Zkuste to znovu, až se zastaví.";
-"Audio routing took too long. Check Audio Capture permission, then try again." = "Směrování zvuku trvalo příliš dlouho. Zkontrolujte oprávnění k zachycování zvuku a zkuste to znovu.";
+"Audio routing timed out. Check Audio Capture permission and available output devices, then try again." = "Směrování zvuku vypršelo. Zkontrolujte oprávnění k zachycování zvuku a dostupná výstupní zařízení a zkuste to znovu.";
+"Audio Capture permission request timed out. Check the permission in System Settings, then try again." = "Žádost o oprávnění k zachycování zvuku vypršela. Zkontrolujte oprávnění v Nastavení systému a zkuste to znovu.";
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (zkontrolujte oprávnění)";
 "Band" = "Pásmo";
 "Bass Boost" = "Zesílení basů";
