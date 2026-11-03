@@ -1,7 +1,7 @@
 import Foundation
 
 /// One headphone correction from the bundled AutoEq database (see Tools/build_autoeq_db.py).
-/// Data © AutoEq (Jaakko Pasanen), MIT — shipped with attribution.
+/// AutoEq and supplemental preset data are shipped with their respective attribution/licenses.
 struct AutoEqPreset: Identifiable, Hashable {
     let id: Int
     let model: String

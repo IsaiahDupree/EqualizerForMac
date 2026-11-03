@@ -19,6 +19,8 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 - ✅ Real-time **`vDSP_biquadm`** EQ engine (up to 32 sections/channel) with a **wait-free** control→audio handoff and **ramped** coefficient updates — no zipper noise on live edits.
 - ✅ **Parametric editor** with a live response curve (drag bands for freq/gain, edit Q & type, add/remove up to 32 bands), preamp, bypass A/B, starter presets, live output-device rebuild.
 - ✅ **8,850 AutoEq headphone corrections** bundled (searchable browser) + JSON **import/export**.
+- ✅ **AirPods Pro 3 preset** — six-band Songbird JM-1 correction with its published
+  preamp, source attribution and offline search. See [preset provenance](Tools/headphone_presets/README.md).
 - ✅ **Linear-phase FIR mode** (toggle) — same magnitude, zero phase distortion, ~21 ms latency; default off (minimum-phase IIR).
 - ✅ **Mid-Side mode** — EQ the mono center and the stereo width with independent curves.
 - ✅ **Sonance Home** — Home Assistant integration, Music Assistant DSP preset sync, Cast/Nest
