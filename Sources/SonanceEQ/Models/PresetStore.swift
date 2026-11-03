@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import SQLite3
 
-/// Read-only access to the bundled AutoEq preset database (8,850 headphone corrections).
+/// Read-only access to the bundled headphone database (AutoEq plus attributed additions).
 ///
 /// The DB is a single SQLite file built at dev time by `Tools/build_autoeq_db.py` and shipped in the
 /// app bundle. Queries are tiny (≤ a few hundred rows) and run on the main actor — instant for a UI

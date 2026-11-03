@@ -1,0 +1,63 @@
+{
+  "app": "SonanceEQ",
+  "version": 1,
+  "name": "Apple AirPods Pro 3 · Songbird · JM-1 (-10 dB tilt)",
+  "preampDb": -3.9,
+  "bands": [
+    {
+      "type": "peaking",
+      "frequency": 40.0,
+      "gain": -2.3,
+      "q": 0.7,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    },
+    {
+      "type": "peaking",
+      "frequency": 151.0,
+      "gain": 3.7,
+      "q": 1.41,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    },
+    {
+      "type": "peaking",
+      "frequency": 3417.0,
+      "gain": 3.9,
+      "q": 3.0,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    },
+    {
+      "type": "peaking",
+      "frequency": 4305.0,
+      "gain": 1.5,
+      "q": 2.0,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    },
+    {
+      "type": "peaking",
+      "frequency": 5747.0,
+      "gain": -6.4,
+      "q": 3.0,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    },
+    {
+      "type": "peaking",
+      "frequency": 7671.0,
+      "gain": -2.9,
+      "q": 1.41,
+      "enabled": true,
+      "slopeDbPerOct": 12
+    }
+  ],
+  "attribution": {
+    "presetSource": "https://raw.githubusercontent.com/sean-o-sullivan/open-mac-eq/929aa9145b6734fba0ea39a223d5bb636948d4cc/AirPodsEQSpike/Presets/airpods-pro-3-songbird-jm1-6band.txt",
+    "measurementSource": "https://songbird.rocks/catalog/apple-airpods-pro-3",
+    "target": "JM-1 -10 dB Tilt",
+    "listeningMode": "Unspecified by source",
+    "license": "MIT License\n\nCopyright (c) 2026 openEq contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+  }
+}

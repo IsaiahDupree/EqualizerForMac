@@ -1,0 +1,19 @@
+[
+  {
+    "model": "Apple AirPods Pro 3",
+    "brand": "Apple",
+    "category": "in-ear",
+    "source": "Songbird · JM-1 (-10 dB tilt)",
+    "rig": "B&K 5128",
+    "file": "airpods-pro-3-songbird-jm1-6band.txt",
+    "sha256": "fc23ad9f6d9f37081080b30e35ee0bfd1a8ba4c61f67fbe51ca506f56430e73d",
+    "filter_count": 6,
+    "preset_url": "https://raw.githubusercontent.com/sean-o-sullivan/open-mac-eq/929aa9145b6734fba0ea39a223d5bb636948d4cc/AirPodsEQSpike/Presets/airpods-pro-3-songbird-jm1-6band.txt",
+    "source_commit": "929aa9145b6734fba0ea39a223d5bb636948d4cc",
+    "measurement_url": "https://songbird.rocks/catalog/apple-airpods-pro-3",
+    "measurement_author": "earphonesarchive",
+    "listening_mode": null,
+    "license": "MIT — openEq contributors; bundled in openEq-LICENSE.txt",
+    "retrieved": "2026-11-03"
+  }
+]

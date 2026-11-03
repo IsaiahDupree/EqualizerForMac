@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Searchable browser over the bundled AutoEq library (8,850 headphone corrections).
+/// Searchable browser over the bundled headphone library.
 /// Selecting a headphone loads its parametric bands + safety preamp into the live EQ.
 struct PresetBrowserView: View {
     @Bindable var app: AppState
@@ -37,7 +37,7 @@ struct PresetBrowserView: View {
         HStack {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Headphone Presets").font(.headline)
-                Text(EQText.format("%@ corrections · AutoEq", store.totalCount.formatted()))
+                Text(EQText.format("%@ total", store.totalCount.formatted()))
                     .font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
