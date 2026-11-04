@@ -1,0 +1,358 @@
+{
+  "reviewed": "2026-11-03",
+  "catalog_scope": "Current official Beats headphones/earbuds, requested Apple/Sony/Samsung models, bundled legacy families and named legacy gaps. Colors/collaborations are not separate acoustic profiles. This is not a claim of complete historical physical-device testing.",
+  "devices": [
+    {
+      "model": "Beats 360",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats 360",
+      "product_url": "https://www.beatsbydre.com/headphones/beats-360",
+      "measurement_reference": "https://www.soundguys.com/product/beats-360/",
+      "data_note": "Published measurements exist; SoundGuys terms require a commercial license. No redistributable model-specific preset found in reviewed AutoEq, OPRA, Songbird or published GitHub sources. Cushion/listening mode must be retained with future data."
+    },
+    {
+      "model": "Beats Studio Pro",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Studio Pro",
+      "product_url": "https://www.beatsbydre.com/headphones/studio-pro-wireless"
+    },
+    {
+      "model": "Beats Solo 4",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Solo 4",
+      "product_url": "https://www.beatsbydre.com/headphones/solo4-wireless"
+    },
+    {
+      "model": "Beats Powerbeats Fit",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Powerbeats Fit",
+      "product_url": "https://www.beatsbydre.com/earbuds/powerbeats-fit",
+      "measurement_reference": "https://www.soundguys.com/powerbeats-fit-review-145954/",
+      "data_note": "Distinct from Fit Pro. Published review measurements are not a redistribution license. Do not alias to Fit Pro."
+    },
+    {
+      "model": "Beats Powerbeats Pro 2",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Powerbeats Pro 2",
+      "product_url": "https://www.beatsbydre.com/earbuds/powerbeats-pro-2"
+    },
+    {
+      "model": "Beats Studio Buds +",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Studio Buds +",
+      "product_url": "https://www.beatsbydre.com/earbuds/studio-buds-plus-wireless-noise-cancelling"
+    },
+    {
+      "model": "Beats Solo Buds",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Solo Buds",
+      "product_url": "https://www.beatsbydre.com/earbuds/solo-buds"
+    },
+    {
+      "model": "Beats Flex",
+      "brand": "Beats",
+      "scope": "current_beats",
+      "query": "Beats Flex",
+      "product_url": "https://www.beatsbydre.com/earbuds/beats-flex"
+    },
+    {
+      "model": "Apple AirPods Max 2",
+      "brand": "Apple",
+      "scope": "requested",
+      "query": "Apple AirPods Max 2",
+      "product_url": "https://support.apple.com/en-ie/126620",
+      "measurement_reference": "https://headphones.com/blogs/features/apple-airpods-max-2-frequency-response-measurements-b-k-5128-and-mire",
+      "data_note": "Measurements exist; a redistributable preset for this generation was not found. Do not reuse the original Max curve."
+    },
+    {
+      "model": "Apple AirPods 5 (USB-C Charging Case)",
+      "brand": "Apple",
+      "scope": "requested",
+      "query": "Apple AirPods 5",
+      "product_url": "https://www.apple.com/airpods-5/specs/",
+      "measurement_reference": "https://www.rtings.com/headphones/reviews/apple/airpods-5",
+      "data_note": "RTINGS measured the Wireless Charging Case variant. No licensed preset found; do not substitute AirPods 4 or assume both versions have the same measured response."
+    },
+    {
+      "model": "Apple AirPods 5 (Wireless Charging Case)",
+      "brand": "Apple",
+      "scope": "requested",
+      "query": "Apple AirPods 5",
+      "product_url": "https://www.apple.com/airpods-5/specs/",
+      "measurement_reference": "https://www.rtings.com/headphones/reviews/apple/airpods-5",
+      "data_note": "RTINGS measured the Wireless Charging Case variant. No licensed preset found; do not substitute AirPods 4 or assume both versions have the same measured response."
+    },
+    {
+      "model": "Sony WF-1000XM6",
+      "brand": "Sony",
+      "scope": "requested",
+      "query": "Sony WF-1000XM6",
+      "product_url": "https://www.sony.com/electronics/support/wireless-headphones-bluetooth-headphones/wf-1000xm6/specifications",
+      "data_note": "No redistribution-reviewed preset in the pinned sources. Distinct from WH-1000XM6 and WF-1000XM5."
+    },
+    {
+      "model": "Samsung Galaxy Buds4 Pro",
+      "brand": "Samsung",
+      "scope": "requested",
+      "query": "Samsung Galaxy Buds4 Pro",
+      "product_url": "https://www.samsung.com/us/audio-sound/galaxy-buds4-pro/",
+      "data_note": "No redistribution-reviewed preset in the pinned sources."
+    },
+    {
+      "model": "Beats Fit Pro",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Fit Pro",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio Buds",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio Buds",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Powerbeats Pro",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Powerbeats Pro",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Powerbeats 4",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Powerbeats 4",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Powerbeats3 Wireless",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Powerbeats3 Wireless",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Powerbeats 2 Wireless",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Powerbeats 2 Wireless",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Solo",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Solo",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Solo HD",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Solo HD",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Solo2 (2014)",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Solo2 (2014)",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Solo3",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Solo3",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Solo Pro",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Solo Pro",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio 2 (2014)",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio 2 (2014)",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio 2 (Bluetooth)",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio 2 (Bluetooth)",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio3 Wireless",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio3 Wireless",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Studio Wireless",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Studio Wireless",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Pro",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Pro",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Mixr",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Mixr",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats EP",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats EP",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Tour",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats Tour",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats urBeats (generation unspecified)",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats urBeats",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats urBeats3 (connector unspecified)",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats urBeats3",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "BeatsX",
+      "brand": "Beats",
+      "scope": "legacy_catalog",
+      "query": "Beats X",
+      "product_url": "https://support.apple.com/en-us/102772"
+    },
+    {
+      "model": "Beats Executive",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats Executive",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats Solo2 Wireless",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats Solo2 Wireless",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats Powerbeats (1st generation)",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats Powerbeats (1st generation)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats Tour 2.5",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats Tour 2.5",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats urBeats (2nd generation)",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats urBeats (2nd generation)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats urBeats3 (Lightning)",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats urBeats3 (Lightning)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Beats Wireless (1.5)",
+      "brand": "Beats",
+      "scope": "legacy_gap",
+      "query": "Beats Wireless (1.5)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Monster Diddybeats",
+      "brand": "Monster",
+      "scope": "legacy_gap",
+      "query": "Monster Diddybeats",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Monster Heartbeats (1st generation)",
+      "brand": "Monster",
+      "scope": "legacy_gap",
+      "query": "Monster Heartbeats (1st generation)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Monster Heartbeats (2nd generation)",
+      "brand": "Monster",
+      "scope": "legacy_gap",
+      "query": "Monster Heartbeats (2nd generation)",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    },
+    {
+      "model": "Monster iBeats",
+      "brand": "Monster",
+      "scope": "legacy_gap",
+      "query": "Monster iBeats",
+      "product_url": "https://support.apple.com/en-us/102772",
+      "data_note": "Listed in Apple's legacy product records; no exact variant preset in the reviewed catalog. Do not borrow a neighboring model or generation."
+    }
+  ]
+}

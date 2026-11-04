@@ -11,6 +11,9 @@ struct AutoEqPreset: Identifiable, Hashable {
     let preampDb: Float
     /// Raw JSON filter array, decoded lazily by `bands()`.
     let filtersJSON: String
+    /// The exact published data and its license, when supplied by a supplemental source.
+    var sourceURL: URL? = nil
+    var dataLicense: String? = nil
 
     /// Decode the stored filters into the app's band model.
     func bands() -> [EQBand] {

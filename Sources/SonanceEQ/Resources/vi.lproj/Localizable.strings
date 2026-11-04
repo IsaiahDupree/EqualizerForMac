@@ -4,6 +4,7 @@
 "%@ apps" = "Ứng dụng đã chọn: %@";
 "%@ corrections · AutoEq" = "%@ cấu hình hiệu chỉnh · AutoEq";
 "%@ failed (%d)" = "Lỗi: %@ (%d)";
+"%@ test purchases · %@ refunds" = "%@ giao dịch mua thử nghiệm · %@ giao dịch hoàn tiền";
 "%@ total" = "Tổng: %@";
 "+%.0f ms latency" = "Độ trễ +%.0f ms";
 "8,850 AutoEq headphone corrections" = "8.850 cấu hình hiệu chỉnh tai nghe AutoEq";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (kiểm tra quyền thu âm)";
 "Band" = "Dải tần";
 "Bass Boost" = "Tăng âm trầm";
+"Beats preset data · CC BY-SA 4.0" = "Dữ liệu cấu hình Beats · CC BY-SA 4.0";
+"Beats presets" = "Cấu hình Beats";
 "Best used with the system EQ off for these apps" = "Nên tắt EQ hệ thống cho các ứng dụng này";
 "Bypass" = "Bỏ qua chỉnh âm";
 "Cancel" = "Hủy";
@@ -40,6 +43,7 @@
 "Custom device" = "Thiết bị tùy chỉnh";
 "Customer info updated" = "Đã cập nhật thông tin khách hàng";
 "Default Output" = "Đầu ra mặc định";
+"Device history; campaign conversion unavailable." = "Lịch sử trên thiết bị; chưa có dữ liệu chuyển đổi chiến dịch.";
 "Done" = "Xong";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Kéo điểm để chỉnh đường cong · nhấn để sửa Q và loại bộ lọc";
 "EQ design" = "Thiết kế EQ";
@@ -88,6 +92,7 @@
 "No matches" = "Không có kết quả";
 "No purchase option is available right now." = "Hiện không có tùy chọn mua.";
 "Not now" = "Để sau";
+"OPRA — Open headphone EQ database" = "OPRA — Cơ sở dữ liệu EQ tai nghe mở";
 "On" = "Bật";
 "On-ear" = "Đặt trên tai";
 "Open Settings" = "Mở cài đặt";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Phát âm thanh không xử lý để so sánh A/B";
 "Paywall shown" = "Đã mở màn hình mua";
 "Preamp" = "Tiền khuếch đại";
+"Preset data license" = "Giấy phép dữ liệu cấu hình";
+"Pro purchases (App Store)" = "Giao dịch mua Pro (App Store)";
+"Pro purchases on this Mac" = "Giao dịch mua Pro trên máy Mac này";
+"Pro unlock confirmed" = "Đã xác nhận mở khóa Pro";
+"Published preset" = "Cấu hình đã công bố";
 "Purchase & diagnostics log — useful when reporting a problem" = "Nhật ký mua hàng và chẩn đoán — hữu ích khi báo lỗi";
 "Purchase Analytics" = "Thống kê mua hàng";
 "Purchase cancelled" = "Đã hủy mua";
 "Purchase completed" = "Mua hoàn tất";
 "Purchase failed" = "Mua thất bại";
+"Purchase history unavailable" = "Không có lịch sử giao dịch mua";
 "Purchase started" = "Đã bắt đầu mua";
 "Purchases" = "Giao dịch mua";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Đang ghi âm — không ảnh hưởng phát lại";
 "Refresh" = "Làm mới";
 "Refresh list" = "Làm mới danh sách";
+"Refresh purchase history" = "Làm mới lịch sử giao dịch mua";
+"Refunds excluded" = "Không tính giao dịch đã hoàn tiền";
 "Relock (mock)" = "Khóa lại (thử nghiệm)";
 "Reset" = "Đặt lại";
 "Restore" = "Khôi phục";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "khôi phục ÷ lần thử";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Giao dịch mua Pro (App Store)";
-"Refunds excluded" = "Không tính giao dịch đã hoàn tiền";
-"Pro purchases on this Mac" = "Giao dịch mua Pro trên máy Mac này";
-"%@ test purchases · %@ refunds" = "%@ giao dịch mua thử nghiệm · %@ giao dịch hoàn tiền";
-"Device history; campaign conversion unavailable." = "Lịch sử trên thiết bị; chưa có dữ liệu chuyển đổi chiến dịch.";
-"Purchase history unavailable" = "Không có lịch sử giao dịch mua";
-"Refresh purchase history" = "Làm mới lịch sử giao dịch mua";
-"Pro unlock confirmed" = "Đã xác nhận mở khóa Pro";

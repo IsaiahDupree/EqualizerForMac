@@ -4,6 +4,7 @@
 "%@ apps" = "App selezionate: %@";
 "%@ corrections · AutoEq" = "%@ correzioni · AutoEq";
 "%@ failed (%d)" = "Operazione non riuscita: %@ (%d)";
+"%@ test purchases · %@ refunds" = "%@ acquisti di prova · %@ rimborsi";
 "%@ total" = "Totale: %@";
 "+%.0f ms latency" = "Latenza +%.0f ms";
 "8,850 AutoEq headphone corrections" = "8.850 correzioni per cuffie AutoEq";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (verifica l’autorizzazione audio)";
 "Band" = "Banda";
 "Bass Boost" = "Bassi potenziati";
+"Beats preset data · CC BY-SA 4.0" = "Dati dei preset Beats · CC BY-SA 4.0";
+"Beats presets" = "Preset Beats";
 "Best used with the system EQ off for these apps" = "Per queste app è meglio disattivare l’EQ di sistema";
 "Bypass" = "Escludi EQ";
 "Cancel" = "Annulla";
@@ -40,6 +43,7 @@
 "Custom device" = "Dispositivo personalizzato";
 "Customer info updated" = "Dati cliente aggiornati";
 "Default Output" = "Uscita predefinita";
+"Device history; campaign conversion unavailable." = "Cronologia del dispositivo; conversione della campagna non disponibile.";
 "Done" = "Fine";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Trascina un punto per modificare la curva · premi per cambiare Q e tipo";
 "EQ design" = "Progetto EQ";
@@ -88,6 +92,7 @@
 "No matches" = "Nessun risultato";
 "No purchase option is available right now." = "Nessuna opzione di acquisto disponibile al momento.";
 "Not now" = "Non ora";
+"OPRA — Open headphone EQ database" = "OPRA — Database aperto di EQ per cuffie";
 "On" = "Attivo";
 "On-ear" = "Sovraurali";
 "Open Settings" = "Apri impostazioni";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Lascia passare l’audio senza elaborazione per un confronto A/B";
 "Paywall shown" = "Schermata acquisti mostrata";
 "Preamp" = "Preamplificatore";
+"Preset data license" = "Licenza dei dati dei preset";
+"Pro purchases (App Store)" = "Acquisti Pro (App Store)";
+"Pro purchases on this Mac" = "Acquisti Pro su questo Mac";
+"Pro unlock confirmed" = "Sblocco Pro confermato";
+"Published preset" = "Preset pubblicato";
 "Purchase & diagnostics log — useful when reporting a problem" = "Registro acquisti e diagnostica — utile per segnalare problemi";
 "Purchase Analytics" = "Statistiche acquisti";
 "Purchase cancelled" = "Acquisto annullato";
 "Purchase completed" = "Acquisto completato";
 "Purchase failed" = "Acquisto non riuscito";
+"Purchase history unavailable" = "Cronologia degli acquisti non disponibile";
 "Purchase started" = "Acquisto avviato";
 "Purchases" = "Acquisti";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Registrazione — riproduzione invariata";
 "Refresh" = "Aggiorna elenco";
 "Refresh list" = "Aggiorna elenco";
+"Refresh purchase history" = "Aggiorna cronologia acquisti";
+"Refunds excluded" = "Rimborsi esclusi";
 "Relock (mock)" = "Blocca di nuovo (test)";
 "Reset" = "Reimposta";
 "Restore" = "Ripristino";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "ripristinati ÷ tentativi";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Acquisti Pro (App Store)";
-"Refunds excluded" = "Rimborsi esclusi";
-"Pro purchases on this Mac" = "Acquisti Pro su questo Mac";
-"%@ test purchases · %@ refunds" = "%@ acquisti di prova · %@ rimborsi";
-"Device history; campaign conversion unavailable." = "Cronologia del dispositivo; conversione della campagna non disponibile.";
-"Purchase history unavailable" = "Cronologia degli acquisti non disponibile";
-"Refresh purchase history" = "Aggiorna cronologia acquisti";
-"Pro unlock confirmed" = "Sblocco Pro confermato";

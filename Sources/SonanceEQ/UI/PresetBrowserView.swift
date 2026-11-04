@@ -25,6 +25,8 @@ struct PresetBrowserView: View {
             } else {
                 proLock
             }
+            Divider()
+            opraCredit
         }
         .frame(width: 460, height: 540)
         .onAppear(perform: refresh)
@@ -95,10 +97,37 @@ struct PresetBrowserView: View {
                 List(results) { preset in
                     Button { apply(preset) } label: { row(preset) }
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            if let url = preset.sourceURL {
+                                Link("Published preset", destination: url)
+                            }
+                            if preset.dataLicense == "CC BY-SA 4.0" {
+                                Link("CC BY-SA 4.0", destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
+                            }
+                        }
                 }
                 .listStyle(.plain)
             }
         }
+    }
+
+    /// Attribution and freely downloadable source data remain available without Pro access.
+    private var opraCredit: some View {
+        HStack(spacing: 8) {
+            if let url = Bundle.main.url(forResource: "OPRA-logo", withExtension: "png"),
+               let logo = NSImage(contentsOf: url) {
+                Image(nsImage: logo).resizable().scaledToFit().frame(width: 52, height: 24)
+                    .padding(3).background(.white, in: RoundedRectangle(cornerRadius: 3))
+                    .accessibilityLabel("OPRA")
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Link("OPRA — Open headphone EQ database", destination: URL(string: "https://github.com/opra-project/OPRA")!)
+                Link("Beats preset data · CC BY-SA 4.0", destination: URL(string: "https://github.com/IsaiahDupree/EqualizerForMac/tree/main/Tools/headphone_presets/opra")!)
+            }
+            .font(.caption2)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 8)
     }
 
     private func row(_ preset: AutoEqPreset) -> some View {

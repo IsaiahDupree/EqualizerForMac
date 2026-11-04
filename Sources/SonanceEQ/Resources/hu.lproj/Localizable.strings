@@ -4,6 +4,7 @@
 "%@ apps" = "Kiválasztott alkalmazások: %@";
 "%@ corrections · AutoEq" = "%@ korrekció · AutoEq";
 "%@ failed (%d)" = "Sikertelen művelet: %@ (%d)";
+"%@ test purchases · %@ refunds" = "%@ tesztvásárlás · %@ visszatérítés";
 "%@ total" = "Összesen: %@";
 "+%.0f ms latency" = "+%.0f ms késleltetés";
 "8,850 AutoEq headphone corrections" = "8 850 AutoEq fejhallgató-korrekció";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (ellenőrizze az engedélyt)";
 "Band" = "Sáv";
 "Bass Boost" = "Basszuskiemelés";
+"Beats preset data · CC BY-SA 4.0" = "Beats-beállításadatok · CC BY-SA 4.0";
+"Beats presets" = "Beats-beállítások";
 "Best used with the system EQ off for these apps" = "Ezeknél az alkalmazásoknál érdemes kikapcsolni a rendszer EQ-ját";
 "Bypass" = "EQ megkerülése";
 "Cancel" = "Mégse";
@@ -40,6 +43,7 @@
 "Custom device" = "Egyéni eszköz";
 "Customer info updated" = "Ügyféladatok frissítve";
 "Default Output" = "Alapértelmezett kimenet";
+"Device history; campaign conversion unavailable." = "Eszközelőzmények; a kampánykonverzió nem érhető el.";
 "Done" = "Kész";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Húzza a pontot a görbe alakításához · kattintson a Q és a típus szerkesztéséhez";
 "EQ design" = "EQ-tervezés";
@@ -88,6 +92,7 @@
 "No matches" = "Nincs találat";
 "No purchase option is available right now." = "Jelenleg nincs elérhető vásárlási lehetőség.";
 "Not now" = "Most nem";
+"OPRA — Open headphone EQ database" = "OPRA — Nyílt fejhallgató-EQ-adatbázis";
 "On" = "Bekapcsolva";
 "On-ear" = "Fülre illeszkedő";
 "Open Settings" = "Beállítások megnyitása";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Feldolgozatlan hang az A/B összehasonlításhoz";
 "Paywall shown" = "Vásárlási képernyő megjelent";
 "Preamp" = "Előerősítő";
+"Preset data license" = "Beállításadatok licence";
+"Pro purchases (App Store)" = "Pro-vásárlások (App Store)";
+"Pro purchases on this Mac" = "Pro-vásárlások ezen a Macen";
+"Pro unlock confirmed" = "Pro-feloldás megerősítve";
+"Published preset" = "Közzétett beállítás";
 "Purchase & diagnostics log — useful when reporting a problem" = "Vásárlási és diagnosztikai napló — hibabejelentéshez";
 "Purchase Analytics" = "Vásárlási statisztikák";
 "Purchase cancelled" = "Vásárlás megszakítva";
 "Purchase completed" = "Vásárlás befejezve";
 "Purchase failed" = "Sikertelen vásárlás";
+"Purchase history unavailable" = "A vásárlási előzmények nem érhetők el";
 "Purchase started" = "Vásárlás elindítva";
 "Purchases" = "Vásárlások";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Felvétel — a lejátszás zavartalan";
 "Refresh" = "Lista frissítése";
 "Refresh list" = "Lista frissítése";
+"Refresh purchase history" = "Vásárlási előzmények frissítése";
+"Refunds excluded" = "Visszatérítések nélkül";
 "Relock (mock)" = "Újrazárolás (teszt)";
 "Reset" = "Alaphelyzet";
 "Restore" = "Visszaállítás";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "visszaállított ÷ próbálkozások";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Pro-vásárlások (App Store)";
-"Refunds excluded" = "Visszatérítések nélkül";
-"Pro purchases on this Mac" = "Pro-vásárlások ezen a Macen";
-"%@ test purchases · %@ refunds" = "%@ tesztvásárlás · %@ visszatérítés";
-"Device history; campaign conversion unavailable." = "Eszközelőzmények; a kampánykonverzió nem érhető el.";
-"Purchase history unavailable" = "A vásárlási előzmények nem érhetők el";
-"Refresh purchase history" = "Vásárlási előzmények frissítése";
-"Pro unlock confirmed" = "Pro-feloldás megerősítve";
