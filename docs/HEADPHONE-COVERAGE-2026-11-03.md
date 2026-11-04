@@ -1,14 +1,17 @@
 # Headphone catalog coverage — November 3, 2026
 
-The 1.0.8 source candidate adds 11 licensed Beats corrections, for 55 Beats
-corrections and 8,862 total entries. The 1.0.7 App Store submission is separate;
-this work does not withdraw, replace or modify its submitted build.
+Version 1.0.8 (11) adds 11 licensed Beats corrections, for 55 Beats corrections
+and 8,862 total entries. On November 3, 2026, the owner requested testing and
+submission of 1.0.8. After the replacement build became VALID, the queued 1.0.7
+submission was withdrawn and replaced. Version 1.0.8 is Waiting for Review,
+verified through Apple's API and UI. See the
+[validation and release record](RELEASE-1.0.8-VALIDATION-2026-11-03.md).
 
 ## Current Beats lineup
 
 The [official Beats product catalog](https://www.beatsbydre.com/us/products)
-currently lists eight headphone/earbud models. Six have corrections in this
-candidate. Colors, collaborations and cushion accessories are not counted as
+currently lists eight headphone/earbud models. Six have corrections in 1.0.8.
+Colors, collaborations and cushion accessories are not counted as
 new headphone generations.
 
 | Model | Bundled model-specific preset |
