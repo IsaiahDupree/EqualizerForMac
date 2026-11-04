@@ -46,6 +46,8 @@ struct AboutView: View {
                        url: "https://github.com/jaakkopasanen/AutoEq")
                 credit("AirPods Pro 3", "Songbird · openEq (MIT)",
                        url: "https://github.com/sean-o-sullivan/open-mac-eq/blob/929aa9145b6734fba0ea39a223d5bb636948d4cc/AirPodsEQSpike/Presets/airpods-pro-3-songbird-jm1-6band.txt")
+                credit("Beats presets", "oratory1990 · AutoEQ · OPRA", url: "https://github.com/opra-project/OPRA")
+                credit("Preset data license", "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/")
                 credit("Purchases", "RevenueCat", url: "https://www.revenuecat.com")
                 credit("App icon", "Generated with OpenAI image models")
                 credit("EQ design", "RBJ Audio EQ Cookbook · Apple Accelerate (vDSP)")

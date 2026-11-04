@@ -48,31 +48,46 @@ final class PresetStore {
 
     /// Distinct categories present, ordered by frequency (for filter chips).
     func categories() -> [String] {
-        query("SELECT category FROM presets GROUP BY category ORDER BY COUNT(*) DESC", bind: [])
+        query("SELECT category FROM preset_metadata GROUP BY category ORDER BY COUNT(*) DESC", bind: [])
             .compactMap { $0 }
     }
 
     /// Search by model/brand (case-insensitive substring), optionally filtered to one category.
     /// Empty query returns the alphabetical head of the (filtered) library.
     func search(_ text: String, category: String? = nil, limit: Int = 200) -> [AutoEqPreset] {
-        guard let db else { return [] }
+        guard let db, limit > 0 else { return [] }
 
-        var sql = "SELECT id, model, brand, category, source, preamp, filters FROM presets"
+        var sql = """
+            SELECT p.id, m.display_model, p.brand, m.category, p.source, p.preamp, p.filters,
+                   m.source_url, m.data_license
+            FROM presets p JOIN preset_metadata m ON p.id = m.preset_id
+            """
         var clauses: [String] = []
         var binds: [String] = []
 
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            clauses.append("(model LIKE ? COLLATE NOCASE OR brand LIKE ? COLLATE NOCASE)")
-            binds.append("%\(trimmed)%")
-            binds.append("%\(trimmed)%")
+            // Treat SQL wildcard characters literally. The secondary key handles spaces,
+            // punctuation and Beats' brand aliases without inventing a model-to-curve match.
+            let literal = trimmed.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "%", with: "\\%")
+                .replacingOccurrences(of: "_", with: "\\_")
+            let key = Self.searchKey(trimmed)
+            var match = "(m.display_model LIKE ? ESCAPE '\\' COLLATE NOCASE OR p.brand LIKE ? ESCAPE '\\' COLLATE NOCASE"
+            binds.append("%\(literal)%")
+            binds.append("%\(literal)%")
+            if !key.isEmpty {
+                match += " OR m.search_key LIKE ?"
+                binds.append("%\(key)%")
+            }
+            clauses.append(match + ")")
         }
         if let category, !category.isEmpty {
-            clauses.append("category = ?")
+            clauses.append("m.category = ?")
             binds.append(category)
         }
         if !clauses.isEmpty { sql += " WHERE " + clauses.joined(separator: " AND ") }
-        sql += " ORDER BY model COLLATE NOCASE LIMIT \(limit)"
+        sql += " ORDER BY m.display_model COLLATE NOCASE, p.source COLLATE NOCASE, p.id LIMIT \(min(limit, 10_000))"
 
         var stmt: OpaquePointer?
         defer { sqlite3_finalize(stmt) }
@@ -93,13 +108,30 @@ final class PresetStore {
                 category: column(stmt, 3),
                 source: column(stmt, 4),
                 preampDb: Float(sqlite3_column_double(stmt, 5)),
-                filtersJSON: column(stmt, 6)
+                filtersJSON: column(stmt, 6),
+                sourceURL: sqlite3_column_type(stmt, 7) == SQLITE_NULL ? nil : URL(string: column(stmt, 7)),
+                dataLicense: sqlite3_column_type(stmt, 8) == SQLITE_NULL ? nil : column(stmt, 8)
             ))
         }
         return results
     }
 
     // MARK: - Helpers
+
+    /// Mirrors the build-time ASCII search key. The + token matters for Studio Buds +.
+    private static func searchKey(_ text: String) -> String {
+        let folded = text.folding(options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive],
+                                  locale: Locale(identifier: "en_US_POSIX"))
+            .lowercased().replacingOccurrences(of: "+", with: "plus")
+        var key = String(folded.unicodeScalars.filter {
+            (97...122).contains($0.value) || (48...57).contains($0.value)
+        })
+        for alias in ["beatsbydrdre", "beatsbydre"] where key.hasPrefix(alias) {
+            key = "beats" + key.dropFirst(alias.count)
+            break
+        }
+        return key
+    }
 
     /// SQLITE_TRANSIENT — tells SQLite to copy bound strings (they don't outlive the call).
     private static let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)

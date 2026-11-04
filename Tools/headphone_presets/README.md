@@ -28,10 +28,43 @@ Rebuild using the existing reference corpus (no network/generation at runtime):
 python3 Tools/build_autoeq_db.py --results /absolute/path/to/AutoEq/results
 ```
 
-The complete bundled catalog is 8,851 entries: 8,850 existing corrections plus
+The 1.0.7 catalog contains 8,851 entries: 8,850 existing corrections plus
 this six-band Pro 3 preset. The native catalog tests search the actual app-bundled
 database, verify the published filters, apply them through `AppState`, and check
 the response and preamp headroom at supported test sample rates.
+
+## Beats expansion for 1.0.8
+
+The catalog now contains **8,862 corrections**, including **55 Beats corrections**.
+Eleven additional published corrections come from [OPRA](opra/README.md), with
+creator attribution and the CC BY-SA 4.0 data license. These are additional
+curves for existing Beats models; they do not establish support for a different
+generation. All 8,851 original database rows, IDs and acoustic values are retained.
+
+Search now accepts `Beats by Dre`, `Beats by Dr. Dre`, spaced generation names
+such as `Solo 3`, and `Studio Buds Plus`. The `+` distinguishes Buds + from Buds.
+Display metadata corrects the duplicate `Beats Beats` name, inconsistent Apple
+names, and the upstream over-ear classification of Powerbeats 2 Wireless.
+Original measurement labels remain in the `presets` table.
+
+`coverage.json` records the current official Beats lineup, the requested newer
+devices and named legacy gaps. A real device appearing in that inventory is
+**not** a bundled preset. Missing generations never receive another model's EQ.
+
+Before expanding or describing coverage, run:
+
+```sh
+python3 Tools/audit_headphone_coverage.py
+python3 Tools/audit_headphone_coverage.py --check-upstream --fail-on-new-release --json
+```
+
+The optional online check reads Beats' current headphone/earbud product links
+and OPRA's latest revision. Unknown products, an updated source revision or a
+failed source lookup require review. The tool does not automatically publish
+or import unreviewed data and installs no daemon or scheduled task.
+
+See [the dated coverage report](../../docs/HEADPHONE-COVERAGE-2026-11-03.md) for
+the newest and legacy models that still need exact, redistributable preset data.
 
 ## Use with the current release
 

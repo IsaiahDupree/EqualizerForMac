@@ -4,6 +4,7 @@
 "%@ apps" = "Επιλεγμένες εφαρμογές: %@";
 "%@ corrections · AutoEq" = "%@ διορθώσεις · AutoEq";
 "%@ failed (%d)" = "Αποτυχία: %@ (%d)";
+"%@ test purchases · %@ refunds" = "%@ δοκιμαστικές αγορές · %@ επιστροφές χρημάτων";
 "%@ total" = "Σύνολο: %@";
 "+%.0f ms latency" = "Καθυστέρηση +%.0f ms";
 "8,850 AutoEq headphone corrections" = "8.850 διορθώσεις ακουστικών AutoEq";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (ελέγξτε την άδεια ήχου)";
 "Band" = "Ζώνη";
 "Bass Boost" = "Ενίσχυση μπάσων";
+"Beats preset data · CC BY-SA 4.0" = "Δεδομένα προρυθμίσεων Beats · CC BY-SA 4.0";
+"Beats presets" = "Προρυθμίσεις Beats";
 "Best used with the system EQ off for these apps" = "Συνιστάται απενεργοποίηση του EQ συστήματος για αυτές τις εφαρμογές";
 "Bypass" = "Παράκαμψη EQ";
 "Cancel" = "Ακύρωση";
@@ -40,6 +43,7 @@
 "Custom device" = "Προσαρμοσμένη συσκευή";
 "Customer info updated" = "Τα στοιχεία πελάτη ενημερώθηκαν";
 "Default Output" = "Προεπιλεγμένη έξοδος";
+"Device history; campaign conversion unavailable." = "Ιστορικό συσκευής· η μετατροπή καμπάνιας δεν είναι διαθέσιμη.";
 "Done" = "Τέλος";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Σύρετε σημείο για αλλαγή καμπύλης · πατήστε για Q και τύπο";
 "EQ design" = "Σχεδιασμός EQ";
@@ -88,6 +92,7 @@
 "No matches" = "Δεν βρέθηκαν αποτελέσματα";
 "No purchase option is available right now." = "Δεν υπάρχει διαθέσιμη επιλογή αγοράς τώρα.";
 "Not now" = "Όχι τώρα";
+"OPRA — Open headphone EQ database" = "OPRA — Ανοιχτή βάση EQ ακουστικών";
 "On" = "Ενεργό";
 "On-ear" = "Επικάθησης";
 "Open Settings" = "Άνοιγμα ρυθμίσεων";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Αναπαραγωγή χωρίς επεξεργασία για σύγκριση A/B";
 "Paywall shown" = "Εμφάνιση οθόνης αγοράς";
 "Preamp" = "Προενίσχυση";
+"Preset data license" = "Άδεια δεδομένων προρυθμίσεων";
+"Pro purchases (App Store)" = "Αγορές Pro (App Store)";
+"Pro purchases on this Mac" = "Αγορές Pro σε αυτό το Mac";
+"Pro unlock confirmed" = "Το ξεκλείδωμα Pro επιβεβαιώθηκε";
+"Published preset" = "Δημοσιευμένη προρύθμιση";
 "Purchase & diagnostics log — useful when reporting a problem" = "Αρχείο αγορών και διαγνωστικών — χρήσιμο για αναφορά προβλημάτων";
 "Purchase Analytics" = "Στατιστικά αγορών";
 "Purchase cancelled" = "Η αγορά ακυρώθηκε";
 "Purchase completed" = "Η αγορά ολοκληρώθηκε";
 "Purchase failed" = "Η αγορά απέτυχε";
+"Purchase history unavailable" = "Το ιστορικό αγορών δεν είναι διαθέσιμο";
 "Purchase started" = "Η αγορά ξεκίνησε";
 "Purchases" = "Αγορές";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Εγγραφή — η αναπαραγωγή δεν επηρεάζεται";
 "Refresh" = "Ανανέωση";
 "Refresh list" = "Ανανέωση λίστας";
+"Refresh purchase history" = "Ανανέωση ιστορικού αγορών";
+"Refunds excluded" = "Εξαιρούνται οι επιστροφές χρημάτων";
 "Relock (mock)" = "Κλείδωμα ξανά (δοκιμή)";
 "Reset" = "Επαναφορά";
 "Restore" = "Επαναφορά";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "επαναφορές ÷ προσπάθειες";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Αγορές Pro (App Store)";
-"Refunds excluded" = "Εξαιρούνται οι επιστροφές χρημάτων";
-"Pro purchases on this Mac" = "Αγορές Pro σε αυτό το Mac";
-"%@ test purchases · %@ refunds" = "%@ δοκιμαστικές αγορές · %@ επιστροφές χρημάτων";
-"Device history; campaign conversion unavailable." = "Ιστορικό συσκευής· η μετατροπή καμπάνιας δεν είναι διαθέσιμη.";
-"Purchase history unavailable" = "Το ιστορικό αγορών δεν είναι διαθέσιμο";
-"Refresh purchase history" = "Ανανέωση ιστορικού αγορών";
-"Pro unlock confirmed" = "Το ξεκλείδωμα Pro επιβεβαιώθηκε";

@@ -4,6 +4,7 @@
 "%@ apps" = "Vybrané aplikace: %@";
 "%@ corrections · AutoEq" = "Korekce: %@ · AutoEq";
 "%@ failed (%d)" = "Chyba: %@ (%d)";
+"%@ test purchases · %@ refunds" = "%@ testovacích nákupů · %@ vrácených plateb";
 "%@ total" = "Celkem: %@";
 "+%.0f ms latency" = "Latence +%.0f ms";
 "8,850 AutoEq headphone corrections" = "8 850 korekcí sluchátek AutoEq";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (zkontrolujte oprávnění)";
 "Band" = "Pásmo";
 "Bass Boost" = "Zesílení basů";
+"Beats preset data · CC BY-SA 4.0" = "Data předvoleb Beats · CC BY-SA 4.0";
+"Beats presets" = "Předvolby Beats";
 "Best used with the system EQ off for these apps" = "Pro tyto aplikace je vhodné vypnout systémový EQ";
 "Bypass" = "Obejít korekci";
 "Cancel" = "Zrušit";
@@ -40,6 +43,7 @@
 "Custom device" = "Vlastní zařízení";
 "Customer info updated" = "Údaje zákazníka aktualizovány";
 "Default Output" = "Výchozí výstup";
+"Device history; campaign conversion unavailable." = "Historie zařízení; konverze kampaně není dostupná.";
 "Done" = "Hotovo";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Přetažením bodu upravíte křivku · kliknutím změníte Q a typ";
 "EQ design" = "Návrh EQ";
@@ -88,6 +92,7 @@
 "No matches" = "Žádné výsledky";
 "No purchase option is available right now." = "Nákup nyní není dostupný.";
 "Not now" = "Teď ne";
+"OPRA — Open headphone EQ database" = "OPRA — Otevřená databáze EQ sluchátek";
 "On" = "Zapnuto";
 "On-ear" = "Na uši";
 "Open Settings" = "Otevřít nastavení";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Pusťte zvuk bez úprav pro porovnání A/B";
 "Paywall shown" = "Nákupní obrazovka zobrazena";
 "Preamp" = "Předzesilovač";
+"Preset data license" = "Licence dat předvoleb";
+"Pro purchases (App Store)" = "Nákupy Pro (App Store)";
+"Pro purchases on this Mac" = "Nákupy Pro na tomto Macu";
+"Pro unlock confirmed" = "Odemčení Pro potvrzeno";
+"Published preset" = "Zveřejněná předvolba";
 "Purchase & diagnostics log — useful when reporting a problem" = "Záznam nákupů a diagnostiky — užitečný při hlášení problémů";
 "Purchase Analytics" = "Statistiky nákupů";
 "Purchase cancelled" = "Nákup zrušen";
 "Purchase completed" = "Nákup dokončen";
 "Purchase failed" = "Nákup selhal";
+"Purchase history unavailable" = "Historie nákupů není dostupná";
 "Purchase started" = "Nákup zahájen";
 "Purchases" = "Nákupy";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Nahrávání — přehrávání není ovlivněno";
 "Refresh" = "Obnovit seznam";
 "Refresh list" = "Obnovit seznam";
+"Refresh purchase history" = "Obnovit historii nákupů";
+"Refunds excluded" = "Bez vrácených plateb";
 "Relock (mock)" = "Znovu zamknout (test)";
 "Reset" = "Obnovit";
 "Restore" = "Obnovení";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "obnovené ÷ pokusy";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Nákupy Pro (App Store)";
-"Refunds excluded" = "Bez vrácených plateb";
-"Pro purchases on this Mac" = "Nákupy Pro na tomto Macu";
-"%@ test purchases · %@ refunds" = "%@ testovacích nákupů · %@ vrácených plateb";
-"Device history; campaign conversion unavailable." = "Historie zařízení; konverze kampaně není dostupná.";
-"Purchase history unavailable" = "Historie nákupů není dostupná";
-"Refresh purchase history" = "Obnovit historii nákupů";
-"Pro unlock confirmed" = "Odemčení Pro potvrzeno";

@@ -88,3 +88,10 @@
 "Audio routing is still finishing. Try again when it stops." = "Le routage audio est encore en cours de fermeture. Réessayez lorsqu’il sera arrêté.";
 "Audio routing took too long. Check Audio Capture permission, then try again." = "Le routage audio a pris trop de temps. Vérifiez l’autorisation de capture audio, puis réessayez.";
 "Finishing audio routing…" = "Finalisation du routage audio…";
+
+// Attribution des nouveaux préréglages Beats.
+"Published preset" = "Préréglage publié";
+"OPRA — Open headphone EQ database" = "OPRA — Base ouverte de réglages EQ pour casques";
+"Beats preset data · CC BY-SA 4.0" = "Données des préréglages Beats · CC BY-SA 4.0";
+"Beats presets" = "Préréglages Beats";
+"Preset data license" = "Licence des données des préréglages";

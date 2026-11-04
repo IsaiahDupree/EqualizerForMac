@@ -4,6 +4,7 @@
 "%@ apps" = "已選 App：%@";
 "%@ corrections · AutoEq" = "%@ 種校正 · AutoEq";
 "%@ failed (%d)" = "%@ 失敗（%d）";
+"%@ test purchases · %@ refunds" = "%@ 筆測試購買 · %@ 筆退款";
 "%@ total" = "共 %@ 筆";
 "+%.0f ms latency" = "延遲 +%.0f 毫秒";
 "8,850 AutoEq headphone corrections" = "8,850 種 AutoEq 耳機校正";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap（請檢查音訊擷取權限）";
 "Band" = "頻段";
 "Bass Boost" = "低音增強";
+"Beats preset data · CC BY-SA 4.0" = "Beats 預設資料 · CC BY-SA 4.0";
+"Beats presets" = "Beats 預設";
 "Best used with the system EQ off for these apps" = "建議關閉這些 App 的系統等化";
 "Bypass" = "略過等化";
 "Cancel" = "取消";
@@ -40,6 +43,7 @@
 "Custom device" = "自訂裝置";
 "Customer info updated" = "客戶資訊已更新";
 "Default Output" = "預設輸出";
+"Device history; campaign conversion unavailable." = "裝置歷史記錄；尚無行銷活動轉換資料。";
 "Done" = "完成";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "拖曳控制點調整曲線 · 點按以編輯 Q 值與類型";
 "EQ design" = "等化器設計";
@@ -88,6 +92,7 @@
 "No matches" = "沒有符合項目";
 "No purchase option is available right now." = "目前沒有可用的購買選項。";
 "Not now" = "稍後再說";
+"OPRA — Open headphone EQ database" = "OPRA — 開放式耳機 EQ 資料庫";
 "On" = "開啟";
 "On-ear" = "貼耳式";
 "Open Settings" = "開啟設定";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "直接播放未處理音訊以進行 A/B 比較";
 "Paywall shown" = "已顯示購買畫面";
 "Preamp" = "前級增益";
+"Preset data license" = "預設資料授權";
+"Pro purchases (App Store)" = "Pro 購買（App Store）";
+"Pro purchases on this Mac" = "此 Mac 上的 Pro 購買";
+"Pro unlock confirmed" = "已確認解鎖 Pro";
+"Published preset" = "已發布的預設";
 "Purchase & diagnostics log — useful when reporting a problem" = "購買與診斷紀錄 — 回報問題時可供參考";
 "Purchase Analytics" = "購買統計";
 "Purchase cancelled" = "購買已取消";
 "Purchase completed" = "購買完成";
 "Purchase failed" = "購買失敗";
+"Purchase history unavailable" = "無法取得購買記錄";
 "Purchase started" = "已開始購買";
 "Purchases" = "購買";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "錄製中 — 不影響播放";
 "Refresh" = "重新整理";
 "Refresh list" = "重新整理清單";
+"Refresh purchase history" = "重新整理購買記錄";
+"Refunds excluded" = "不含退款";
 "Relock (mock)" = "重新鎖定（測試）";
 "Reset" = "重設";
 "Restore" = "回復";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "回復 ÷ 嘗試次數";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Pro 購買（App Store）";
-"Refunds excluded" = "不含退款";
-"Pro purchases on this Mac" = "此 Mac 上的 Pro 購買";
-"%@ test purchases · %@ refunds" = "%@ 筆測試購買 · %@ 筆退款";
-"Device history; campaign conversion unavailable." = "裝置歷史記錄；尚無行銷活動轉換資料。";
-"Purchase history unavailable" = "無法取得購買記錄";
-"Refresh purchase history" = "重新整理購買記錄";
-"Pro unlock confirmed" = "已確認解鎖 Pro";

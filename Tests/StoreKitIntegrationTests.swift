@@ -119,6 +119,19 @@ struct StoreKitIntegrationTests {
         return ids
     }
 
+    /// Transaction.all can lag currentEntitlements after a refund or repurchase. Wait for the
+    /// actual history setup before asserting snapshot/cache behavior; a missing condition still fails.
+    private func awaitHistory(_ tracker: PurchaseEventTracker,
+                              until predicate: (StorePurchaseSnapshot) -> Bool) async throws -> StorePurchaseSnapshot {
+        var snapshot = await tracker.refreshStorePurchases()
+        for _ in 0..<100 {
+            if predicate(snapshot) { return snapshot }
+            try await Task.sleep(nanoseconds: 100_000_000)
+            snapshot = await tracker.refreshStorePurchases()
+        }
+        return snapshot
+    }
+
     @Test func noPurchaseLeavesEveryFeatureLocked() async throws {
         let session = try newSession()
         _ = session
@@ -383,7 +396,9 @@ struct StoreKitIntegrationTests {
         #expect(bought.testPurchaseCount == 1)
         try session.refundTransaction(identifier: UInt(transaction.id))
         #expect(try await awaitEntitlements { $0.isEmpty }.isEmpty)
-        let refunded = await tracker.refreshStorePurchases()
+        let refunded = try await awaitHistory(tracker) {
+            $0.state == .complete && $0.testPurchaseCount == 0 && $0.revokedPurchaseCount == 1
+        }
         #expect(refunded.state == .complete)
         #expect(refunded.testPurchaseCount == 0)
         #expect(refunded.productionPurchaseCount == 0)
@@ -408,7 +423,9 @@ struct StoreKitIntegrationTests {
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
         let tracker = PurchaseEventTracker(defaults: defaults)
-        let complete = await tracker.refreshStorePurchases()
+        let complete = try await awaitHistory(tracker) {
+            $0.state == .complete && $0.recordsRead >= 2
+        }
         #expect(complete.state == .complete)
         #expect(complete.recordsRead >= 2)
         let saved = try #require(defaults.data(forKey: PurchaseEventTracker.storeEvidenceKey))

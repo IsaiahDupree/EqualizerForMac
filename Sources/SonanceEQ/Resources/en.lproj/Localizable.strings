@@ -4,6 +4,7 @@
 "%@ apps" = "%@ apps";
 "%@ corrections · AutoEq" = "%@ corrections · AutoEq";
 "%@ failed (%d)" = "%@ failed (%d)";
+"%@ test purchases · %@ refunds" = "%@ test purchases · %@ refunds";
 "%@ total" = "%@ total";
 "+%.0f ms latency" = "+%.0f ms latency";
 "8,850 AutoEq headphone corrections" = "8,850 AutoEq headphone corrections";
@@ -25,6 +26,8 @@
 "AudioHardwareCreateProcessTap (check Audio Capture permission)" = "AudioHardwareCreateProcessTap (check Audio Capture permission)";
 "Band" = "Band";
 "Bass Boost" = "Bass Boost";
+"Beats preset data · CC BY-SA 4.0" = "Beats preset data · CC BY-SA 4.0";
+"Beats presets" = "Beats presets";
 "Best used with the system EQ off for these apps" = "Best used with the system EQ off for these apps";
 "Bypass" = "Bypass";
 "Cancel" = "Cancel";
@@ -40,6 +43,7 @@
 "Custom device" = "Custom device";
 "Customer info updated" = "Customer info updated";
 "Default Output" = "Default Output";
+"Device history; campaign conversion unavailable." = "Device history; campaign conversion unavailable.";
 "Done" = "Done";
 "Drag a handle to shape the curve · tap a handle to edit Q & type" = "Drag a handle to shape the curve · tap a handle to edit Q & type";
 "EQ design" = "EQ design";
@@ -88,6 +92,7 @@
 "No matches" = "No matches";
 "No purchase option is available right now." = "No purchase option is available right now.";
 "Not now" = "Not now";
+"OPRA — Open headphone EQ database" = "OPRA — Open headphone EQ database";
 "On" = "On";
 "On-ear" = "On-ear";
 "Open Settings" = "Open Settings";
@@ -97,11 +102,17 @@
 "Pass audio through unprocessed for an A/B comparison" = "Pass audio through unprocessed for an A/B comparison";
 "Paywall shown" = "Paywall shown";
 "Preamp" = "Preamp";
+"Preset data license" = "Preset data license";
+"Pro purchases (App Store)" = "Pro purchases (App Store)";
+"Pro purchases on this Mac" = "Pro purchases on this Mac";
+"Pro unlock confirmed" = "Pro unlock confirmed";
+"Published preset" = "Published preset";
 "Purchase & diagnostics log — useful when reporting a problem" = "Purchase & diagnostics log — useful when reporting a problem";
 "Purchase Analytics" = "Purchase Analytics";
 "Purchase cancelled" = "Purchase cancelled";
 "Purchase completed" = "Purchase completed";
 "Purchase failed" = "Purchase failed";
+"Purchase history unavailable" = "Purchase history unavailable";
 "Purchase started" = "Purchase started";
 "Purchases" = "Purchases";
 "Q" = "Q";
@@ -113,6 +124,8 @@
 "Recording — playback is unaffected" = "Recording — playback is unaffected";
 "Refresh" = "Refresh";
 "Refresh list" = "Refresh list";
+"Refresh purchase history" = "Refresh purchase history";
+"Refunds excluded" = "Refunds excluded";
 "Relock (mock)" = "Relock (mock)";
 "Reset" = "Reset";
 "Restore" = "Restore";
@@ -164,13 +177,3 @@
 "restored ÷ attempts" = "restored ÷ attempts";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-
-// Verified on-device purchase history
-"Pro purchases (App Store)" = "Pro purchases (App Store)";
-"Refunds excluded" = "Refunds excluded";
-"Pro purchases on this Mac" = "Pro purchases on this Mac";
-"%@ test purchases · %@ refunds" = "%@ test purchases · %@ refunds";
-"Device history; campaign conversion unavailable." = "Device history; campaign conversion unavailable.";
-"Purchase history unavailable" = "Purchase history unavailable";
-"Refresh purchase history" = "Refresh purchase history";
-"Pro unlock confirmed" = "Pro unlock confirmed";
