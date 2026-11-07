@@ -66,6 +66,9 @@ def desktop(request, source, build, output, environment, execute):
         raise RuntimeError("desktop interaction test report is incomplete")
     with tempfile.TemporaryDirectory(prefix="orion-sonance-ui-") as temporary:
         work = Path(temporary)
+        notices = work / "OPEN-SOURCE-LICENSES"
+        execute([python, source / "portable/desktop/license_bundle.py", notices], output,
+                "desktop-notices", environment=env, timeout=30)
         command = [python, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--windowed",
                    "--name", "SonanceEQ", "--distpath", work / "dist", "--workpath", work / "build",
                    "--specpath", work, "--paths", source / "portable", "--paths", source / "portable/desktop",
@@ -84,14 +87,17 @@ def desktop(request, source, build, output, environment, execute):
         frozen_env.pop("SONANCE_EQ_CORE_LIBRARY", None)
         frozen_env.pop("SONANCE_EQ_DATABASE", None)
         frozen_env.pop("PYTHONPATH", None)
+        if windows:
+            frozen_env["QT_QPA_PLATFORM"] = "windows"
         execute([executable, "--settings-dir", work / "settings", "--smoke-dir", output / "frozen-smoke"],
                 output, "desktop-frozen-startup", environment=frozen_env, timeout=90)
         smoke = json.loads((output / "frozen-smoke/smoke.json").read_text())
         if not smoke["frozen"] or smoke["native_abi"] != 1 or smoke["headphone_count"] != 8850 or smoke["response_points"] != 512:
             raise RuntimeError("packaged desktop startup did not verify its real native core/data")
+        if smoke["qt_platform"] != ("windows" if windows else "offscreen") or not smoke["font_family"].startswith("Inter"):
+            raise RuntimeError("packaged desktop did not use its declared window backend and bundled font")
         # Preserve exact installed license files beside the dynamically linked bundle.
-        license_script = source / "portable/desktop/license_bundle.py"
-        execute([python, license_script, package / "OPEN-SOURCE-LICENSES"], output, "desktop-notices", environment=env, timeout=30)
+        shutil.copytree(notices, package / "OPEN-SOURCE-LICENSES")
         shutil.copy2(source / "portable/desktop/PREVIEW.md", package / "README-PREVIEW.md")
         shutil.copy2(source / "LICENSE", package / "SONANCE-SOURCE-LICENSE.txt")
         shutil.copy2(source / "THIRD-PARTY-NOTICES.md", package / "THIRD-PARTY-NOTICES.md")

@@ -50,6 +50,7 @@ def main(argv=None):
             state = {"status": "passed", "platform": platform.platform(), "frozen": bool(getattr(sys, "frozen", False)),
                      "native_abi": core.library.sonance_abi_version(), "headphone_count": document.headphone_count,
                      "font_family": font_family, "python_version": platform.python_version(),
+                     "qt_platform": app.platformName(),
                      "preset": document.preset, "response_points": len(document.response),
                      "system_audio_connected": False, "window_size": [window.width(), window.height()]}
             (args.smoke_dir / "smoke.json").write_text(json.dumps(state, indent=2) + "\n")

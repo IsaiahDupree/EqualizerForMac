@@ -26,7 +26,7 @@ for entry in manifest["files"]:
     target = destination / "upstream" / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
-    upstream_notices.append(str(target.relative_to(destination)))
+    upstream_notices.append(target.relative_to(destination).as_posix())
 shutil.copy2(root / "licenses/sources.json", destination / "upstream-sources.json")
 for name in ("PySide6-Essentials", "shiboken6", "pyinstaller"):
     distribution = importlib.metadata.distribution(name)
@@ -38,11 +38,14 @@ for name in ("PySide6-Essentials", "shiboken6", "pyinstaller"):
                 target = destination / name / str(relative).replace("../", "")
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, target)
-                notices.append(str(target.relative_to(destination)))
+                notices.append(target.relative_to(destination).as_posix())
     if name in ("PySide6-Essentials", "shiboken6"):
         if distribution.version != "6.10.2":
             raise RuntimeError("Qt notices are pinned to version 6.10.2")
-        notices.extend(path for path in upstream_notices if "/pyside-6.10.2/" in path)
+        pyside_notices = [path for path in upstream_notices if "/pyside-6.10.2/" in path]
+        if not any(path.endswith("/LGPL-3.0-only.txt") for path in pyside_notices):
+            raise RuntimeError("The upstream Qt for Python LGPL text is missing")
+        notices.extend(pyside_notices)
     if not notices:
         raise RuntimeError("Installed dependency notices are missing: " + name)
     packages.append({"name": name, "version": distribution.version, "notices": notices})

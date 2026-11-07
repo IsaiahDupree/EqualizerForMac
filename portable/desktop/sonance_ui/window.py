@@ -21,6 +21,7 @@ FILTER_NAMES = {"peaking": "Peak", "lowShelf": "Low shelf", "highShelf": "High s
 STYLE = """
 QMainWindow, QWidget { background:#11151e; color:#e9edf5; font-size:13px; }
 QFrame#sidebar { background:#171c27; border-right:1px solid #2b3241; }
+QFrame#sidebar QLabel { background:transparent; }
 QFrame#card { background:#191f2b; border:1px solid #2c3444; border-radius:12px; }
 QFrame#card QWidget { background:transparent; }
 QLabel#brand { font-size:21px; font-weight:650; }
@@ -169,6 +170,8 @@ class EditorWindow(QMainWindow):
         phones.addWidget(self.search)
         phones.addWidget(label(f"{self.document.headphone_count:,} profiles · AutoEq", "muted"))
         self.results = QListWidget()
+        self.results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.results.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.results.setObjectName("headphoneResults")
         self.results.setWordWrap(True)
         self.results.setAccessibleName("Headphone search results")
