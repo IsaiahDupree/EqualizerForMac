@@ -44,6 +44,16 @@ class DesktopIntegrationTests(unittest.TestCase):
         for character in "Sonance EQ 0123456789 ·—":
             self.assertTrue(font.supportsCharacter(ord(character)), repr(character))
 
+    def test_compact_window_keeps_graph_and_helper_text_separate(self):
+        self.window.resize(1100, 740)
+        QTest.qWait(30)
+        self.assertLess(self.window.plot.geometry().bottom(), self.window.plot_hint.geometry().top())
+        self.assertGreaterEqual(self.window.plot.height(), 150)
+        if os.environ.get("SONANCE_UI_TEST_OUTPUT"):
+            directory = Path(os.environ["SONANCE_UI_TEST_OUTPUT"])
+            directory.mkdir(parents=True, exist_ok=True)
+            self.assertTrue(self.window.grab().save(str(directory / "compact-editor.png")))
+
     def test_real_native_bridge_and_bypass(self):
         value = flat_preset()
         value["bands"] = [{"type": "peaking", "frequency": 1000, "gain": 6, "q": 1,

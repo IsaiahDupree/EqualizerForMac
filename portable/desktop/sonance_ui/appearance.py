@@ -8,6 +8,7 @@ from .native import resource_root
 
 
 def configure_font(application):
+    application.setStyle("Fusion")
     root = resource_root()
     relative = "sonance/assets/InterVariable.ttf" if getattr(sys, "frozen", False) else "portable/desktop/assets/InterVariable.ttf"
     identity = QFontDatabase.addApplicationFont(str(root / relative))

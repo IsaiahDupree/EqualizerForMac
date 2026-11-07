@@ -62,7 +62,7 @@ def desktop(request, source, build, output, environment, execute):
                        output, "desktop-interactions", environment=env, timeout=120)
     import re
     count = re.search(r"Ran (\d+) tests", tests)
-    if count is None or int(count[1]) < 8:
+    if count is None or int(count[1]) < 9:
         raise RuntimeError("desktop interaction test report is incomplete")
     with tempfile.TemporaryDirectory(prefix="orion-sonance-ui-") as temporary:
         work = Path(temporary)
@@ -94,7 +94,8 @@ def desktop(request, source, build, output, environment, execute):
         smoke = json.loads((output / "frozen-smoke/smoke.json").read_text())
         if not smoke["frozen"] or smoke["native_abi"] != 1 or smoke["headphone_count"] != 8850 or smoke["response_points"] != 512:
             raise RuntimeError("packaged desktop startup did not verify its real native core/data")
-        if smoke["qt_platform"] != ("windows" if windows else "offscreen") or not smoke["font_family"].startswith("Inter"):
+        if (smoke["qt_platform"] != ("windows" if windows else "offscreen") or
+                not smoke["font_family"].startswith("Inter") or not smoke["layout_valid"]):
             raise RuntimeError("packaged desktop did not use its declared window backend and bundled font")
         # Preserve exact installed license files beside the dynamically linked bundle.
         shutil.copytree(notices, package / "OPEN-SOURCE-LICENSES")

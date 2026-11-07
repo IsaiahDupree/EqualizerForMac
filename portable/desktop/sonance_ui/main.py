@@ -47,10 +47,16 @@ def main(argv=None):
             if not window.grab().save(str(args.smoke_dir / "desktop.png")):
                 app.exit(1)
                 return
+            layout_valid = window.plot.geometry().bottom() < window.plot_hint.geometry().top()
+            if not layout_valid:
+                (args.smoke_dir / "startup-error.txt").write_text("The response graph overlaps its helper text.")
+                app.exit(1)
+                return
             state = {"status": "passed", "platform": platform.platform(), "frozen": bool(getattr(sys, "frozen", False)),
                      "native_abi": core.library.sonance_abi_version(), "headphone_count": document.headphone_count,
                      "font_family": font_family, "python_version": platform.python_version(),
                      "qt_platform": app.platformName(),
+                     "layout_valid": layout_valid,
                      "preset": document.preset, "response_points": len(document.response),
                      "system_audio_connected": False, "window_size": [window.width(), window.height()]}
             (args.smoke_dir / "smoke.json").write_text(json.dumps(state, indent=2) + "\n")

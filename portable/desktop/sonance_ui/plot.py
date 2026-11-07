@@ -18,7 +18,7 @@ class ResponsePlot(QWidget):
         self.dragged = -1
         self.setObjectName("responsePlot")
         self.setAccessibleName("Equalizer frequency response and draggable band handles")
-        self.setMinimumHeight(210)
+        self.setMinimumHeight(150)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         document.changed.connect(self.update)
