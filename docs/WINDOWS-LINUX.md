@@ -13,9 +13,11 @@ Apple platforms. The original filter mathematics, portable preset format,
 headphone correction database and product identity can be reused.
 
 This branch implements a portable C++17 IIR core and real preset/database tools
-in [`portable/`](../portable/README.md). Its Windows and Linux core builds now pass
-on Orion, including sanitizer profiles. Neither a Windows/Linux desktop app nor a
-Store submission has been produced. Windows Store eligibility remains contingent
+in [`portable/`](../portable/README.md), plus a shared Qt desktop preset editor.
+Its Windows and Linux core builds pass on Orion, including sanitizer profiles.
+The desktop preview edits real presets and calculates the actual native response;
+it does not process system playback. No Store submission has been produced.
+Windows Store eligibility remains contingent
 on the finished app, its audio installation model and Microsoft's certification.
 
 The owner-confirmed v1 includes:
@@ -37,14 +39,14 @@ does not establish feature parity with the entire Mac product.
 | Equalizer math | Original C++17 biquad cascade | Same original core | Orion Windows/Linux core builds and sanitizer profiles passed |
 | Presets | Existing v1 JSON and AutoEq SQLite data | Same files | Real database tests passed on both platforms |
 | System processing | User-mode endpoint-effects APO with supported installation package | PipeWire virtual sink/processing node | Not implemented |
-| Controller | Native desktop UI controlling a separate real-time component | Desktop UI controlling the PipeWire node | Not implemented |
+| Controller | Qt desktop editor, with a separate audio component still required | Shared Qt editor, with a PipeWire node still required | Preset editor implemented; playback not connected |
 | Live changes | Validated snapshots and smooth transitions outside the callback | Same discipline | Not implemented |
 | Purchases | Windows-appropriate entitlement/checkout flow | Direct-sale entitlement flow | Not implemented; no price set |
-| Release | Signed offline EXE/MSI candidate; evaluate MSIX controller only with valid separate audio delivery | Native Linux package first; additional formats after testing | Core verification bundles retained; no app installers |
+| Release | Signed offline EXE/MSI candidate; evaluate MSIX controller only with valid separate audio delivery | Native Linux package first; additional formats after testing | Unsigned editor previews; no audio installers |
 
-The UI toolkit is not locked by this branch. Keep the DSP independent of a GUI,
-purchase SDK and device API; choose a distributable toolkit/toolchain only after
-the native audio proof establishes the actual deployment requirements. Existing
+The editor uses PySide6 Essentials 6.10.2 with dynamically linked Qt libraries.
+The DSP remains independent of the GUI, purchase SDK and device API. The native
+audio proof still determines the final deployment requirements. Existing
 Apple StoreKit/RevenueCat entitlements do not automatically license a PC build.
 
 ### Windows: prove the processing and installation path first
@@ -140,8 +142,9 @@ checkout/entitlement and pricing decision before enabling paid distribution.
    retain real audio/latency observations and decide the complete packaging model.
 4. **Linux audio proof:** run an actual PipeWire sink and verify routing and
    restoration on a supported desktop.
-5. **Core desktop apps:** implement editor, headphone search, preset operations,
-   preamp/bypass, device lifecycle and live parameter smoothing.
+5. **Core desktop apps:** the editor, headphone search, preset operations and
+   preamp/bypass response controls are implemented. Connect them to actual audio
+   processing, device lifecycle handling and smooth live parameter changes.
 6. **Release candidates:** qualify install, upgrade and uninstall; produce signed
    Windows and native Linux packages; implement real licensing and retain notices.
 7. **Store submission:** verify account/product identity, signing, package route,
@@ -150,9 +153,11 @@ checkout/entitlement and pricing decision before enabling paid distribution.
 The initial shared Orion worker inventory did not contain a Sonance build lane.
 The follow-up owner request to build/test on Orion added a task-scoped copied
 runtime and registered the exact source/toolchain profiles. Four core build/test
-jobs passed; the shared Orion controller was preserved. No desktop application,
-hardware audio qualification or cloud build was started. Details and artifact
-hashes are in the [Orion report](reports/ORION-CORE-BUILD-2026-11-06.md).
+jobs passed; the shared Orion controller was preserved. That initial milestone
+did not build a desktop application or qualify hardware audio. Details and
+artifact hashes are in the [core report](reports/ORION-CORE-BUILD-2026-11-06.md).
+The subsequent desktop editor work is described in the
+[UI guide](DESKTOP-EDITOR.md) and [Orion UI report](reports/ORION-DESKTOP-UI-2026-11-07.md).
 
 The strategy capability packet returned `research_required` in capability-audit
 mode. It supplies no current Windows/Linux demand, pricing or revenue validation.
@@ -185,7 +190,8 @@ Store approval. Source references above were checked November 6, 2026.
   No failure was removed from the test suite.
 
 These initial results and the later Orion builds establish the portable library
-milestone. Desktop application builds, real system-audio output, smooth live
-editing, UI, licensing, install/uninstall and Store certification remain open.
+milestone. The desktop preset editor extends that work. Real system-audio output,
+smooth live audio editing, licensing, install/uninstall and Store certification
+remain open.
 The initial host verification receipt is in
 [`reports/WINDOWS-LINUX-CORE-2026-11-06.json`](reports/WINDOWS-LINUX-CORE-2026-11-06.json).

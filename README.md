@@ -36,10 +36,11 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).
 
-**Windows/Linux port:** the [portable core](portable/README.md) and
-[delivery plan](docs/WINDOWS-LINUX.md) begin the core-EQ port. Native audio
-backends, desktop apps and Microsoft Store packaging are still under development;
-there are no Windows/Linux release binaries yet.
+**Windows/Linux port:** the [desktop preset editor](docs/DESKTOP-EDITOR.md) uses
+the [portable C++ core](portable/README.md) for its response graph, with editable
+bands, headphone search, preamp/bypass and preset persistence. Unsigned developer
+previews are being qualified on Orion. System audio integration and Microsoft
+Store release work remain in the [delivery plan](docs/WINDOWS-LINUX.md).
 
 ## Build & run
 

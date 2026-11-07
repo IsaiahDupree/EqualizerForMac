@@ -1,8 +1,9 @@
 # Sonance EQ portable core
 
 This directory starts the Windows/Linux core-EQ port. It contains an original,
-dependency-free C++17 IIR processor and Python preset/database tools. It is a
-library and command-line tooling, not an installable system equalizer yet.
+dependency-free C++17 IIR processor, Python preset/database tools and a Qt desktop
+preset editor. System audio integration is still required for an installable
+system equalizer.
 
 The [cross-platform delivery plan](../docs/WINDOWS-LINUX.md) records the Windows
 audio integration, Linux routing, desktop UI and Store release work still needed.
@@ -22,7 +23,8 @@ must run only while processing is stopped; one thread owns each processor and
 its channel layout stays fixed for the stream. Live UI parameter transfer and
 click-free wet/dry transitions still need platform integration. Immediate bypass
 has no transition ramp. This library does not include FIR, Mid-Side, an audio
-driver, an APO, a device router, a limiter or a GUI.
+driver, an APO, a device router or a limiter. The desktop editor is a separate
+consumer of its versioned response-evaluation C ABI.
 
 ```cpp
 #include <sonance/eq.hpp>
@@ -59,6 +61,23 @@ accompany a distributed copy. No upstream project code has been imported.
 
 ## Verification
 
+### Desktop editor
+
+[`desktop/`](../docs/DESKTOP-EDITOR.md) provides the Windows/Linux interface:
+draggable bands, all eight filter shapes, preamp/bypass response preview, actual
+headphone search, v1 JSON import/export, named preset copies and session restore.
+It uses PySide6 Essentials 6.10.2 with an unmodified bundled Inter font; the graph
+calls `sonance_eq_bridge` rather than duplicating filter equations in Python.
+The app explicitly reports that playback is not connected.
+
+The Orion UI profiles run real Qt mouse/key integration tests and freeze an
+executable with PyInstaller 6.22.3. Packaged startup tests remove development
+resource overrides and verify the bundled native core/database. Full dependency
+notices, versions and upstream source hashes accompany the preview ZIPs.
+They are unsigned developer previews, not audio installers or Store packages.
+
+### Core and native bridge
+
 Small, serial compiler/unit checks (no network or package installation):
 
 ```sh
@@ -85,7 +104,8 @@ Linux verification ran in Orion's Ubuntu WSL2 environment. The CMake/CTest route
 real database tests and 1,584 cross-platform coefficient cases passed; see the
 [retained Orion report](../docs/reports/ORION-CORE-BUILD-2026-11-06.md).
 
-These are portable-core verification bundles. Native desktop UI, system-audio
-integration, latency and actual hardware playback still need qualification.
+The original bundles verify the portable core. Desktop preview qualification is
+recorded separately in the [UI report](../docs/reports/ORION-DESKTOP-UI-2026-11-07.md).
+System-audio integration, latency and physical playback remain unverified.
 The task controller is stopped after its jobs finish; no recurring job or cloud
 build is installed.

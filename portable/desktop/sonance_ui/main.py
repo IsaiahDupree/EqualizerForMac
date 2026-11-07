@@ -7,9 +7,9 @@ import platform
 import sys
 
 from PySide6.QtCore import QStandardPaths, QTimer
-from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from .appearance import configure_font
 from .document import Document
 from .native import NativeCore, database_path
 from .window import EditorWindow
@@ -25,8 +25,8 @@ def main(argv=None):
     app.setApplicationName("SonanceEQ")
     app.setApplicationDisplayName("Sonance EQ")
     app.setOrganizationName("Sonance")
-    app.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.GeneralFont))
     try:
+        font_family = configure_font(app)
         settings = args.settings_dir or Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation))
         core = NativeCore()
         document = Document(core, database_path(), settings)
@@ -49,6 +49,7 @@ def main(argv=None):
                 return
             state = {"status": "passed", "platform": platform.platform(), "frozen": bool(getattr(sys, "frozen", False)),
                      "native_abi": core.library.sonance_abi_version(), "headphone_count": document.headphone_count,
+                     "font_family": font_family, "python_version": platform.python_version(),
                      "preset": document.preset, "response_points": len(document.response),
                      "system_audio_connected": False, "window_size": [window.width(), window.height()]}
             (args.smoke_dir / "smoke.json").write_text(json.dumps(state, indent=2) + "\n")

@@ -6,15 +6,18 @@ import tempfile
 import unittest
 
 from PySide6.QtCore import QPoint, Qt
+from PySide6.QtGui import QRawFont
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 import presets
 from sonance_ui.document import Document, flat_preset
+from sonance_ui.appearance import configure_font
 from sonance_ui.native import NativeCore, database_path
 from sonance_ui.window import EditorWindow
 
 APP = QApplication.instance() or QApplication([])
+configure_font(APP)
 
 
 class DesktopIntegrationTests(unittest.TestCase):
@@ -34,6 +37,12 @@ class DesktopIntegrationTests(unittest.TestCase):
         self.window.close()
         APP.processEvents()
         self.directory.cleanup()
+
+    def test_bundled_font_has_real_latin_glyphs(self):
+        font = QRawFont.fromFont(APP.font())
+        self.assertTrue(font.isValid())
+        for character in "Sonance EQ 0123456789 ·—":
+            self.assertTrue(font.supportsCharacter(ord(character)), repr(character))
 
     def test_real_native_bridge_and_bypass(self):
         value = flat_preset()

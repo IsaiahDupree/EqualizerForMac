@@ -33,6 +33,38 @@ Source: https://github.com/jaakkopasanen/AutoEq
 
 ---
 
+## Windows/Linux desktop preview
+
+The desktop editor uses unmodified, dynamically linked **Qt / PySide6 / shiboken6
+6.10.2** under the LGPLv3 option. These components remain under their own
+licenses. Their original license texts, upstream Qt third-party notices and
+source references are retained in `portable/desktop/licenses/` and copied into
+`OPEN-SOURCE-LICENSES/` in preview bundles. The wheels can omit open-source
+license files, so their metadata alone is not treated as a complete notice set.
+
+- Qt source: https://github.com/qt/qtbase/tree/v6.10.2 and
+  https://github.com/qt/qtsvg/tree/v6.10.2
+- Qt for Python source: https://github.com/pyside/pyside-setup/tree/v6.10.2
+- Licensing: https://doc.qt.io/qtforpython-6.10/licenses.html
+
+The editor bundles the unmodified **Inter 4.1** font by Rasmus Andersson and the
+Inter Project Authors under the **SIL Open Font License 1.1**. Its exact font
+and license are in `portable/desktop/assets/`.
+Source: https://github.com/rsms/inter/tree/v4.1
+
+Frozen previews include **Python** under the PSF license. **PyInstaller 6.22.3**
+is the packaging tool; its GPL license includes an exception for distributing
+applications built with it. Exact runtime/build-tool versions and notices are
+recorded in each bundle's `OPEN-SOURCE-LICENSES/packages.json`.
+Source: https://pyinstaller.org/en/stable/license.html
+
+These third-party components are excluded from Sonance's original-code license.
+The previews are internal developer builds; corresponding-source delivery and
+all third-party distribution obligations must be verified before external
+distribution or Store submission.
+
+---
+
 ## RevenueCat — purchases SDK
 
 In-app purchases use the **RevenueCat** `purchases-ios` SDK, licensed under the **MIT License**.

@@ -62,7 +62,7 @@ def desktop(request, source, build, output, environment, execute):
                        output, "desktop-interactions", environment=env, timeout=120)
     import re
     count = re.search(r"Ran (\d+) tests", tests)
-    if count is None or int(count[1]) < 7:
+    if count is None or int(count[1]) < 8:
         raise RuntimeError("desktop interaction test report is incomplete")
     with tempfile.TemporaryDirectory(prefix="orion-sonance-ui-") as temporary:
         work = Path(temporary)
@@ -73,6 +73,7 @@ def desktop(request, source, build, output, environment, execute):
                    "--add-data", str(source / "Sources/SonanceEQ/Resources/autoeq.sqlite") + os.pathsep + "sonance/data",
                    "--add-data", str(source / "LICENSE") + os.pathsep + "sonance/notices",
                    "--add-data", str(source / "THIRD-PARTY-NOTICES.md") + os.pathsep + "sonance/notices",
+                   "--add-data", str(source / "portable/desktop/assets") + os.pathsep + "sonance/assets",
                    source / "portable/desktop/app.py"]
         execute(command, output, "desktop-package", environment=env, timeout=420)
         package = work / "dist/SonanceEQ"

@@ -1,4 +1,4 @@
-# Orion core build lane
+# Orion core and desktop build lane
 
 `software.sonance_core` runs on a task-scoped copy of the existing authenticated
 Orion control API. It uses the ordinary serialized workers queue, resource
@@ -6,7 +6,10 @@ admission, idempotency keys, per-job receipts and artifact hashes. It does not
 replace the shared controller or start any recurring automation.
 
 The registered profile names are `windows`, `windows-asan`, `linux`,
-`linux-sanitizers` and `prepare-linux`. API requests accept only `project_id`,
+`linux-sanitizers`, `prepare-linux`, `prepare-ui-windows`, `prepare-ui-linux`,
+`windows-ui` and `linux-ui`. UI build profiles become available after their
+dedicated Python/Qt environments have been installed and registered with exact
+runtime hashes. API requests accept only `project_id`,
 `profile`, `expected_source_sha256` and a 60–900 second `timeout_sec`. They accept
 no caller command, executable, compiler flags or filesystem paths.
 
@@ -21,7 +24,7 @@ Orion authentication is reused without putting its value in arguments or logs.
 The controller's native Windows Python launches the fixed `run.py` harness.
 Windows uses the installed Visual Studio 2022 Build Tools. Linux profiles use
 Ubuntu WSL2 and verify the registered GCC, CMake, Ninja, CTest and Python hashes.
-The setup profile installs only free CMake/Ninja packages; on this device it also
+The core setup profile installs only free CMake/Ninja packages; on this device it also
 finished the previously half-configured `man-db` package before installation.
 
 Each build uses a verified source copy, one compiler job, CMake/CTest, the actual
@@ -30,6 +33,15 @@ instrument the compiled binaries; the generated compile commands are retained.
 Bundles contain the verification executables, core header, preset tool, actual
 database and license notices. They are developer verification bundles, not
 desktop application installers.
+
+The UI setup profiles install pinned, free Python wheels in dedicated Orion
+virtual environments. Linux also installs the declared Qt runtime/font libraries.
+`windows-ui` and `linux-ui` add actual Qt widget integration tests, screenshots,
+PyInstaller packaging, frozen-app startup with bundled resources, and verified
+upstream dependency notices. The finished ZIP is an unsigned editor preview;
+system audio is not connected. Larger artifacts use the existing authenticated
+SSH file-transfer route and are checked against worker artifact SHA-256 hashes;
+the control API's inline-fetch limit is not increased.
 
 Submit through the existing saved-token client once the task API/tunnel is up:
 
@@ -57,4 +69,5 @@ snapshots use the actual identity/hash returned by registration. The controller
 and its SSH forward are closed after artifact verification. Reusing this lane
 for a later assigned task requires starting that task controller; it does not
 enable background builds. Full results are in the
-[Orion verification report](../../docs/reports/ORION-CORE-BUILD-2026-11-06.md).
+[core verification report](../../docs/reports/ORION-CORE-BUILD-2026-11-06.md) and
+[desktop UI report](../../docs/reports/ORION-DESKTOP-UI-2026-11-07.md).
