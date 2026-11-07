@@ -72,7 +72,7 @@ void stream_tests() {
     const auto config = prepare({FilterType::peaking, 1000, 9, 1.2});
     std::vector<float> signal(32768);
     for (std::size_t i = 0; i < signal.size(); ++i)
-        signal[i] = static_cast<float>(0.1 * std::sin(2 * pi * 1000 * i / 48000));
+        signal[i] = static_cast<float>(0.1 * std::sin(2 * pi * 1000 * static_cast<double>(i) / 48000));
     auto wet = signal;
     processor.configure(config);
     require(processor.process(wet.data(), wet.size(), 1), "mono sine processed");
@@ -101,8 +101,8 @@ void stream_tests() {
         require(stereo[i * 2 + 1] == 0, "no crosstalk into silent right channel");
     double real = 0, imaginary = 0;
     for (std::size_t i = 0; i < 4096; ++i) {
-        real += stereo[i * 2] * std::cos(2 * pi * 1000 * i / 48000);
-        imaginary -= stereo[i * 2] * std::sin(2 * pi * 1000 * i / 48000);
+        real += stereo[i * 2] * std::cos(2 * pi * 1000 * static_cast<double>(i) / 48000);
+        imaginary -= stereo[i * 2] * std::sin(2 * pi * 1000 * static_cast<double>(i) / 48000);
     }
     near(std::hypot(real, imaginary) / 0.2, config.magnitude(1000), 1e-6,
          "processed impulse agrees with analytic transfer function");

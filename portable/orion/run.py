@@ -40,9 +40,12 @@ def msvc_environment(profile):
     script = profile["tools"]["vsdevcmd"]["path"]
     if any(char in script for char in '\n\r"&|<>^%'):
         raise ValueError("unexpected characters in the registered Visual Studio path")
-    command = f'call "{script}" -no_logo -arch=x64 -host_arch=x64 >nul && set'
-    done = subprocess.run(["cmd.exe", "/d", "/s", "/c", command], capture_output=True,
-                          text=True, encoding="utf-8", errors="replace", timeout=60, check=True)
+    with tempfile.TemporaryDirectory(prefix="orion-msvc-env-") as directory:
+        wrapper = Path(directory) / "environment.cmd"
+        wrapper.write_text(f'@echo off\ncall "{script}" -no_logo -arch=x64 -host_arch=x64 >nul\n'
+                           'if errorlevel 1 exit /b %errorlevel%\nset\n', encoding="utf-8")
+        done = subprocess.run(["cmd.exe", "/d", "/c", str(wrapper)], capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", timeout=60, check=True)
     result = os.environ.copy()
     for line in done.stdout.splitlines():
         key, separator, value = line.partition("=")
