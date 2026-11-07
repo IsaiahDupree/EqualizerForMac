@@ -44,6 +44,28 @@ print(json.dumps(result))
     return json.loads(done.stdout)
 
 
+def ui_runtime(python, *, linux=False):
+    code = """import hashlib,importlib.metadata,json,pathlib,sys
+import PySide6,PySide6.QtCore,PySide6.QtGui,PySide6.QtWidgets,shiboken6
+paths={'python':sys.executable,'QtCore':PySide6.QtCore.__file__,'QtGui':PySide6.QtGui.__file__,'QtWidgets':PySide6.QtWidgets.__file__}
+pins={name:{'path':str(pathlib.Path(path).resolve()),'sha256':hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()} for name,path in paths.items()}
+versions={name:importlib.metadata.version(name) for name in ['PySide6-Essentials','shiboken6','pyinstaller']}
+print(json.dumps({'python_exe':sys.executable,'pins':pins,'versions':versions,'qt_version':PySide6.QtCore.qVersion()}))
+"""
+    import base64
+    encoded = base64.b64encode(code.encode()).decode()
+    command = [str(python), "-c", "import base64;exec(base64.b64decode('" + encoded + "'))"]
+    if linux:
+        command = ["wsl.exe", "-d", "Ubuntu", "-u", "root", "--", *command]
+    done = subprocess.run(command, capture_output=True, text=True, timeout=40)
+    if done.returncode:
+        return None
+    result = json.loads(done.stdout)
+    if result["versions"]["PySide6-Essentials"] != "6.10.2" or result["versions"]["pyinstaller"] != "6.22.3":
+        raise RuntimeError("UI environment versions differ from the pinned requirements")
+    return result
+
+
 def register(root, source):
     sys.path.insert(0, str(source / "portable/orion"))
     import worker
@@ -65,6 +87,19 @@ def register(root, source):
     if set(linux) == {"compiler", "cmake", "ninja", "ctest", "python"}:
         profiles["linux"] = {"kind": "linux", "distribution": "Ubuntu", "sanitizers": False, "tools": linux}
         profiles["linux-sanitizers"] = {"kind": "linux", "distribution": "Ubuntu", "sanitizers": True, "tools": linux}
+    requirements = source / "portable/desktop/requirements.txt"
+    if requirements.is_file():
+        tag = sha(requirements)[:12]
+        windows_venv = Path("E:/orion-tools/sonance-ui") / tag / "windows"
+        linux_venv = "/opt/orion/sonance-ui/" + tag + "/linux"
+        profiles["prepare-ui-windows"] = {"kind": "windows-ui-setup", "venv": str(windows_venv)}
+        profiles["prepare-ui-linux"] = {"kind": "linux-ui-setup", "distribution": "Ubuntu", "venv": linux_venv}
+        windows_ui = ui_runtime(windows_venv / "Scripts/python.exe") if (windows_venv / "Scripts/python.exe").is_file() else None
+        linux_ui = ui_runtime(linux_venv + "/bin/python", linux=True)
+        if windows_ui:
+            profiles["windows-ui"] = {**profiles["windows"], "desktop": True, "ui_runtime": windows_ui}
+        if linux_ui and "linux" in profiles:
+            profiles["linux-ui"] = {**profiles["linux"], "desktop": True, "ui_runtime": linux_ui}
     project = {"root": str(source), "source_sha256": worker.digest(worker.source_manifest(source)),
                "python_exe": sys.executable, "python_exe_sha256": sha(sys.executable), "profiles": profiles}
     registry = root / "control/sonance-projects.json"

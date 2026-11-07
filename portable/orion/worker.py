@@ -10,7 +10,8 @@ import shutil
 import stat
 
 PARAMETERS = ["project_id", "profile", "expected_source_sha256", "timeout_sec"]
-PROFILES = {"windows", "windows-asan", "linux", "linux-sanitizers", "prepare-linux"}
+PROFILES = {"windows", "windows-asan", "linux", "linux-sanitizers", "prepare-linux",
+            "prepare-ui-windows", "prepare-ui-linux", "windows-ui", "linux-ui"}
 
 
 def digest(value):
@@ -77,6 +78,9 @@ def validate(params, input_root):
         for name, entry in selected["tools"].items():
             if file_sha(entry["path"]) != entry["sha256"]:
                 raise ValueError("registered Windows tool changed: " + name)
+        for entry in selected.get("ui_runtime", {}).get("pins", {}).values():
+            if file_sha(entry["path"]) != entry["sha256"]:
+                raise ValueError("registered desktop UI runtime changed")
     return {"project_id": identity, "profile": profile, "expected_source_sha256": expected,
             "timeout_sec": timeout, "runtime_sha256": digest(selected)}, "cpu-heavy", 0
 

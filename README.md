@@ -1,6 +1,6 @@
 # Sonance EQ
 
-[![CI](https://github.com/IsaiahDupree/EqualizerForMac/actions/workflows/ci.yml/badge.svg)](https://github.com/IsaiahDupree/EqualizerForMac/actions/workflows/ci.yml)
+[Owned-hardware verification](docs/reports/ORION-CORE-BUILD-2026-11-06.md)
 
 A **system-wide equalizer for macOS** — high-precision, driverless, with a huge preset library. Every app's audio (Spotify, Safari, Zoom, games, system sounds) flows through a real-time parametric EQ before it reaches your speakers.
 

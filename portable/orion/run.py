@@ -57,7 +57,7 @@ def msvc_environment(profile):
 def native(request, source, output):
     profile = request["profile"]
     windows = platform.system() == "Windows"
-    if windows != (profile["kind"] == "windows"):
+    if platform.system() != ("Windows" if profile["kind"] == "windows" else "Linux"):
         raise RuntimeError("profile is not running on its declared native OS")
     tools = profile["tools"]
     for name, entry in tools.items():
@@ -120,12 +120,16 @@ def native(request, source, output):
             for relative in ("portable/include/sonance/eq.hpp", "portable/presets.py", "portable/README.md",
                              "Sources/SonanceEQ/Resources/autoeq.sqlite", "LICENSE", "THIRD-PARTY-NOTICES.md"):
                 package.write(source / relative, relative)
-        return {"status": "passed", "profile": request["profile_name"], "platform": platform.platform(),
+        result = {"status": "passed", "profile": request["profile_name"], "platform": platform.platform(),
                 "machine": platform.machine(), "compiler_id": compiler_id[1], "compiler_version": compiler_version[1],
                 "source_sha256": request["source_sha256"], "dsp_assertions": int(matches[0]),
                 "preset_tests": int(count[1]), "coefficient_cases": len(requests.splitlines()),
                 "sanitizers": (["address"] if windows else ["address", "undefined", "leaks"]) if profile["sanitizers"] else [],
                 "hardware_audio_verified": False, "retail_app_produced": False}
+        if profile.get("desktop"):
+            import ui_jobs
+            result.update(ui_jobs.desktop(request, source, build, output, env, execute))
+        return result
 
 
 def main():
@@ -140,7 +144,7 @@ def main():
     if args.linux:
         source, output = Path(wsl_path(request["source"])), Path(wsl_path(request["output"]))
     output.mkdir(parents=True, exist_ok=True)
-    if request["profile"]["kind"] in {"linux", "linux-setup"} and not args.linux:
+    if request["profile"]["kind"] in {"linux", "linux-setup", "linux-ui-setup"} and not args.linux:
         if platform.system() != "Windows":
             raise RuntimeError("the bridge must start on the registered Windows worker")
         command = ["wsl.exe", "-d", request["profile"]["distribution"], "-u", "root", "--",
@@ -154,7 +158,10 @@ def main():
         return
     if worker.digest(worker.source_manifest(source)) != request["source_sha256"]:
         raise RuntimeError("source changed before execution")
-    if request["profile"]["kind"] == "linux-setup":
+    if request["profile"]["kind"] in {"windows-ui-setup", "linux-ui-setup"}:
+        import ui_jobs
+        result = ui_jobs.setup(request, source, output, execute)
+    elif request["profile"]["kind"] == "linux-setup":
         setup_env = {**os.environ, "DEBIAN_FRONTEND": "noninteractive"}
         package_state, _ = execute(["/usr/bin/dpkg-query", "-W", "-f=${Status}", "man-db"],
                                    output, "dpkg-state", environment=setup_env)

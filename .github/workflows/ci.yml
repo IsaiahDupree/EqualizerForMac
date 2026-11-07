@@ -1,8 +1,8 @@
 name: CI
 
-# Cloud build execution requires exact workload authorization, including free
-# runners. Source pushes and PRs must not start hosted compute. Tests remain
-# available for an explicitly authorized manual run or owned-hardware execution.
+# Historical definition retained; GitHub Actions is banned, including manual
+# dispatch and self-hosted runners. Repository Actions permissions stay disabled.
+# Run these checks directly on owned hardware under the Orion placement policy.
 on:
   workflow_dispatch:
 

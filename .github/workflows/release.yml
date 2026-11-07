@@ -1,5 +1,8 @@
 name: Release (Developer ID DMG)
 
+# GitHub Actions is banned. This historical definition must not be dispatched;
+# keep repository Actions permissions disabled and build directly on owned hardware.
+
 # Push a version tag (e.g. v1.0.0) → build, sign (Developer ID), notarize, staple, DMG, GitHub Release.
 # Configure these repo secrets first (Settings → Secrets and variables → Actions):
 #   DEVELOPER_ID_CERT_P12        base64 of your "Developer ID Application" .p12  (base64 -i cert.p12 | pbcopy)
