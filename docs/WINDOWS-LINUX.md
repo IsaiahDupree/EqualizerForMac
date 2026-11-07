@@ -171,6 +171,12 @@ Store approval. Source references above were checked November 6, 2026.
 - Five Python integration tests passed against the existing read-only database.
   Its actual row count is 8,850; that count does not mean every correction has
   been individually qualified on new hardware.
+- The existing Mac project's normal pre-commit test gate passed with zero
+  failures and 16 reported skips. The initial uncached attempt could not resolve
+  RevenueCat; the hook's documented pinned-cache path succeeded with the actual
+  5.102.0 checkout at `193efe58cf61f9d59da4076dd394490ae59e86a9`, automatic package
+  resolution disabled and one build job. No tests were removed or excluded by
+  this change. This is Mac regression coverage, not Windows/Linux qualification.
 - Address/undefined-behavior sanitizer execution timed out twice at 60 seconds.
   A separate minimal sanitizer program also exceeded its five-second limit.
   Sanitizer coverage is therefore **not verified**; no passing sanitizer result

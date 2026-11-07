@@ -68,5 +68,31 @@
     "source_ci_triggers": [
       "workflow_dispatch"
     ]
+  },
+  "portable_core_commit": "421bb395ba54c1768357114ef6aa45ee90ec21ba",
+  "mac_project_validation": {
+    "result": "Passed",
+    "summary": {
+      "passedTests": 270,
+      "skippedTests": 16,
+      "failedTests": 0,
+      "totalTestCount": 286
+    },
+    "device_configuration_summary": {
+      "passedTests": 4266,
+      "skippedTests": 16,
+      "failedTests": 0
+    },
+    "result_bundle": "build/mac-validation/Logs/Test/Test-SonanceEQ-2026.11.06_20-33-46--0500.xcresult",
+    "build_jobs": 1,
+    "parallel_testing_enabled": false,
+    "cached_dependency": {
+      "name": "purchases-ios-spm",
+      "version": "5.102.0",
+      "revision": "193efe58cf61f9d59da4076dd394490ae59e86a9"
+    },
+    "automatic_package_resolution_disabled": true,
+    "initial_uncached_attempt": "Package dependency resolution failed; retry with the documented verified cache passed.",
+    "tests_removed_or_excluded_by_this_change": false
   }
 }
