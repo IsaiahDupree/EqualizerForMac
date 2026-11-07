@@ -69,7 +69,11 @@ def register(root, source):
                "python_exe": sys.executable, "python_exe_sha256": sha(sys.executable), "profiles": profiles}
     registry = root / "control/sonance-projects.json"
     registry.parent.mkdir(parents=True, exist_ok=True)
-    registry.write_text(json.dumps({"projects": {identity: project}}, indent=2) + "\n")
+    data = json.loads(registry.read_text()) if registry.exists() else {"projects": {}}
+    data["projects"][identity] = project
+    temporary = registry.with_suffix(".tmp")
+    temporary.write_text(json.dumps(data, indent=2) + "\n")
+    os.replace(temporary, registry)
     receipt(root, "register.sonance_core", "success", project_id=identity,
             source_sha256=project["source_sha256"], profiles=sorted(profiles))
     return identity, project
