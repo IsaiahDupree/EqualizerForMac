@@ -36,6 +36,11 @@ A **system-wide equalizer for macOS** — high-precision, driverless, with a hug
 **📖 Using the app:** see the [**User Manual**](docs/MANUAL.md).
 For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-checked technical findings see [`docs/RESEARCH.md`](docs/RESEARCH.md).
 
+**Windows/Linux port:** the [portable core](portable/README.md) and
+[delivery plan](docs/WINDOWS-LINUX.md) begin the core-EQ port. Native audio
+backends, desktop apps and Microsoft Store packaging are still under development;
+there are no Windows/Linux release binaries yet.
+
 ## Build & run
 
 Requires **macOS 14.4+** and **Xcode 16+** (developed on macOS 26 / Xcode 26). The Xcode project is generated from `project.yml` with [XcodeGen](https://github.com/yonki/XcodeGen).

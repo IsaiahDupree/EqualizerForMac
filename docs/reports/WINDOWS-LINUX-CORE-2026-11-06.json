@@ -1,0 +1,72 @@
+{
+  "core_assertions": 5278,
+  "swift_parity_cases": 1584,
+  "swift_preset_roundtrip_cases": 6,
+  "sanitizers": false,
+  "max_absolute_coefficient_error": 1.121779571455761e-07,
+  "shipping_source_sha256": {
+    "Sources/SonanceEQ/DSP/Biquad.swift": "298bededeef87097d18223a7aa4d5f4331b8710a2882600f6d4970426725af22",
+    "Sources/SonanceEQ/Models/EQBand.swift": "96673a8846cb0d77a1b878d688ea779deb8a29d90f437634469133db61042955",
+    "Sources/SonanceEQ/DSP/FilterDesigner.swift": "530662732b6fdac7e6a0d4a2e8a3b5574b130e1cc6e9ee00f5eba7d9ba947b13",
+    "Sources/SonanceEQ/Models/PresetFile.swift": "ba4215af861176d45c825a38ed3fe14bc33b634d05181095760ee434185e8ef3",
+    "Sources/SonanceEQ/Models/Presets.swift": "f3546f0ad4903475d631560d92d76e242afe554dcea6fbb0f96049e378e14905"
+  },
+  "portable_source_sha256": {
+    "portable/CMakeLists.txt": "03a3cbaf31e5838b91951f0f5046008b5ca4b5089ad03196c7ade655034267f2",
+    "portable/README.md": "885f5327c0a97693bf940e2e2423009842537ffaac5823a01cf65a4c295bf6c2",
+    "portable/include/sonance/eq.hpp": "d846d3aeae6b0d223f59cbcb43e55da44d379d0ca8421f0b50fef7011ae61870",
+    "portable/presets.py": "c39ead15c2e9a758bf6276af7dd93bd7ddfb931614534182ea8c6e1cbe1b6556",
+    "portable/tests/coefficients.cpp": "c3b4dfe2e8e256d2d3a07f9caa944083ac6e5657b9724eb134661a82eb866576",
+    "portable/tests/core_tests.cpp": "1f0e6e49f259005a3e85d41f18391ab759899a70e2ac8040148c306ed9d3ff57",
+    "portable/tests/swift_coefficients.swift": "93727452026205da1cd7386bd25eba39b9563ab02e794ee3ea5f0efc9aaa6315",
+    "portable/tests/swift_presets.swift": "9218eaba6c4800177c166bbead112dd6739eb474a786231c8a7ba096d4567040",
+    "portable/tests/test_presets.py": "1bc3a9f1419ec03c267bc89b99ce31b6eb3407d2ab4d062f99f6264019732e21",
+    "portable/tests/verify.py": "325ff5b3568b793f57d4b43f9a16d7528ee18fe77f234adfd6bf1a37b38115b7"
+  },
+  "native_windows_build_verified": false,
+  "native_linux_build_verified": false,
+  "hardware_audio_verified": false,
+  "milestone": "portable_core_and_preset_tools_only",
+  "recorded_at_utc": "2026-11-07T01:31:10.267106+00:00",
+  "source_base_commit": "f64ae0eb509371db6fc948439eacd3c467519e6e",
+  "host_platform": "macOS-26.6.1-arm64-arm-64bit-Mach-O",
+  "compiler": "Apple clang version 17.0.0 (clang-1700.3.19.1)",
+  "real_database_integration_tests_passed": 5,
+  "headphone_database_rows": 8850,
+  "headphone_database_sha256": "7657d42f27496e6ffa5afd32b30c868912dacca8d902d1788c20cdf146e45e66",
+  "sanitizer_status": {
+    "verified": false,
+    "core_attempts": 2,
+    "core_timeout_seconds": 60,
+    "minimal_program_also_timed_out": true,
+    "minimal_program_timeout_seconds": 5
+  },
+  "orion_observation": {
+    "reachable": true,
+    "worker_capability_command_id": "cmd_f876696dfdf143e18cd967f40b0c50c1",
+    "existing_software_job_types": [
+      "software.react_native",
+      "software.web_build"
+    ],
+    "sonance_cpp_desktop_job_registered": false
+  },
+  "release_state": {
+    "windows_audio_backend_implemented": false,
+    "linux_audio_backend_implemented": false,
+    "desktop_ui_implemented": false,
+    "packages_produced": false,
+    "store_submission_created": false,
+    "publisher_account_verified": false,
+    "code_signing_assets_verified": false
+  },
+  "cloud_execution": {
+    "jobs_started_by_this_task": 0,
+    "github_workflow_states": {
+      "ci.yml": "disabled_manually",
+      "release.yml": "disabled_manually"
+    },
+    "source_ci_triggers": [
+      "workflow_dispatch"
+    ]
+  }
+}

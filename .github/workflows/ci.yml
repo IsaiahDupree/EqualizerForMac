@@ -1,9 +1,9 @@
 name: CI
 
-# Public repo → free macOS runners, so CI runs on every push/PR. (Private repos need Actions billing.)
+# Cloud build execution requires exact workload authorization, including free
+# runners. Source pushes and PRs must not start hosted compute. Tests remain
+# available for an explicitly authorized manual run or owned-hardware execution.
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:

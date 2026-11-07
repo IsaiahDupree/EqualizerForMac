@@ -1,0 +1,182 @@
+# Sonance EQ for Windows and Linux
+
+Owner scope, November 6, 2026: core system-wide EQ, headphone presets, preamp and
+bypass first. Mixer and recorder are outside this first release. The existing Mac
+product is Sonance EQ (`EqualizerForMac`); “Sonity Q” refers to that product here.
+
+## Feasibility and current delivery
+
+Both ports are technically feasible, but the SwiftUI/Core Audio application
+cannot be recompiled unchanged for either OS. Its UI, system capture/reinjection,
+Accelerate DSP, route watchdogs, Apple purchase handling and packaging are tied to
+Apple platforms. The original filter mathematics, portable preset format,
+headphone correction database and product identity can be reused.
+
+This branch implements a portable C++17 IIR core and real preset/database tools
+in [`portable/`](../portable/README.md). Neither a Windows/Linux desktop app nor a
+Store submission has been produced. Windows Store eligibility remains contingent
+on the finished app, its audio installation model and Microsoft's certification.
+
+The owner-confirmed v1 includes:
+
+- System-wide stereo EQ on explicitly supported outputs.
+- Graphic/parametric editing using the existing eight filter shapes.
+- Searchable existing AutoEq headphone corrections, retaining attribution.
+- Preamp, bypass/A-B and existing v1 preset import/export.
+- Output selection, startup/stop recovery and restoration of normal playback.
+
+Per-app routing/EQ, recording, FIR, Mid-Side, legacy PulseAudio support and broad
+hardware/architecture coverage are subsequent work. An early core milestone
+does not establish feature parity with the entire Mac product.
+
+## Platform architecture
+
+| Layer | Windows candidate | Linux candidate | State |
+|---|---|---|---|
+| Equalizer math | Original C++17 biquad cascade | Same original core | Implemented; host tests and Swift comparison |
+| Presets | Existing v1 JSON and AutoEq SQLite data | Same files | Read-only search/export and validation implemented |
+| System processing | User-mode endpoint-effects APO with supported installation package | PipeWire virtual sink/processing node | Not implemented |
+| Controller | Native desktop UI controlling a separate real-time component | Desktop UI controlling the PipeWire node | Not implemented |
+| Live changes | Validated snapshots and smooth transitions outside the callback | Same discipline | Not implemented |
+| Purchases | Windows-appropriate entitlement/checkout flow | Direct-sale entitlement flow | Not implemented; no price set |
+| Release | Signed offline EXE/MSI candidate; evaluate MSIX controller only with valid separate audio delivery | Native Linux package first; additional formats after testing | No packages produced |
+
+The UI toolkit is not locked by this branch. Keep the DSP independent of a GUI,
+purchase SDK and device API; choose a distributable toolkit/toolchain only after
+the native audio proof establishes the actual deployment requirements. Existing
+Apple StoreKit/RevenueCat entitlements do not automatically license a PC build.
+
+### Windows: prove the processing and installation path first
+
+[WASAPI loopback](https://learn.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording)
+captures audio already being rendered. Inference from that behavior: replaying an
+equalized loopback stream alone does not replace the original system output and
+can duplicate audio or create feedback. It is not a complete system-wide EQ.
+
+Microsoft supports [custom APOs](https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/audio-processing-object-architecture),
+which execute DSP in the Windows audio engine. An APO is a user-mode COM DLL,
+not necessarily a new kernel-mode driver. The documented installation route uses
+an INF/driver package; configuration UI is separate. Its real-time methods must
+be nonblocking. See [APO implementation](https://learn.microsoft.com/en-us/windows-hardware/drivers/audio/implementing-audio-processing-objects)
+and [deployment classes](https://learn.microsoft.com/en-us/windows-hardware/drivers/dashboard/deploying-audio-processing-objects).
+
+First qualify an original APO on one declared Orion output and prove reversible
+installation without replacing unrelated vendor effects. Inspect the existing
+endpoint graph and supported association mechanism. Do not assume arbitrary
+Realtek, USB, HDMI, Bluetooth, RAW, exclusive or protected streams are covered.
+If a supported APO association cannot meet the compatibility target, evaluate an
+original virtual endpoint and its separate driver/signing burden before promising
+that hardware. No third-party paid driver or commercial SDK was selected.
+
+Acceptance must include silence/bypass behavior, finite output, stopped-stream
+configuration, smooth parameter updates, device invalidation/reconnect, reboot,
+sleep/wake, crash recovery and clean rollback/uninstall. A DSP unit test cannot
+validate audibility, latency or compatibility.
+
+### Linux: PipeWire first
+
+[PipeWire streams](https://docs.pipewire.org/page_streams.html) support virtual
+audio sinks and processing callbacks. Its [filter-chain module](https://docs.pipewire.org/page_module_filter_chain.html)
+also supports configurable biquads and raw coefficients. These are viable native
+processing mechanisms; no macOS process-tap equivalent needs to be ported.
+
+Implement a Sonance stereo sink and explicitly connect its processed output to a
+physical output. Select it and move existing application streams only when the
+user starts EQ. Preserve and restore the prior default; exclude Sonance's own
+sink from output choices to prevent recursion. Test session-manager behavior,
+device removal, rate changes, Bluetooth switching and process exit on an actual
+PipeWire desktop. WSLg audio alone does not prove a Linux desktop release.
+
+Start qualification with one declared Linux distribution/desktop and package the
+actual native dependencies. Do not claim every Linux distribution or ship an
+AppImage/Flatpak label before runtime dependencies and routing permissions work.
+
+## Microsoft Store route
+
+Microsoft Store supports both MSIX desktop apps and traditional EXE/MSI apps.
+There are two materially different delivery paths:
+
+| Route | Microsoft behavior | Consequence for Sonance |
+|---|---|---|
+| MSIX | Store hosts and re-signs the app package after certification | Good for a self-contained controller, but not a way to install an audio driver |
+| EXE/MSI | Publisher supplies a signed, standalone silent installer at an immutable versioned HTTPS URL | Candidate for a complete desktop/audio installer, subject to certification and driver requirements |
+
+[MSIX does not support drivers](https://learn.microsoft.com/en-us/windows/msix/packaging-tool/know-your-installer).
+[MSIX Store signing](https://learn.microsoft.com/en-us/windows/apps/publish/faq/get-started-with-the-microsoft-store)
+does not replace signing or delivery requirements for a separate audio component.
+[EXE/MSI requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/app-package-requirements)
+require the installer and its PE files to carry a trusted certificate; setup must
+work offline and silently (UAC is allowed). That route does not provide installer
+hosting. Packaging alone does not guarantee that a particular audio design passes
+certification.
+
+Use the native audio proof to choose between those routes. Before selecting a
+paid certificate/signing service, inspect existing owner signing assets and the
+exact app/driver policy. No certificate, cloud signing, hosted build, add-on or
+new hosting expense is authorized by this branch.
+
+Current [developer onboarding](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account)
+offers free Individual and Company registration through the new Store entry
+flow. This does not remove identity/business verification or guarantee that an
+existing account has the necessary publishing rights. No owner Partner Center
+session, reserved product name or certificate was verified in this audit.
+
+[Submission requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/create-app-submission)
+include a verified publishing account, product name, package/installer, listing
+assets, age ratings and appropriate privacy/support information. Capture actual
+Windows screenshots and describe only qualified hardware/features. Resolve the
+checkout/entitlement and pricing decision before enabling paid distribution.
+
+## Build and release gates
+
+1. **Portable behavior:** compare the original C++ math with shipping Swift;
+   verify real sample processing, boundaries and actual headphone preset files.
+2. **Native Orion build lane:** register a pinned C++/Windows SDK toolchain and
+   source snapshot with typed bounded build/test actions and hashed artifacts.
+   Register the Linux toolchain separately. No generic shell job or cloud runner.
+3. **Windows audio proof:** install/rollback an original APO on a declared output,
+   retain real audio/latency observations and decide the complete packaging model.
+4. **Linux audio proof:** run an actual PipeWire sink and verify routing and
+   restoration on a supported desktop.
+5. **Core desktop apps:** implement editor, headphone search, preset operations,
+   preamp/bypass, device lifecycle and live parameter smoothing.
+6. **Release candidates:** qualify install, upgrade and uninstall; produce signed
+   Windows and native Linux packages; implement real licensing and retain notices.
+7. **Store submission:** verify account/product identity, signing, package route,
+   listing and commercial terms, then submit the actual qualified Windows build.
+
+Orion was reachable during this audit. Its deployed `workers.capabilities`
+reported `software.web_build` and `software.react_native`, but no Sonance/C++
+desktop build profile. Thus full native build/qualification needs a registered
+lane; this is not an unavailable-computer or missing-admin-permission claim.
+Small serial host unit compiles are separate from that release prerequisite.
+No Windows/Linux release build, hardware audio qualification or cloud build was
+started. The repository's Apple-only Mac validation uses one build job.
+
+The strategy capability packet returned `research_required` in capability-audit
+mode. It supplies no current Windows/Linux demand, pricing or revenue validation.
+This engineering feasibility finding does not imply validated market demand or a
+Store approval. Source references above were checked November 6, 2026.
+
+## Initial validation
+
+- 5,278 C++ DSP assertions passed on the Mac host, including real sine/impulse
+  processing, callback block boundaries, channel isolation, bypass history and
+  invalid-input rejection.
+- 1,584 coefficient cases matched the actual shipping Swift implementation
+  within the comparison tolerance; maximum absolute coefficient difference was
+  approximately 1.12e-7.
+- Six presets round-tripped through the shipping Swift encoder/decoder,
+  including all five built-in presets and an actual bundled headphone correction.
+- Five Python integration tests passed against the existing read-only database.
+  Its actual row count is 8,850; that count does not mean every correction has
+  been individually qualified on new hardware.
+- Address/undefined-behavior sanitizer execution timed out twice at 60 seconds.
+  A separate minimal sanitizer program also exceeded its five-second limit.
+  Sanitizer coverage is therefore **not verified**; no passing sanitizer result
+  is claimed. No failure was removed from the test suite.
+
+These results establish the portable library milestone only. Full native builds,
+real system-audio output, smooth live editing, UI, licensing, install/uninstall and
+Store certification remain open. The retained verification receipt is in
+[`reports/WINDOWS-LINUX-CORE-2026-11-06.json`](reports/WINDOWS-LINUX-CORE-2026-11-06.json).
