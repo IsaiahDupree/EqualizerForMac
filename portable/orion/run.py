@@ -155,10 +155,19 @@ def main():
     if worker.digest(worker.source_manifest(source)) != request["source_sha256"]:
         raise RuntimeError("source changed before execution")
     if request["profile"]["kind"] == "linux-setup":
+        setup_env = {**os.environ, "DEBIAN_FRONTEND": "noninteractive"}
+        package_state, _ = execute(["/usr/bin/dpkg-query", "-W", "-f=${Status}", "man-db"],
+                                   output, "dpkg-state", environment=setup_env)
+        configured = []
+        if "half-configured" in package_state:
+            execute(["/usr/bin/dpkg", "--configure", "man-db"], output, "dpkg-man-db",
+                    environment=setup_env, timeout=240)
+            configured.append("man-db")
         execute(["/usr/bin/apt-get", "update", "-qq"], output, "apt-update", timeout=240)
         execute(["/usr/bin/apt-get", "install", "-y", "--no-install-recommends", "cmake", "ninja-build"],
-                output, "apt-install", timeout=240)
-        result = {"status": "passed", "profile": "prepare-linux", "installed_packages": ["cmake", "ninja-build"]}
+                output, "apt-install", environment=setup_env, timeout=240)
+        result = {"status": "passed", "profile": "prepare-linux", "installed_packages": ["cmake", "ninja-build"],
+                  "configured_packages": configured}
     else:
         result = native(request, source, output)
     if worker.digest(worker.source_manifest(source)) != request["source_sha256"]:
