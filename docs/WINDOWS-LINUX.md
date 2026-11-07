@@ -96,6 +96,11 @@ AppImage/Flatpak label before runtime dependencies and routing permissions work.
 
 ## Microsoft Store route
 
+Owner update, November 7: use **JetKVM** for store account access and publishing,
+with builds and checks on **Orion**. The [store publishing runbook](STORE-PUBLISHING.md)
+records the observed account state, Windows package-signing distinction and
+Linux storefront requirements.
+
 Microsoft Store supports both MSIX desktop apps and traditional EXE/MSI apps.
 There are two materially different delivery paths:
 
