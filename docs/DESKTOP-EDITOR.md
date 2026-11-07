@@ -56,8 +56,12 @@ Qt widget integration tests use the real native library, database and temporary
 files. They exercise mouse/key input, band editing, graph dragging, preamp,
 bypass, headphone loading, import/export, named copies and session restoration.
 The frozen-app smoke run removes development resource overrides before launch.
-Offscreen screenshots verify Qt rendering; they do not establish accessibility,
-physical display scaling or system audio behavior on every supported desktop.
+Windows additionally launches the packaged app through its normal window backend.
+The nine integration tests include actual font glyphs and the compact layout.
+Linux rendering is verified with the offscreen backend in Ubuntu WSL2. These
+checks do not establish accessibility, physical display scaling or system audio
+behavior on every supported desktop. Results and screenshots are in the
+[Orion UI report](reports/ORION-DESKTOP-UI-2026-11-07.md).
 
 ## Distribution boundary
 

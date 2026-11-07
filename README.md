@@ -39,7 +39,8 @@ For the roadmap see [`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md); for the fact-che
 **Windows/Linux port:** the [desktop preset editor](docs/DESKTOP-EDITOR.md) uses
 the [portable C++ core](portable/README.md) for its response graph, with editable
 bands, headphone search, preamp/bypass and preset persistence. Unsigned developer
-previews are being qualified on Orion. System audio integration and Microsoft
+previews passed the [Orion UI checks](docs/reports/ORION-DESKTOP-UI-2026-11-07.md).
+System audio integration and Microsoft
 Store release work remain in the [delivery plan](docs/WINDOWS-LINUX.md).
 
 ## Build & run

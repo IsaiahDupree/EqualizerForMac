@@ -1,0 +1,521 @@
+{
+  "date": "2026-11-07",
+  "milestone": "Windows/Linux core EQ desktop preset editor preview",
+  "source": {
+    "root": "E:/orion-jobs/sonance-ui-128fc09",
+    "snapshot_root": "E:/orion-jobs/sonance-ui-c856f9a",
+    "project_id": "sonance-core-539dab747809",
+    "source_sha256": "539dab747809e4410278e1372fbada26c4dad9e90b0dac2253c34b17b6188bf5",
+    "profiles": [
+      "linux",
+      "linux-sanitizers",
+      "linux-ui",
+      "prepare-linux",
+      "prepare-ui-linux",
+      "prepare-ui-windows",
+      "windows",
+      "windows-asan",
+      "windows-ui"
+    ],
+    "revision": "c856f9aa7623fced3282e3fa00cf7db85871208c"
+  },
+  "source_archive": {
+    "revision": "c856f9aa7623fced3282e3fa00cf7db85871208c",
+    "archive_sha256": "c4007cf1c8dd7531a8853ce9a9f1c1028cd9e78fdb592b801b860f5a02e94a72",
+    "snapshot_root": "E:/orion-jobs/sonance-ui-c856f9a",
+    "controller_root": "E:/orion-jobs/sonance-ui-128fc09"
+  },
+  "profiles": {
+    "windows-ui": {
+      "job_id": "wrk_6fdf981cd4804b1198055b63f3693778",
+      "result": {
+        "status": "passed",
+        "profile": "windows-ui",
+        "platform": "Windows-10-10.0.26200-SP0",
+        "machine": "AMD64",
+        "compiler_id": "MSVC",
+        "compiler_version": "19.43.34810.0",
+        "source_sha256": "539dab747809e4410278e1372fbada26c4dad9e90b0dac2253c34b17b6188bf5",
+        "dsp_assertions": 5278,
+        "preset_tests": 5,
+        "coefficient_cases": 1584,
+        "sanitizers": [],
+        "hardware_audio_verified": false,
+        "retail_app_produced": false,
+        "desktop_widget_tests": 9,
+        "desktop_bundle": "SonanceEQ-Windows-UI-Preview.zip",
+        "frozen_startup": {
+          "status": "passed",
+          "platform": "Windows-10-10.0.26200-SP0",
+          "frozen": true,
+          "native_abi": 1,
+          "headphone_count": 8850,
+          "font_family": "Inter Variable Text",
+          "python_version": "3.11.9",
+          "qt_platform": "windows",
+          "layout_valid": true,
+          "preset": {
+            "app": "SonanceEQ",
+            "version": 1,
+            "name": "Flat",
+            "preampDb": 0,
+            "bands": [
+              {
+                "type": "peaking",
+                "frequency": 31.25,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 62.5,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 125,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 250,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 500,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 1000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 2000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 4000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 8000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 16000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              }
+            ]
+          },
+          "response_points": 512,
+          "system_audio_connected": false,
+          "window_size": [
+            1100,
+            749
+          ]
+        },
+        "qt_versions": {
+          "PySide6-Essentials": "6.10.2",
+          "shiboken6": "6.10.2",
+          "pyinstaller": "6.22.3"
+        },
+        "system_audio_connected": false
+      }
+    },
+    "linux-ui": {
+      "job_id": "wrk_e87a38f262664b189d4613c6d514f66f",
+      "result": {
+        "status": "passed",
+        "profile": "linux-ui",
+        "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "compiler_id": "GNU",
+        "compiler_version": "13.3.0",
+        "source_sha256": "539dab747809e4410278e1372fbada26c4dad9e90b0dac2253c34b17b6188bf5",
+        "dsp_assertions": 5278,
+        "preset_tests": 5,
+        "coefficient_cases": 1584,
+        "sanitizers": [],
+        "hardware_audio_verified": false,
+        "retail_app_produced": false,
+        "desktop_widget_tests": 9,
+        "desktop_bundle": "SonanceEQ-Linux-UI-Preview.zip",
+        "frozen_startup": {
+          "status": "passed",
+          "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+          "frozen": true,
+          "native_abi": 1,
+          "headphone_count": 8850,
+          "font_family": "Inter Variable",
+          "python_version": "3.12.3",
+          "qt_platform": "offscreen",
+          "layout_valid": true,
+          "preset": {
+            "app": "SonanceEQ",
+            "version": 1,
+            "name": "Flat",
+            "preampDb": 0,
+            "bands": [
+              {
+                "type": "peaking",
+                "frequency": 31.25,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 62.5,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 125,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 250,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 500,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 1000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 2000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 4000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 8000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              },
+              {
+                "type": "peaking",
+                "frequency": 16000,
+                "gain": 0,
+                "q": 1.414,
+                "enabled": true,
+                "slopeDbPerOct": 12
+              }
+            ]
+          },
+          "response_points": 512,
+          "system_audio_connected": false,
+          "window_size": [
+            1320,
+            850
+          ]
+        },
+        "qt_versions": {
+          "PySide6-Essentials": "6.10.2",
+          "shiboken6": "6.10.2",
+          "pyinstaller": "6.22.3"
+        },
+        "system_audio_connected": false
+      }
+    },
+    "windows-asan": {
+      "job_id": "wrk_622a673768454d58a4049fde2350584b",
+      "result": {
+        "status": "passed",
+        "profile": "windows-asan",
+        "platform": "Windows-10-10.0.26200-SP0",
+        "machine": "AMD64",
+        "compiler_id": "MSVC",
+        "compiler_version": "19.43.34810.0",
+        "source_sha256": "83f6ad5524cd2b34cd8d62d9c82b2dbfb8f94490920166b7d2283b3d3ea8e6f3",
+        "dsp_assertions": 5278,
+        "preset_tests": 5,
+        "coefficient_cases": 1584,
+        "sanitizers": [
+          "address"
+        ],
+        "hardware_audio_verified": false,
+        "retail_app_produced": false
+      }
+    },
+    "linux-sanitizers": {
+      "job_id": "wrk_dccb6d897a5840f89387d97d8d0010d6",
+      "result": {
+        "status": "passed",
+        "profile": "linux-sanitizers",
+        "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "machine": "x86_64",
+        "compiler_id": "GNU",
+        "compiler_version": "13.3.0",
+        "source_sha256": "83f6ad5524cd2b34cd8d62d9c82b2dbfb8f94490920166b7d2283b3d3ea8e6f3",
+        "dsp_assertions": 5278,
+        "preset_tests": 5,
+        "coefficient_cases": 1584,
+        "sanitizers": [
+          "address",
+          "undefined",
+          "leaks"
+        ],
+        "hardware_audio_verified": false,
+        "retail_app_produced": false
+      }
+    }
+  },
+  "bundle_inspection": [
+    {
+      "profile": "windows-ui",
+      "archive": "SonanceEQ-Windows-UI-Preview.zip",
+      "entries": 350,
+      "bytes": 42026653,
+      "sha256": "d35f496795ee1c1ea9f791ccdb5b3c3f3c5d85e6cc7effe8ce045b6b4275724a",
+      "packages": [
+        {
+          "name": "PySide6-Essentials",
+          "version": "6.10.2"
+        },
+        {
+          "name": "shiboken6",
+          "version": "6.10.2"
+        },
+        {
+          "name": "pyinstaller",
+          "version": "6.22.3"
+        },
+        {
+          "name": "Python",
+          "version": "3.11.9"
+        },
+        {
+          "name": "Qt",
+          "version": "6.10.2"
+        },
+        {
+          "name": "Inter",
+          "version": "4.1"
+        }
+      ],
+      "native_executable_magic": "PE",
+      "linux_executable_permission_verified": false
+    },
+    {
+      "profile": "linux-ui",
+      "archive": "SonanceEQ-Linux-UI-Preview.zip",
+      "entries": 438,
+      "bytes": 90529572,
+      "sha256": "307fd260d632d70c4d2ac78c3e1995985f72be279bc2403d66b5c941a64e7819",
+      "packages": [
+        {
+          "name": "PySide6-Essentials",
+          "version": "6.10.2"
+        },
+        {
+          "name": "shiboken6",
+          "version": "6.10.2"
+        },
+        {
+          "name": "pyinstaller",
+          "version": "6.22.3"
+        },
+        {
+          "name": "Python",
+          "version": "3.12.3"
+        },
+        {
+          "name": "Qt",
+          "version": "6.10.2"
+        },
+        {
+          "name": "Inter",
+          "version": "4.1"
+        }
+      ],
+      "native_executable_magic": "ELF",
+      "linux_executable_permission_verified": true
+    }
+  ],
+  "coefficient_comparison": {
+    "cases": 1584,
+    "maximum_absolute_difference": 2.220446049250313e-16,
+    "tolerance": 1e-12
+  },
+  "sanitizer_source_equivalence": [
+    {
+      "path": "portable/include/sonance/eq.hpp",
+      "sha256": "d846d3aeae6b0d223f59cbcb43e55da44d379d0ca8421f0b50fef7011ae61870"
+    },
+    {
+      "path": "portable/desktop/native/bridge.h",
+      "sha256": "87361caf310e15c6c4074d9a5e3c7da418f7e8ea237df6c5c16898497e50507a"
+    },
+    {
+      "path": "portable/desktop/native/bridge.cpp",
+      "sha256": "7bbb9f083332c1a948f972180742c059bbca1db4a333128174b7759427f86c7c"
+    },
+    {
+      "path": "portable/CMakeLists.txt",
+      "sha256": "35f884ce4fdbe740dcf4c33ad771bb95ae9f009745c410882e31780d4ea9838e"
+    },
+    {
+      "path": "portable/tests/bridge_tests.cpp",
+      "sha256": "8ddf0333965bf231e713bf73920472cc712b0ebf17c91e5ebf0dd6120d166909"
+    }
+  ],
+  "runtime_checks": [
+    {
+      "check": "inventory",
+      "exit_code": 0
+    },
+    {
+      "check": "inventory-check",
+      "exit_code": 0
+    },
+    {
+      "check": "schemas",
+      "exit_code": 0
+    },
+    {
+      "check": "agent-list",
+      "exit_code": 0
+    },
+    {
+      "check": "api-self-test",
+      "exit_code": 0
+    },
+    {
+      "check": "monitor",
+      "exit_code": 0
+    },
+    {
+      "check": "browser",
+      "exit_code": 0
+    }
+  ],
+  "github_actions": {
+    "permissions": {
+      "enabled": false,
+      "sha_pinning_required": false
+    },
+    "queued_runs": [
+      {
+        "id": 35555866651,
+        "status": "queued",
+        "created_at": "2026-09-21T02:57:27Z"
+      }
+    ],
+    "shutdown_attempts": [
+      {
+        "id": 35555866651,
+        "action": "cancel",
+        "exit_code": 1,
+        "response": "{\"message\":\"Cannot cancel a workflow run that has not been queued yet.\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflow-runs#cancel-a-workflow-run\",\"status\":\"409\"}gh: Cannot cancel a workflow run that has not been queued yet. (HTTP 409)\n"
+      },
+      {
+        "id": 35555866651,
+        "action": "force-cancel",
+        "exit_code": 1,
+        "response": "{\"message\":\"Cannot cancel a workflow run that has not been queued yet.\",\"documentation_url\":\"https://docs.github.com/rest/actions/workflow-runs#force-cancel-a-workflow-run\",\"status\":\"409\"}gh: Cannot cancel a workflow run that has not been queued yet. (HTTP 409)\n"
+      }
+    ]
+  },
+  "cleanup": {
+    "task_controller_stopped": true,
+    "task_forward_closed": true,
+    "stopped_forward_client_pids": [
+      75338
+    ],
+    "shared_health": {
+      "bind": "127.0.0.1",
+      "control_home": "C:\\orion\\control",
+      "device": "orion",
+      "ok": true,
+      "pid": 23172,
+      "platform": "Windows-10-10.0.26200-SP0",
+      "port": 8788,
+      "service": "orion-control-api",
+      "time": "2026-11-07T15:12:16.255937+00:00",
+      "token_configured": true
+    },
+    "shared_original_pid": 23172,
+    "shared_controller_preserved": true
+  },
+  "system_audio_connected": false,
+  "signed_installer": false,
+  "store_submission": false,
+  "limitations": [
+    "Linux verification used Ubuntu WSL2 with the Qt offscreen backend, not a physical Linux desktop.",
+    "Windows frozen startup used the normal Windows window backend in the Orion task session.",
+    "No system-audio processing, physical playback, device lifecycle or smooth live audio transitions were qualified.",
+    "Unsigned owner developer previews; no install/upgrade/uninstall, entitlement flow or Store certification.",
+    "Bundled dependency notices are retained; external distribution still needs a complete corresponding-source and license compliance review."
+  ]
+}
