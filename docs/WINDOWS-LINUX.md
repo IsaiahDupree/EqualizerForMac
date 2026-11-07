@@ -13,7 +13,8 @@ Apple platforms. The original filter mathematics, portable preset format,
 headphone correction database and product identity can be reused.
 
 This branch implements a portable C++17 IIR core and real preset/database tools
-in [`portable/`](../portable/README.md). Neither a Windows/Linux desktop app nor a
+in [`portable/`](../portable/README.md). Its Windows and Linux core builds now pass
+on Orion, including sanitizer profiles. Neither a Windows/Linux desktop app nor a
 Store submission has been produced. Windows Store eligibility remains contingent
 on the finished app, its audio installation model and Microsoft's certification.
 
@@ -33,13 +34,13 @@ does not establish feature parity with the entire Mac product.
 
 | Layer | Windows candidate | Linux candidate | State |
 |---|---|---|---|
-| Equalizer math | Original C++17 biquad cascade | Same original core | Implemented; host tests and Swift comparison |
-| Presets | Existing v1 JSON and AutoEq SQLite data | Same files | Read-only search/export and validation implemented |
+| Equalizer math | Original C++17 biquad cascade | Same original core | Orion Windows/Linux core builds and sanitizer profiles passed |
+| Presets | Existing v1 JSON and AutoEq SQLite data | Same files | Real database tests passed on both platforms |
 | System processing | User-mode endpoint-effects APO with supported installation package | PipeWire virtual sink/processing node | Not implemented |
 | Controller | Native desktop UI controlling a separate real-time component | Desktop UI controlling the PipeWire node | Not implemented |
 | Live changes | Validated snapshots and smooth transitions outside the callback | Same discipline | Not implemented |
 | Purchases | Windows-appropriate entitlement/checkout flow | Direct-sale entitlement flow | Not implemented; no price set |
-| Release | Signed offline EXE/MSI candidate; evaluate MSIX controller only with valid separate audio delivery | Native Linux package first; additional formats after testing | No packages produced |
+| Release | Signed offline EXE/MSI candidate; evaluate MSIX controller only with valid separate audio delivery | Native Linux package first; additional formats after testing | Core verification bundles retained; no app installers |
 
 The UI toolkit is not locked by this branch. Keep the DSP independent of a GUI,
 purchase SDK and device API; choose a distributable toolkit/toolchain only after
@@ -131,9 +132,10 @@ checkout/entitlement and pricing decision before enabling paid distribution.
 
 1. **Portable behavior:** compare the original C++ math with shipping Swift;
    verify real sample processing, boundaries and actual headphone preset files.
-2. **Native Orion build lane:** register a pinned C++/Windows SDK toolchain and
-   source snapshot with typed bounded build/test actions and hashed artifacts.
-   Register the Linux toolchain separately. No generic shell job or cloud runner.
+2. **Native Orion build lane:** the portable-core `software.sonance_core` lane is
+   registered and verified for Windows/MSVC and Ubuntu WSL2/GCC, with bounded
+   build/test actions and hashed artifacts. Extend the declared source/build
+   profile when the actual desktop apps and audio components are implemented.
 3. **Windows audio proof:** install/rollback an original APO on a declared output,
    retain real audio/latency observations and decide the complete packaging model.
 4. **Linux audio proof:** run an actual PipeWire sink and verify routing and
@@ -145,13 +147,12 @@ checkout/entitlement and pricing decision before enabling paid distribution.
 7. **Store submission:** verify account/product identity, signing, package route,
    listing and commercial terms, then submit the actual qualified Windows build.
 
-Orion was reachable during this audit. Its deployed `workers.capabilities`
-reported `software.web_build` and `software.react_native`, but no Sonance/C++
-desktop build profile. Thus full native build/qualification needs a registered
-lane; this is not an unavailable-computer or missing-admin-permission claim.
-Small serial host unit compiles are separate from that release prerequisite.
-No Windows/Linux release build, hardware audio qualification or cloud build was
-started. The repository's Apple-only Mac validation uses one build job.
+The initial shared Orion worker inventory did not contain a Sonance build lane.
+The follow-up owner request to build/test on Orion added a task-scoped copied
+runtime and registered the exact source/toolchain profiles. Four core build/test
+jobs passed; the shared Orion controller was preserved. No desktop application,
+hardware audio qualification or cloud build was started. Details and artifact
+hashes are in the [Orion report](reports/ORION-CORE-BUILD-2026-11-06.md).
 
 The strategy capability packet returned `research_required` in capability-audit
 mode. It supplies no current Windows/Linux demand, pricing or revenue validation.
@@ -179,10 +180,12 @@ Store approval. Source references above were checked November 6, 2026.
   this change. This is Mac regression coverage, not Windows/Linux qualification.
 - Address/undefined-behavior sanitizer execution timed out twice at 60 seconds.
   A separate minimal sanitizer program also exceeded its five-second limit.
-  Sanitizer coverage is therefore **not verified**; no passing sanitizer result
-  is claimed. No failure was removed from the test suite.
+  The initial **Mac sanitizer coverage** was not verified. The subsequent Orion
+  sanitizer profiles passed; the original Mac timeout receipt is retained.
+  No failure was removed from the test suite.
 
-These results establish the portable library milestone only. Full native builds,
-real system-audio output, smooth live editing, UI, licensing, install/uninstall and
-Store certification remain open. The retained verification receipt is in
+These initial results and the later Orion builds establish the portable library
+milestone. Desktop application builds, real system-audio output, smooth live
+editing, UI, licensing, install/uninstall and Store certification remain open.
+The initial host verification receipt is in
 [`reports/WINDOWS-LINUX-CORE-2026-11-06.json`](reports/WINDOWS-LINUX-CORE-2026-11-06.json).

@@ -78,8 +78,14 @@ cmake --build build/portable --parallel 1
 ctest --test-dir build/portable --output-on-failure
 ```
 
-Full native builds and sustained audio qualification belong on Orion through a
-registered typed build job. The current Orion worker inventory does not include
-a Sonance/C++ desktop build profile; native Windows/Linux compilation, the CMake
-route, latency and real hardware behavior have not been verified. Host unit
-checks and mathematical parity do not establish those properties.
+Native builds and sustained audio qualification belong on Orion. The
+[`software.sonance_core` build lane](orion/README.md) has now passed Windows x64
+release/AddressSanitizer and Linux x64 release/AddressSanitizer/UBSan/leak checks.
+Linux verification ran in Orion's Ubuntu WSL2 environment. The CMake/CTest route,
+real database tests and 1,584 cross-platform coefficient cases passed; see the
+[retained Orion report](../docs/reports/ORION-CORE-BUILD-2026-11-06.md).
+
+These are portable-core verification bundles. Native desktop UI, system-audio
+integration, latency and actual hardware playback still need qualification.
+The task controller is stopped after its jobs finish; no recurring job or cloud
+build is installed.

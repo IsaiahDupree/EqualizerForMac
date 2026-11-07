@@ -1,0 +1,493 @@
+{
+  "recorded_at_utc": "2026-11-07T04:56:46.061153+00:00",
+  "scope": "portable core and preset tools; no desktop audio/UI implementation",
+  "source_commit": "ea83b6d4fe6e210cf42a77ac9d3fcd8e1d7aa4cc",
+  "source_sha256": "a650a7cdffba6fd6ad70471ac3b5eca4ffd0ec2ecd0ce15ba530f919afa85ac9",
+  "project_id": "sonance-core-a650a7cdffba",
+  "profiles": [
+    {
+      "status": "passed",
+      "profile": "windows",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "compiler_id": "MSVC",
+      "compiler_version": "19.43.34810.0",
+      "source_sha256": "a650a7cdffba6fd6ad70471ac3b5eca4ffd0ec2ecd0ce15ba530f919afa85ac9",
+      "dsp_assertions": 5278,
+      "preset_tests": 5,
+      "coefficient_cases": 1584,
+      "sanitizers": [],
+      "hardware_audio_verified": false,
+      "retail_app_produced": false,
+      "job_id": "wrk_ee24d36d01ed421eb3af78d944e80b4d",
+      "started_at": "2026-11-07T04:45:08.253372+00:00",
+      "completed_at": "2026-11-07T04:45:18.021534+00:00",
+      "artifact_manifest": [
+        {
+          "bytes": 36864,
+          "name": "bin/sonance_eq_coefficients.exe",
+          "sha256": "5dfef351b9059981f590b54c01b046733705b984e3c503be93d546cced24c90b"
+        },
+        {
+          "bytes": 48128,
+          "name": "bin/sonance_eq_tests.exe",
+          "sha256": "96ff28e3898ba448579883479195a9d74f1a4f38c4cab4b7b8b46b5ec7e7eeaf"
+        },
+        {
+          "bytes": 286,
+          "name": "build.log",
+          "sha256": "61193f3a25bafeaee59a9bffcb7736ee82339a0d79c9da52b5b31064969b22cc"
+        },
+        {
+          "bytes": 16321,
+          "name": "CMakeCache.txt",
+          "sha256": "5a935649d42fc5ac28db46b5ddb5a4dff394e57cd2f8b5c2a41b6aa4bb4863e7"
+        },
+        {
+          "bytes": 442156,
+          "name": "coefficients.jsonl",
+          "sha256": "33e127fcfc56590f6bfd7cbc6cc4dc725ce28c97511771d12c15ef4cf14783ef"
+        },
+        {
+          "bytes": 442156,
+          "name": "coefficients.log",
+          "sha256": "33e127fcfc56590f6bfd7cbc6cc4dc725ce28c97511771d12c15ef4cf14783ef"
+        },
+        {
+          "bytes": 1806,
+          "name": "compile_commands.json",
+          "sha256": "b47557ca618bfbabd6d3f79e2ff230c5e12e7aff9eb0a7821d423a25861ddb6a"
+        },
+        {
+          "bytes": 528,
+          "name": "configure.log",
+          "sha256": "94c530c1652f34dfdc97706257074e38bda7d49a9d079afbc55abc9fe3c166ec"
+        },
+        {
+          "bytes": 1287,
+          "name": "ctest.log",
+          "sha256": "012ef16362ffc26bdcfab49cf90978c92b2f7923d0a60b6850452150f260c3c6"
+        },
+        {
+          "bytes": 833,
+          "name": "LastTest.log",
+          "sha256": "b228d1304db8ab695ba07b1366bdbe670acc90b6284af8e7bd011a1b35b0d81c"
+        },
+        {
+          "bytes": 851,
+          "name": "presets.log",
+          "sha256": "c47b140689da455e50a1d8e5c21ace4ecaef83ad5e2b438bfe6b366c0947ba0b"
+        },
+        {
+          "bytes": 55554,
+          "name": "requests.txt",
+          "sha256": "cd96f1a3cd2245bca405cca70fa9a5235b01569b0b022b18e8c928fb476e2928"
+        },
+        {
+          "bytes": 444,
+          "name": "result.json",
+          "sha256": "69ff3bdae9429c86997b260d1773c5241129306854e5d84b173e0e06c9f1643b"
+        },
+        {
+          "bytes": 1096382,
+          "name": "sonance-core-windows.zip",
+          "sha256": "e680108edc79797464d85f9ac031fd4a51ec23b493378abb122586e75426e4e6"
+        },
+        {
+          "bytes": 2928,
+          "name": "manifest.json",
+          "sha256": "effdb2afe4379829c797683d49349d51e7686311561b0ef5b95f01e155582307"
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "profile": "windows-asan",
+      "platform": "Windows-10-10.0.26200-SP0",
+      "machine": "AMD64",
+      "compiler_id": "MSVC",
+      "compiler_version": "19.43.34810.0",
+      "source_sha256": "a650a7cdffba6fd6ad70471ac3b5eca4ffd0ec2ecd0ce15ba530f919afa85ac9",
+      "dsp_assertions": 5278,
+      "preset_tests": 5,
+      "coefficient_cases": 1584,
+      "sanitizers": [
+        "address"
+      ],
+      "hardware_audio_verified": false,
+      "retail_app_produced": false,
+      "job_id": "wrk_f63e74c7a70e4218965dad06480b5d7d",
+      "started_at": "2026-11-07T04:46:20.888604+00:00",
+      "completed_at": "2026-11-07T04:46:29.052212+00:00",
+      "artifact_manifest": [
+        {
+          "bytes": 82944,
+          "name": "bin/sonance_eq_coefficients.exe",
+          "sha256": "fd1d0229d98ef1e22550e7fe4a3f0abb5660a4a9f67b3978e891c53e72258a35"
+        },
+        {
+          "bytes": 110080,
+          "name": "bin/sonance_eq_tests.exe",
+          "sha256": "e7309728bcccd522521ecd4896cc75b9f63aa88200b75d8bf49a8c391a871fde"
+        },
+        {
+          "bytes": 286,
+          "name": "build.log",
+          "sha256": "61193f3a25bafeaee59a9bffcb7736ee82339a0d79c9da52b5b31064969b22cc"
+        },
+        {
+          "bytes": 16320,
+          "name": "CMakeCache.txt",
+          "sha256": "be743d146d1a95304806d1ff3a7c1a353d0ffbaf209aacc650bcf7b49060a952"
+        },
+        {
+          "bytes": 442156,
+          "name": "coefficients.jsonl",
+          "sha256": "33e127fcfc56590f6bfd7cbc6cc4dc725ce28c97511771d12c15ef4cf14783ef"
+        },
+        {
+          "bytes": 442156,
+          "name": "coefficients.log",
+          "sha256": "33e127fcfc56590f6bfd7cbc6cc4dc725ce28c97511771d12c15ef4cf14783ef"
+        },
+        {
+          "bytes": 1852,
+          "name": "compile_commands.json",
+          "sha256": "789ba5215b93782e6110c520c23d7b37760ae86d4f97981d909420d7dc142c99"
+        },
+        {
+          "bytes": 528,
+          "name": "configure.log",
+          "sha256": "1a63a0f6fb8bd938a540954e9184dab700305ac51bd987f308971c5447710606"
+        },
+        {
+          "bytes": 1287,
+          "name": "ctest.log",
+          "sha256": "8bf1f4556504e83315aa2a45a2b373eee9114753307643e8c91cebba8f4814ed"
+        },
+        {
+          "bytes": 833,
+          "name": "LastTest.log",
+          "sha256": "0d692a28c35a6a4ea461742a11b53a6cf17a3a78e520204fe3c677e9510f92dd"
+        },
+        {
+          "bytes": 851,
+          "name": "presets.log",
+          "sha256": "9fe4c2c1e165f7505e28caeaaa0093d3f8f709f122818dda980520db85585ef6"
+        },
+        {
+          "bytes": 55554,
+          "name": "requests.txt",
+          "sha256": "cd96f1a3cd2245bca405cca70fa9a5235b01569b0b022b18e8c928fb476e2928"
+        },
+        {
+          "bytes": 468,
+          "name": "result.json",
+          "sha256": "2109b449f28f8583eccdd4d1786c79217955ee94b34231940b896cdac8f830c3"
+        },
+        {
+          "bytes": 1131971,
+          "name": "sonance-core-windows-asan.zip",
+          "sha256": "c5d2f3b625a346b25367e87f00490f5d0aa3de8c699b2eab45da2ccc4a54ab58"
+        },
+        {
+          "bytes": 2939,
+          "name": "manifest.json",
+          "sha256": "100f57b293a3127cccf9d7381ceff28394abc52082442baeb6201efcb469e1af"
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "profile": "linux",
+      "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "machine": "x86_64",
+      "compiler_id": "GNU",
+      "compiler_version": "13.3.0",
+      "source_sha256": "a650a7cdffba6fd6ad70471ac3b5eca4ffd0ec2ecd0ce15ba530f919afa85ac9",
+      "dsp_assertions": 5278,
+      "preset_tests": 5,
+      "coefficient_cases": 1584,
+      "sanitizers": [],
+      "hardware_audio_verified": false,
+      "retail_app_produced": false,
+      "job_id": "wrk_e2df0747c0884d3292a83474f4ffad5e",
+      "started_at": "2026-11-07T04:47:36.554126+00:00",
+      "completed_at": "2026-11-07T04:47:56.311440+00:00",
+      "artifact_manifest": [
+        {
+          "bytes": 32152,
+          "name": "bin/sonance_eq_coefficients",
+          "sha256": "5c2faae70176e551f8ebe91216db3ceddfacf2d6e21f14fdaa9c2685aa556f6c"
+        },
+        {
+          "bytes": 60880,
+          "name": "bin/sonance_eq_tests",
+          "sha256": "fae0bcfb34b236906daf03b3085a34cec24a14243ced846a9d4632536e2ceb1f"
+        },
+        {
+          "bytes": 270,
+          "name": "build.log",
+          "sha256": "f01a94708fa609f3d04c5d379e5ddcdf025f47e39aaed3c2ddb976832f05876f"
+        },
+        {
+          "bytes": 14864,
+          "name": "CMakeCache.txt",
+          "sha256": "3e06fb7c6067daf9648ca852dd8cddcc8ed89000d7577810f2ccdc8e54f5634a"
+        },
+        {
+          "bytes": 440599,
+          "name": "coefficients.jsonl",
+          "sha256": "1ea8af0559730fc04593eba16c47ca41d501c2943479fc39a77059f1934b4c90"
+        },
+        {
+          "bytes": 440599,
+          "name": "coefficients.log",
+          "sha256": "1ea8af0559730fc04593eba16c47ca41d501c2943479fc39a77059f1934b4c90"
+        },
+        {
+          "bytes": 1364,
+          "name": "compile_commands.json",
+          "sha256": "0990b8f984a6904ac992c93951e1b84de49c19f736cac117f0c631fb532a6e68"
+        },
+        {
+          "bytes": 403,
+          "name": "configure.log",
+          "sha256": "71c56df58025d00f0c9289b783414f4422096f12129d2d72878dd9401d1fbfb2"
+        },
+        {
+          "bytes": 1027,
+          "name": "ctest.log",
+          "sha256": "7b3f25a023fe3a663f02659f07beef48ee483eec4f32c0697856bc8b33418d36"
+        },
+        {
+          "bytes": 680,
+          "name": "LastTest.log",
+          "sha256": "14e0c2b1d8f928daf88923d62fd06222d4b5cf8cda9d88c851e6fbaf08d92c79"
+        },
+        {
+          "bytes": 841,
+          "name": "presets.log",
+          "sha256": "9fe8a3221cf4391161f24a405cb23ad34ab0595d81e646be058783251b304e0d"
+        },
+        {
+          "bytes": 53970,
+          "name": "requests.txt",
+          "sha256": "a6d8859a870fc2e02eb8488207173a9d3b4b07ffaf167da355cb6a12a78e87a3"
+        },
+        {
+          "bytes": 457,
+          "name": "result.json",
+          "sha256": "15178080da1744187658c760aeff423d1c76222b44e01c38ece5dfef2e88013d"
+        },
+        {
+          "bytes": 1090942,
+          "name": "sonance-core-linux.zip",
+          "sha256": "ce1c261bf51f9aacaabc3369e4b96563f185613b19974d36dfab8ef87c27d3de"
+        },
+        {
+          "bytes": 2916,
+          "name": "manifest.json",
+          "sha256": "58bfdf50e03616161c3e123a9c93fff9c758e5b1accf24e7af01ba2f1bc525d7"
+        }
+      ]
+    },
+    {
+      "status": "passed",
+      "profile": "linux-sanitizers",
+      "platform": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+      "machine": "x86_64",
+      "compiler_id": "GNU",
+      "compiler_version": "13.3.0",
+      "source_sha256": "a650a7cdffba6fd6ad70471ac3b5eca4ffd0ec2ecd0ce15ba530f919afa85ac9",
+      "dsp_assertions": 5278,
+      "preset_tests": 5,
+      "coefficient_cases": 1584,
+      "sanitizers": [
+        "address",
+        "undefined",
+        "leaks"
+      ],
+      "hardware_audio_verified": false,
+      "retail_app_produced": false,
+      "job_id": "wrk_9283fe14cb0e45b4b35012b4bec000c3",
+      "started_at": "2026-11-07T04:47:58.998764+00:00",
+      "completed_at": "2026-11-07T04:48:17.881590+00:00",
+      "artifact_manifest": [
+        {
+          "bytes": 208616,
+          "name": "bin/sonance_eq_coefficients",
+          "sha256": "db4e5ce6ebaf273141a4514ecb78de13d7140c06eb537a318e8d7f4fdb04cd55"
+        },
+        {
+          "bytes": 278800,
+          "name": "bin/sonance_eq_tests",
+          "sha256": "6a44df14c2332e95416d002c0a54e26c4a41b6c590c9cb2eb5044a43d46fb779"
+        },
+        {
+          "bytes": 270,
+          "name": "build.log",
+          "sha256": "f01a94708fa609f3d04c5d379e5ddcdf025f47e39aaed3c2ddb976832f05876f"
+        },
+        {
+          "bytes": 14863,
+          "name": "CMakeCache.txt",
+          "sha256": "2f3c4285aa861ae13bc9604b3c03ffb737f335d3cc34ce077b503ea14db0f061"
+        },
+        {
+          "bytes": 440599,
+          "name": "coefficients.jsonl",
+          "sha256": "1ea8af0559730fc04593eba16c47ca41d501c2943479fc39a77059f1934b4c90"
+        },
+        {
+          "bytes": 440599,
+          "name": "coefficients.log",
+          "sha256": "1ea8af0559730fc04593eba16c47ca41d501c2943479fc39a77059f1934b4c90"
+        },
+        {
+          "bytes": 1522,
+          "name": "compile_commands.json",
+          "sha256": "2a43e1238607025fbff107eeee675631d6b2420cf065ecce18d2ba688bcb4c9a"
+        },
+        {
+          "bytes": 404,
+          "name": "configure.log",
+          "sha256": "e93966c8c73bd75c0dcda6952b1fb0b8f9d6ea559a17086ce00eddaf1c06445c"
+        },
+        {
+          "bytes": 1027,
+          "name": "ctest.log",
+          "sha256": "cd832d4e8b69593a59de82c64a0efd4053ca16e13b304057904550ea490b2011"
+        },
+        {
+          "bytes": 680,
+          "name": "LastTest.log",
+          "sha256": "cd2438d02b25ffbcee7eed834484852c20897c703325ecfc7132aa3f00b5e52c"
+        },
+        {
+          "bytes": 841,
+          "name": "presets.log",
+          "sha256": "aac4e3401e9d1f7fa0d7f827b1b541372dcff1bde2de7f3e475c9758fb7cdccb"
+        },
+        {
+          "bytes": 53970,
+          "name": "requests.txt",
+          "sha256": "a6d8859a870fc2e02eb8488207173a9d3b4b07ffaf167da355cb6a12a78e87a3"
+        },
+        {
+          "bytes": 515,
+          "name": "result.json",
+          "sha256": "bcc0ba743ea7682ec20f5009659cf4124d296ba8599045c28ddd4bc5ae33ea17"
+        },
+        {
+          "bytes": 1179245,
+          "name": "sonance-core-linux-sanitizers.zip",
+          "sha256": "1644225cd9c4e2fa99b0737ca62a14f9600be1db8125e27b5cbc338d7336038e"
+        },
+        {
+          "bytes": 2940,
+          "name": "manifest.json",
+          "sha256": "c4d84c14c0ac7c7729107c03099b5db121235714d430e899577a490ce0218fc8"
+        }
+      ]
+    }
+  ],
+  "cross_platform_parity": [
+    {
+      "profile": "windows",
+      "cases": 1584,
+      "max_absolute_error": 0,
+      "compiler": "MSVC 19.43.34810.0"
+    },
+    {
+      "profile": "windows-asan",
+      "cases": 1584,
+      "max_absolute_error": 0,
+      "compiler": "MSVC 19.43.34810.0"
+    },
+    {
+      "profile": "linux",
+      "cases": 1584,
+      "max_absolute_error": 2.220446049250313e-16,
+      "compiler": "GNU 13.3.0"
+    },
+    {
+      "profile": "linux-sanitizers",
+      "cases": 1584,
+      "max_absolute_error": 2.220446049250313e-16,
+      "compiler": "GNU 13.3.0"
+    }
+  ],
+  "runtime_checks": [
+    {
+      "check": "inventory-generate",
+      "exit_code": 0
+    },
+    {
+      "check": "inventory-check",
+      "exit_code": 0
+    },
+    {
+      "check": "schemas",
+      "exit_code": 0
+    },
+    {
+      "check": "agent-list",
+      "exit_code": 0
+    },
+    {
+      "check": "api-self-test",
+      "exit_code": 0
+    },
+    {
+      "check": "native-monitor",
+      "exit_code": 0
+    },
+    {
+      "check": "native-browser-status",
+      "exit_code": 0
+    }
+  ],
+  "contract_rejections": [
+    {
+      "case": "unknown_parameter",
+      "rejected": true,
+      "response": "500: {\n  \"command_id\": \"cmd_5388547b47f942309c57d07bd2f0ed0d\",\n  \"error\": \"unsupported Sonance build parameters\",\n  \"ok\": false\n}"
+    },
+    {
+      "case": "unknown_profile",
+      "rejected": true,
+      "response": "500: {\n  \"command_id\": \"cmd_b7bce9f6c4514101812a736a46cd140c\",\n  \"error\": \"unregistered Sonance build profile\",\n  \"ok\": false\n}"
+    },
+    {
+      "case": "source_drift",
+      "rejected": true,
+      "response": "500: {\n  \"command_id\": \"cmd_42e5d2ee744c48b99fa6fc60624eb798\",\n  \"error\": \"Sonance source snapshot hash mismatch\",\n  \"ok\": false\n}"
+    }
+  ],
+  "orion_task_root": "E:/orion-jobs/sonance-eq-698f82d",
+  "orion_snapshot_root": "E:/orion-jobs/sonance-eq-ea83b6d",
+  "cleanup": {
+    "private_controller_stop_verified": true,
+    "controller_root": "E:/orion-jobs/sonance-eq-698f82d",
+    "local_ssh_forward_closed": true,
+    "task_ssh_processes_stopped": [
+      27390
+    ],
+    "shared_orion_healthy": true,
+    "shared_orion_pid": 23172,
+    "shared_orion_pid_unchanged": true
+  },
+  "cloud_jobs_started": 0,
+  "native_desktop_apps_built": false,
+  "hardware_audio_verified": false,
+  "store_submission_created": false,
+  "setup": {
+    "installed_linux_packages": [
+      "cmake",
+      "ninja-build"
+    ],
+    "configured_interrupted_package": "man-db",
+    "other_os_upgrades_requested": false
+  }
+}
