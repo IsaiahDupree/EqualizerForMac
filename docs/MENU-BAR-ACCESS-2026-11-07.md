@@ -156,6 +156,15 @@ files are historical source, not authorization to run them.
 
 ## Before release
 
+A subsequent [local 1.0.9/build 12 candidate](RELEASE-1.0.9-CANDIDATE.md) now
+has a signed universal package with exact purchase/version/preset validation.
+Physical keyboard-menu testing found that the initial synchronous activation
+could leave the reopened window behind Finder. The menu now defers activation
+until its tracking action returns; its physical keyboard retest remains open.
+The app's audio controller and preset database remain unchanged. Four UI
+acceptance methods compile, including keyboard menu selection from Finder;
+compilation does not establish execution.
+
 - Review and merge this development branch.
 - Run `SonanceEQ-MenuBar` with the isolated test identity on a working macOS
   UI automation host; do not treat its successful compilation as execution.
@@ -169,9 +178,10 @@ files are historical source, not authorization to run them.
 - Check light/dark menu appearance and crowded/full-screen menu bar behavior.
 - Run the normal signed MAS purchase, permission and distribution checks for
   the exact release candidate. This change does not alter those subsystems.
-- Select the next version/build, rebuild and verify that exact release artifact,
-  prepare release notes and obtain the owner's explicit approval before any
-  upload, submission or publication.
+- Recheck live Apple state before reusing proposed 1.0.9/build 12, complete the
+  candidate's remaining interaction/hardware checks and obtain the owner's
+  explicit approval before any upload, submission or publication. The proposed
+  numbers are local and are not reserved on Apple's servers.
 
 The bundled preset database, AirPods Pro 3 correction, DSP and audio lifecycle
 sources are unchanged. Automated software checks do not establish audibility

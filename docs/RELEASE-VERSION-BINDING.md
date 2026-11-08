@@ -6,8 +6,8 @@ when it archives, but literal plist values can retain the old identity. An
 incremented setting alone does not establish the identity of the resulting app.
 
 The XcodeGen spec and generated source Info.plist now use `$(MARKETING_VERSION)`
-and `$(CURRENT_PROJECT_VERSION)` for those two metadata keys. The source release
-baseline is 1.0.7 (10), matching appstore.json. Apple was observed on October 10
+and `$(CURRENT_PROJECT_VERSION)` for those two metadata keys. The original source
+baseline was 1.0.7 (10), matching appstore.json at that time. Apple was observed on October 10
 with 1.0.6 (9) already on sale and 10 as the next build number. This is source
 preparation; it does not create an Apple version or upload a build. AppFleet
 rechecks the next available number when a release is authorized.
@@ -19,7 +19,7 @@ build/upload handoff. Package metadata must still match its explicit selected
 build and the source marketing version. AppFleet validates signing and native
 distribution identity separately.
 
-CI compiles a real default Release-MAS app and a second app with a later version
+The retained CI source compiles a real default Release-MAS app and a second app with a later version
 and build. The second version/build is derived from the actual release manifest;
 tests require it to differ from the source baseline and inspect the processed
 native app metadata and executable. The probes use the host architecture,
@@ -27,6 +27,11 @@ disabled signing/optimization and DWARF-only debug information to bound this
 metadata check. They do not establish a signed or optimized distribution release.
 The normal native and local StoreKit gates remain separate and retain their
 existing assertions.
+
+GitHub Actions is now disabled by the November 7 owner directive. Run these
+checks directly on owned hardware. The current
+[1.0.9/build 12 candidate](RELEASE-1.0.9-CANDIDATE.md) has separately verified
+processed package metadata; it has not been uploaded.
 
 The historical source plist at f18873b is retained with its SHA-256 as an unchanged
 negative control under Tools/tests/evidence/version_binding. It is source
