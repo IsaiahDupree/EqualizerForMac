@@ -96,6 +96,7 @@
 "On" = "Attivo";
 "On-ear" = "Sovraurali";
 "Open Settings" = "Apri impostazioni";
+"Open Sonance EQ" = "Apri Sonance EQ";
 "Output" = "Uscita";
 "Over-ear" = "Circumaurali";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Acquisto avviato";
 "Purchases" = "Acquisti";
 "Q" = "Q";
+"Quit Sonance EQ" = "Esci da Sonance EQ";
 "Recent events" = "Eventi recenti";
 "Record" = "Registra";
 "Record system or per-app audio to a file" = "Registra l’audio di sistema o di un’app in un file";

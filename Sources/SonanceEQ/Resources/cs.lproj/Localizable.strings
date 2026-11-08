@@ -96,6 +96,7 @@
 "On" = "Zapnuto";
 "On-ear" = "Na uši";
 "Open Settings" = "Otevřít nastavení";
+"Open Sonance EQ" = "Otevřít Sonance EQ";
 "Output" = "Výstup";
 "Over-ear" = "Kolem uší";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Nákup zahájen";
 "Purchases" = "Nákupy";
 "Q" = "Q";
+"Quit Sonance EQ" = "Ukončit Sonance EQ";
 "Recent events" = "Nedávné události";
 "Record" = "Nahrát";
 "Record system or per-app audio to a file" = "Nahrát systémový zvuk nebo zvuk aplikace do souboru";

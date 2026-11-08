@@ -96,6 +96,7 @@
 "On" = "Bekapcsolva";
 "On-ear" = "Fülre illeszkedő";
 "Open Settings" = "Beállítások megnyitása";
+"Open Sonance EQ" = "Sonance EQ megnyitása";
 "Output" = "Kimenet";
 "Over-ear" = "Fül körüli";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Vásárlás elindítva";
 "Purchases" = "Vásárlások";
 "Q" = "Q";
+"Quit Sonance EQ" = "Kilépés a Sonance EQ-ból";
 "Recent events" = "Legutóbbi események";
 "Record" = "Felvétel";
 "Record system or per-app audio to a file" = "Rendszerhang vagy alkalmazáshang rögzítése fájlba";

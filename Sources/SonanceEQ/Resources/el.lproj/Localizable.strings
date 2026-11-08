@@ -96,6 +96,7 @@
 "On" = "Ενεργό";
 "On-ear" = "Επικάθησης";
 "Open Settings" = "Άνοιγμα ρυθμίσεων";
+"Open Sonance EQ" = "Άνοιγμα Sonance EQ";
 "Output" = "Έξοδος";
 "Over-ear" = "Περιωτικά";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Η αγορά ξεκίνησε";
 "Purchases" = "Αγορές";
 "Q" = "Q";
+"Quit Sonance EQ" = "Τερματισμός Sonance EQ";
 "Recent events" = "Πρόσφατα συμβάντα";
 "Record" = "Εγγραφή";
 "Record system or per-app audio to a file" = "Καταγραφή ήχου συστήματος ή εφαρμογής σε αρχείο";

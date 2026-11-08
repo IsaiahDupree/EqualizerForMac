@@ -96,6 +96,7 @@
 "On" = "On";
 "On-ear" = "On-ear";
 "Open Settings" = "Open Settings";
+"Open Sonance EQ" = "Open Sonance EQ";
 "Output" = "Output";
 "Over-ear" = "Over-ear";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Purchase started";
 "Purchases" = "Purchases";
 "Q" = "Q";
+"Quit Sonance EQ" = "Quit Sonance EQ";
 "Recent events" = "Recent events";
 "Record" = "Record";
 "Record system or per-app audio to a file" = "Record system or per-app audio to a file";

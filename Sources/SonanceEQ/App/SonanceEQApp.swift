@@ -1,8 +1,13 @@
+import AppKit
 import SwiftUI
 import StoreKit
 
 /// Unified subsystem string for os.Logger across the app.
 let kSubsystem = "com.isaiahdupree.SonanceEQ"
+
+private enum SonanceWindow {
+    static let main = "main"
+}
 
 @main
 struct SonanceEQApp: App {
@@ -11,7 +16,7 @@ struct SonanceEQApp: App {
     @Environment(\.requestReview) private var requestReview
 
     var body: some Scene {
-        Window("Sonance EQ", id: "main") {
+        Window("Sonance EQ", id: SonanceWindow.main) {
             ContentView(app: app)
                 .task { app.review.present = { requestReview() } }
                 .task {
@@ -26,11 +31,32 @@ struct SonanceEQApp: App {
                 }
         }
         .windowResizability(.contentSize)
+        .keyboardShortcut("e", modifiers: [.command, .shift])
         .commands {
             CommandGroup(replacing: .newItem) {} // no "New Window"
             CommandGroup(replacing: .appInfo) {
                 Button("About Sonance EQ") { app.showingAbout = true }
             }
         }
+
+        // AppState stays owned by the App, including while the main window is closed.
+        // This menu only presents the existing controls; it never changes audio routing.
+        MenuBarExtra("Sonance EQ", systemImage: "slider.horizontal.3") {
+            MenuBarAccessMenu()
+        }
+        .menuBarExtraStyle(.menu)
+    }
+}
+
+private struct MenuBarAccessMenu: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Button("Open Sonance EQ") {
+            openWindow(id: SonanceWindow.main)
+            NSApplication.shared.activate()
+        }
+        Divider()
+        Button("Quit Sonance EQ") { NSApplication.shared.terminate(nil) }
     }
 }

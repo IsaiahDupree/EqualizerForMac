@@ -126,6 +126,20 @@ targets:
         # PresetStore uses SQLite3; link it for the test bundle too.
         OTHER_LDFLAGS: "-lsqlite3"
 
+  SonanceEQAccessUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    deploymentTarget: "14.4"
+    sources:
+      - UITests
+    dependencies:
+      - target: SonanceEQ
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQAccessUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: SonanceEQ
+
 schemes:
   SonanceEQ:
     build:
@@ -143,6 +157,17 @@ schemes:
           isEnabled: false
     run:
       config: Debug
+
+  # Opt-in native UI acceptance. Run with -xcconfig UITests/AccessTestIdentity.xcconfig
+  # to avoid attaching to an installed production copy. Does not start capture.
+  SonanceEQ-MenuBar:
+    build:
+      targets:
+        SonanceEQ: all
+    test:
+      config: Debug
+      targets:
+        - SonanceEQAccessUITests
 
   # An explicit serial local-StoreKit gate; ordinary tests keep StoreKit process-global state off.
   SonanceEQ-StoreKit:
