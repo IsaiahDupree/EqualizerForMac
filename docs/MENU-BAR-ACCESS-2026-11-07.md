@@ -50,8 +50,10 @@ Run directly on the owned Mac, with bounded concurrency:
 xcodegen generate
 xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ-MenuBar \
   -xcconfig UITests/AccessTestIdentity.xcconfig \
+  -derivedDataPath "$PWD/build/menu-bar-ui" \
   -destination 'platform=macOS,arch=arm64' -jobs 1 -parallel-testing-enabled NO
 xcodebuild test -project SonanceEQ.xcodeproj -scheme SonanceEQ \
+  -derivedDataPath "$PWD/build/native-regression" \
   -destination 'platform=macOS,arch=arm64' -jobs 1 -parallel-testing-enabled NO
 ```
 
@@ -71,8 +73,9 @@ Observed on the owned Apple Silicon Mac with macOS 26.6.1 / Xcode 26.0.1:
 | Native interaction smoke check | Menu opens while another app is foreground; Open activates Sonance EQ; published preset loads and remains selected with its six-band curve and -3.9 dB preamp; native Window menu displays the shortcut; menu Quit exits the isolated host |
 | Physical input acceptance, follow-up | Passed close/reopen, minimize/restore, Hide/unhide, and actual ⌘⇧E reopening after close. Each restored the six-band AirPods Pro 3 curve and -3.9 dB preamp. Used the isolated bundle, a verified foreground PID and leased JetKVM input; capture remained stopped |
 | Automated UI execution | Blocked before any method ran: runner failed to initialize, “Timed out while enabling automation mode”; same result after test-helper recovery |
-| Release-MAS resolved settings | Explicit task-local DerivedData probe resolves the real main app, arm64/x86_64, macOS 14.4, App Sandbox and hardened runtime enabled, with no `ENABLE_TCC_SPI` condition. Configuration verification, not a compiled/signed release |
-| Local signing prerequisites | Valid Mac App Store application/distribution identities found in Keychain. AppFleet doctor remains blocked in target discovery; archive/export not completed |
+| Local signing preflight | Passed AppFleet doctor after its isolated cache-discovery fix; existing Sonance EQ MAS profile and exact application/installer identities verified |
+| Release-MAS archive and export | Passed through AppFleet with one archive job; no `ENABLE_TCC_SPI` condition. The existing archive was re-exported after disabling Xcode's automatic build renumbering |
+| Exact exported package | Passed AppFleet validation of package/application signatures, exact certificate fingerprints, profile name and entitlements, bundle identity and 1.0.8/build 11. Independently inspected payload has arm64 and x86_64 binaries with macOS 14.4 minimum load commands, sandbox and hardened runtime enabled, and no debugging entitlement |
 | Preset database hash | Unchanged from 1.0.8: `5e57770a181181f892e7153ef942a48ff0ffdd014dc077827aac57ba5a0ee8e3` |
 
 `DevToolsSecurity -status` reported developer mode disabled. This is a dated
@@ -103,12 +106,33 @@ remains unverified; the preset selection check is not an acoustic measurement.
 
 The canonical AppFleet doctor initially failed on the default Xcode cache path,
 then returned no signable target when that path produced empty build settings.
-A real `-showBuildSettings -json` query with explicit task-local
-`-derivedDataPath` resolves 579 settings and the expected main application.
-AppFleet's current target-discovery path does not pass that explicit location.
-Resolve that tooling path and rerun its signing preflight before local
-archive/export. No fallback signing pipeline, new signing assets, version
-record, upload or submission was created.
+Its target queries cannot accept `-derivedDataPath` without a scheme. The
+isolated [AppFleet fix](https://github.com/IsaiahDupree/AppFleet/pull/31) adds
+checkout-specific product, intermediate and precompiled-header roots to both
+settings query modes. Its 51 local package-cache, multi-target-signing and
+build-environment tests passed, including real Xcode/SwiftPM/loopback-Git
+integration. The real Sonance EQ signing doctor then passed.
+
+The native Release-MAS archive succeeded. Xcode's first local export silently
+changed build 11 to build 12; AppFleet's existing exact-artifact validation
+correctly rejected it. The same tooling branch now explicitly disables
+`manageAppVersionAndBuildNumber` and exposes its existing local export step for
+re-export without recompilation. Its 41 signing regression tests passed again.
+Re-export of the original archive preserved build 11 and passed the complete
+AppFleet package verification with exact signing identities and profile names.
+No fallback signing pipeline, app version record, upload or submission was used.
+The main AppFleet checkout and its unrelated edits were preserved.
+
+The verified local package is under the workspace's
+`artifacts/sonance-menu-bar-validation-20261107/com.isaiahdupree.SonanceEQ/1.0.8-11-20261107-224425-447478/export/SonanceEQ.pkg`.
+Its SHA-256 is
+`dc18094c3d3d297b6caa5e24b29f55a6ed057a5825497da0bc4a0e091a6c8506`.
+It was built from application commit `8c7e056` and exported with AppFleet
+commit `262d811`. The preset database inside the actual exported package
+matches the unchanged source/database hash above. This is local validation
+using the already released 1.0.8/build 11 identifiers, not a new release
+candidate. A future authorized release needs a new version/build and renewed
+exact-artifact validation. The package was not installed or launched.
 
 Native logs/results remain in the ignored `build/` directory:
 `native-regression.xcresult`, `native-summary.json`, `menu-bar-ui.xcresult`,
@@ -117,6 +141,10 @@ Native logs/results remain in the ignored `build/` directory:
 `commit-validation-recovered.log`.
 Follow-up evidence: `manual-access-continue.json`, `release-settings-explicit-derived.json`,
 `local-release-doctor-workspace.stderr` and `ui-diagnostics-continue/`.
+Signed-validation evidence: `local-release-doctor-fixed.json`,
+`local-signed-validation.json`, `local-signed-validation.log` and
+`local-reexport-validation.log`; archive/export logs remain beside the local
+artifacts outside the source repository.
 GitHub Actions was verified
 disabled with no active runs. The repository has no deployment records or
 active hooks; no cloud build or deployment was started. Existing workflow
@@ -127,8 +155,8 @@ files are historical source, not authorization to run them.
 - Review and merge this development branch.
 - Run `SonanceEQ-MenuBar` with the isolated test identity on a working macOS
   UI automation host; do not treat its successful compilation as execution.
-- Repair/recheck AppFleet's task-local target-settings discovery, then complete
-  the signed archive/export and exact-artifact validation.
+- Review/integrate AppFleet PR #31 so the installed pipeline includes the
+  validated cache discovery and deterministic export fixes.
 - Verify audible continuity on actual AirPods Pro 3 while opening the menu,
   closing/reopening the window, hiding/minimizing it and switching foreground
   apps. Check that the selected preset, preamp and bypass state remain intact.
@@ -137,8 +165,9 @@ files are historical source, not authorization to run them.
 - Check light/dark menu appearance and crowded/full-screen menu bar behavior.
 - Run the normal signed MAS purchase, permission and distribution checks for
   the exact release candidate. This change does not alter those subsystems.
-- Select the next version/build, prepare release notes and obtain the owner's
-  explicit approval before any upload, submission or publication.
+- Select the next version/build, rebuild and verify that exact release artifact,
+  prepare release notes and obtain the owner's explicit approval before any
+  upload, submission or publication.
 
 The bundled preset database, AirPods Pro 3 correction, DSP and audio lifecycle
 sources are unchanged. Automated software checks do not establish audibility
