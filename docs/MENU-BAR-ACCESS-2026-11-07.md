@@ -145,8 +145,12 @@ Signed-validation evidence: `local-release-doctor-fixed.json`,
 `local-signed-validation.json`, `local-signed-validation.log` and
 `local-reexport-validation.log`; archive/export logs remain beside the local
 artifacts outside the source repository.
-GitHub Actions was verified
-disabled with no active runs. The repository has no deployment records or
+GitHub Actions remains disabled (`enabled: false`), and both existing workflows
+are `disabled_manually`. A final history check found the September 21 CI run
+`35555866651` still labeled queued with zero jobs. Both cancel and force-cancel
+requests return HTTP 409, “Cannot cancel a workflow run that has not been
+queued yet.” Clearing that stale server-side entry remains unresolved; no
+workflow was enabled, dispatched or rerun for this task. The repository has no deployment records or
 active hooks; no cloud build or deployment was started. Existing workflow
 files are historical source, not authorization to run them.
 
