@@ -91,6 +91,24 @@ final class MenuBarAccessTests: XCTestCase {
         XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
     }
 
+    func testKeyboardMenuSelectionActivatesReopenedWindowFromFinder() {
+        let window = app.windows["Sonance EQ"]
+        window.buttons[XCUIIdentifierCloseWindow].click()
+        XCTAssertTrue(window.waitForNonExistence(timeout: 5))
+        let finder = XCUIApplication(bundleIdentifier: "com.apple.finder")
+        finder.activate()
+        XCTAssertTrue(finder.wait(for: .runningForeground, timeout: 5))
+
+        menuBarItem.click()
+        XCTAssertTrue(app.menuItems["Open Sonance EQ"].waitForExistence(timeout: 5))
+        finder.typeKey(.downArrow, modifierFlags: [])
+        XCTAssertTrue(app.menuItems["Open Sonance EQ"].isSelected)
+        finder.typeKey(.return, modifierFlags: [])
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 5))
+        XCTAssertTrue(window.buttons[XCUIIdentifierCloseWindow].isHittable)
+        XCTAssertEqual(app.windows.count, 1)
+    }
+
     private var menuBarItem: XCUIElement {
         app.menuBars.menuBarItems["Sonance EQ"]
     }

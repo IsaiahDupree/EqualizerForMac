@@ -54,7 +54,9 @@ private struct MenuBarAccessMenu: View {
     var body: some View {
         Button("Open Sonance EQ") {
             openWindow(id: SonanceWindow.main)
-            NSApplication.shared.activate()
+            // Keyboard menu tracking restores the previous app as it closes.
+            // Request activation after that tracking action has returned.
+            DispatchQueue.main.async { NSApplication.shared.activate() }
         }
         Divider()
         Button("Quit Sonance EQ") { NSApplication.shared.terminate(nil) }
