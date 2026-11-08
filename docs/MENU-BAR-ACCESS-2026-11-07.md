@@ -65,26 +65,30 @@ Observed on the owned Apple Silicon Mac with macOS 26.6.1 / Xcode 26.0.1:
 | --- | --- |
 | Debug application build | Passed |
 | Full native regression | 281 methods / 4,297 runs passed, zero failures; existing 16 opt-in methods skipped |
-| Separate local StoreKit gate | Did not complete: host launched but produced no test-case output; interrupted after 4 min 13 sec overall. No StoreKit success claimed for this attempt |
+| Separate local StoreKit gate | 15 methods / 25 runs passed, zero failures or skips, using real local Apple test transactions |
 | AirPods Pro 3 catalog/application and existing DSP/audio lifecycle tests | Passed as part of the native regression |
 | Isolated app and three UI test methods, `build-for-testing` | Passed compilation |
 | Native interaction smoke check | Menu opens while another app is foreground; Open activates Sonance EQ; published preset loads and remains selected with its six-band curve and -3.9 dB preamp; native Window menu displays the shortcut; menu Quit exits the isolated host |
-| Automated UI execution | Blocked before any method ran: runner failed to initialize, “Timed out while enabling automation mode” |
+| Automated UI execution | Blocked before any method ran: runner failed to initialize, “Timed out while enabling automation mode”; same result after test-helper recovery |
 | Preset database hash | Unchanged from 1.0.8: `5e57770a181181f892e7153ef942a48ff0ffdd014dc077827aac57ba5a0ee8e3` |
 
 `DevToolsSecurity -status` reported developer mode disabled. This is a dated
 environment observation, not proof of the timeout's root cause. No developer
 security or privacy settings were changed. The three UI methods remain
 unexecuted; closed-window, minimize, Hide and keyboard-shortcut acceptance must
-be completed on a working UI-test host. The separate StoreKit attempt also
-requires rerunning; its stall's root cause was not established and no purchase
-test was removed or weakened. The smoke check did not start capture,
+be completed on a working UI-test host. The local Xcode test helper stopped
+responding during later control-session requests. Restarting that stuck helper
+restored both the repository's complete pre-commit check and the separate
+StoreKit gate; no app code or test assertions were changed to resolve it.
+The smoke check did not start capture,
 and is not an audible-continuity test. Task-owned hosts were closed afterward;
 the installed Sonance EQ copy was preserved.
 
 Native logs/results remain in the ignored `build/` directory:
 `native-regression.xcresult`, `native-summary.json`, `menu-bar-ui.xcresult`,
-`menu-bar-ui.log`, `isolated-ui-compile-final.log` and `storekit-gate.log`.
+`menu-bar-ui.log`, `menu-bar-ui-recovered.xcresult`, `isolated-ui-compile-final.log`,
+`storekit-gate-recovered.xcresult`, `storekit-summary.json` and
+`commit-validation-recovered.log`.
 GitHub Actions was verified
 disabled with no active runs. The repository has no deployment records or
 active hooks; no cloud build or deployment was started. Existing workflow
