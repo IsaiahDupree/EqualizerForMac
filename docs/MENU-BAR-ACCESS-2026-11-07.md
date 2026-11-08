@@ -69,14 +69,18 @@ Observed on the owned Apple Silicon Mac with macOS 26.6.1 / Xcode 26.0.1:
 | AirPods Pro 3 catalog/application and existing DSP/audio lifecycle tests | Passed as part of the native regression |
 | Isolated app and three UI test methods, `build-for-testing` | Passed compilation |
 | Native interaction smoke check | Menu opens while another app is foreground; Open activates Sonance EQ; published preset loads and remains selected with its six-band curve and -3.9 dB preamp; native Window menu displays the shortcut; menu Quit exits the isolated host |
+| Physical input acceptance, follow-up | Passed close/reopen, minimize/restore, Hide/unhide, and actual ⌘⇧E reopening after close. Each restored the six-band AirPods Pro 3 curve and -3.9 dB preamp. Used the isolated bundle, a verified foreground PID and leased JetKVM input; capture remained stopped |
 | Automated UI execution | Blocked before any method ran: runner failed to initialize, “Timed out while enabling automation mode”; same result after test-helper recovery |
+| Release-MAS resolved settings | Explicit task-local DerivedData probe resolves the real main app, arm64/x86_64, macOS 14.4, App Sandbox and hardened runtime enabled, with no `ENABLE_TCC_SPI` condition. Configuration verification, not a compiled/signed release |
+| Local signing prerequisites | Valid Mac App Store application/distribution identities found in Keychain. AppFleet doctor remains blocked in target discovery; archive/export not completed |
 | Preset database hash | Unchanged from 1.0.8: `5e57770a181181f892e7153ef942a48ff0ffdd014dc077827aac57ba5a0ee8e3` |
 
 `DevToolsSecurity -status` reported developer mode disabled. This is a dated
 environment observation, not proof of the timeout's root cause. No developer
-security or privacy settings were changed. The three UI methods remain
-unexecuted; closed-window, minimize, Hide and keyboard-shortcut acceptance must
-be completed on a working UI-test host. The local Xcode test helper stopped
+security or privacy settings were changed. The three XCTest UI methods remain
+unexecuted. Their principal access interactions were subsequently verified with
+physical input as recorded above; automated execution still needs a working
+UI-test host. The local Xcode test helper stopped
 responding during later control-session requests. Restarting that stuck helper
 restored both the repository's complete pre-commit check and the separate
 StoreKit gate; no app code or test assertions were changed to resolve it.
@@ -84,11 +88,35 @@ The smoke check did not start capture,
 and is not an audible-continuity test. Task-owned hosts were closed afterward;
 the installed Sonance EQ copy was preserved.
 
+The follow-up inspection found Xcode Helper absent from the Mac's Accessibility
+authorization list. Its installed `com.apple.dt.Xcode-Helper` bundle passes an
+Apple-root signature requirement. Apple documents
+[Xcode Helper Accessibility access for UI testing](https://developer.apple.com/documentation/XCUIAutomation/recording-ui-automation-for-testing).
+That permission is for development test tooling. Enabling new computer-control
+access requires the owner's response to the pending permission request; no
+permission was enabled during this validation. Its absence is a concrete setup
+gap, not proof that it is the only cause of the XCTest timeout.
+
+No AirPods output was connected during the follow-up device inventory. The
+current output was Mac mini Speakers. Audible AirPods Pro 3 continuity therefore
+remains unverified; the preset selection check is not an acoustic measurement.
+
+The canonical AppFleet doctor initially failed on the default Xcode cache path,
+then returned no signable target when that path produced empty build settings.
+A real `-showBuildSettings -json` query with explicit task-local
+`-derivedDataPath` resolves 579 settings and the expected main application.
+AppFleet's current target-discovery path does not pass that explicit location.
+Resolve that tooling path and rerun its signing preflight before local
+archive/export. No fallback signing pipeline, new signing assets, version
+record, upload or submission was created.
+
 Native logs/results remain in the ignored `build/` directory:
 `native-regression.xcresult`, `native-summary.json`, `menu-bar-ui.xcresult`,
 `menu-bar-ui.log`, `menu-bar-ui-recovered.xcresult`, `isolated-ui-compile-final.log`,
 `storekit-gate-recovered.xcresult`, `storekit-summary.json` and
 `commit-validation-recovered.log`.
+Follow-up evidence: `manual-access-continue.json`, `release-settings-explicit-derived.json`,
+`local-release-doctor-workspace.stderr` and `ui-diagnostics-continue/`.
 GitHub Actions was verified
 disabled with no active runs. The repository has no deployment records or
 active hooks; no cloud build or deployment was started. Existing workflow
@@ -99,6 +127,8 @@ files are historical source, not authorization to run them.
 - Review and merge this development branch.
 - Run `SonanceEQ-MenuBar` with the isolated test identity on a working macOS
   UI automation host; do not treat its successful compilation as execution.
+- Repair/recheck AppFleet's task-local target-settings discovery, then complete
+  the signed archive/export and exact-artifact validation.
 - Verify audible continuity on actual AirPods Pro 3 while opening the menu,
   closing/reopening the window, hiding/minimizing it and switching foreground
   apps. Check that the selected preset, preamp and bypass state remain intact.
