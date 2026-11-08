@@ -56,6 +56,17 @@ First run:
 See the [User Manual](docs/MANUAL.md) for a full walkthrough, and the
 [Release Runbook](docs/RELEASE.md) for the signed-DMG / App Store automation.
 
+### Menu bar access (development)
+
+While Sonance EQ is running, click its equalizer icon in the macOS menu bar and
+choose **Open Sonance EQ** to bring back the existing controls, including
+**Headphones** and the AirPods Pro 3 preset. Closing the window keeps Sonance EQ
+running; use **Quit Sonance EQ** to exit. With the app active, **⌘⇧E** also opens
+its window through the native Window menu. This shortcut is local to the app.
+
+This source change has not been published in an App Store update. See the
+[implementation and release checklist](docs/MENU-BAR-ACCESS-2026-11-07.md).
+
 > The project file (`SonanceEQ.xcodeproj`) is git-ignored — always regenerate it with `xcodegen generate`. Edit `project.yml`, never the `.xcodeproj` directly.
 
 ## Architecture (one-liner)

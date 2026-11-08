@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import http.client
 import json
+import os
 import plistlib
 import re
 import signal
@@ -49,12 +50,27 @@ def decode_json(raw):
 
 
 def read_settings(repo=REPO, configuration="Release-MAS"):
-    result = subprocess.run([
+    command = [
         "xcodebuild", "-showBuildSettings", "-json", "-project", "SonanceEQ.xcodeproj",
         "-scheme", "SonanceEQ", "-configuration", configuration,
         "-destination", "generic/platform=macOS", "-jobs", "1",
         "-skipPackageUpdates",
-    ], cwd=repo, capture_output=True, timeout=30, check=False)
+    ]
+    # Reuse the existing bounded local-test cache options. Always query Xcode;
+    # a cache selection never substitutes a saved settings response.
+    for variable, flag in (("SONANCE_DERIVED_DATA_DIR", "-derivedDataPath"),
+                           ("SONANCE_SOURCE_PACKAGES_DIR", "-clonedSourcePackagesDirPath")):
+        configured = os.environ.get(variable)
+        if not configured:
+            continue
+        path = Path(configured).expanduser()
+        require(path.is_absolute(), variable + " must be an absolute directory")
+        require(not path.exists() or path.is_dir(), variable + " must be a directory")
+        if variable == "SONANCE_SOURCE_PACKAGES_DIR":
+            require(path.is_dir(), variable + " must exist")
+            command.append("-disableAutomaticPackageResolution")
+        command += [flag, str(path.resolve())]
+    result = subprocess.run(command, cwd=repo, capture_output=True, timeout=30, check=False)
     require(result.returncode == 0, "Xcode could not resolve build settings")
     rows = decode_json(result.stdout)
     require(isinstance(rows, list), "Invalid Xcode settings collection")

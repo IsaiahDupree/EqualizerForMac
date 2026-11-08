@@ -96,6 +96,7 @@
 "On" = "開啟";
 "On-ear" = "貼耳式";
 "Open Settings" = "開啟設定";
+"Open Sonance EQ" = "開啟 Sonance EQ";
 "Output" = "輸出";
 "Over-ear" = "耳罩式";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "已開始購買";
 "Purchases" = "購買";
 "Q" = "Q";
+"Quit Sonance EQ" = "結束 Sonance EQ";
 "Recent events" = "最近事件";
 "Record" = "錄製";
 "Record system or per-app audio to a file" = "將系統或個別 App 的音訊錄製為檔案";

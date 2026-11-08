@@ -1,5 +1,12 @@
 # Release Runbook
 
+GitHub Actions and automatic cloud builds are disabled under the owner's
+November 7, 2026 directive. Run checks on owned hardware with bounded native
+Mac builds. The CI setup below is historical reference and does not authorize
+enabling or running a workflow. The current menu bar change has a
+[local 1.0.9 candidate](RELEASE-1.0.9-CANDIDATE.md); upload, submission and
+publication require the owner's explicit approval.
+
 > **Two ways to drive this:** plain shell (`Tools/*.sh`, zero dependencies) or **fastlane**
 > (`fastlane mac release` / `fastlane mac app_store` — see [`fastlane/README.md`](../fastlane/README.md)).
 > Both reuse the same account-level App Store Connect API key. Pick whichever you prefer.

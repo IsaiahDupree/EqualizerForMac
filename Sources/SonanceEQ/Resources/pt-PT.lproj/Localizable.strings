@@ -96,6 +96,7 @@
 "On" = "Ligado";
 "On-ear" = "Supra-aurais";
 "Open Settings" = "Abrir definições";
+"Open Sonance EQ" = "Abrir Sonance EQ";
 "Output" = "Saída";
 "Over-ear" = "Circum-aurais";
 "PRO" = "PRO";
@@ -116,6 +117,7 @@
 "Purchase started" = "Compra iniciada";
 "Purchases" = "Compras";
 "Q" = "Q";
+"Quit Sonance EQ" = "Sair do Sonance EQ";
 "Recent events" = "Eventos recentes";
 "Record" = "Gravar";
 "Record system or per-app audio to a file" = "Grave áudio do sistema ou de uma aplicação num ficheiro";
