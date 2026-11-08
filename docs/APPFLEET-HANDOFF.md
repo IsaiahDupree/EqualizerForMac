@@ -40,6 +40,14 @@ package size limit is 256 MiB; package extraction has a 60-second bound. Digests
 before and after inspection. Preview deliberately reports distribution signing as unverified.
 It is a plan and metadata check, not proof of a signed release or a customer payment.
 
+The purchase preflight honors the repository's existing local-test cache options:
+`SONANCE_DERIVED_DATA_DIR` selects an absolute directory for Xcode DerivedData,
+and `SONANCE_SOURCE_PACKAGES_DIR` optionally selects an existing absolute pinned
+package checkout. This supports hosts with an unavailable default Xcode cache.
+The preflight queries Xcode on every run and checks the resolved settings and
+actual package metadata. AppFleet's archive/export root remains separately
+controlled by `APPFLEET_BUILD_ROOT`.
+
 For an authorized source release, AppFleet's existing generation helper prepares the selected
 Xcode project before the purchase preflight. Dirty source fails that canonical generation gate.
 Before delegation with `--yes`, the adapter also checks current RevenueCat public configuration

@@ -117,6 +117,12 @@ class XcodeConfigurationTests(unittest.TestCase):
     def test_actual_mas_configuration(self):
         key = gate.validate_settings(self.settings)
         self.assertTrue(key.startswith("appl_"))
+        configured = os.environ.get("SONANCE_DERIVED_DATA_DIR")
+        if configured:
+            root = Path(configured).expanduser().resolve()
+            for setting in ("BUILD_DIR", "OBJROOT"):
+                self.assertTrue(Path(self.settings[setting]).resolve().is_relative_to(root),
+                                setting + " escaped the selected native cache")
 
     def test_actual_old_upload_configuration_is_blocked(self):
         # Xcode omits an empty custom setting from its resolved JSON.
