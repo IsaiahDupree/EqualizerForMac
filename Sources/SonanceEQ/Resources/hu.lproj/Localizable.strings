@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (kis méret)";
 "About Sonance EQ" = "A Sonance EQ névjegye";
 "Active · %@" = "Aktív · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Összes";
 "All Apps" = "Minden alkalmazás";
 "All Apps · per-app EQ is Pro" = "Minden alkalmazás · alkalmazásonkénti EQ: Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Beats-beállítások";
 "Best used with the system EQ off for these apps" = "Ezeknél az alkalmazásoknál érdemes kikapcsolni a rendszer EQ-ját";
 "Bypass" = "EQ megkerülése";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Mégse";
 "Capture what's playing to a file" = "A lejátszott hang mentése fájlba";
 "Check for Updates" = "Frissítések keresése";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Fejhallgató-beállítások";
 "Headphone presets" = "Fejhallgató-beállítások";
 "Headphones" = "Fejhallgatók";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Segítsen javítani a beállítást és a vásárlást. Hangot, neveket és e-mail-címeket soha nem küldünk. Kapcsolja ki ezt a beállítást a még el nem küldött adatok törléséhez.";
 "Import & export presets" = "Beállítások importálása és exportálása";
 "Import failed: not a Sonance EQ preset." = "Sikertelen importálás: nem Sonance EQ-beállítás.";
 "Import…" = "Importálás…";
@@ -92,6 +95,7 @@
 "No matches" = "Nincs találat";
 "No purchase option is available right now." = "Jelenleg nincs elérhető vásárlási lehetőség.";
 "Not now" = "Most nem";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Nyílt fejhallgató-EQ-adatbázis";
 "On" = "Bekapcsolva";
 "On-ear" = "Fülre illeszkedő";
@@ -143,6 +147,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Tesztáruház — nincs valódi fizetés. A vásárlásokhoz állítsa be a RevenueCat kulcsot a LicenseConfig fájlban.";
 "Saved where you choose · stays on your Mac" = "A választott helyre mentve · a Macen marad";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Keresés: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Használati adatok megosztása";
 "Side" = "Oldal";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "A Sonance EQ %@ elérhető a Mac App Store-ban";

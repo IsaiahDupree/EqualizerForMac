@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (μικρό αρχείο)";
 "About Sonance EQ" = "Σχετικά με το Sonance EQ";
 "Active · %@" = "Ενεργό · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Όλα";
 "All Apps" = "Όλες οι εφαρμογές";
 "All Apps · per-app EQ is Pro" = "Όλες οι εφαρμογές · EQ ανά εφαρμογή με Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Προρυθμίσεις Beats";
 "Best used with the system EQ off for these apps" = "Συνιστάται απενεργοποίηση του EQ συστήματος για αυτές τις εφαρμογές";
 "Bypass" = "Παράκαμψη EQ";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Ακύρωση";
 "Capture what's playing to a file" = "Καταγράψτε τον ήχο που παίζει σε αρχείο";
 "Check for Updates" = "Έλεγχος ενημερώσεων";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Προεπιλογές ακουστικών";
 "Headphone presets" = "Προεπιλογές ακουστικών";
 "Headphones" = "Ακουστικά";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Βοηθήστε μας να βελτιώσουμε τη ρύθμιση και τις αγορές. Ο ήχος, τα ονόματα και οι διευθύνσεις email δεν αποστέλλονται ποτέ. Απενεργοποιήστε αυτή την επιλογή για να διαγράψετε τα δεδομένα που δεν έχουν αποσταλεί.";
 "Import & export presets" = "Εισαγωγή και εξαγωγή προεπιλογών";
 "Import failed: not a Sonance EQ preset." = "Η εισαγωγή απέτυχε: δεν είναι προεπιλογή Sonance EQ.";
 "Import…" = "Εισαγωγή…";
@@ -92,6 +95,7 @@
 "No matches" = "Δεν βρέθηκαν αποτελέσματα";
 "No purchase option is available right now." = "Δεν υπάρχει διαθέσιμη επιλογή αγοράς τώρα.";
 "Not now" = "Όχι τώρα";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Ανοιχτή βάση EQ ακουστικών";
 "On" = "Ενεργό";
 "On-ear" = "Επικάθησης";
@@ -143,6 +147,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Δοκιμαστικό κατάστημα — χωρίς πραγματική χρέωση. Ορίστε κλειδί RevenueCat στο LicenseConfig για αγορές.";
 "Saved where you choose · stays on your Mac" = "Αποθήκευση όπου επιλέξετε · παραμένει στο Mac σας";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Αναζήτηση: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Κοινοποίηση δεδομένων χρήσης";
 "Side" = "Πλευρές";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Το Sonance EQ %@ είναι διαθέσιμο στο Mac App Store";

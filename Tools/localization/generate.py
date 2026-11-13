@@ -6,7 +6,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RESOURCES = ROOT / "Sources/SonanceEQ/Resources"
-STABLE = ["Sonance EQ", "Sonance EQ Pro", "PRO", "Q", "dB/oct", "Apple Lossless", "© 2026 Isaiah Dupree", "%+.1f dB", "%.2f", "—"]
+STABLE = [
+    "Sonance EQ", "Sonance EQ Pro", "PRO", "Q", "dB/oct", "Apple Lossless",
+    "© 2026 Isaiah Dupree", "%+.1f dB", "%.2f", "—",
+    "AirPods Pro 3", "CC BY-SA 4.0", "OPRA",
+]
 PERMISSION = {
     "en": "Sonance EQ captures your Mac’s audio to apply equalization. Recording starts only when you choose it and saves to your selected file. Audio stays on your Mac.",
     "pl": "Sonance EQ przechwytuje dźwięk Maca, aby zastosować korekcję. Nagrywanie rozpoczyna się tylko na Twoje żądanie i zapisuje w wybranym pliku. Dźwięk pozostaje na Macu.",

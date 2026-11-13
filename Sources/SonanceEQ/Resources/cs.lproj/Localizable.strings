@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (kompaktní)";
 "About Sonance EQ" = "O Sonance EQ";
 "Active · %@" = "Aktivní · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Vše";
 "All Apps" = "Všechny aplikace";
 "All Apps · per-app EQ is Pro" = "Všechny aplikace · EQ jednotlivých aplikací vyžaduje Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Předvolby Beats";
 "Best used with the system EQ off for these apps" = "Pro tyto aplikace je vhodné vypnout systémový EQ";
 "Bypass" = "Obejít korekci";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Zrušit";
 "Capture what's playing to a file" = "Uložte přehrávaný zvuk do souboru";
 "Check for Updates" = "Zkontrolovat aktualizace";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Předvolby sluchátek";
 "Headphone presets" = "Předvolby sluchátek";
 "Headphones" = "Sluchátka";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Pomozte vylepšit nastavení a nákupy. Zvuk, jména ani e-mailové adresy se nikdy neodesílají. Vypnutím této volby smažete neodeslané údaje.";
 "Import & export presets" = "Import a export předvoleb";
 "Import failed: not a Sonance EQ preset." = "Import selhal: nejde o předvolbu Sonance EQ.";
 "Import…" = "Importovat…";
@@ -92,6 +95,7 @@
 "No matches" = "Žádné výsledky";
 "No purchase option is available right now." = "Nákup nyní není dostupný.";
 "Not now" = "Teď ne";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Otevřená databáze EQ sluchátek";
 "On" = "Zapnuto";
 "On-ear" = "Na uši";
@@ -143,6 +147,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Testovací obchod — bez skutečných plateb. Pro nákupy nastavte klíč RevenueCat v LicenseConfig.";
 "Saved where you choose · stays on your Mac" = "Uloženo na vybraném místě · zůstává na Macu";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Hledat: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Sdílet údaje o používání";
 "Side" = "Strany";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ je dostupný v Mac App Store";

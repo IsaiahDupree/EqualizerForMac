@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (mały plik)";
 "About Sonance EQ" = "O Sonance EQ";
 "Active · %@" = "Aktywne · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Wszystkie";
 "All Apps" = "Wszystkie aplikacje";
 "All Apps · per-app EQ is Pro" = "Wszystkie aplikacje · EQ dla aplikacji wymaga Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Ustawienia Beats";
 "Best used with the system EQ off for these apps" = "Dla tych aplikacji najlepiej wyłączyć EQ systemowy";
 "Bypass" = "Pomiń korekcję";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Anuluj";
 "Capture what's playing to a file" = "Zapisz odtwarzany dźwięk do pliku";
 "Check for Updates" = "Sprawdź aktualizacje";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Ustawienia słuchawek";
 "Headphone presets" = "Ustawienia słuchawek";
 "Headphones" = "Słuchawki";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Pomóż ulepszyć konfigurację i zakupy. Dźwięk, nazwy i adresy e-mail nigdy nie są przesyłane. Wyłącz tę opcję, aby usunąć niewysłane dane.";
 "Import & export presets" = "Import i eksport ustawień";
 "Import failed: not a Sonance EQ preset." = "Import nie powiódł się: to nie są ustawienia Sonance EQ.";
 "Import…" = "Importuj…";
@@ -92,6 +95,7 @@
 "No matches" = "Brak wyników";
 "No purchase option is available right now." = "Opcja zakupu jest teraz niedostępna.";
 "Not now" = "Nie teraz";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Otwarta baza korekcji słuchawek";
 "On" = "Włączone";
 "On-ear" = "Nauszne";
@@ -143,6 +147,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Sklep testowy — bez opłat. Skonfiguruj klucz RevenueCat w LicenseConfig, aby uruchomić prawdziwe zakupy.";
 "Saved where you choose · stays on your Mac" = "Zapis w wybranym miejscu · tylko na Twoim Macu";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Szukaj: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Udostępniaj dane o użytkowaniu";
 "Side" = "Boki";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ jest dostępny w Mac App Store";

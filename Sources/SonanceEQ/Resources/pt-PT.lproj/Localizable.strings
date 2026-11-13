@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (compacto)";
 "About Sonance EQ" = "Acerca do Sonance EQ";
 "Active · %@" = "Ativo · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Todos";
 "All Apps" = "Todas as aplicações";
 "All Apps · per-app EQ is Pro" = "Todas as aplicações · EQ por aplicação requer Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Predefinições Beats";
 "Best used with the system EQ off for these apps" = "Para estas aplicações, é preferível desligar o EQ do sistema";
 "Bypass" = "Ignorar EQ";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Cancelar";
 "Capture what's playing to a file" = "Grave o áudio em reprodução num ficheiro";
 "Check for Updates" = "Procurar atualizações";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Predefinições de auscultadores";
 "Headphone presets" = "Predefinições de auscultadores";
 "Headphones" = "Auscultadores";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Ajude a melhorar a configuração e as compras. O áudio, os nomes e os endereços de e-mail nunca são enviados. Desative esta opção para apagar os dados ainda não enviados.";
 "Import & export presets" = "Importar e exportar predefinições";
 "Import failed: not a Sonance EQ preset." = "A importação falhou: não é uma predefinição Sonance EQ.";
 "Import…" = "Importar…";
@@ -92,6 +95,7 @@
 "No matches" = "Sem resultados";
 "No purchase option is available right now." = "Não há opções de compra disponíveis de momento.";
 "Not now" = "Agora não";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Base de dados aberta de EQ para auscultadores";
 "On" = "Ligado";
 "On-ear" = "Supra-aurais";
@@ -143,6 +147,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Loja de teste — sem cobranças reais. Configure a chave RevenueCat em LicenseConfig para ativar compras.";
 "Saved where you choose · stays on your Mac" = "Guardado onde escolher · fica no seu Mac";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Pesquisar: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Partilhar dados de utilização";
 "Side" = "Laterais";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "O Sonance EQ %@ está disponível na Mac App Store";
