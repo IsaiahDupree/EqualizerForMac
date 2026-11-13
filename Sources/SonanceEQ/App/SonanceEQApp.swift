@@ -54,9 +54,11 @@ private struct MenuBarAccessMenu: View {
     var body: some View {
         Button("Open Sonance EQ") {
             openWindow(id: SonanceWindow.main)
-            // Keyboard menu tracking restores the previous app as it closes.
-            // Request activation after that tracking action has returned.
-            DispatchQueue.main.async { NSApplication.shared.activate() }
+            // Ask Launch Services to foreground this running instance, as the Dock does.
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.addsToRecentItems = false
+            configuration.allowsRunningApplicationSubstitution = false
+            NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration)
         }
         Divider()
         Button("Quit Sonance EQ") { NSApplication.shared.terminate(nil) }
