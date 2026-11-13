@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (compact)";
 "About Sonance EQ" = "About Sonance EQ";
 "Active · %@" = "Active · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "All";
 "All Apps" = "All Apps";
 "All Apps · per-app EQ is Pro" = "All Apps · per-app EQ is Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Beats presets";
 "Best used with the system EQ off for these apps" = "Best used with the system EQ off for these apps";
 "Bypass" = "Bypass";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Cancel";
 "Capture what's playing to a file" = "Capture what's playing to a file";
 "Check for Updates" = "Check for Updates";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Headphone Presets";
 "Headphone presets" = "Headphone presets";
 "Headphones" = "Headphones";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics.";
 "Import & export presets" = "Import & export presets";
 "Import failed: not a Sonance EQ preset." = "Import failed: not a Sonance EQ preset.";
 "Import…" = "Import…";
@@ -92,6 +95,7 @@
 "No matches" = "No matches";
 "No purchase option is available right now." = "No purchase option is available right now.";
 "Not now" = "Not now";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Open headphone EQ database";
 "On" = "On";
 "On-ear" = "On-ear";
@@ -141,6 +145,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live.";
 "Saved where you choose · stays on your Mac" = "Saved where you choose · stays on your Mac";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Search e.g. HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Share usage metrics";
 "Side" = "Side";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ is available in the Mac App Store";
@@ -177,5 +182,3 @@
 "restored ÷ attempts" = "restored ÷ attempts";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-"Share usage metrics" = "Share usage metrics";
-"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics.";

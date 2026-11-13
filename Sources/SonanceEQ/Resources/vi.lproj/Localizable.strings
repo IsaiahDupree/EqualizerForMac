@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (nhỏ gọn)";
 "About Sonance EQ" = "Giới thiệu Sonance EQ";
 "Active · %@" = "Đang hoạt động · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Tất cả";
 "All Apps" = "Tất cả ứng dụng";
 "All Apps · per-app EQ is Pro" = "Tất cả ứng dụng · EQ từng ứng dụng cần Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Cấu hình Beats";
 "Best used with the system EQ off for these apps" = "Nên tắt EQ hệ thống cho các ứng dụng này";
 "Bypass" = "Bỏ qua chỉnh âm";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Hủy";
 "Capture what's playing to a file" = "Lưu âm thanh đang phát vào tệp";
 "Check for Updates" = "Kiểm tra cập nhật";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Cấu hình tai nghe";
 "Headphone presets" = "Cấu hình tai nghe";
 "Headphones" = "Tai nghe";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Giúp cải thiện quá trình thiết lập và mua hàng. Âm thanh, tên và địa chỉ email không bao giờ được gửi. Tắt tùy chọn này để xóa số liệu chưa gửi.";
 "Import & export presets" = "Nhập và xuất cấu hình";
 "Import failed: not a Sonance EQ preset." = "Nhập thất bại: không phải cấu hình Sonance EQ.";
 "Import…" = "Nhập…";
@@ -92,6 +95,7 @@
 "No matches" = "Không có kết quả";
 "No purchase option is available right now." = "Hiện không có tùy chọn mua.";
 "Not now" = "Để sau";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Cơ sở dữ liệu EQ tai nghe mở";
 "On" = "Bật";
 "On-ear" = "Đặt trên tai";
@@ -141,6 +145,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Cửa hàng thử nghiệm — không tính phí thật. Thiết lập khóa RevenueCat trong LicenseConfig để bật mua hàng.";
 "Saved where you choose · stays on your Mac" = "Lưu ở nơi bạn chọn · giữ trên máy Mac";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Tìm: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Chia sẻ số liệu sử dụng";
 "Side" = "Hai bên";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ đã có trên Mac App Store";
@@ -177,5 +182,3 @@
 "restored ÷ attempts" = "khôi phục ÷ lần thử";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-"Share usage metrics" = "Chia sẻ số liệu sử dụng";
-"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Giúp cải thiện quá trình thiết lập và mua hàng. Âm thanh, tên và địa chỉ email không bao giờ được gửi. Tắt tùy chọn này để xóa số liệu chưa gửi.";

@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC（精簡）";
 "About Sonance EQ" = "關於 Sonance EQ";
 "Active · %@" = "運作中 · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "全部";
 "All Apps" = "所有 App";
 "All Apps · per-app EQ is Pro" = "所有 App · 各 App 等化需要 Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Beats 預設";
 "Best used with the system EQ off for these apps" = "建議關閉這些 App 的系統等化";
 "Bypass" = "略過等化";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "取消";
 "Capture what's playing to a file" = "將正在播放的音訊錄製為檔案";
 "Check for Updates" = "檢查更新";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "耳機預設";
 "Headphone presets" = "耳機預設";
 "Headphones" = "耳機";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "協助改善設定與購買流程。音訊、名稱和電子郵件地址一律不會傳送。關閉此選項即可清除尚未傳送的統計資料。";
 "Import & export presets" = "匯入與匯出預設";
 "Import failed: not a Sonance EQ preset." = "匯入失敗：並非 Sonance EQ 預設。";
 "Import…" = "匯入⋯";
@@ -92,6 +95,7 @@
 "No matches" = "沒有符合項目";
 "No purchase option is available right now." = "目前沒有可用的購買選項。";
 "Not now" = "稍後再說";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — 開放式耳機 EQ 資料庫";
 "On" = "開啟";
 "On-ear" = "貼耳式";
@@ -141,6 +145,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "測試商店 — 不會實際收費。請在 LicenseConfig 設定 RevenueCat 金鑰以啟用購買。";
 "Saved where you choose · stays on your Mac" = "儲存於指定位置 · 保留在 Mac 上";
 "Search e.g. HD 600, AirPods, Moondrop…" = "搜尋：HD 600、AirPods、Moondrop⋯";
+"Share usage metrics" = "分享使用統計";
 "Side" = "側邊";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ 已於 Mac App Store 推出";
@@ -177,5 +182,3 @@
 "restored ÷ attempts" = "回復 ÷ 嘗試次數";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-"Share usage metrics" = "分享使用統計";
-"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "協助改善設定與購買流程。音訊、名稱和電子郵件地址一律不會傳送。關閉此選項即可清除尚未傳送的統計資料。";

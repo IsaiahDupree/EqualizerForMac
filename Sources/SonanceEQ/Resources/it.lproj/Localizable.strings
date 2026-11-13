@@ -12,6 +12,7 @@
 "AAC (compact)" = "AAC (compatto)";
 "About Sonance EQ" = "Informazioni su Sonance EQ";
 "Active · %@" = "Attivo · %@";
+"AirPods Pro 3" = "AirPods Pro 3";
 "All" = "Tutti";
 "All Apps" = "Tutte le app";
 "All Apps · per-app EQ is Pro" = "Tutte le app · EQ per app richiede Pro";
@@ -30,6 +31,7 @@
 "Beats presets" = "Preset Beats";
 "Best used with the system EQ off for these apps" = "Per queste app è meglio disattivare l’EQ di sistema";
 "Bypass" = "Escludi EQ";
+"CC BY-SA 4.0" = "CC BY-SA 4.0";
 "Cancel" = "Annulla";
 "Capture what's playing to a file" = "Registra l’audio in riproduzione in un file";
 "Check for Updates" = "Cerca aggiornamenti";
@@ -67,6 +69,7 @@
 "Headphone Presets" = "Preset per cuffie";
 "Headphone presets" = "Preset per cuffie";
 "Headphones" = "Cuffie";
+"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Aiuta a migliorare la configurazione e gli acquisti. Audio, nomi e indirizzi email non vengono mai inviati. Disattiva questa opzione per eliminare i dati non ancora inviati.";
 "Import & export presets" = "Importa ed esporta preset";
 "Import failed: not a Sonance EQ preset." = "Importazione non riuscita: non è un preset Sonance EQ.";
 "Import…" = "Importa…";
@@ -92,6 +95,7 @@
 "No matches" = "Nessun risultato";
 "No purchase option is available right now." = "Nessuna opzione di acquisto disponibile al momento.";
 "Not now" = "Non ora";
+"OPRA" = "OPRA";
 "OPRA — Open headphone EQ database" = "OPRA — Database aperto di EQ per cuffie";
 "On" = "Attivo";
 "On-ear" = "Sovraurali";
@@ -141,6 +145,7 @@
 "Sandbox / mock store — no real charge. Fill a RevenueCat key in LicenseConfig to go live." = "Negozio di prova — nessun addebito reale. Configura la chiave RevenueCat in LicenseConfig per attivare gli acquisti.";
 "Saved where you choose · stays on your Mac" = "Salvato dove scegli · resta sul tuo Mac";
 "Search e.g. HD 600, AirPods, Moondrop…" = "Cerca: HD 600, AirPods, Moondrop…";
+"Share usage metrics" = "Condividi i dati di utilizzo";
 "Side" = "Laterale";
 "Sonance EQ" = "Sonance EQ";
 "Sonance EQ %@ is available in the Mac App Store" = "Sonance EQ %@ è disponibile sul Mac App Store";
@@ -177,5 +182,3 @@
 "restored ÷ attempts" = "ripristinati ÷ tentativi";
 "© 2026 Isaiah Dupree" = "© 2026 Isaiah Dupree";
 "—" = "—";
-"Share usage metrics" = "Condividi i dati di utilizzo";
-"Help improve setup and purchases. Audio, names and email addresses are never included. Turn this off to clear unsent metrics." = "Aiuta a migliorare la configurazione e gli acquisti. Audio, nomi e indirizzi email non vengono mai inviati. Disattiva questa opzione per eliminare i dati non ancora inviati.";
