@@ -25,7 +25,12 @@ final class PurchaseManager {
         case failure(String)
     }
 
-    private(set) var isPro = false
+    private(set) var isPro = false {
+        didSet {
+            if oldValue != isPro { onProChange?() }
+        }
+    }
+    var onProChange: (() -> Void)?
     private(set) var isConfigured = false      // true once the live RevenueCat SDK is configured
     private(set) var store: Store = .mock
     var lastError: String?

@@ -96,7 +96,7 @@
 "More Sonance" = "További Sonance alkalmazások";
 "No active Pro purchase was found for this Apple Account." = "Ehhez az Apple-fiókhoz nem található aktív Pro-vásárlás.";
 "No apps are playing audio" = "Egy alkalmazás sem játszik le hangot";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "Nem érkezett hang a hangszínszabályzóhoz. Ellenőrizze a kimeneti eszközt, majd indítsa újra az EQ-t.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "Nem érkezett hang a hangszínszabályzóhoz. Játsszon le hangot egy másik alkalmazásban, ellenőrizze a kimenetet, és indítsa újra az EQ-t.";
 "No default output device" = "Nincs alapértelmezett kimeneti eszköz";
 "No events yet — open the paywall or make a (mock) purchase." = "Még nincs esemény — nyissa meg a vásárlási képernyőt vagy végezzen tesztvásárlást.";
 "No matches" = "Nincs találat";

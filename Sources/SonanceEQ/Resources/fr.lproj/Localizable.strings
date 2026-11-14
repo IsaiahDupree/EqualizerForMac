@@ -112,7 +112,7 @@
 "Couldn’t play the preview. Check your output and try again." = "Impossible de lire l’aperçu. Vérifiez la sortie audio, puis réessayez.";
 "Audio Capture permission request timed out. Check the permission in System Settings, then try again." = "Le délai de la demande de capture audio a expiré. Vérifiez l’autorisation dans Réglages Système, puis réessayez.";
 "Audio routing timed out. Check Audio Capture permission and available output devices, then try again." = "Le routage audio a expiré. Vérifiez l’autorisation de capture et les sorties disponibles, puis réessayez.";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "Aucun son n’a atteint l’égaliseur. Vérifiez la sortie audio, puis redémarrez l’égaliseur.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "Aucun son n’a atteint l’égaliseur. Lancez la lecture dans une autre app, vérifiez la sortie audio, puis redémarrez l’égaliseur.";
 
 "Save EQ for this output" = "Enregistrer l’égaliseur pour cette sortie";
 "Forget saved EQ" = "Oublier l’égaliseur enregistré";

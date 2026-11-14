@@ -96,7 +96,7 @@
 "More Sonance" = "Ứng dụng Sonance khác";
 "No active Pro purchase was found for this Apple Account." = "Không tìm thấy giao dịch mua Pro đang hoạt động cho Tài khoản Apple này.";
 "No apps are playing audio" = "Không có ứng dụng đang phát âm thanh";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "EQ không nhận được âm thanh. Hãy kiểm tra thiết bị đầu ra rồi bật lại EQ.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "EQ không nhận được âm thanh. Hãy phát âm thanh trong ứng dụng khác, kiểm tra đầu ra rồi bật lại EQ.";
 "No default output device" = "Không có thiết bị đầu ra mặc định";
 "No events yet — open the paywall or make a (mock) purchase." = "Chưa có sự kiện — mở màn hình mua hoặc mua thử nghiệm.";
 "No matches" = "Không có kết quả";

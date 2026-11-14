@@ -96,7 +96,7 @@
 "More Sonance" = "Περισσότερα από τη Sonance";
 "No active Pro purchase was found for this Apple Account." = "Δεν βρέθηκε ενεργή αγορά Pro για αυτόν τον λογαριασμό Apple.";
 "No apps are playing audio" = "Καμία εφαρμογή δεν αναπαράγει ήχο";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "Δεν έφτασε ήχος στον ισοσταθμιστή. Ελέγξτε τη συσκευή εξόδου και ξεκινήστε πάλι την ισοστάθμιση.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "Δεν έφτασε ήχος στον ισοσταθμιστή. Αναπαράγετε ήχο σε άλλη εφαρμογή, ελέγξτε την έξοδο και ξεκινήστε πάλι την ισοστάθμιση.";
 "No default output device" = "Δεν υπάρχει προεπιλεγμένη συσκευή εξόδου";
 "No events yet — open the paywall or make a (mock) purchase." = "Δεν υπάρχουν συμβάντα — ανοίξτε την οθόνη αγοράς ή κάντε δοκιμαστική αγορά.";
 "No matches" = "Δεν βρέθηκαν αποτελέσματα";

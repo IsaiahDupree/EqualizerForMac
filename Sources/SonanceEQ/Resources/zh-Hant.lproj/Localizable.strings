@@ -96,7 +96,7 @@
 "More Sonance" = "更多 Sonance App";
 "No active Pro purchase was found for this Apple Account." = "此 Apple 帳號沒有有效的 Pro 購買。";
 "No apps are playing audio" = "目前沒有 App 播放音訊";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "等化器未收到音訊。請檢查輸出裝置，再重新啟動等化。";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "等化器未收到音訊。請在其他 App 播放音訊並檢查輸出裝置，再重新啟動等化。";
 "No default output device" = "沒有預設輸出裝置";
 "No events yet — open the paywall or make a (mock) purchase." = "尚無事件 — 開啟購買畫面或進行測試購買。";
 "No matches" = "沒有符合項目";

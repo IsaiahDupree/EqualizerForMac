@@ -162,7 +162,7 @@ struct ContentView: View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
             Text("Audio Capture permission is required to equalize system audio.")
-                .font(.caption)
+                .font(.caption).fixedSize(horizontal: false, vertical: true)
             Spacer()
             Button("Open Settings") { app.openPrivacySettings() }
         }
@@ -301,7 +301,7 @@ struct ContentView: View {
     private var phaseRow: some View {
         HStack(spacing: 8) {
             Toggle(isOn: Binding(get: { app.linearPhase },
-                                 set: { if app.license.canUse(.parametricEQ) { app.linearPhase = $0; app.pushSettings() } else { presentPaywall() } })) {
+                                 set: { if app.license.canUse(.parametricEQ) { app.setLinearPhase($0) } else { presentPaywall() } })) {
                 proLabel("Linear Phase", feature: .parametricEQ)
             }
             .toggleStyle(.switch)

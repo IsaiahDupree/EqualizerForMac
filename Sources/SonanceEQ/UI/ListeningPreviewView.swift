@@ -6,6 +6,8 @@ struct ListeningPreviewView: View {
     @State private var player: AVAudioPlayer?
     @State private var sample: ListeningSample.Comparison?
     @State private var playbackError = false
+    @State private var playingTuned: Bool?
+    @State private var playbackEnd: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -15,12 +17,12 @@ struct ListeningPreviewView: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack {
                 Button { play(tuned: false) } label: {
-                    Label("Original", systemImage: "play.fill")
+                    Label("Original", systemImage: playingTuned == false ? "speaker.wave.2.fill" : "play.fill")
                 }
                 Button { play(tuned: true) } label: {
-                    Label("Vocal", systemImage: "play.fill")
+                    Label("Vocal", systemImage: playingTuned == true ? "speaker.wave.2.fill" : "play.fill")
                 }
-                Button("Stop") { stop() }
+                Button("Stop") { stop() }.disabled(player == nil)
             }
             if playbackError {
                 Text("Couldn’t play the preview. Check your output and try again.")
@@ -43,15 +45,27 @@ struct ListeningPreviewView: View {
         let audio = ListeningSample.wave(tuned ? comparison.tuned : comparison.original)
         do {
             let next = try AVAudioPlayer(data: audio)
-            playbackError = !next.play()
-            if !playbackError { player = next }
+            guard next.play() else { playbackError = true; return }
+            playbackError = false
+            player = next
+            playingTuned = tuned
+            playbackEnd = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(next.duration))
+                guard !Task.isCancelled else { return }
+                player = nil
+                playingTuned = nil
+                playbackEnd = nil
+            }
         } catch {
             playbackError = true
         }
     }
 
     private func stop() {
+        playbackEnd?.cancel()
+        playbackEnd = nil
         player?.stop()
         player = nil
+        playingTuned = nil
     }
 }

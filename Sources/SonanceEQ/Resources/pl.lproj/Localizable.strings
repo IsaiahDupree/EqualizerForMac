@@ -96,7 +96,7 @@
 "More Sonance" = "Więcej aplikacji Sonance";
 "No active Pro purchase was found for this Apple Account." = "Nie znaleziono aktywnego zakupu Pro dla tego konta Apple.";
 "No apps are playing audio" = "Żadna aplikacja nie odtwarza dźwięku";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "Do korektora nie dotarł dźwięk. Sprawdź urządzenie wyjściowe i uruchom korektor ponownie.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "Do korektora nie dotarł dźwięk. Odtwórz dźwięk w innej aplikacji, sprawdź wyjście audio i uruchom korektor ponownie.";
 "No default output device" = "Brak domyślnego urządzenia wyjściowego";
 "No events yet — open the paywall or make a (mock) purchase." = "Brak zdarzeń — otwórz ekran zakupu lub wykonaj zakup testowy.";
 "No matches" = "Brak wyników";

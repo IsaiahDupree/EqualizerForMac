@@ -177,7 +177,7 @@ final class SystemAudioTap {
             switch self {
             case .finishing: return EQText.string("Audio routing is still finishing. Try again when it stops.")
             case .timedOut: return EQText.string("Audio routing timed out. Check Audio Capture permission and available output devices, then try again.")
-            case .noAudio: return EQText.string("No audio reached the equalizer. Check your output device, then start EQ again.")
+            case .noAudio: return EQText.string("No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again.")
             }
         }
     }

@@ -96,7 +96,7 @@
 "More Sonance" = "More Sonance";
 "No active Pro purchase was found for this Apple Account." = "No active Pro purchase was found for this Apple Account.";
 "No apps are playing audio" = "No apps are playing audio";
-"No audio reached the equalizer. Check your output device, then start EQ again." = "No audio reached the equalizer. Check your output device, then start EQ again.";
+"No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again." = "No audio reached the equalizer. Play audio in another app and check your output device, then start EQ again.";
 "No default output device" = "No default output device";
 "No events yet — open the paywall or make a (mock) purchase." = "No events yet — open the paywall or make a (mock) purchase.";
 "No matches" = "No matches";

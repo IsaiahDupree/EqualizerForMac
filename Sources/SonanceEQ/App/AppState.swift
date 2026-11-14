@@ -37,6 +37,11 @@ final class AppState {
                   entry.event == .purchaseCompleted || entry.event == .restoreCompleted else { return }
             Task { [weak self] in await self?.license.tracker.refreshStorePurchases() }
         }
+        license.onProChange = { [weak self] in
+            guard let self else { return }
+            self.refreshOutputPreset()
+            self.pushSettings()
+        }
         license.start()
         mixerEngine.onChannelFailure = { [weak self] bundleID, message in
             guard let self else { return }
@@ -258,7 +263,16 @@ final class AppState {
     func setMidSide(_ on: Bool) {
         midSideEnabled = on
         if on, sideBands.isEmpty { sideBands = Presets.flat }
-        if !on { editTarget = .mid }
+        if !on {
+            editTarget = .mid
+            refreshOutputPreset()
+        }
+        pushSettings()
+    }
+
+    func setLinearPhase(_ on: Bool) {
+        linearPhase = on
+        if !on { refreshOutputPreset() }
         pushSettings()
     }
 
@@ -292,7 +306,11 @@ final class AppState {
     }
 
     var canManageOutputPreset: Bool {
-        isAudioFlowing && tap?.outputUID != nil && !midSideEnabled && !linearPhase
+        isAudioFlowing && tap?.outputUID != nil && supportsOutputPresetMode
+    }
+
+    private var supportsOutputPresetMode: Bool {
+        !midSideEnabled && !linearPhase
     }
 
     func saveOutputPreset() {
@@ -325,9 +343,23 @@ final class AppState {
         PresetFile(name: activePresetName ?? "", preampDb: preampDb, bands: bands)
     }
 
+    private func refreshOutputPreset() {
+        updatePreset(for: tap?.isRunning == true ? tap?.outputUID : nil)
+    }
+
     private func updatePreset(for uid: String?) {
-        guard let uid, !midSideEnabled, !linearPhase, license.canUse(.outputPresets) else {
+        guard license.canUse(.outputPresets) else {
             hasSavedOutputPreset = false
+            restoreUnassignedOutput()
+            return
+        }
+        guard let uid else {
+            hasSavedOutputPreset = false
+            return
+        }
+        guard supportsOutputPresetMode else {
+            hasSavedOutputPreset = false
+            if uid != appliedPresetOutputUID { restoreUnassignedOutput() }
             return
         }
         let preset = outputPresets.preset(for: uid)
@@ -337,11 +369,15 @@ final class AppState {
             if appliedPresetOutputUID == nil { unassignedOutputEQ = currentPreset() }
             appliedPresetOutputUID = uid
             loadPreset(preset)
-        } else if let unassignedOutputEQ {
-            loadPreset(unassignedOutputEQ)
-            self.unassignedOutputEQ = nil
-            appliedPresetOutputUID = nil
+        } else {
+            restoreUnassignedOutput()
         }
+    }
+
+    private func restoreUnassignedOutput() {
+        if let unassignedOutputEQ { loadPreset(unassignedOutputEQ) }
+        unassignedOutputEQ = nil
+        appliedPresetOutputUID = nil
     }
 
     private func loadPreset(_ preset: PresetFile) {
