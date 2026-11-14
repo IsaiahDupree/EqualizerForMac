@@ -641,8 +641,12 @@ final class AppState {
     }
 
     func openPrivacySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
-            NSWorkspace.shared.open(url)
+        let privacyPane = NSWorkspace.shared
+        if #available(macOS 26, *),
+           let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AudioCapture"),
+           privacyPane.open(url) { return }
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            privacyPane.open(url)
         }
     }
 }
