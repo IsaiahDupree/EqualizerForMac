@@ -2,6 +2,9 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var app: AppState
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var defaultOutputName: String?
+    @State private var showingListeningPreview = false
     @State private var showingBrowser = false
     @State private var showingPaywall = false
     @State private var showingMixer = false
@@ -23,6 +26,7 @@ struct ContentView: View {
         VStack(spacing: 14) {
             header
             if app.permission.status == .denied || app.permissionRecoverySuggested { permissionBanner }
+            listeningRow
             targetRow
             presetRow
             stereoRow
@@ -37,6 +41,7 @@ struct ContentView: View {
         }
         .padding(22)
         .frame(minWidth: 560, idealWidth: 680, maxWidth: 760)
+        .sheet(isPresented: $showingListeningPreview) { ListeningPreviewView() }
         .sheet(isPresented: $showingBrowser) { PresetBrowserView(app: app) }
         .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
         .sheet(isPresented: $showingMixer) { MixerView(app: app) }
@@ -45,6 +50,12 @@ struct ContentView: View {
         .sheet(isPresented: $showingAnalytics) { PurchaseAnalyticsView(app: app) }
         .onAppear(perform: openLaunchArgPanel)
         .task { await app.updates.check() }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            app.permission.refresh()
+            let output = await Task.detached(priority: .utility) { AudioDevices.defaultOutput()?.name }.value
+            if !Task.isCancelled { defaultOutputName = output }
+        }
     }
 
     /// Auto-present a panel from a launch argument (`--screen mixer|recorder`) for demos/screenshots.
@@ -97,6 +108,9 @@ struct ContentView: View {
     }
 
     private var headerSubtitle: String {
+        if app.isRunning && app.permissionRequestInFlight {
+            return EQText.string("Waiting for Audio Capture permission…")
+        }
         if app.isRunning {
             guard app.isAudioFlowing else { return EQText.string("Routing audio…") }
             if let preset = app.activePresetName { return EQText.format("Active · %@", preset) }
@@ -104,6 +118,44 @@ struct ContentView: View {
         }
         if app.audioRouteFinishing { return EQText.string("Finishing audio routing…") }
         return app.activePresetName ?? EQText.string("Stopped")
+    }
+
+    private var listeningRow: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                if let output = app.isAudioFlowing ? app.outputDeviceName : defaultOutputName {
+                    Label {
+                        Text(EQText.format("Output: %@", output))
+                    } icon: {
+                        Image(systemName: "speaker.wave.2")
+                    }
+                    .lineLimit(1)
+                    .help(output)
+                }
+                if !app.isRunning && app.permission.status != .denied && !app.permissionRecoverySuggested {
+                    Text("macOS may ask for Audio Capture permission when you start EQ.")
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            Spacer()
+            if app.canManageOutputPreset {
+                Menu {
+                    Button("Save EQ for this output") { requirePro(.outputPresets) { app.saveOutputPreset() } }
+                    if app.hasSavedOutputPreset {
+                        Button("Forget saved EQ") { app.forgetOutputPreset() }
+                    }
+                } label: {
+                    Label("Output preset", systemImage: app.hasSavedOutputPreset ? "bookmark.fill" : "bookmark")
+                }
+                .controlSize(.small)
+            }
+            Button { showingListeningPreview = true } label: {
+                Label("Preview EQ", systemImage: "play.circle")
+            }
+            .controlSize(.small)
+        }
     }
 
     private var permissionBanner: some View {

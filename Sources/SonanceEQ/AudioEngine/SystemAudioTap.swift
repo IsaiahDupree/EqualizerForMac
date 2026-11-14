@@ -5,7 +5,7 @@ import OSLog
 
 private struct RouteSnapshot {
     let format: AudioStreamBasicDescription?
-    let outputName: String
+    let output: AudioDevice
 }
 
 /// Owns route intent and callback health on the main actor. Core Audio's synchronous
@@ -22,6 +22,7 @@ final class SystemAudioTap {
 
     private(set) var tapFormat: AudioStreamBasicDescription?
     private(set) var outputDeviceName = "—"
+    private(set) var outputUID: String?
     private(set) var isRunning = false
     var isAudioFlowing: Bool { isRunning && watchdog.state == .flowing }
     var isFinishingOperation: Bool { operation.inFlight }
@@ -127,7 +128,8 @@ final class SystemAudioTap {
                     return
                 }
                 self.tapFormat = snapshot.format
-                self.outputDeviceName = snapshot.outputName
+                self.outputDeviceName = snapshot.output.name
+                self.outputUID = snapshot.output.uid
                 self.isRunning = true
                 self.watchdog.arm { [weak self] flowing in
                     guard let self, self.desiredRunning else { return }
@@ -135,10 +137,10 @@ final class SystemAudioTap {
                         self.onAudioFlowChange?()
                     } else {
                         self.stop()
-                        self.onRebuild?(.failure(CoreAudioError.create("Couldn't route audio on this output device", -1)))
+                        self.onRebuild?(.failure(RouteError.noAudio))
                     }
                 }
-                self.onRebuild?(.success(snapshot.outputName))
+                self.onRebuild?(.success(snapshot.output.name))
             case let .failure(error):
                 if error is CancellationError, !self.desiredRunning { return }
                 self.desiredRunning = false
@@ -159,6 +161,7 @@ final class SystemAudioTap {
         watchdog.stop()
         isRunning = false
         tapFormat = nil
+        outputUID = nil
         onAudioFlowChange?()
     }
 
@@ -169,11 +172,12 @@ final class SystemAudioTap {
     }
 
     private enum RouteError: LocalizedError {
-        case finishing, timedOut
+        case finishing, timedOut, noAudio
         var errorDescription: String? {
             switch self {
             case .finishing: return EQText.string("Audio routing is still finishing. Try again when it stops.")
-            case .timedOut: return EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+            case .timedOut: return EQText.string("Audio routing timed out. Check Audio Capture permission and available output devices, then try again.")
+            case .noAudio: return EQText.string("No audio reached the equalizer. Check your output device, then start EQ again.")
             }
         }
     }
@@ -192,7 +196,6 @@ private final class SystemAudioRoute: @unchecked Sendable {
     private var deviceChangeBlock: AudioObjectPropertyListenerBlock?
     private var sessionGeneration: UInt64 = 0
     private var tapFormat: AudioStreamBasicDescription?
-    private var outputDeviceName = "—"
     private var routeGeneration: UInt64 = 0
     var onDeviceChange: ((UInt64) -> Void)?
     var onLifecycleStage: ((UInt64, String) -> Void)?
@@ -209,11 +212,11 @@ private final class SystemAudioRoute: @unchecked Sendable {
         stop()
         routeGeneration = generation
         try cancellation.check()
-        try build(target: target, excludedBundleIDs: excludedBundleIDs,
-                  heartbeat: heartbeat, cancellation: cancellation)
+        let output = try build(target: target, excludedBundleIDs: excludedBundleIDs,
+                               heartbeat: heartbeat, cancellation: cancellation)
         try installDefaultDeviceListener(routeGeneration: generation)
         try cancellation.check()
-        return RouteSnapshot(format: tapFormat, outputName: outputDeviceName)
+        return RouteSnapshot(format: tapFormat, output: output)
     }
 
     func stop() {
@@ -224,7 +227,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
 
     private func build(target: EQTarget, excludedBundleIDs: Set<String>,
                        heartbeat: AudioRouteWatchdog.Heartbeat,
-                       cancellation: AudioRouteOperation<RouteSnapshot?>.Cancellation) throws {
+                       cancellation: AudioRouteOperation<RouteSnapshot?>.Cancellation) throws -> AudioDevice {
         try cancellation.check()
         // 1. Exclude ourselves from the global tap to prevent feedback.
         var exclude: [AudioObjectID] = []
@@ -283,7 +286,7 @@ private final class SystemAudioRoute: @unchecked Sendable {
         let outputDevice = try AudioObjectID.system.readDefaultOutputDevice()
         guard outputDevice.isValid else { throw CoreAudioError.create("No default output device", -1) }
         let outputUID = try outputDevice.readDeviceUID()
-        outputDeviceName = (try? outputDevice.readDeviceName()) ?? "Output"
+        let outputName = (try? outputDevice.readDeviceName()) ?? EQText.string("Output")
         try cancellation.check()
 
         // 5. Build a private aggregate: real output as main/clock sub-device + the tap.
@@ -335,7 +338,8 @@ private final class SystemAudioRoute: @unchecked Sendable {
         guard status == noErr else { throw CoreAudioError.create("AudioDeviceStart", status) }
         try cancellation.check()
 
-        log.info("Tap running → \(self.outputDeviceName, privacy: .public) @ \(format.mSampleRate, privacy: .public) Hz, \(format.mChannelsPerFrame, privacy: .public) ch")
+        log.info("Tap running → \(outputName, privacy: .public) @ \(format.mSampleRate, privacy: .public) Hz, \(format.mChannelsPerFrame, privacy: .public) ch")
+        return AudioDevice(id: outputDevice, uid: outputUID, name: outputName)
     }
 
     private func teardown() {

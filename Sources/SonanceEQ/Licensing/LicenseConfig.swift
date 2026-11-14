@@ -43,4 +43,5 @@ enum ProFeature: CaseIterable {
     case importExport    // M2 — preset import/export
     case perAppEQ        // M3 — per-application equalization
     case audioRecorder   // Tier 1 — record system / per-app audio to a file
+    case outputPresets
 }
