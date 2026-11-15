@@ -4,7 +4,7 @@
   "platform": "macos",
   "configuration": "Release-MAS",
   "profile_name": "Sonance EQ MAS",
-  "version": "1.0.9",
-  "build_number": "13",
+  "version": "1.1.0",
+  "build_number": "14",
   "archive_jobs": 1
 }
