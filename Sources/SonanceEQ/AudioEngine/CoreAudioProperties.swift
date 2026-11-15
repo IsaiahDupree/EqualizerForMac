@@ -99,6 +99,11 @@ enum CoreAudioError: LocalizedError {
     case property(AudioObjectPropertySelector, OSStatus)
     case create(String, OSStatus)
 
+    var suggestsAudioCapturePermissionRecovery: Bool {
+        guard case let .create(operation, _) = self else { return false }
+        return operation.contains("Audio Capture permission")
+    }
+
     var errorDescription: String? {
         switch self {
         case let .property(sel, status):

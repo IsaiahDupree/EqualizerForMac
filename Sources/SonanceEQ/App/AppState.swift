@@ -16,10 +16,15 @@ final class AppState {
 
     private var tap: SystemAudioTap?
     private var startGeneration: UInt64 = 0
-    private var permissionRequestInFlight = false
+    private(set) var permissionRequestInFlight = false
+    private(set) var permissionRecoverySuggested = false
     private var permissionDeadline: DispatchWorkItem?
     private let log = Logger(subsystem: kSubsystem, category: "AppState")
     private let diagnostics = DiagnosticsReporter()
+    private let outputPresets = OutputPresetStore()
+    private var appliedPresetOutputUID: String?
+    private var unassignedOutputEQ: PresetFile?
+    private(set) var hasSavedOutputPreset = false
 
     init() {
         diagnostics.start()
@@ -31,6 +36,11 @@ final class AppState {
             guard let self, self.journey.optedIn, entry.store == "revenueCat",
                   entry.event == .purchaseCompleted || entry.event == .restoreCompleted else { return }
             Task { [weak self] in await self?.license.tracker.refreshStorePurchases() }
+        }
+        license.onProChange = { [weak self] in
+            guard let self else { return }
+            self.refreshOutputPreset()
+            self.pushSettings()
         }
         license.start()
         mixerEngine.onChannelFailure = { [weak self] bundleID, message in
@@ -143,6 +153,7 @@ final class AppState {
         guard !permissionRequestInFlight else { return }
         guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
+        permissionRecoverySuggested = false
         startGeneration &+= 1
         switch permission.status {
         case .authorized:
@@ -156,7 +167,8 @@ final class AppState {
                 guard let self, self.startGeneration == expectedGeneration,
                       self.permissionRequestInFlight, self.isRunning else { return }
                 self.stop()
-                self.errorMessage = EQText.string("Audio routing took too long. Check Audio Capture permission, then try again.")
+                self.permissionRecoverySuggested = true
+                self.errorMessage = EQText.string("Audio Capture permission request timed out. Check the permission in System Settings, then try again.")
             }
             permissionDeadline = deadline
             DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: deadline)
@@ -169,9 +181,13 @@ final class AppState {
                 guard self.startGeneration == expectedGeneration, self.isRunning else { return }
                 self.isRunning = false
                 if granted { self.reallyStart() }
-                else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
+                else {
+                    self.permissionRecoverySuggested = true
+                    self.errorMessage = EQText.string("Audio Capture permission was denied.")
+                }
             }
         case .denied:
+            permissionRecoverySuggested = true
             errorMessage = EQText.string("Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security.")
         }
     }
@@ -196,10 +212,15 @@ final class AppState {
             switch result {
             case .success:
                 guard tap.isRunning else { return }
+                self.permissionRecoverySuggested = false
                 self.outputDeviceName = tap.outputDeviceName
+                self.updatePreset(for: tap.outputUID)
+                // The completed route provides the actual sample rate for the current output.
+                self.pushSettings()
             case let .failure(error):
                 guard !tap.isRunning else { return }
                 self.isRunning = false
+                self.permissionRecoverySuggested = (error as? CoreAudioError)?.suggestsAudioCapturePermissionRecovery ?? false
                 self.errorMessage = error.localizedDescription
             }
         }
@@ -212,6 +233,7 @@ final class AppState {
             self.outputDeviceName = tap.outputDeviceName
             self.isRunning = true
         } catch {
+            permissionRecoverySuggested = (error as? CoreAudioError)?.suggestsAudioCapturePermissionRecovery ?? false
             self.errorMessage = error.localizedDescription
             log.error("Start failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -225,6 +247,7 @@ final class AppState {
         // Retain its operation slot while an OS call/cleanup may still be pending.
         isRunning = false
         audioFlowing = false
+        hasSavedOutputPreset = false
         audioRouteFinishing = permissionRequestInFlight || tap?.isFinishingOperation == true
     }
 
@@ -240,7 +263,16 @@ final class AppState {
     func setMidSide(_ on: Bool) {
         midSideEnabled = on
         if on, sideBands.isEmpty { sideBands = Presets.flat }
-        if !on { editTarget = .mid }
+        if !on {
+            editTarget = .mid
+            refreshOutputPreset()
+        }
+        pushSettings()
+    }
+
+    func setLinearPhase(_ on: Bool) {
+        linearPhase = on
+        if !on { refreshOutputPreset() }
         pushSettings()
     }
 
@@ -268,8 +300,90 @@ final class AppState {
 
     func apply(_ preset: [EQBand]) {
         bands = preset
+        activePresetName = nil
         pushSettings()
         review.positiveAction()
+    }
+
+    var canManageOutputPreset: Bool {
+        isAudioFlowing && tap?.outputUID != nil && supportsOutputPresetMode
+    }
+
+    private var supportsOutputPresetMode: Bool {
+        !midSideEnabled && !linearPhase
+    }
+
+    func saveOutputPreset() {
+        guard canManageOutputPreset, license.canUse(.outputPresets), let uid = tap?.outputUID else { return }
+        do {
+            try outputPresets.set(currentPreset(), for: uid)
+            if appliedPresetOutputUID == nil {
+                unassignedOutputEQ = PresetFile(name: "", preampDb: 0, bands: Presets.flat)
+            }
+            hasSavedOutputPreset = true
+            appliedPresetOutputUID = uid
+        } catch {
+            errorMessage = EQText.string("Couldn’t save the output preset.")
+        }
+    }
+
+    func forgetOutputPreset() {
+        guard canManageOutputPreset, license.canUse(.outputPresets), let uid = tap?.outputUID else { return }
+        do {
+            try outputPresets.set(nil, for: uid)
+            hasSavedOutputPreset = false
+            appliedPresetOutputUID = nil
+            unassignedOutputEQ = nil
+        } catch {
+            errorMessage = EQText.string("Couldn’t save the output preset.")
+        }
+    }
+
+    private func currentPreset() -> PresetFile {
+        PresetFile(name: activePresetName ?? "", preampDb: preampDb, bands: bands)
+    }
+
+    private func refreshOutputPreset() {
+        updatePreset(for: tap?.isRunning == true ? tap?.outputUID : nil)
+    }
+
+    private func updatePreset(for uid: String?) {
+        guard license.canUse(.outputPresets) else {
+            hasSavedOutputPreset = false
+            restoreUnassignedOutput()
+            return
+        }
+        guard let uid else {
+            hasSavedOutputPreset = false
+            return
+        }
+        guard supportsOutputPresetMode else {
+            hasSavedOutputPreset = false
+            if uid != appliedPresetOutputUID { restoreUnassignedOutput() }
+            return
+        }
+        let preset = outputPresets.preset(for: uid)
+        hasSavedOutputPreset = preset != nil
+        guard uid != appliedPresetOutputUID else { return }
+        if let preset {
+            if appliedPresetOutputUID == nil { unassignedOutputEQ = currentPreset() }
+            appliedPresetOutputUID = uid
+            loadPreset(preset)
+        } else {
+            restoreUnassignedOutput()
+        }
+    }
+
+    private func restoreUnassignedOutput() {
+        if let unassignedOutputEQ { loadPreset(unassignedOutputEQ) }
+        unassignedOutputEQ = nil
+        appliedPresetOutputUID = nil
+    }
+
+    private func loadPreset(_ preset: PresetFile) {
+        bands = preset.eqBands()
+        preampDb = preset.preampDb
+        activePresetName = preset.name.isEmpty ? nil : preset.name
     }
 
     /// Load an AutoEq headphone correction: its parametric bands + its safety preamp.
@@ -527,8 +641,12 @@ final class AppState {
     }
 
     func openPrivacySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
-            NSWorkspace.shared.open(url)
+        let privacyPane = NSWorkspace.shared
+        if #available(macOS 26, *),
+           let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AudioCapture"),
+           privacyPane.open(url) { return }
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            privacyPane.open(url)
         }
     }
 }

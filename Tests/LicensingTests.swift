@@ -12,8 +12,7 @@ import Testing
     @Test func productIdentifier() { #expect(LicenseConfig.proProductID == "com.isaiahdupree.SonanceEQ.pro") }
     @Test func offeringIdentifier() { #expect(LicenseConfig.offeringID == "default") }
     @Test func proFeatureCatalog() {
-        #expect(ProFeature.allCases.count == 5)
-        #expect(ProFeature.allCases.contains(.audioRecorder))
+        #expect(ProFeature.allCases == [.parametricEQ, .autoEqLibrary, .importExport, .perAppEQ, .audioRecorder, .outputPresets])
     }
 }
 
