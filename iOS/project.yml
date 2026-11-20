@@ -1,0 +1,100 @@
+name: SonanceEQ
+options:
+  deploymentTarget:
+    iOS: '17.0'
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: '1,2'
+
+fileGroups:
+  - README.md
+
+targets:
+  SonanceEQiOS:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/App
+      - Sources/Shared
+      - ../Sources/SonanceEQ/Models/EQBand.swift
+      - ../Sources/SonanceEQ/Models/Presets.swift
+      - ../Sources/SonanceEQ/DSP/Biquad.swift
+      - ../Sources/SonanceEQ/DSP/FilterDesigner.swift
+      - ../Sources/SonanceEQ/DSP/FrequencyResponse.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Sonance EQ
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+    dependencies:
+      - target: SonanceEQAudioUnit
+
+  SonanceEQAudioUnit:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/AudioUnit
+        excludes:
+          - Info.plist
+      - Sources/Shared
+      - ../Sources/SonanceEQ/Models/EQBand.swift
+      - ../Sources/SonanceEQ/Models/Presets.swift
+      - ../Sources/SonanceEQ/DSP/Biquad.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/AudioUnit/SonanceRender.h
+    dependencies:
+      - sdk: Accelerate.framework
+      - sdk: AudioToolbox.framework
+    info:
+      path: Sources/AudioUnit/Info.plist
+      properties:
+        CFBundleDisplayName: Sonance EQ Audio Unit
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.AudioUnit
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SonanceAudioUnitFactory
+          NSExtensionAttributes:
+            AudioComponents:
+              - name: 'Isaiah Dupree: Sonance EQ'
+                description: Sonance EQ
+                manufacturer: IsDp
+                type: aufx
+                subtype: SnEQ
+                version: 1
+                tags: [Effects, Equalizer]
+
+  SonanceEQiOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: SonanceEQiOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.Tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  SonanceEQiOS:
+    build:
+      targets:
+        SonanceEQiOS: all
+    test:
+      targets:
+        - name: SonanceEQiOSTests
+          parallelizable: false

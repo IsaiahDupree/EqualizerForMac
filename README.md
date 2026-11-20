@@ -4,6 +4,8 @@
 
 A **system-wide equalizer for macOS** — high-precision, driverless, with a huge preset library. Every app's audio (Spotify, Safari, Zoom, games, system sounds) flows through a real-time parametric EQ before it reaches your speakers.
 
+The [iOS prototype](iOS/README.md) brings the Sonance bands and presets to iPhone and iPad for Files playback and AUv3 hosts.
+
 > Not a browser extension. Unlike Safari-only equalizers, Sonance EQ sits between the macOS audio mixer and your output device, so it shapes **everything you hear**.
 
 <p align="center">
