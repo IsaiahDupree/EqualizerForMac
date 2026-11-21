@@ -3,9 +3,9 @@ import Observation
 
 struct EqualizerSnapshot: Codable, Equatable {
     var settings = MobileEQSettings()
-    var selectedBand = 5
+    var selectedBand: Int? = 5
 
-    var isValid: Bool { settings.isValid && settings.bands.indices.contains(selectedBand) }
+    var isValid: Bool { settings.isValid && selectedBand == settings.selection(selectedBand) }
 }
 
 struct EqualizerStore {
@@ -70,13 +70,14 @@ final class EqualizerSession {
         player.apply(loaded.settings)
     }
 
-    func selectBand(_ index: Int) {
-        snapshot.selectedBand = index
+    func selectBand(_ index: Int?) {
+        snapshot.selectedBand = snapshot.settings.selection(index)
         if !isEditing { saveIfChanged() }
     }
 
     func updateEQ(_ update: (inout MobileEQSettings) -> Void) {
         update(&snapshot.settings)
+        snapshot.selectedBand = snapshot.settings.selection(snapshot.selectedBand)
         if !playingReference { player.apply(snapshot.settings) }
         if !isEditing { saveIfChanged() }
     }

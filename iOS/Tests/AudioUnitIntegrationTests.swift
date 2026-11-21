@@ -10,9 +10,11 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 62)
+        XCTAssertEqual(tree.allParameters.count, 3 + MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
+        XCTAssertEqual(MobileEQ.address(.type, band: 0), 32)
+        XCTAssertEqual(MobileEQ.address(.enabled, band: 9), 61)
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
         gain.value = 9
         preamp.value = -3
@@ -31,6 +33,53 @@ final class AudioUnitIntegrationTests: XCTestCase {
         gain.value = -6
         let cut = try stream.measure()
         XCTAssertEqual(cut[0], -9, accuracy: 0.25)
+    }
+
+    @MainActor
+    func testAddingAndRemovingBandsChangesTheRenderedAudioAndRestoresInAHost() async throws {
+        let effect = try await installedEffect()
+        let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
+        let count = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.bandCountAddress))
+        XCTAssertEqual(count.value, Float(MobileEQ.initialBandCount))
+        var edited = MobileEQSettings()
+        edited.bands[5].gain = -2
+        edited.apply(to: tree)
+        let stream = try RenderStream(effect: effect, frequencies: [1_000])
+        XCTAssertEqual(try stream.measure()[0], -2, accuracy: 0.25)
+
+        let original = edited
+        var newBand = MobileEQ.newBand()
+        newBand.gain = 8
+        edited.bands.append(newBand)
+        edited.apply(to: tree, changedFrom: original)
+        XCTAssertEqual(count.value, Float(MobileEQ.initialBandCount + 1))
+        XCTAssertEqual(try stream.measure()[0], 6, accuracy: 0.25)
+
+        let restored = try await installedEffect()
+        restored.auAudioUnit.fullState = try XCTUnwrap(effect.auAudioUnit.fullState)
+        let restoredTree = try XCTUnwrap(restored.auAudioUnit.parameterTree)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.bandCountAddress)?.value, count.value)
+        XCTAssertEqual(try RenderStream(effect: restored, frequencies: [1_000]).measure()[0], 6, accuracy: 0.25)
+
+        original.apply(to: tree, changedFrom: edited)
+        XCTAssertEqual(try stream.measure()[0], -2, accuracy: 0.25)
+
+        var replacement = original
+        replacement.bands.append(MobileEQ.newBand())
+        replacement.apply(to: tree, changedFrom: original)
+        XCTAssertEqual(try stream.measure()[0], -2, accuracy: 0.25)
+
+        var empty = MobileEQSettings(bands: [], preamp: -3)
+        empty.apply(to: tree, changedFrom: replacement)
+        XCTAssertEqual(count.value, 0)
+        XCTAssertEqual(try stream.measure()[0], -3, accuracy: 0.25)
+
+        let reset = empty
+        empty.bands = (0..<MobileEQ.maximumBandCount).map { _ in MobileEQ.newBand() }
+        empty.bands[MobileEQ.maximumBandCount - 1].gain = 6
+        empty.apply(to: tree, changedFrom: reset)
+        XCTAssertEqual(count.value, Float(MobileEQ.maximumBandCount))
+        XCTAssertEqual(try stream.measure()[0], 3, accuracy: 0.25)
     }
 
     @MainActor

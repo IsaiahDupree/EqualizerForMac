@@ -40,6 +40,7 @@ final class PresetLibraryTests: XCTestCase {
         XCTAssertEqual(settings.preamp, -6)
         XCTAssertEqual(settings.bands[0].type, .lowShelf)
         XCTAssertEqual(settings.bands[1].slopeDbPerOct, 24)
-        XCTAssertTrue(settings.bands.dropFirst(2).allSatisfy { !$0.enabled })
+        XCTAssertEqual(settings.bands.count, 2)
+        XCTAssertTrue(settings.bands.allSatisfy(\.enabled))
     }
 }

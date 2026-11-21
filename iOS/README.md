@@ -2,18 +2,21 @@
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app
-includes the Mac app’s ten starting bands and five presets. Tap a point on the
-curve to select its band. Drag it left or right to change frequency and up or
-down to change gain. The sliders remain available for fine adjustments and Q.
-Preamp controls the overall level. The graph uses the selected file’s sample
-rate.
+includes the Mac app’s ten starting bands and five presets. Choose a band
+from the **Filter Bands** dropdown or tap its point on the curve. Drag the
+point left or right to change frequency and up or down to change gain.
+Press **+** to create and select a flat 1 kHz bell, or **−** to remove the
+selected band. The iPhone editor supports up to 32 bands. The sliders remain
+available for fine adjustments and Q. Preamp controls the overall level. The
+graph uses the selected file’s sample rate.
 
 Open **Presets → Preset Library** to save the entire curve and preamp under a
 name. The library can import multiple Sonance EQ files at once, export a
 single Mac-compatible `.sonanceeq.json` preset, or back up the library in
-one iOS preset collection. Imported presets support one to ten filters,
-including shelves, cuts, and the Mac filter shapes. The preset keeps the
-filter values and enabled states. Bypass is a separate playback control.
+one iOS preset collection. Imported presets keep their original band count,
+with up to 32 filters including shelves, cuts, and the Mac filter shapes.
+The preset keeps the filter values and enabled states. Bypass is a separate
+playback control.
 
 Use **Set A** to capture a reference before tuning. **A · Reference**
 auditions the captured sound, and **B · Edited** returns to the working curve.
@@ -84,6 +87,11 @@ supported physical device.
 Build 4 passed 15 simulator tests. These cover preset persistence and batch
 import, A/B auditioning, shelf and cut response in AUv3, and measured
 post-EQ playback levels. The app and extension built for arm64 iOS.
+
+Build 5 passed 18 simulator tests. The band dropdown tracks the selected
+point, newly created and deleted bands survive relaunch, and the AUv3 host
+restores the band count and filter values. The original ten bands retain
+their AUv3 parameter addresses.
 
 The UI lifecycle suite changes the EQ, goes to the Home Screen, and terminates
 and relaunches Sonance to verify restored settings. An independent test host

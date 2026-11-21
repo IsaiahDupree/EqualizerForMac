@@ -4,7 +4,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Each filter slot reserves enough sections for a 96 dB/oct cut.
-enum { SonanceRenderBands = 10, SonanceSectionsPerBand = 8,
+enum { SonanceRenderBands = 32, SonanceSectionsPerBand = 8,
        SonanceRenderSections = SonanceRenderBands * SonanceSectionsPerBand,
        SonanceRenderCoefficientCount = 5 * SonanceRenderSections };
 

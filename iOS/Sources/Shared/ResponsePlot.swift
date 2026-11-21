@@ -2,14 +2,14 @@ import SwiftUI
 
 struct ResponsePlot: View {
     struct Interaction {
-        let select: (Int) -> Void
-        let move: (Int, Double, Float) -> Void
+        let select: (UUID) -> Void
+        let move: (UUID, Double, Float) -> Void
         let editingChanged: (Bool) -> Void
     }
 
     let bands: [EQBand]
     let sampleRate: Double
-    let selection: Int?
+    let selection: UUID?
     let bypassed: Bool
     var interaction: Interaction?
 
@@ -23,18 +23,18 @@ struct ResponsePlot: View {
     var body: some View {
         GeometryReader { geometry in
             let scale = PlotScale(size: geometry.size, sampleRate: sampleRate)
-            let points = bands.enumerated().compactMap { index, band -> BandPoint? in
+            let points = bands.compactMap { band -> BandPoint? in
                 guard band.enabled, band.frequency <= scale.highestFrequency else { return nil }
                 let gain = band.type.usesGain ? Double(band.gain) : 0
-                return BandPoint(index: index, location: scale.point(frequency: band.frequency, gain: gain))
+                return BandPoint(id: band.id, location: scale.point(frequency: band.frequency, gain: gain))
             }
 
             Canvas { context, _ in
                 guard scale.bounds.width > 0, scale.bounds.height > 0 else { return }
                 drawGrid(in: context, scale: scale)
                 drawResponse(in: context, scale: scale)
-                for point in points where point.index != selection { drawHandle(point, in: context) }
-                if let selected = points.first(where: { $0.index == selection }) {
+                for point in points where point.id != selection { drawHandle(point, in: context) }
+                if let selected = points.first(where: { $0.id == selection }) {
                     drawHandle(selected, in: context)
                 }
             }
@@ -66,13 +66,13 @@ struct ResponsePlot: View {
                     let nearest = candidates.min { first, second in
                         let firstDistance = first.distance(to: value.startLocation)
                         let secondDistance = second.distance(to: value.startLocation)
-                        if firstDistance == secondDistance { return first.index == selection && second.index != selection }
+                        if firstDistance == secondDistance { return first.id == selection && second.id != selection }
                         return firstDistance < secondDistance
                     }
                     guard let nearest else { return }
                     drag = BandDrag(point: nearest)
                     interaction.editingChanged(true)
-                    interaction.select(nearest.index)
+                    interaction.select(nearest.id)
                 }
                 moveBand(by: value.translation, scale: scale)
             }
@@ -92,7 +92,7 @@ struct ResponsePlot: View {
         let location = CGPoint(x: drag.point.location.x + translation.width,
                                y: drag.point.location.y + translation.height)
         let (frequency, gain) = scale.values(at: location)
-        interaction?.move(drag.point.index, frequency, gain)
+        interaction?.move(drag.point.id, frequency, gain)
     }
 
     private func finishDrag() {
@@ -156,7 +156,7 @@ struct ResponsePlot: View {
     }
 
     private func drawHandle(_ point: BandPoint, in context: GraphicsContext) {
-        let isSelected = point.index == selection
+        let isSelected = point.id == selection
         if isSelected {
             context.fill(Path(ellipseIn: point.bounds(radius: 11)), with: .color(trace.opacity(0.28)))
         }
@@ -166,7 +166,7 @@ struct ResponsePlot: View {
 }
 
 private struct BandPoint {
-    let index: Int
+    let id: UUID
     let location: CGPoint
 
     func distance(to touch: CGPoint) -> Double { hypot(location.x - touch.x, location.y - touch.y) }

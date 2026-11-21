@@ -19,8 +19,31 @@ private func auError(_ status: OSStatus) -> NSError {
 
 final class SonanceAudioUnit: AUAudioUnit {
     private struct ControlState {
+        // Hosts can restore the extra bands' parameters before restoring the count.
         var settings = MobileEQSettings()
+        var bandCount = MobileEQ.initialBandCount
         var sampleRate = 48_000.0
+
+        init() {
+            for _ in MobileEQ.initialBandCount..<MobileEQ.maximumBandCount {
+                settings.bands.append(MobileEQ.newBand())
+            }
+        }
+
+        var visibleSettings: MobileEQSettings {
+            var visible = settings
+            visible.bands = Array(settings.bands.prefix(bandCount))
+            return visible
+        }
+
+        mutating func setValue(_ value: AUValue, at address: AUParameterAddress) {
+            if address == MobileEQ.bandCountAddress {
+                guard value.isFinite else { return }
+                bandCount = Int(min(max(value, 0), Float(MobileEQ.maximumBandCount)).rounded())
+            } else {
+                settings.setValue(value, at: address)
+            }
+        }
     }
 
     private let control = OSAllocatedUnfairLock(initialState: ControlState())
@@ -36,7 +59,7 @@ final class SonanceAudioUnit: AUAudioUnit {
         let storage = try RenderStorage()
         self.storage = storage
         render = SonanceRenderMakeBlock(storage.pointer)
-        guard MobileEQ.bandCount == SonanceRenderBands,
+        guard MobileEQ.maximumBandCount == SonanceRenderBands,
               let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 2) else {
             throw auError(kAudioUnitErr_FormatNotSupported)
         }
@@ -55,7 +78,7 @@ final class SonanceAudioUnit: AUAudioUnit {
     override var outputBusses: AUAudioUnitBusArray { outputs }
     override var internalRenderBlock: AUInternalRenderBlock { render }
 
-    var settings: MobileEQSettings { control.withLock { $0.settings } }
+    var settings: MobileEQSettings { control.withLock { $0.visibleSettings } }
     var analysisCapture: OpaquePointer { SonanceRenderAnalysis(storage.pointer) }
 
     override var shouldBypassEffect: Bool {
@@ -104,18 +127,23 @@ final class SonanceAudioUnit: AUAudioUnit {
     private func stage(_ state: ControlState) {
         let settings = state.settings
         let highestFrequency = MobileEQ.highestFrequency(at: state.sampleRate)
-        var coefficients = [Double]()
-        coefficients.reserveCapacity(Int(SonanceRenderCoefficientCount))
-        for (index, band) in settings.bands.enumerated() {
-            let inactive = settings.bypassed || !band.enabled || band.frequency > highestFrequency ||
-                (band.type.usesGain && band.gain == 0)
-            let sections = inactive ? [] : FilterDesigner.sections(for: band, sampleRate: state.sampleRate)
-            for slot in 0..<Int(SonanceSectionsPerBand) {
-                let section = slot < sections.count ? sections[slot] : .identity
-                let scale = index == 0 && slot == 0 && !settings.bypassed ? pow(10, Double(settings.preamp) / 20) : 1
-                coefficients.append(contentsOf: [Double(section.b0) * scale, Double(section.b1) * scale,
-                                                Double(section.b2) * scale, Double(section.a1), Double(section.a2)])
+        var coefficients = Array(repeating: 0.0, count: Int(SonanceRenderCoefficientCount))
+        for section in 0..<Int(SonanceRenderSections) { coefficients[section * 5] = 1 }
+        if !settings.bypassed {
+            for (index, band) in settings.bands.prefix(state.bandCount).enumerated()
+                where band.enabled && band.frequency <= highestFrequency && (!band.type.usesGain || band.gain != 0) {
+                let sections = FilterDesigner.sections(for: band, sampleRate: state.sampleRate)
+                for (slot, section) in sections.enumerated() {
+                    let offset = (index * Int(SonanceSectionsPerBand) + slot) * 5
+                    coefficients[offset] = Double(section.b0)
+                    coefficients[offset + 1] = Double(section.b1)
+                    coefficients[offset + 2] = Double(section.b2)
+                    coefficients[offset + 3] = Double(section.a1)
+                    coefficients[offset + 4] = Double(section.a2)
+                }
             }
+            let scale = pow(10, Double(settings.preamp) / 20)
+            for index in 0..<3 { coefficients[index] *= scale }
         }
         coefficients.withUnsafeBufferPointer { SonanceRenderStage(storage.pointer, $0.baseAddress!) }
     }
@@ -139,7 +167,7 @@ final class SonanceAudioUnit: AUAudioUnit {
             parameter("preamp", "Preamp", MobileEQ.preampAddress, MobileEQ.preampRange, .decibels),
             parameter("bypass", "Bypass", MobileEQ.bypassAddress, 0...1, .boolean),
         ]
-        for band in initial.bands.indices {
+        for band in 0..<MobileEQ.maximumBandCount {
             let number = band + 1
             let controls = [
                 parameter("frequency", "Band \(number) Frequency", MobileEQ.address(.frequency, band: band),
@@ -158,17 +186,23 @@ final class SonanceAudioUnit: AUAudioUnit {
             nodes.append(AUParameterTree.createGroup(withIdentifier: "band\(number)",
                                                      name: "Band \(number)", children: controls))
         }
+        nodes.append(parameter("bandCount", "Band Count", MobileEQ.bandCountAddress,
+                               0...Float(MobileEQ.maximumBandCount), .indexed))
 
         let tree = AUParameterTree.createTree(withChildren: nodes)
         tree.implementorValueObserver = { [weak self] parameter, value in
             guard let self else { return }
             self.control.withLock { state in
-                state.settings.setValue(value, at: parameter.address)
+                state.setValue(value, at: parameter.address)
+                if let (band, _) = MobileEQ.bandControl(at: parameter.address), band >= state.bandCount { return }
                 self.stage(state)
             }
         }
         tree.implementorValueProvider = { [weak self] parameter in
-            self?.control.withLock { $0.settings.value(at: parameter.address) } ?? 0
+            self?.control.withLock { state in
+                parameter.address == MobileEQ.bandCountAddress ? Float(state.bandCount) :
+                    state.settings.value(at: parameter.address)
+            } ?? 0
         }
         return tree
     }

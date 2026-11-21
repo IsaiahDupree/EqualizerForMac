@@ -222,10 +222,7 @@ private final class PlaybackGraph {
     }
 
     func apply(_ settings: MobileEQSettings, changedFrom previous: MobileEQSettings? = nil) {
-        for parameter in tree.allParameters {
-            let value = settings.value(at: parameter.address)
-            if previous?.value(at: parameter.address) != value { parameter.value = value }
-        }
+        settings.apply(to: tree, changedFrom: previous)
     }
 }
 

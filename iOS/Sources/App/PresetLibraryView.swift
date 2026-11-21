@@ -96,7 +96,7 @@ struct PresetLibraryView: View {
                         $0.bands = settings.bands
                         $0.preamp = settings.preamp
                     }
-                    session.selectBand(settings.bands.firstIndex(where: \.enabled) ?? 0)
+                    session.selectBand(settings.bands.firstIndex(where: \.enabled))
                     session.editingChanged(false)
                     dismiss()
                 }

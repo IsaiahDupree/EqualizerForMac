@@ -41,6 +41,36 @@ final class EqualizerRelaunchTests: XCTestCase {
     }
 
     @MainActor
+    func testBandDropdownAddsAndRemovesTheSelectedBand() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Presets"].tap()
+        app.buttons["Flat"].tap()
+        let selector = app.buttons["eqBandSelector"]
+        let add = app.buttons["addBand"]
+        let remove = app.buttons["removeBand"]
+        reveal(add, in: app)
+        add.tap()
+        XCTAssertTrue(try selectedBand(selector).hasPrefix("Band 11 · "))
+        retainScreenshot("Band Selector", app)
+
+        selector.tap()
+        XCTAssertTrue(app.buttons["eqBand0"].exists)
+        let newBand = app.buttons["eqBand10"]
+        XCTAssertTrue(newBand.exists)
+        retainScreenshot("Band Dropdown", app)
+        newBand.tap()
+        remove.tap()
+        XCTAssertTrue(try selectedBand(selector).hasPrefix("Band 10 · "))
+
+        selector.tap()
+        XCTAssertFalse(newBand.exists)
+        app.buttons["eqBand3"].tap()
+        XCTAssertTrue(try selectedBand(selector).hasPrefix("Band 4 · "))
+    }
+
+    @MainActor
     func testTapSelectsAndDraggingMovesFilterOnCurve() throws {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -50,19 +80,18 @@ final class EqualizerRelaunchTests: XCTestCase {
 
         let plot = app.descendants(matching: .any)["eqResponse"].firstMatch
         XCTAssertTrue(plot.isHittable)
-        let band = app.buttons["eqBand3"]
-        let original = band.label
+        let selector = app.buttons["eqBandSelector"]
         let center = plot.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(
             dx: 36 + (plot.frame.width - 58) * log10(250 / 20.0) / 3,
             dy: 16 + (plot.frame.height - 42) / 2
         ))
         center.tap()
-        XCTAssertTrue(band.isSelected)
-        XCTAssertEqual(band.label, original)
+        let original = try selectedBand(selector)
+        XCTAssertEqual(original, "Band 4 · 250 Hz")
         center.press(forDuration: 0.08, thenDragTo: center.withOffset(CGVector(dx: 35, dy: -33)))
-        XCTAssertTrue(band.isSelected)
-        XCTAssertNotEqual(band.label, original)
-        let moved = band.label
+        let moved = try selectedBand(selector)
+        XCTAssertTrue(moved.hasPrefix("Band 4 · "))
+        XCTAssertNotEqual(moved, original)
         let gain = app.sliders["eqGain"]
         reveal(gain, in: app)
         let movedGain = try XCTUnwrap(gain.value as? String)
@@ -70,8 +99,7 @@ final class EqualizerRelaunchTests: XCTestCase {
 
         app.terminate()
         app.launch()
-        XCTAssertTrue(band.isSelected)
-        XCTAssertEqual(band.label, moved)
+        XCTAssertEqual(try selectedBand(selector), moved)
         reveal(gain, in: app)
         XCTAssertEqual(gain.value as? String, movedGain)
     }
@@ -84,9 +112,10 @@ final class EqualizerRelaunchTests: XCTestCase {
 
         app.buttons["Presets"].tap()
         app.buttons["Vocal"].tap()
-        let band = app.buttons["eqBand3"]
-        reveal(band, in: app)
-        band.tap()
+        let selector = app.buttons["eqBandSelector"]
+        reveal(selector, in: app)
+        selector.tap()
+        app.buttons["eqBand3"].tap()
 
         let positions: [(String, CGFloat)] = [("eqFrequency", 0.51), ("eqGain", 0.75),
                                              ("eqQuality", 0.40), ("eqPreamp", 0.24)]
@@ -115,8 +144,8 @@ final class EqualizerRelaunchTests: XCTestCase {
         XCTAssertEqual(bypass.value as? String, changedBypass)
         XCTAssertEqual(app.buttons["playAudio"].label, "Play")
         XCTAssertFalse(app.buttons["playAudio"].isEnabled)
-        reveal(band, in: app)
-        XCTAssertTrue(band.isSelected)
+        reveal(selector, in: app)
+        XCTAssertTrue(try selectedBand(selector).hasPrefix("Band 4 · "))
         for (identifier, _) in positions {
             let slider = app.sliders[identifier]
             reveal(slider, in: app)
@@ -130,6 +159,11 @@ final class EqualizerRelaunchTests: XCTestCase {
         wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: nil)], timeout: 6)
         app.activate()
         XCTAssertEqual(bypass.value as? String, changedBypass)
+    }
+
+    @MainActor
+    private func selectedBand(_ selector: XCUIElement) throws -> String {
+        try XCTUnwrap(selector.value as? String)
     }
 
     @MainActor

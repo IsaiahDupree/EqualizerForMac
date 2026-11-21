@@ -3,6 +3,32 @@ import XCTest
 
 final class EqualizerSessionTests: XCTestCase {
     @MainActor
+    func testAddedAndDeletedBandsPersistIncludingAnEmptyCurve() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+
+        // A build 4 snapshot has the ten starting bands and an integer selection.
+        try store.save(session.snapshot)
+        let upgraded = EqualizerSession(store: store)
+        XCTAssertEqual(upgraded.snapshot, session.snapshot)
+        let band = MobileEQ.newBand()
+        upgraded.updateEQ { $0.bands.append(band) }
+        upgraded.selectBand(MobileEQ.initialBandCount)
+        let extended = EqualizerSession(store: store)
+        XCTAssertEqual(extended.snapshot.settings.bands.last, band)
+        XCTAssertEqual(extended.snapshot.selectedBand, MobileEQ.initialBandCount)
+
+        extended.updateEQ { $0.bands.removeAll() }
+        let empty = EqualizerSession(store: store)
+        XCTAssertTrue(empty.snapshot.settings.bands.isEmpty)
+        XCTAssertNil(empty.snapshot.selectedBand)
+        empty.updateEQ { $0.bands.append(MobileEQ.newBand()) }
+        XCTAssertEqual(try store.load().selectedBand, 0)
+    }
+
+    @MainActor
     func testAuditioningAProtectsTheEditedCurveAndSavedSettings() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

@@ -41,7 +41,7 @@ private final class HostedEqualizer {
     private(set) var settings = MobileEQSettings()
     private(set) var sampleRate = 48_000.0
     private(set) var isReady = false
-    var selectedBand = 5
+    var selectedBand: Int? = 5
 
     @ObservationIgnored private var unit: SonanceAudioUnit?
     @ObservationIgnored private var tree: AUParameterTree?
@@ -65,12 +65,8 @@ private final class HostedEqualizer {
     }
 
     func apply(_ updated: MobileEQSettings) {
-        for parameter in tree?.allParameters ?? [] {
-            let value = updated.value(at: parameter.address)
-            if settings.value(at: parameter.address) != value {
-                parameter.setValue(value, originator: token)
-            }
-        }
+        guard let tree else { return }
+        updated.apply(to: tree, changedFrom: settings, originator: token)
         refresh()
     }
 
@@ -82,6 +78,7 @@ private final class HostedEqualizer {
     private func refresh() {
         guard let unit else { return }
         settings = unit.settings
+        selectedBand = settings.selection(selectedBand)
         sampleRate = unit.outputBusses[0].format.sampleRate
     }
 

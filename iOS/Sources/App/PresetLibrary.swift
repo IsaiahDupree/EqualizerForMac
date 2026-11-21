@@ -25,7 +25,7 @@ enum PresetError: LocalizedError {
         case .nameRequired: return "Enter a preset name between 1 and 100 characters."
         case .nameTaken: return "A preset with that name already exists."
         case .invalidFile: return "Choose a Sonance EQ preset or preset collection."
-        case .tooManyFilters: return "Sonance EQ for iPhone supports presets with 1 to 10 filters."
+        case .tooManyFilters: return "Sonance EQ for iPhone supports up to \(MobileEQ.maximumBandCount) filters per preset."
         case .outOfRange: return "A filter or preamp value is outside the iPhone editor’s range."
         case .libraryUnavailable: return "Saved presets couldn’t be opened. The existing library was preserved."
         }
@@ -36,13 +36,8 @@ extension MobileEQSettings {
     init(preset file: PresetFile) throws {
         self.init()
         guard file.app == "SonanceEQ", file.version == 1 else { throw PresetError.invalidFile }
-        guard (1...MobileEQ.bandCount).contains(file.bands.count) else { throw PresetError.tooManyFilters }
-        let imported = file.eqBands()
-        bands = imported + Presets.flat.dropFirst(imported.count).map { flat in
-            var band = flat
-            band.enabled = false
-            return band
-        }
+        guard file.bands.count <= MobileEQ.maximumBandCount else { throw PresetError.tooManyFilters }
+        bands = file.eqBands()
         preamp = file.preampDb
         guard isValid else { throw PresetError.outOfRange }
     }

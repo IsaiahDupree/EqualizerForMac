@@ -16,7 +16,8 @@ enum MobileEQ {
     static let gainRange: ClosedRange<Float> = -24...24
     static let qualityRange: ClosedRange<Float> = 0.1...18
     static let preampRange: ClosedRange<Float> = -24...6
-    static let bandCount = Presets.isoCenters.count
+    static let initialBandCount = Presets.isoCenters.count
+    static let maximumBandCount = 32
     static let filterTypes: [FilterType] = [.peaking, .lowShelf, .highShelf, .lowPass, .highPass, .notch, .bandPass, .allPass]
 
     static func highestFrequency(at sampleRate: Double) -> Double {
@@ -29,9 +30,20 @@ enum MobileEQ {
 
     private static let originalControls: AUParameterAddress = 3
     private static let extraControls: AUParameterAddress = 3
-    private static let firstExtraAddress = 2 + AUParameterAddress(bandCount) * originalControls
+    private static let controlsPerBand = originalControls + extraControls
+    // Builds 1–4 used separate address ranges for the original ten bands.
+    private static let firstExtraAddress = 2 + AUParameterAddress(initialBandCount) * originalControls
+    static let bandCountAddress = 2 + AUParameterAddress(initialBandCount) * controlsPerBand
+    private static let firstAdditionalBand = bandCountAddress + 1
+
+    static func newBand() -> EQBand {
+        EQBand(frequency: 1_000, gain: 0, q: 1, type: .peaking)
+    }
 
     static func address(_ control: Control, band: Int) -> AUParameterAddress {
+        if band >= initialBandCount {
+            return firstAdditionalBand + AUParameterAddress(band - initialBandCount) * controlsPerBand + control.rawValue
+        }
         if control.rawValue < originalControls {
             return 2 + AUParameterAddress(band) * originalControls + control.rawValue
         }
@@ -39,15 +51,19 @@ enum MobileEQ {
     }
 
     static func bandControl(at address: AUParameterAddress) -> (Int, Control)? {
-        guard address >= 2 else { return nil }
+        guard address >= 2, address != bandCountAddress else { return nil }
+        if address >= firstAdditionalBand {
+            let offset = address - firstAdditionalBand
+            let band = initialBandCount + Int(offset / controlsPerBand)
+            guard band < maximumBandCount else { return nil }
+            return Control(rawValue: offset % controlsPerBand).map { (band, $0) }
+        }
         if address < firstExtraAddress {
             let offset = address - 2
             return Control(rawValue: offset % originalControls).map { (Int(offset / originalControls), $0) }
         }
         let offset = address - firstExtraAddress
-        let band = Int(offset / extraControls)
-        guard band < bandCount else { return nil }
-        return Control(rawValue: originalControls + offset % extraControls).map { (band, $0) }
+        return Control(rawValue: originalControls + offset % extraControls).map { (Int(offset / extraControls), $0) }
     }
 }
 
@@ -56,27 +72,37 @@ struct MobileEQSettings: Codable, Equatable {
     var preamp: Float = 0
     var bypassed = false
 
+    private static let unusedBand = MobileEQ.newBand()
+
     var isValid: Bool {
-        MobileEQ.preampRange.contains(preamp) && bands.count == MobileEQ.bandCount && bands.allSatisfy {
+        MobileEQ.preampRange.contains(preamp) && bands.count <= MobileEQ.maximumBandCount &&
+            Set(bands.map(\.id)).count == bands.count && bands.allSatisfy {
             MobileEQ.frequencyRange.contains(Float($0.frequency)) &&
                 MobileEQ.gainRange.contains($0.gain) && MobileEQ.qualityRange.contains(Float($0.q)) &&
                 (!$0.type.supportsSlope || FilterDesigner.slopes.contains($0.slopeDbPerOct))
         }
     }
 
+    func selection(_ index: Int?) -> Int? {
+        guard !bands.isEmpty else { return nil }
+        return min(max(index ?? 0, 0), bands.count - 1)
+    }
+
     func value(at address: AUParameterAddress) -> AUValue {
         switch address {
         case MobileEQ.preampAddress: return preamp
         case MobileEQ.bypassAddress: return bypassed ? 1 : 0
+        case MobileEQ.bandCountAddress: return Float(bands.count)
         default:
-            guard let (band, control) = MobileEQ.bandControl(at: address) else { return 0 }
+            guard let (index, control) = MobileEQ.bandControl(at: address) else { return 0 }
+            let band = bands.indices.contains(index) ? bands[index] : Self.unusedBand
             switch control {
-            case .frequency: return Float(bands[band].frequency)
-            case .gain: return bands[band].gain
-            case .quality: return Float(bands[band].q)
-            case .type: return Float(MobileEQ.filterTypes.firstIndex(of: bands[band].type) ?? 0)
-            case .slope: return Float(FilterDesigner.slopes.firstIndex(of: bands[band].slopeDbPerOct) ?? 1)
-            case .enabled: return bands[band].enabled ? 1 : 0
+            case .frequency: return Float(band.frequency)
+            case .gain: return band.gain
+            case .quality: return Float(band.q)
+            case .type: return Float(MobileEQ.filterTypes.firstIndex(of: band.type) ?? 0)
+            case .slope: return Float(FilterDesigner.slopes.firstIndex(of: band.slopeDbPerOct) ?? 1)
+            case .enabled: return band.enabled ? 1 : 0
             }
         }
     }
@@ -88,7 +114,7 @@ struct MobileEQSettings: Codable, Equatable {
         case MobileEQ.preampAddress: preamp = clamped(MobileEQ.preampRange)
         case MobileEQ.bypassAddress: bypassed = value >= 0.5
         default:
-            guard let (band, control) = MobileEQ.bandControl(at: address) else { return }
+            guard let (band, control) = MobileEQ.bandControl(at: address), bands.indices.contains(band) else { return }
             switch control {
             case .frequency: bands[band].frequency = Double(clamped(MobileEQ.frequencyRange))
             case .gain: bands[band].gain = clamped(MobileEQ.gainRange)
@@ -98,6 +124,24 @@ struct MobileEQSettings: Codable, Equatable {
             case .enabled: bands[band].enabled = value >= 0.5
             }
         }
+    }
+
+    func apply(to tree: AUParameterTree, changedFrom previous: MobileEQSettings? = nil, originator: AUParameterObserverToken? = nil) {
+        let previousCount = previous?.bands.count ?? MobileEQ.initialBandCount
+        let count = tree.parameter(withAddress: MobileEQ.bandCountAddress)
+        if bands.count < previousCount { count?.setValue(Float(bands.count), originator: originator) }
+
+        for parameter in tree.allParameters where parameter.address != MobileEQ.bandCountAddress {
+            let index = MobileEQ.bandControl(at: parameter.address)?.0
+            if let index, index >= bands.count { continue }
+            let value = value(at: parameter.address)
+            // An index brought back into use may still hold values from a deleted band in the host.
+            if (index.map { $0 >= previousCount } ?? false) || previous?.value(at: parameter.address) != value {
+                parameter.setValue(value, originator: originator)
+            }
+        }
+
+        if bands.count > previousCount { count?.setValue(Float(bands.count), originator: originator) }
     }
 }
 
