@@ -1,0 +1,57 @@
+name: SonanceRouteLab
+options:
+  deploymentTarget:
+    iOS: '27.0'
+  createIntermediateGroups: true
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: '5.0'
+    CLANG_ENABLE_OBJC_ARC: YES
+    TARGETED_DEVICE_FAMILY: '1,2'
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+targets:
+  SonanceRouteLab:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/App
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.RouteLab
+        PRODUCT_NAME: SonanceRouteLab
+        INFOPLIST_FILE: Sources/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/App/App.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/App/App-Bridging-Header.h
+    dependencies:
+      - sdk: AVFoundation.framework
+      - target: SonanceRouteLabExtension
+        embed: true
+        codeSign: true
+  SonanceRouteLabExtension:
+    type: extensionkit-extension
+    platform: iOS
+    sources:
+      - Sources/Extension
+      - Sources/Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.RouteLab.MediaDevice
+        PRODUCT_NAME: SonanceRouteLabExtension
+        INFOPLIST_FILE: Sources/Extension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/Extension/Extension.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Extension/Extension-Bridging-Header.h
+    dependencies:
+      - sdk: MediaDevice.framework
+      - sdk: CoreAudio.framework
+      - sdk: AudioToolbox.framework
+      - sdk: AVFoundation.framework
+      - sdk: Network.framework
+      - sdk: ExtensionFoundation.framework
+schemes:
+  SonanceRouteLab:
+    build:
+      targets:
+        SonanceRouteLab: all

@@ -35,6 +35,8 @@ iOS 27 cross-app product and has not been submitted or published.
    evidence, then uninstall the exact test bundle and verify its absence.
 3. Implement and validate an iOS 27 Media Device route if appropriate. Confirm
    the applicable Apple terms, entitlement configuration and review position.
+   The separate debug-only Route Lab contains unverified experimental source
+   but is not integrated. Resolve its peer authentication and privacy issues.
    Capture the results in [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
 4. Complete distribution signing, icon and release review separately when
    the product and its compatibility claims have been verified.

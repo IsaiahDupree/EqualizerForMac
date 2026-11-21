@@ -5,6 +5,16 @@ respective authors and is used under its own license.
 
 ---
 
+## iOS 27 Media Device route experiment
+
+The debug-only `iOS/RouteExperiment` target adapts
+[`ios27-media-device-passthrough`](https://github.com/satomasahiro2005/ios27-media-device-passthrough)
+by nemut.ai, commit `0ed6091ec6e82d5aa9fb4320bef7a083260f6a0f`, under the
+MIT No Attribution license retained in `iOS/RouteExperiment/UPSTREAM-LICENSE`.
+It is not integrated with the production app or approved for distribution.
+
+---
+
 ## AutoEq — headphone correction data
 
 The bundled headphone presets (`Resources/autoeq.sqlite`, ~8,850 corrections) are derived from the

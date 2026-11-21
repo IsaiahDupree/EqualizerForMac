@@ -1,7 +1,10 @@
 # iOS 27 routing experiment
 
 Status: **not tested**. The existing Sonance iOS prototype plays files and
-provides an AUv3 effect; it does not itself register a Media Device route.
+provides an AUv3 effect; it does not itself register a Media Device route. A
+separate [debug-only Route Lab](RouteExperiment/README.md) now contains an
+unverified source implementation with a low-pass filter. It is not integrated
+into Sonance EQ and has unresolved transport and privacy issues.
 Speech listening modes are available independently in the player and AUv3 host.
 
 Apple documents Media Device as a way to stream to playback hardware, and
@@ -26,8 +29,8 @@ Confirm the applicable agreement and Apple review position before release.
    or change its data as an assumed prerequisite.
 3. A working selectable route, with signed extension and container app,
    and a documented plan for audio transport, interruptions, feedback loops,
-   buffer underruns, teardown, and failure reporting. No route is implemented
-   in this branch.
+   buffer underruns, teardown, failure reporting and authenticated peers. The
+   separate Route Lab does not yet meet these requirements.
 4. Retain the device log, app and OS versions, output, sample, and observed
    result for each row. Compare audible filtered and bypassed playback, and
    measure latency and battery with a stated method. Never infer a pass from
