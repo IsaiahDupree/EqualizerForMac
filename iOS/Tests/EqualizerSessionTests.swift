@@ -21,10 +21,10 @@ final class EqualizerSessionTests: XCTestCase {
         let session = EqualizerSession(store: store)
         XCTAssertEqual(session.snapshot.settings, previous)
         session.selectBand(8)
-        session.sliderEditingChanged(true)
+        session.editingChanged(true)
         session.updateEQ { $0.bands[8].q = 3.5 }
         XCTAssertEqual(try store.load().settings, previous)
-        session.sliderEditingChanged(false)
+        session.editingChanged(false)
 
         let relaunched = EqualizerSession(store: store)
         XCTAssertEqual(relaunched.snapshot, session.snapshot)
@@ -45,7 +45,7 @@ final class EqualizerSessionTests: XCTestCase {
         }
         let store = EqualizerStore(file: location.appending(path: "equalizer-session.json"), legacyDefaults: defaults)
         let session = EqualizerSession(store: store)
-        session.sliderEditingChanged(true)
+        session.editingChanged(true)
         session.updateEQ { $0.preamp = -7 }
         session.checkpointForBackground()
         XCTAssertEqual(try store.load().settings.preamp, -7)

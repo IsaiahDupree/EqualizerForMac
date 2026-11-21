@@ -4,7 +4,7 @@ import Observation
 
 @MainActor @Observable
 final class PreviewPlayer {
-    enum State { case idle, starting, playing }
+    enum State: Sendable { case idle, starting, playing, paused }
 
     private(set) var state = State.idle
     private(set) var fileName: String?
@@ -16,7 +16,8 @@ final class PreviewPlayer {
     @ObservationIgnored private var graph: PlaybackGraph?
     @ObservationIgnored private var playRequest: UUID?
     @ObservationIgnored private var sessionActive = false
-    @ObservationIgnored private var settings = MobileEQSettings()
+    @ObservationIgnored private(set) var settings = MobileEQSettings()
+    @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
 
     func select(_ url: URL) {
@@ -39,6 +40,10 @@ final class PreviewPlayer {
     }
 
     func play() async {
+        if state == .paused {
+            resume()
+            return
+        }
         guard let selected, state == .idle else { return }
         let request = UUID()
         playRequest = request
@@ -53,9 +58,7 @@ final class PreviewPlayer {
             self.graph = graph
 
             try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
-            sessionActive = true
-            try graph.engine.start()
+            try startEngine(graph)
             graph.player.scheduleFile(selected.file, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 Task { @MainActor in
                     guard let self, self.playRequest == request else { return }
@@ -72,21 +75,64 @@ final class PreviewPlayer {
         }
     }
 
+    func pause() {
+        guard state == .playing, let graph else { return }
+        pausedProgress = progress
+        graph.player.pause()
+        graph.engine.pause()
+        state = .paused
+        outputName = nil
+        deactivateSession()
+    }
+
+    var progress: Double {
+        if state == .paused { return pausedProgress }
+        guard let file = selected?.file, let node = graph?.player,
+              let nodeTime = node.lastRenderTime, let playhead = node.playerTime(forNodeTime: nodeTime) else {
+            return 0
+        }
+        let duration = Double(file.length) / file.processingFormat.sampleRate
+        let elapsed = Double(playhead.sampleTime) / playhead.sampleRate
+        return min(max(elapsed / duration, 0), 1)
+    }
+
+    private func resume() {
+        guard let graph else { return }
+        do {
+            try startEngine(graph)
+            graph.player.play()
+            outputName = session.currentRoute.outputs.first?.portName
+            state = .playing
+        } catch {
+            stop()
+            self.error = "Playback couldn’t resume. Tap Play to start the file again."
+        }
+    }
+
+    private func startEngine(_ graph: PlaybackGraph) throws {
+        try session.setActive(true)
+        sessionActive = true
+        try graph.engine.start()
+    }
+
     func stop() {
         playRequest = nil
         graph?.player.stop()
         graph?.engine.stop()
         graph = nil
-        if sessionActive {
-            try? session.setActive(false, options: .notifyOthersOnDeactivation)
-            sessionActive = false
-        }
+        deactivateSession()
         outputName = nil
         state = .idle
     }
 
+    private func deactivateSession() {
+        guard sessionActive else { return }
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        sessionActive = false
+    }
+
     func handleInterruption(_ notification: Notification) {
-        guard state != .idle,
+        guard state == .playing || state == .starting,
               notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt == AVAudioSession.InterruptionType.began.rawValue
         else { return }
         stop()
@@ -104,7 +150,8 @@ final class PreviewPlayer {
     }
 
     func handleConfigurationChange(_ notification: Notification) {
-        guard let engine = notification.object as? AVAudioEngine, engine === graph?.engine, state == .playing else { return }
+        guard state == .playing || state == .paused,
+              let engine = notification.object as? AVAudioEngine, engine === graph?.engine else { return }
         stop()
         error = "The audio output changed. Tap Play to restart playback."
     }

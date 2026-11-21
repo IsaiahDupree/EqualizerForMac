@@ -2,6 +2,42 @@ import XCTest
 
 final class EqualizerRelaunchTests: XCTestCase {
     @MainActor
+    func testTapSelectsAndDraggingMovesFilterOnCurve() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Presets"].tap()
+        app.buttons["Flat"].tap()
+
+        let plot = app.descendants(matching: .any)["eqResponse"].firstMatch
+        XCTAssertTrue(plot.isHittable)
+        let band = app.buttons["eqBand3"]
+        let original = band.label
+        let center = plot.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(
+            dx: 36 + (plot.frame.width - 58) * log10(250 / 20.0) / 3,
+            dy: 16 + (plot.frame.height - 42) / 2
+        ))
+        center.tap()
+        XCTAssertTrue(band.isSelected)
+        XCTAssertEqual(band.label, original)
+        center.press(forDuration: 0.08, thenDragTo: center.withOffset(CGVector(dx: 35, dy: -33)))
+        XCTAssertTrue(band.isSelected)
+        XCTAssertNotEqual(band.label, original)
+        let moved = band.label
+        let gain = app.sliders["eqGain"]
+        reveal(gain, in: app)
+        let movedGain = try XCTUnwrap(gain.value as? String)
+        XCTAssertNotEqual(movedGain, "+0.0 dB")
+
+        app.terminate()
+        app.launch()
+        XCTAssertTrue(band.isSelected)
+        XCTAssertEqual(band.label, moved)
+        reveal(gain, in: app)
+        XCTAssertEqual(gain.value as? String, movedGain)
+    }
+
+    @MainActor
     func testTuningAndActiveBandSurviveLeavingAndTerminatingTheApp() throws {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -92,14 +128,31 @@ final class EqualizerRelaunchTests: XCTestCase {
             return
         }
         transport.tap()
-        let playing = NSPredicate(format: "label == %@", "Stop")
+        let playing = NSPredicate(format: "label == %@", "Pause")
         await fulfillment(of: [XCTNSPredicateExpectation(predicate: playing, object: transport)], timeout: 8)
+        app.scrollViews.firstMatch.swipeUp()
+        XCTAssertTrue(transport.isHittable)
+        transport.tap()
+        XCTAssertEqual(transport.label, "Play")
+        XCTAssertTrue(app.buttons["stopAudio"].isHittable)
+        transport.tap()
+        await fulfillment(of: [XCTNSPredicateExpectation(predicate: playing, object: transport)], timeout: 8)
+
+        let floatingCurve = app.buttons["floatingCurve"]
+        if floatingCurve.exists {
+            let ready = NSPredicate { _, _ in floatingCurve.isHittable && floatingCurve.isEnabled }
+            await fulfillment(of: [XCTNSPredicateExpectation(predicate: ready, object: nil)], timeout: 5)
+            floatingCurve.tap()
+            let opened = NSPredicate(format: "label == %@", "Close Picture in Picture")
+            await fulfillment(of: [XCTNSPredicateExpectation(predicate: opened, object: floatingCurve)], timeout: 8)
+            floatingCurve.tap()
+        }
 
         XCUIDevice.shared.press(.home)
         try await Task.sleep(for: .seconds(4))
         XCTAssertEqual(app.state, .runningBackground)
         app.activate()
-        XCTAssertEqual(transport.label, "Stop")
+        XCTAssertEqual(transport.label, "Pause")
 
         app.terminate()
         app.launch()
@@ -109,9 +162,15 @@ final class EqualizerRelaunchTests: XCTestCase {
 
     @MainActor
     private func reveal(_ item: XCUIElement, in app: XCUIApplication, down: Bool = true) {
-        for _ in 0..<5 where !item.isHittable {
-            if down { app.swipeUp() } else { app.swipeDown() }
+        func visibleInEditor() -> Bool {
+            guard item.isHittable else { return false }
+            let abovePlayer = item.frame.maxY < app.buttons["playAudio"].frame.minY - 10
+            return abovePlayer && item.frame.minY > app.navigationBars.firstMatch.frame.maxY
         }
-        XCTAssertTrue(item.isHittable, item.debugDescription)
+        for _ in 0..<5 where !visibleInEditor() {
+            let scroll = app.scrollViews.firstMatch
+            if down { scroll.swipeUp(velocity: .slow) } else { scroll.swipeDown(velocity: .slow) }
+        }
+        XCTAssertTrue(visibleInEditor(), item.debugDescription)
     }
 }

@@ -17,6 +17,10 @@ enum MobileEQ {
     static let qualityRange: ClosedRange<Float> = 0.25...8
     static let preampRange: ClosedRange<Float> = -24...6
 
+    static func highestFrequency(at sampleRate: Double) -> Double {
+        min(Double(frequencyRange.upperBound), sampleRate / 2 - 1)
+    }
+
     enum Control: AUParameterAddress, CaseIterable {
         case frequency, gain, quality
     }

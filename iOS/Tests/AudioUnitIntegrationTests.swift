@@ -1,5 +1,7 @@
 import AudioToolbox
 import AVFAudio
+import AVFoundation
+import CoreAudioKit
 import XCTest
 @testable import SonanceEQiOS
 
@@ -10,6 +12,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
         XCTAssertEqual(tree.allParameters.count, 32)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
+        XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
         gain.value = 9
         preamp.value = -3
@@ -49,6 +52,37 @@ final class AudioUnitIntegrationTests: XCTestCase {
     }
 
     @MainActor
+    func testHostCanRequestSonanceEditor() async throws {
+        let effect = try await installedEffect()
+        XCTAssertTrue(effect.auAudioUnit.providesUserInterface)
+        let editor = await effect.auAudioUnit.requestViewController()
+        XCTAssertNotNil(editor)
+    }
+
+    @MainActor
+    func testFloatingCurveVideoRendersTheFilterAndPlaybackProgress() throws {
+        let renderer = CurveVideoRenderer()
+        var settings = MobileEQSettings()
+        func render(progress: Double) throws -> Data {
+            let frame = CurveVideoFrame(title: "Sonance", settings: settings, sampleRate: 48_000, progress: progress)
+            let sample = try XCTUnwrap(renderer.render(frame))
+            XCTAssertTrue(CMSampleBufferDataIsReady(sample))
+            let image = try XCTUnwrap(CMSampleBufferGetImageBuffer(sample))
+            XCTAssertEqual(CVPixelBufferGetWidth(image), 480)
+            XCTAssertEqual(CVPixelBufferGetHeight(image), 270)
+            CVPixelBufferLockBaseAddress(image, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(image, .readOnly) }
+            let address = try XCTUnwrap(CVPixelBufferGetBaseAddress(image))
+            return Data(bytes: address, count: CVPixelBufferGetBytesPerRow(image) * CVPixelBufferGetHeight(image))
+        }
+        let flat = try render(progress: 0)
+        settings.bands[5].gain = 10
+        let boosted = try render(progress: 0)
+        XCTAssertNotEqual(flat, boosted)
+        XCTAssertNotEqual(boosted, try render(progress: 0.5))
+    }
+
+    @MainActor
     func testAppPlaysASelectedAudioFileThroughItsEmbeddedEffect() async throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
         defer { try? FileManager.default.removeItem(at: url) }
@@ -65,6 +99,10 @@ final class AudioUnitIntegrationTests: XCTestCase {
         await player.play()
         XCTAssertEqual(player.state, .playing, player.error ?? "")
         XCTAssertNotNil(player.outputName)
+        player.pause()
+        XCTAssertEqual(player.state, .paused)
+        await player.play()
+        XCTAssertEqual(player.state, .playing, player.error ?? "")
         player.stop()
         XCTAssertEqual(player.state, .idle)
         XCTAssertNil(player.outputName)

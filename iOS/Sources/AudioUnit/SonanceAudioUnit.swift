@@ -2,16 +2,6 @@ import AudioToolbox
 import AVFAudio
 import os
 
-final class SonanceAudioUnitFactory: NSObject, AUAudioUnitFactory {
-    func beginRequest(with context: NSExtensionContext) {
-        // A headless Audio Unit has no view to prepare. Core Audio calls createAudioUnit for playback.
-    }
-
-    func createAudioUnit(with description: AudioComponentDescription) throws -> AUAudioUnit {
-        try SonanceAudioUnit(componentDescription: description, options: [])
-    }
-}
-
 private final class RenderStorage {
     let pointer: OpaquePointer
 
@@ -65,6 +55,8 @@ final class SonanceAudioUnit: AUAudioUnit {
     override var outputBusses: AUAudioUnitBusArray { outputs }
     override var internalRenderBlock: AUInternalRenderBlock { render }
 
+    var settings: MobileEQSettings { control.withLock { $0.settings } }
+
     override var shouldBypassEffect: Bool {
         get { control.withLock { $0.settings.bypassed } }
         set { parameterTree?.parameter(withAddress: MobileEQ.bypassAddress)?.value = newValue ? 1 : 0 }
@@ -110,10 +102,11 @@ final class SonanceAudioUnit: AUAudioUnit {
 
     private func stage(_ state: ControlState) {
         let settings = state.settings
+        let highestFrequency = MobileEQ.highestFrequency(at: state.sampleRate)
         var coefficients = [Double]()
         coefficients.reserveCapacity(Int(SonanceRenderCoefficientCount))
         for (index, band) in settings.bands.enumerated() {
-            let inactive = settings.bypassed || band.gain == 0 || band.frequency > state.sampleRate / 2 - 1
+            let inactive = settings.bypassed || band.gain == 0 || band.frequency > highestFrequency
             let section = inactive ? .identity : RBJ.coeffs(
                 type: .peaking, sampleRate: state.sampleRate, freq: band.frequency,
                 gainDb: Double(band.gain), q: band.q

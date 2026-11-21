@@ -48,7 +48,7 @@ final class EqualizerSession {
 
     @ObservationIgnored private let store: EqualizerStore
     @ObservationIgnored private var savedSnapshot: EqualizerSnapshot
-    @ObservationIgnored private var sliderIsEditing = false
+    @ObservationIgnored private var isEditing = false
 
     init(store: EqualizerStore = .live) {
         self.store = store
@@ -69,22 +69,22 @@ final class EqualizerSession {
 
     func selectBand(_ index: Int) {
         snapshot.selectedBand = index
-        saveIfChanged()
+        if !isEditing { saveIfChanged() }
     }
 
     func updateEQ(_ update: (inout MobileEQSettings) -> Void) {
         update(&snapshot.settings)
         player.apply(snapshot.settings)
-        if !sliderIsEditing { saveIfChanged() }
+        if !isEditing { saveIfChanged() }
     }
 
-    func sliderEditingChanged(_ editing: Bool) {
-        sliderIsEditing = editing
+    func editingChanged(_ editing: Bool) {
+        isEditing = editing
         if !editing { saveIfChanged() }
     }
 
     func checkpointForBackground() {
-        sliderEditingChanged(false)
+        editingChanged(false)
     }
 
     private func saveIfChanged() {

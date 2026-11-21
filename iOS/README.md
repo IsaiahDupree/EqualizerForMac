@@ -2,13 +2,22 @@
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app
-includes the Mac app’s ten starting bands and five presets. Each band has
-adjustable frequency, gain, and Q. Preamp controls the overall level. The graph
-shows the band response at the selected file’s sample rate.
+includes the Mac app’s ten starting bands and five presets. Tap a point on the
+curve to select its band. Drag it left or right to change frequency and up or
+down to change gain. The sliders remain available for fine adjustments and Q.
+Preamp controls the overall level. The graph uses the selected file’s sample
+rate.
+
+The floating player stays on screen as you scroll the equalizer. While a file
+is playing, use the Picture in Picture button on supported devices to see the
+EQ curve and playback progress in a resizable window. Its play and pause
+controls operate the file in Sonance. Tap the return-to-app button to edit the
+curve.
 
 The same installed AUv3 effect processes the preview and appears independently
 in compatible hosts. Search for **Sonance EQ** in the host’s effects list. The
-host can expose the plug-in’s controls and save them with its session. The
+host can open the same touch editor or present standard parameter controls.
+The host saves the plug-in’s settings with its session and manages playback. The
 effect supports planar Float32 mono and stereo from 8 to 192 kHz. Host control
 changes ramp during processing. Sample-accurate automation is outside this
 prototype’s scope.
@@ -16,8 +25,8 @@ prototype’s scope.
 ## Closing and reopening
 
 Sonance saves frequency, gain, Q, preamp, bypass, and the selected band on the
-device as you finish an edit. Going to the Home Screen also saves the current
-EQ. Build 2 loads the EQ settings from build 1 when upgrading.
+device when you finish a drag or slider edit. Going to the Home Screen also
+saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 - Switching apps or locking the screen during Files playback uses iOS background
   audio. Stop playback in Sonance when you’re done.
@@ -50,6 +59,12 @@ Build 2 passed the settings relaunch, independent AUv3 host, and Files
 playback Home Screen and force-quit cases on iOS Simulator 26.0. The iPhone
 build declares Apple's background audio mode. Lock-screen and headphone
 checks still require the designated physical iPhone.
+
+Build 3 passed the simulator tests for touch selection and dragging, the
+floating transport, rendering the curve and progress into video frames, and
+loading the custom AUv3 editor. The app and extension built for arm64 iOS.
+Verify the Picture in Picture window and EffectDeck's presentation on a
+supported physical device.
 
 The UI lifecycle suite changes the EQ, goes to the Home Screen, and terminates
 and relaunches Sonance to verify restored settings. An independent test host
