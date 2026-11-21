@@ -15,11 +15,18 @@ struct SonanceRender {
     float *scratch;
     AUAudioFrameCount maxFrames;
     uint32_t channels;
+    double sampleRate;
+    SonanceAnalysisCapture *analysis;
 };
 
 SonanceRender *SonanceRenderCreate(void) {
     SonanceRender *render = calloc(1, sizeof(*render));
     if (render != NULL) {
+        render->analysis = SonanceAnalysisCreate();
+        if (render->analysis == NULL) {
+            free(render);
+            return NULL;
+        }
         render->lock = OS_UNFAIR_LOCK_INIT;
         for (size_t section = 0; section < SonanceRenderSections; ++section) {
             render->staged[5 * section] = 1;
@@ -43,8 +50,11 @@ void SonanceRenderReleaseResources(SonanceRender *render) {
 
 void SonanceRenderDestroy(SonanceRender *render) {
     SonanceRenderReleaseResources(render);
+    SonanceAnalysisDestroy(render->analysis);
     free(render);
 }
+
+SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render) { return render->analysis; }
 
 void SonanceRenderStage(SonanceRender *render, const double *coefficients) {
     os_unfair_lock_lock(&render->lock);
@@ -62,7 +72,7 @@ static void expandChannels(double *destination, const double *source, uint32_t c
     }
 }
 
-bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, uint32_t channels) {
+bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, uint32_t channels, double sampleRate) {
     SonanceRenderReleaseResources(render);
     if (channels == 0 || channels > maxChannels || maxFrames == 0 || maxFrames > UINT32_MAX / sizeof(float)) {
         return false;
@@ -83,6 +93,7 @@ bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, ui
     }
     render->channels = channels;
     render->maxFrames = maxFrames;
+    render->sampleRate = sampleRate;
     return true;
 }
 
@@ -158,6 +169,7 @@ AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render) {
 
         applyUpdate(render);
         vDSP_biquadm(render->setup, inputs, 1, outputs, 1, frames);
+        SonanceAnalysisPush(render->analysis, outputs[0], channels == 2 ? outputs[1] : NULL, frames, render->sampleRate);
         // The filter can still have a tail when the input is silent.
         *flags &= ~kAudioUnitRenderAction_OutputIsSilence;
         return noErr;

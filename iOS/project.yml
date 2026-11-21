@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: '5.0'
     MARKETING_VERSION: '0.1.0'
-    CURRENT_PROJECT_VERSION: '3'
+    CURRENT_PROJECT_VERSION: '4'
     CODE_SIGN_STYLE: Automatic
     TARGETED_DEVICE_FAMILY: '1,2'
 
@@ -26,12 +26,14 @@ targets:
       - Sources/Shared
       - ../Sources/SonanceEQ/Models/EQBand.swift
       - ../Sources/SonanceEQ/Models/Presets.swift
+      - ../Sources/SonanceEQ/Models/PresetFile.swift
       - ../Sources/SonanceEQ/DSP/Biquad.swift
       - ../Sources/SonanceEQ/DSP/FilterDesigner.swift
       - ../Sources/SonanceEQ/DSP/FrequencyResponse.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Shared/SonanceAnalysis.h
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Sonance EQ
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
@@ -46,6 +48,7 @@ targets:
         UIBackgroundModes: [audio]
     dependencies:
       - target: SonanceEQAudioUnit
+      - sdk: Accelerate.framework
 
   SonanceEQAudioUnit:
     type: app-extension
@@ -85,7 +88,7 @@ targets:
                 manufacturer: IsDp
                 type: aufx
                 subtype: SnEQ
-                version: 2
+                version: 3
                 tags: [Effects, Equalizer]
 
   SonanceEQiOSTests:

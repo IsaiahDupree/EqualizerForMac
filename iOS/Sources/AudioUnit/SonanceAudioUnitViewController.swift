@@ -47,6 +47,7 @@ private final class HostedEqualizer {
     @ObservationIgnored private var tree: AUParameterTree?
     @ObservationIgnored private var token: AUParameterObserverToken?
     @ObservationIgnored private var formatObservation: NSKeyValueObservation?
+    @ObservationIgnored private lazy var analysis = AudioAnalysisMonitor()
 
     func connect(to unit: SonanceAudioUnit) {
         guard self.unit !== unit, let tree = unit.parameterTree else { return }
@@ -73,6 +74,11 @@ private final class HostedEqualizer {
         refresh()
     }
 
+    func readAnalysis() -> AudioAnalysisFrame? {
+        guard let unit else { return nil }
+        return analysis.read(unit.analysisCapture)
+    }
+
     private func refresh() {
         guard let unit else { return }
         settings = unit.settings
@@ -86,16 +92,25 @@ private final class HostedEqualizer {
 
 private struct HostedEditorView: View {
     @Bindable var editor: HostedEqualizer
+    @State private var workspace = AudioWorkspace.equalizer
 
     var body: some View {
         Group {
             if editor.isReady {
                 ScrollView {
-                    EqualizerEditor(settings: Binding(get: { editor.settings }, set: editor.apply),
-                                    selectedBand: $editor.selectedBand, sampleRate: editor.sampleRate)
-                        .frame(maxWidth: 600)
-                        .padding(16)
-                        .frame(maxWidth: .infinity)
+                    VStack(alignment: .leading, spacing: 16) {
+                        AudioWorkspacePicker(workspace: $workspace)
+                        if workspace == .live {
+                            LiveAudioView(active: true, waitingMessage: "Start playback in the host to see its output.",
+                                          read: editor.readAnalysis)
+                        } else {
+                            EqualizerEditor(settings: Binding(get: { editor.settings }, set: editor.apply),
+                                            selectedBand: $editor.selectedBand, sampleRate: editor.sampleRate)
+                        }
+                    }
+                    .frame(maxWidth: 600)
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
                 }
             } else {
                 ProgressView("Loading equalizer…")

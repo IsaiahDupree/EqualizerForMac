@@ -3,6 +3,23 @@ import XCTest
 
 final class EqualizerSessionTests: XCTestCase {
     @MainActor
+    func testAuditioningAProtectsTheEditedCurveAndSavedSettings() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+        session.updateEQ { $0.preamp = -2 }
+        session.captureReference()
+        session.updateEQ { $0.preamp = -8 }
+        XCTAssertEqual(session.player.settings.preamp, -8)
+        session.auditionReference(true)
+        XCTAssertEqual(session.player.settings.preamp, -2)
+        XCTAssertEqual(try store.load().settings.preamp, -8)
+        session.auditionReference(false)
+        XCTAssertEqual(session.player.settings.preamp, -8)
+    }
+
+    @MainActor
     func testExistingTuningSurvivesUpgradeAndACompletedEdit() throws {
         let location = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         let domain = "SonanceEQSessionTests.\(UUID().uuidString)"

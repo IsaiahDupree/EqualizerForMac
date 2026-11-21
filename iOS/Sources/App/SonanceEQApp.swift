@@ -18,6 +18,8 @@ struct SonanceEQApp: App {
 private struct EqualizerView: View {
     let session: EqualizerSession
     @State private var pickingFile = false
+    @State private var showingPresets = false
+    @State private var workspace = AudioWorkspace.equalizer
     @State private var floatingCurve = FloatingCurve()
 
     private var player: PreviewPlayer { session.player }
@@ -26,17 +28,32 @@ private struct EqualizerView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    EqualizerEditor(
-                        settings: Binding(get: { session.snapshot.settings },
-                                          set: { updated in session.updateEQ { $0 = updated } }),
-                        selectedBand: Binding(get: { session.snapshot.selectedBand }, set: session.selectBand),
-                        sampleRate: player.sampleRate,
-                        onEditingChanged: session.editingChanged
-                    )
-                    if let message = session.storageMessage {
-                        Text(message).font(.footnote).foregroundStyle(.secondary)
+                    AudioWorkspacePicker(workspace: $workspace)
+                    if workspace == .live {
+                        LiveAudioView(active: player.state == .playing, waitingMessage: "Play an audio file to see its output.",
+                                      read: player.readAnalysis)
+                    } else {
+                        EqualizerEditor(
+                            settings: Binding(
+                                get: {
+                                    if session.playingReference, let reference = session.reference { return reference }
+                                    return session.snapshot.settings
+                                },
+                                set: { updated in session.updateEQ { $0 = updated } }
+                            ),
+                            selectedBand: Binding(get: { session.snapshot.selectedBand }, set: session.selectBand),
+                            sampleRate: player.sampleRate,
+                            onEditingChanged: session.editingChanged,
+                            onPresetLibrary: { showingPresets = true },
+                            comparison: EqualizerComparison(hasReference: session.reference != nil,
+                                                            listeningToReference: session.playingReference,
+                                                            capture: session.captureReference, audition: session.auditionReference)
+                        )
+                        if let message = session.storageMessage {
+                            Text(message).font(.footnote).foregroundStyle(.secondary)
+                        }
+                        pluginHelp
                     }
-                    pluginHelp
                 }
                 .frame(maxWidth: 600)
                 .padding(.horizontal, 16)
@@ -54,6 +71,11 @@ private struct EqualizerView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .tint(EqualizerEditor.accent)
+        .sheet(isPresented: $showingPresets) {
+            PresetLibraryView(library: session.presets, session: session)
+                .tint(EqualizerEditor.accent)
+        }
+        .onChange(of: workspace) { _, current in floatingCurve.showSignal(current == .live) }
         .fileImporter(isPresented: $pickingFile, allowedContentTypes: [.audio]) { result in
             switch result {
             case .success(let url): player.select(url)

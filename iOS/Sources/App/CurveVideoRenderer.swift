@@ -6,6 +6,8 @@ struct CurveVideoFrame: Equatable {
     let settings: MobileEQSettings
     let sampleRate: Double
     let progress: Double
+    var showsSignal = false
+    var outputAnalysis: AudioAnalysisFrame?
 }
 
 @MainActor
@@ -64,8 +66,13 @@ final class CurveVideoRenderer {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .padding(.horizontal, 8)
-            ResponsePlot(bands: frame.settings.bands, sampleRate: frame.sampleRate, selection: nil,
-                         bypassed: frame.settings.bypassed)
+            if frame.showsSignal {
+                AudioSpectrumView(frame: frame.outputAnalysis).frame(height: 136)
+                AudioWaveformView(frame: frame.outputAnalysis).frame(height: 59)
+            } else {
+                ResponsePlot(bands: frame.settings.bands, sampleRate: frame.sampleRate, selection: nil,
+                             bypassed: frame.settings.bypassed)
+            }
             GeometryReader { geometry in
                 Capsule().fill(.white.opacity(0.2))
                     .overlay(alignment: .leading) {

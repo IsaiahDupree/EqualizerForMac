@@ -19,6 +19,13 @@ final class PreviewPlayer {
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
+    @ObservationIgnored private var analysis: AudioAnalysisMonitor?
+
+    func readAnalysis() -> AudioAnalysisFrame? {
+        guard state == .playing, let capture = graph?.capture else { return nil }
+        if analysis == nil { analysis = AudioAnalysisMonitor() }
+        return analysis?.read(capture.pointer)
+    }
 
     func select(_ url: URL) {
         do {
@@ -83,6 +90,7 @@ final class PreviewPlayer {
         state = .paused
         outputName = nil
         deactivateSession()
+        analysis?.reset()
     }
 
     var progress: Double {
@@ -118,8 +126,10 @@ final class PreviewPlayer {
     func stop() {
         playRequest = nil
         graph?.player.stop()
+        graph?.removeAnalysisTap()
         graph?.engine.stop()
         graph = nil
+        analysis?.reset()
         deactivateSession()
         outputName = nil
         state = .idle
@@ -188,6 +198,7 @@ private final class PlaybackGraph {
     let player = AVAudioPlayerNode()
     private let effect: AVAudioUnit
     private let tree: AUParameterTree
+    let capture = PlayerAnalysisCapture()
 
     init(effect: AVAudioUnit, format: AVAudioFormat) throws {
         guard let tree = effect.auAudioUnit.parameterTree else { throw CocoaError(.featureUnsupported) }
@@ -197,6 +208,17 @@ private final class PlaybackGraph {
         engine.attach(effect)
         engine.connect(player, to: effect, format: format)
         engine.connect(effect, to: engine.mainMixerNode, format: format)
+        if let capture {
+            effect.installTap(onBus: 0, bufferSize: 1024, format: nil) { buffer, _ in
+                guard let data = buffer.floatChannelData, !buffer.format.isInterleaved else { return }
+                let right = buffer.format.channelCount == 2 ? data[1] : nil
+                SonanceAnalysisPush(capture.pointer, data[0], right, buffer.frameLength, buffer.format.sampleRate)
+            }
+        }
+    }
+
+    func removeAnalysisTap() {
+        if capture != nil { effect.removeTap(onBus: 0) }
     }
 
     func apply(_ settings: MobileEQSettings, changedFrom previous: MobileEQSettings? = nil) {
@@ -205,4 +227,16 @@ private final class PlaybackGraph {
             if previous?.value(at: parameter.address) != value { parameter.value = value }
         }
     }
+}
+
+// The tap owns the producer and the main actor owns the reader. The C capture coordinates their access.
+private final class PlayerAnalysisCapture: @unchecked Sendable {
+    let pointer: OpaquePointer
+
+    init?() {
+        guard let pointer = SonanceAnalysisCreate() else { return nil }
+        self.pointer = pointer
+    }
+
+    deinit { SonanceAnalysisDestroy(pointer) }
 }

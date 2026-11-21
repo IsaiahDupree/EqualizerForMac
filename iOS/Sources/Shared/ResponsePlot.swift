@@ -25,7 +25,8 @@ struct ResponsePlot: View {
             let scale = PlotScale(size: geometry.size, sampleRate: sampleRate)
             let points = bands.enumerated().compactMap { index, band -> BandPoint? in
                 guard band.enabled, band.frequency <= scale.highestFrequency else { return nil }
-                return BandPoint(index: index, location: scale.point(frequency: band.frequency, gain: Double(band.gain)))
+                let gain = band.type.usesGain ? Double(band.gain) : 0
+                return BandPoint(index: index, location: scale.point(frequency: band.frequency, gain: gain))
             }
 
             Canvas { context, _ in
@@ -110,7 +111,7 @@ struct ResponsePlot: View {
             context.stroke(path, with: .color(.white.opacity(opacity)), lineWidth: 1)
         }
 
-        for gain in [-12.0, 0, 12] {
+        for gain in [-24.0, -12, 0, 12, 24] {
             let row = scale.y(gain)
             rule(from: CGPoint(x: plot.minX, y: row), to: CGPoint(x: plot.maxX, y: row),
                  opacity: gain == 0 ? 0.28 : 0.15)
@@ -130,7 +131,9 @@ struct ResponsePlot: View {
     }
 
     private func drawResponse(in context: GraphicsContext, scale: PlotScale) {
-        let active = bypassed ? [] : bands.filter { $0.frequency <= scale.highestFrequency && $0.gain != 0 }
+        let active = bypassed ? [] : bands.filter {
+            $0.frequency <= scale.highestFrequency && (!$0.type.usesGain || $0.gain != 0)
+        }
         let response = FrequencyResponse.curve(bands: active, sampleRate: sampleRate, points: 145,
                                                fMax: scale.highestFrequency)
         let points = response.map { scale.point(frequency: $0.freq, gain: $0.db) }
@@ -195,7 +198,7 @@ private struct PlotScale {
     let bounds: CGRect
     let highestFrequency: Double
     private let minimumFrequency = Double(MobileEQ.frequencyRange.lowerBound)
-    private let chartGain = 18.0
+    private let chartGain = 27.0
 
     init(size: CGSize, sampleRate: Double) {
         bounds = CGRect(x: 36, y: 16, width: max(1, size.width - 58), height: max(1, size.height - 42))

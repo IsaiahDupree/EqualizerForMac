@@ -2,6 +2,45 @@ import XCTest
 
 final class EqualizerRelaunchTests: XCTestCase {
     @MainActor
+    func testNamedPresetCanBeSavedAndLoadedAfterRelaunch() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Presets"].tap()
+        app.buttons["Vocal"].tap()
+        let preamp = app.sliders["eqPreamp"]
+        reveal(preamp, in: app)
+        preamp.adjust(toNormalizedSliderPosition: 0.3)
+        let level = try XCTUnwrap(preamp.value as? String)
+        XCTAssertNotEqual(level, "0.0 dB")
+
+        let presets = app.buttons["Presets"]
+        reveal(presets, in: app, down: false)
+        presets.tap()
+        app.buttons["Preset Library"].tap()
+        app.buttons["saveCurrentPreset"].tap()
+        let name = "Studio \(UUID().uuidString.prefix(5))"
+        let alert = app.alerts["Save Preset"]
+        let field = alert.textFields.firstMatch
+        field.tap()
+        field.typeText(name)
+        alert.buttons["Save"].tap()
+        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5))
+        retainScreenshot("Preset Library", app)
+        app.buttons["Done"].tap()
+        presets.tap()
+        app.buttons["Flat"].tap()
+
+        app.terminate()
+        app.launch()
+        presets.tap()
+        app.buttons["Preset Library"].tap()
+        app.staticTexts[name].tap()
+        reveal(preamp, in: app)
+        XCTAssertEqual(preamp.value as? String, level)
+    }
+
+    @MainActor
     func testTapSelectsAndDraggingMovesFilterOnCurve() throws {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -130,6 +169,11 @@ final class EqualizerRelaunchTests: XCTestCase {
         transport.tap()
         let playing = NSPredicate(format: "label == %@", "Pause")
         await fulfillment(of: [XCTNSPredicateExpectation(predicate: playing, object: transport)], timeout: 8)
+        let workspace = app.segmentedControls["audioWorkspace"]
+        workspace.buttons["Live"].tap()
+        XCTAssertTrue(app.staticTexts["spectrumPeak"].waitForExistence(timeout: 4))
+        retainScreenshot("Live Audio", app)
+        workspace.buttons["Equalizer"].tap()
         app.scrollViews.firstMatch.swipeUp()
         XCTAssertTrue(transport.isHittable)
         transport.tap()
@@ -158,6 +202,14 @@ final class EqualizerRelaunchTests: XCTestCase {
         app.launch()
         XCTAssertEqual(transport.label, "Play")
         XCTAssertFalse(transport.isEnabled)
+    }
+
+    @MainActor
+    private func retainScreenshot(_ title: String, _ app: XCUIApplication) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = title
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     @MainActor

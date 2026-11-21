@@ -16,6 +16,7 @@ final class FloatingCurve: NSObject {
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private lazy var renderer = CurveVideoRenderer()
     @ObservationIgnored private var lastFrame: CurveVideoFrame?
+    @ObservationIgnored private var showsSignal = false
     @ObservationIgnored private nonisolated let playerState = OSAllocatedUnfairLock(initialState: PreviewPlayer.State.idle)
 
     func attach(to layer: AVSampleBufferDisplayLayer, player: PreviewPlayer) {
@@ -75,6 +76,11 @@ final class FloatingCurve: NSObject {
         }
     }
 
+    func showSignal(_ enabled: Bool) {
+        showsSignal = enabled
+        enqueueFrame()
+    }
+
     private func enqueueFrame() {
         guard let player, let title = player.fileName, let layer else { return }
         let output = layer.sampleBufferRenderer
@@ -84,7 +90,8 @@ final class FloatingCurve: NSObject {
         }
         guard output.isReadyForMoreMediaData else { return }
         let frame = CurveVideoFrame(title: title, settings: player.settings, sampleRate: player.sampleRate,
-                                    progress: player.progress)
+                                    progress: player.progress, showsSignal: showsSignal,
+                                    outputAnalysis: showsSignal ? player.readAnalysis() : nil)
         guard frame != lastFrame, let sample = renderer.render(frame) else { return }
         output.enqueue(sample)
         lastFrame = frame

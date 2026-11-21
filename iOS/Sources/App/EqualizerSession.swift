@@ -43,8 +43,11 @@ struct EqualizerStore {
 @MainActor @Observable
 final class EqualizerSession {
     let player = PreviewPlayer()
+    @ObservationIgnored lazy var presets = PresetLibrary()
     private(set) var snapshot: EqualizerSnapshot
     private(set) var storageMessage: String?
+    private(set) var reference: MobileEQSettings?
+    private(set) var playingReference = false
 
     @ObservationIgnored private let store: EqualizerStore
     @ObservationIgnored private var savedSnapshot: EqualizerSnapshot
@@ -74,8 +77,19 @@ final class EqualizerSession {
 
     func updateEQ(_ update: (inout MobileEQSettings) -> Void) {
         update(&snapshot.settings)
-        player.apply(snapshot.settings)
+        if !playingReference { player.apply(snapshot.settings) }
         if !isEditing { saveIfChanged() }
+    }
+
+    func captureReference() {
+        reference = snapshot.settings
+        auditionReference(false)
+    }
+
+    func auditionReference(_ enabled: Bool) {
+        guard let reference else { return }
+        playingReference = enabled
+        player.apply(enabled ? reference : snapshot.settings)
     }
 
     func editingChanged(_ editing: Bool) {

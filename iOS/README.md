@@ -8,11 +8,26 @@ down to change gain. The sliders remain available for fine adjustments and Q.
 Preamp controls the overall level. The graph uses the selected file’s sample
 rate.
 
+Open **Presets → Preset Library** to save the entire curve and preamp under a
+name. The library can import multiple Sonance EQ files at once, export a
+single Mac-compatible `.sonanceeq.json` preset, or back up the library in
+one iOS preset collection. Imported presets support one to ten filters,
+including shelves, cuts, and the Mac filter shapes. The preset keeps the
+filter values and enabled states. Bypass is a separate playback control.
+
+Use **Set A** to capture a reference before tuning. **A · Reference**
+auditions the captured sound, and **B · Edited** returns to the working curve.
+The app keeps the working curve when auditioning A.
+
+Switch to **Live** to see the spectrum, waveform, and output levels after
+the EQ. Stereo audio shows meters for both channels. The custom AUv3 editor
+has a Live view for the signal provided by its host.
+
 The floating player stays on screen as you scroll the equalizer. While a file
 is playing, use the Picture in Picture button on supported devices to see the
-EQ curve and playback progress in a resizable window. Its play and pause
-controls operate the file in Sonance. Tap the return-to-app button to edit the
-curve.
+EQ curve and playback progress in a resizable window. Switch to Live to
+float the spectrum and waveform. Its play and pause controls operate the
+file in Sonance. Tap the return-to-app button to edit the curve.
 
 The same installed AUv3 effect processes the preview and appears independently
 in compatible hosts. Search for **Sonance EQ** in the host’s effects list. The
@@ -65,6 +80,10 @@ floating transport, rendering the curve and progress into video frames, and
 loading the custom AUv3 editor. The app and extension built for arm64 iOS.
 Verify the Picture in Picture window and EffectDeck's presentation on a
 supported physical device.
+
+Build 4 passed 15 simulator tests. These cover preset persistence and batch
+import, A/B auditioning, shelf and cut response in AUv3, and measured
+post-EQ playback levels. The app and extension built for arm64 iOS.
 
 The UI lifecycle suite changes the EQ, goes to the Home Screen, and terminates
 and relaunches Sonance to verify restored settings. An independent test host

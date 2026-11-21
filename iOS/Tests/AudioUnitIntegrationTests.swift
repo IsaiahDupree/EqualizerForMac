@@ -10,7 +10,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 32)
+        XCTAssertEqual(tree.allParameters.count, 62)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
@@ -49,6 +49,35 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(restoredTree.parameter(withAddress: gain)).value, 6)
         let stream = try RenderStream(effect: restored, frequencies: [750])
         XCTAssertEqual(try stream.measure()[0], 6, accuracy: 0.25)
+    }
+
+    @MainActor
+    func testMacFilterShapesRenderAndRestoreInAHost() async throws {
+        let effect = try await installedEffect()
+        let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
+        func parameter(_ control: MobileEQ.Control) throws -> AUParameter {
+            try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(control, band: 0)))
+        }
+        try parameter(.type).value = Float(try XCTUnwrap(MobileEQ.filterTypes.firstIndex(of: .lowShelf)))
+        try parameter(.frequency).value = 400
+        try parameter(.gain).value = 8
+        try parameter(.quality).value = 0.707
+        let restored = try await installedEffect()
+        restored.auAudioUnit.fullState = try XCTUnwrap(effect.auAudioUnit.fullState)
+        let spectrum = try RenderStream(effect: restored, frequencies: [100, 3_000]).measure()
+        XCTAssertEqual(spectrum[0], 8, accuracy: 0.3)
+        XCTAssertEqual(spectrum[1], 0, accuracy: 0.15)
+
+        let cut = try await installedEffect()
+        let cutTree = try XCTUnwrap(cut.auAudioUnit.parameterTree)
+        try XCTUnwrap(cutTree.parameter(withAddress: MobileEQ.address(.type, band: 0))).value =
+            Float(try XCTUnwrap(MobileEQ.filterTypes.firstIndex(of: .highPass)))
+        try XCTUnwrap(cutTree.parameter(withAddress: MobileEQ.address(.slope, band: 0))).value =
+            Float(try XCTUnwrap(FilterDesigner.slopes.firstIndex(of: 24)))
+        try XCTUnwrap(cutTree.parameter(withAddress: MobileEQ.address(.frequency, band: 0))).value = 400
+        let response = try RenderStream(effect: cut, frequencies: [200, 3_000]).measure()
+        XCTAssertEqual(response[0], -24, accuracy: 1)
+        XCTAssertEqual(response[1], 0, accuracy: 0.12)
     }
 
     @MainActor
@@ -95,10 +124,25 @@ final class AudioUnitIntegrationTests: XCTestCase {
         let player = PreviewPlayer()
         defer { player.stop() }
         player.select(url)
+        var boosted = MobileEQSettings()
+        boosted.bands[5].gain = 6
+        player.apply(boosted)
         XCTAssertEqual(player.fileName, url.lastPathComponent)
         await player.play()
         XCTAssertEqual(player.state, .playing, player.error ?? "")
         XCTAssertNotNil(player.outputName)
+        var measured: AudioAnalysisFrame?
+        for _ in 0..<22 {
+            if let frame = player.readAnalysis(), frame.dominantFrequency != nil {
+                measured = frame
+                break
+            }
+            try await Task.sleep(for: .milliseconds(70))
+        }
+        let frame = try XCTUnwrap(measured, "The visualizer should receive actual audio from the EQ output")
+        XCTAssertEqual(try XCTUnwrap(frame.dominantFrequency), 1_000, accuracy: 25)
+        XCTAssertEqual(frame.left.peak, -12.1, accuracy: 0.6)
+        XCTAssertNil(frame.right)
         player.pause()
         XCTAssertEqual(player.state, .paused)
         await player.play()
