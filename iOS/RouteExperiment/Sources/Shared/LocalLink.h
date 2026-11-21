@@ -28,6 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (class, readonly) MDPLinkSender *shared;
 @property (nonatomic, readonly) BOOL connected;
 @property (nonatomic, readonly) uint64_t sentFrames;
+@property (nonatomic, readonly) uint64_t droppedFrames;
 - (void)start;
 - (void)stop;
 /// リアルタイムスレッドから呼ぶ。内部のリングに積むだけで、送信は別スレッド。
@@ -40,13 +41,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL listening;
 @property (nonatomic, readonly) BOOL hasPeer;
 @property (nonatomic, readonly) uint64_t receivedFrames;
+@property (nonatomic, readonly) uint64_t droppedFrames;
+@property (nonatomic, readonly) uint64_t underrunFrames;
 /// まだ読み出していないフレーム数。そのまま遅延になる。
 @property (nonatomic, readonly) uint32_t bufferedFrames;
 
-/// 再同期のときに置く、書き位置からの遅れ（フレーム）。
-/// 設計上の定数なので、遅れの表示にはこちらを使う。
-/// bufferedFrames はその瞬間の溜まりで、払うたびに動く。
-@property (class, nonatomic, readonly) uint32_t targetFrames;
 - (BOOL)start;
 - (void)stop;
 /// 受信済みのサンプルを取り出す。足りない分は無音で埋める。

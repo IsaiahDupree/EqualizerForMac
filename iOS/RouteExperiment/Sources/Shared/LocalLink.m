@@ -3,6 +3,7 @@
 //  拒否が出たときにどのシステムコールかがそのまま分かる形にした。
 
 #import "LocalLink.h"
+#import "MDPAudioRing.h"
 #import <sys/socket.h>
 #import <netinet/in.h>
 #import <netinet/tcp.h>
@@ -43,16 +44,16 @@ static os_log_t MDPLinkLog(void) {
 
 // ---- 送り手 ----
 
-#define SEND_RING_SAMPLES (48000 * 2 * 2)   // 2 秒
+#define SEND_RING_FRAMES 8192
 
 @implementation MDPLinkSender {
-    int _fd;
+    _Atomic int _fd;
     dispatch_queue_t _q;
     dispatch_source_t _timer;
-    float *_ring;
-    _Atomic uint64_t _w;
-    uint64_t _r;
-    BOOL _running;
+    MDPAudioRing *_ring;
+    _Atomic bool _running;
+    _Atomic uint64_t _framesSent;
+    _Atomic uint64_t _framesDropped;
     // 送信中のチャンク。_txOff はサンプルではなくバイト位置。
     uint8_t *_txBuf;
     size_t _txLen;
@@ -69,26 +70,36 @@ static os_log_t MDPLinkLog(void) {
 
 - (instancetype)init {
     if ((self = [super init])) {
-        _fd = -1;
+        atomic_init(&_fd, -1);
+        atomic_init(&_running, false);
+        atomic_init(&_framesSent, 0);
+        atomic_init(&_framesDropped, 0);
         _q = dispatch_queue_create("com.isaiahdupree.SonanceEQ.RouteLab.link.send", DISPATCH_QUEUE_SERIAL);
-        _ring = calloc(SEND_RING_SAMPLES, sizeof(float));
+        _ring = MDPAudioRingCreate(SEND_RING_FRAMES);
         // malloc 由来なので先頭は 16 バイト境界。ヘッダ 12 の直後の float 配列も 4 で揃う。
         _txBuf = calloc(1, MDP_LINK_CHUNK_BYTES);
+        if (!_ring || !_txBuf) { MDPAudioRingDestroy(_ring); free(_txBuf); return nil; }
     }
     return self;
 }
 
 - (BOOL)connected { return _fd >= 0; }
+- (uint64_t)sentFrames { return atomic_load(&_framesSent); }
+- (uint64_t)droppedFrames { return atomic_load(&_framesDropped); }
 
 - (void)start {
+    @synchronized (self) {
     if (_running) return;
     _running = YES;
-    _r = atomic_load(&_w);
-    _txLen = _txOff = 0;
-    _txSamples = 0;
+    dispatch_sync(_q, ^{
+        MDPAudioRingDiscard(self->_ring);
+        self->_txLen = self->_txOff = 0;
+        self->_txSamples = 0;
+    });
     // 毎回 0 から数える。累計のままだと、今回何も送っていなくても
     // 「送信=188万」のように見えて、ログで判断を誤る。
-    _sentFrames = 0;
+    atomic_store(&_framesSent, 0);
+    atomic_store(&_framesDropped, 0);
     _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _q);
     // 10ms ごとに溜まったぶんを送る。接続が無ければ張り直す。
     dispatch_source_set_timer(_timer, DISPATCH_TIME_NOW, 10 * NSEC_PER_MSEC, 2 * NSEC_PER_MSEC);
@@ -96,30 +107,27 @@ static os_log_t MDPLinkLog(void) {
     dispatch_source_set_event_handler(_timer, ^{ [weak pump]; });
     dispatch_resume(_timer);
     os_log_error(MDPLinkLog(), "ET sender 開始");
+    }
 }
 
 - (void)stop {
+    @synchronized (self) {
     _running = NO;
     if (_timer) { dispatch_source_cancel(_timer); _timer = nil; }
-    dispatch_async(_q, ^{
+    dispatch_sync(_q, ^{
         if (self->_fd >= 0) { close(self->_fd); self->_fd = -1; }
         self->_txLen = self->_txOff = 0;
         self->_txSamples = 0;
+        MDPAudioRingDiscard(self->_ring);
     });
-    os_log(MDPLinkLog(), "sender 停止 sent=%llu", (unsigned long long)_sentFrames);
+    os_log(MDPLinkLog(), "sender 停止 sent=%llu", (unsigned long long)self.sentFrames);
+    }
 }
 
 - (void)pushInterleaved:(const float *)samples frames:(uint32_t)frames channels:(uint32_t)channels {
-    if (!samples || frames == 0) return;
-    uint64_t w = atomic_load_explicit(&_w, memory_order_relaxed);
-    for (uint32_t i = 0; i < frames; i++) {
-        float l = samples[i * channels];
-        float r = (channels > 1) ? samples[i * channels + 1] : l;
-        _ring[(w + 0) % SEND_RING_SAMPLES] = l;
-        _ring[(w + 1) % SEND_RING_SAMPLES] = r;
-        w += 2;
-    }
-    atomic_store_explicit(&_w, w, memory_order_release);
+    if (!_running || !samples || frames == 0) return;
+    uint32_t accepted = MDPAudioRingWrite(_ring, samples, frames, channels);
+    atomic_fetch_add_explicit(&_framesDropped, frames - accepted, memory_order_relaxed);
 }
 
 - (void)ensureConnected {
@@ -147,7 +155,7 @@ static os_log_t MDPLinkLog(void) {
     int fl = fcntl(fd, F_GETFL, 0);
     fcntl(fd, F_SETFL, fl | O_NONBLOCK);
     _fd = fd;
-    _r = atomic_load(&_w);   // 繋がった時点から送る
+    MDPAudioRingDiscard(_ring); // Drop samples accumulated before this connection.
     // 前の接続で送り残したチャンクの途中から流すと、新しいストリームの先頭が
     // ヘッダにならない。持ち越しはここで捨てる。
     _txLen = _txOff = 0;
@@ -172,7 +180,7 @@ static os_log_t MDPLinkLog(void) {
         return NO;
     }
     // 送り切ったチャンクだけ数える。途中で止まったぶんは次の pump で数える。
-    if (_txSamples) { _sentFrames += _txSamples / 2; _txSamples = 0; }
+    if (_txSamples) { atomic_fetch_add(&_framesSent, _txSamples / 2); _txSamples = 0; }
     return YES;
 }
 
@@ -183,23 +191,17 @@ static os_log_t MDPLinkLog(void) {
 
     if (![self flushPending]) return;   // 前回の残りが先
 
-    uint64_t w = atomic_load_explicit(&_w, memory_order_acquire);
-    uint64_t r = _r;
-    if (w <= r) return;
-    uint64_t avail = w - r;
-    if (avail > SEND_RING_SAMPLES) { r = w - SEND_RING_SAMPLES; avail = SEND_RING_SAMPLES; }
-
-    while (avail >= 2) {
-        uint32_t n = (uint32_t)MIN(avail, (uint64_t)MDP_LINK_MAX_SAMPLES);
-        n &= ~1u;   // 必ず偶数サンプルで切る。奇数だと以後 L と R が入れ替わる
-        if (n == 0) break;
+    // Bound each timer invocation so a fast producer cannot monopolize the queue.
+    for (int pass = 0; pass < 8; ++pass) {
+        float *payload = (float *)(void *)(_txBuf + MDP_LINK_HDR_BYTES);
+        uint32_t frames = MDPAudioRingRead(_ring, payload, MDP_LINK_MAX_SAMPLES / 2);
+        if (!frames) return;
+        uint32_t n = frames * 2;
 
         uint64_t magic = MDP_LINK_MAGIC;
         uint32_t count = n;
         memcpy(_txBuf, &magic, sizeof(magic));
         memcpy(_txBuf + 8, &count, sizeof(count));
-        float *payload = (float *)(void *)(_txBuf + MDP_LINK_HDR_BYTES);
-        for (uint32_t i = 0; i < n; i++) payload[i] = _ring[(r + i) % SEND_RING_SAMPLES];
 
         _txLen = MDP_LINK_HDR_BYTES + (size_t)n * sizeof(float);
         _txOff = 0;
@@ -207,30 +209,28 @@ static os_log_t MDPLinkLog(void) {
 
         // リングから _txBuf へ写した時点で読み位置を進める。送信が途中で止まっても
         // 残りは _txBuf が持っているので、リングを読み直す必要は無い。
-        r += n;
-        avail -= n;
-        _r = r;
-
         if (![self flushPending]) return;   // 続きは次の pump
     }
-    _r = r;
 }
 
 @end
 
 // ---- 受け手 ----
 
-#define RECV_RING_SAMPLES (48000 * 2 * 2)
+#define RECV_RING_FRAMES 8192
 #define RX_BUF_BYTES      65536     // 1 チャンク（最大 16396 バイト）より十分大きく取る
 
 @implementation MDPLinkReceiver {
-    int _listenFd;
-    int _peerFd;
+    _Atomic int _listenFd;
+    _Atomic int _peerFd;
     dispatch_queue_t _q;
     dispatch_source_t _timer;
-    float *_ring;
-    _Atomic uint64_t _w;
-    uint64_t _r;
+    MDPAudioRing *_ring;
+    _Atomic uint64_t _framesReceived;
+    _Atomic uint64_t _framesDropped;
+    _Atomic uint64_t _framesUnderrun;
+    _Atomic uint64_t _generation;
+    uint64_t _consumerGeneration; // accessed by the audio consumer only
     // 受信したバイトをそのまま溜める。float に切り出すのは境界が揃ってから。
     uint8_t *_rxBuf;
     size_t _rxLen;
@@ -246,30 +246,32 @@ static os_log_t MDPLinkLog(void) {
 
 - (instancetype)init {
     if ((self = [super init])) {
-        _listenFd = -1;
-        _peerFd = -1;
+        atomic_init(&_listenFd, -1);
+        atomic_init(&_peerFd, -1);
+        atomic_init(&_framesReceived, 0);
+        atomic_init(&_framesDropped, 0);
+        atomic_init(&_framesUnderrun, 0);
+        atomic_init(&_generation, 0);
         _q = dispatch_queue_create("com.isaiahdupree.SonanceEQ.RouteLab.link.recv", DISPATCH_QUEUE_SERIAL);
-        _ring = calloc(RECV_RING_SAMPLES, sizeof(float));
+        _ring = MDPAudioRingCreate(RECV_RING_FRAMES);
         _rxBuf = calloc(1, RX_BUF_BYTES);
+        if (!_ring || !_rxBuf) { MDPAudioRingDestroy(_ring); free(_rxBuf); return nil; }
     }
     return self;
 }
 
 - (BOOL)listening { return _listenFd >= 0; }
 - (BOOL)hasPeer   { return _peerFd >= 0; }
-
-+ (uint32_t)targetFrames { return 2048; }
+- (uint64_t)receivedFrames { return atomic_load(&_framesReceived); }
+- (uint64_t)droppedFrames { return atomic_load(&_framesDropped); }
+- (uint64_t)underrunFrames { return atomic_load(&_framesUnderrun); }
 
 - (uint32_t)bufferedFrames {
-    uint64_t w = atomic_load_explicit(&_w, memory_order_acquire);
-    uint64_t r = _r;
-    if (w <= r) return 0;
-    uint64_t samples = w - r;
-    if (samples > RECV_RING_SAMPLES) samples = RECV_RING_SAMPLES;
-    return (uint32_t)(samples / 2);
+    return MDPAudioRingAvailable(_ring);
 }
 
 - (BOOL)start {
+    @synchronized (self) {
     if (_listenFd >= 0) return YES;
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -299,6 +301,10 @@ static os_log_t MDPLinkLog(void) {
     fcntl(fd, F_SETFL, fl | O_NONBLOCK);
     _listenFd = fd;
     _rxLen = 0;
+    atomic_fetch_add(&_generation, 1);
+    atomic_store(&_framesReceived, 0);
+    atomic_store(&_framesDropped, 0);
+    atomic_store(&_framesUnderrun, 0);
     os_log_error(MDPLinkLog(), "MDP receiver 待ち受け開始 port=%d", MDP_LINK_PORT);
 
     _timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _q);
@@ -307,21 +313,25 @@ static os_log_t MDPLinkLog(void) {
     dispatch_source_set_event_handler(_timer, ^{ [weak pump]; });
     dispatch_resume(_timer);
     return YES;
+    }
 }
 
 - (void)stop {
+    @synchronized (self) {
     if (_timer) { dispatch_source_cancel(_timer); _timer = nil; }
-    dispatch_async(_q, ^{
+    dispatch_sync(_q, ^{
         if (self->_peerFd >= 0) { close(self->_peerFd); self->_peerFd = -1; }
         if (self->_listenFd >= 0) { close(self->_listenFd); self->_listenFd = -1; }
         self->_rxLen = 0;
+        atomic_fetch_add(&self->_generation, 1);
     });
+    }
 }
 
 /// チャンク本体をリングへ写す。
 - (void)writeSamples:(const uint8_t *)bytes count:(uint32_t)count {
-    uint64_t w = atomic_load_explicit(&_w, memory_order_relaxed);
     uint64_t badBefore = _badSamples;
+    float decoded[MDP_LINK_MAX_SAMPLES];
     for (uint32_t i = 0; i < count; i++) {
         float v;
         // _rxBuf の途中から読むので 4 バイト境界に乗っている保証が無い。memcpy で取る。
@@ -329,10 +339,12 @@ static os_log_t MDPLinkLog(void) {
         // NaN や inf を 1 つ通すと IIR の状態が戻らなくなり、以後ずっと無音か轟音になる。
         // ここで落として数を記録する（黙って埋めると原因が見えない）。
         if (!isfinite(v)) { v = 0.0f; _badSamples++; }
-        _ring[(w + i) % RECV_RING_SAMPLES] = v;
+        decoded[i] = v;
     }
-    atomic_store_explicit(&_w, w + count, memory_order_release);
-    _receivedFrames += count / 2;
+    uint32_t frames = count / 2;
+    uint32_t accepted = MDPAudioRingWrite(_ring, decoded, frames, 2);
+    atomic_fetch_add_explicit(&_framesReceived, frames, memory_order_relaxed);
+    atomic_fetch_add_explicit(&_framesDropped, frames - accepted, memory_order_relaxed);
 
     // ここで出さないと、同期ずれを伴わない非有限値（送り手側で既に壊れている音）が
     // 黙って 0 に置き換わる。consume 側の bad= は同期ずれが起きたときしか通らない。
@@ -389,6 +401,7 @@ static os_log_t MDPLinkLog(void) {
             fcntl(c, F_SETFL, fl | O_NONBLOCK);
             _peerFd = c;
             _rxLen = 0;     // 前の相手の書きかけを新しいストリームに混ぜない
+            atomic_fetch_add(&_generation, 1);
             os_log_error(MDPLinkLog(), "ET 接続を受けた");
         }
         return;
@@ -402,6 +415,7 @@ static os_log_t MDPLinkLog(void) {
             os_log(MDPLinkLog(), "相手が切断した");
             close(_peerFd); _peerFd = -1;
             _rxLen = 0;
+            atomic_fetch_add(&_generation, 1);
             return;
         }
         if (n < 0) {
@@ -409,6 +423,7 @@ static os_log_t MDPLinkLog(void) {
             os_log_error(MDPLinkLog(), "recv 失敗 errno=%d", errno);
             close(_peerFd); _peerFd = -1;
             _rxLen = 0;
+            atomic_fetch_add(&_generation, 1);
             return;
         }
         // n は 4 の倍数とは限らない。端数は _rxBuf に残したまま次の recv と繋ぐ。
@@ -418,19 +433,18 @@ static os_log_t MDPLinkLog(void) {
 }
 
 - (uint32_t)readInterleaved:(float *)out frames:(uint32_t)frames {
-    uint64_t w = atomic_load_explicit(&_w, memory_order_acquire);
-    uint64_t r = _r;
-    uint32_t want = frames * 2;
-    if (r == 0 || w > r + RECV_RING_SAMPLES) {
-        uint64_t behind = (uint64_t)[MDPLinkReceiver targetFrames] * 2ull;
-        r = (w > behind) ? (w - behind) : 0;
+    if (!out) return 0;
+    uint64_t generation = atomic_load_explicit(&_generation, memory_order_acquire);
+    if (_consumerGeneration != generation) {
+        MDPAudioRingDiscard(_ring);
+        _consumerGeneration = generation;
     }
-    uint64_t avail = (w > r) ? (w - r) : 0;
-    uint32_t got = (uint32_t)MIN(avail, (uint64_t)want);
-    for (uint32_t i = 0; i < got; i++) out[i] = _ring[(r + i) % RECV_RING_SAMPLES];
-    for (uint32_t i = got; i < want; i++) out[i] = 0.0f;
-    _r = r + got;
-    return got / 2;
+    uint32_t got = MDPAudioRingRead(_ring, out, frames);
+    // If the connection changed during the read, do not render the old block.
+    if (generation != atomic_load_explicit(&_generation, memory_order_acquire)) got = 0;
+    atomic_fetch_add_explicit(&_framesUnderrun, frames - got, memory_order_relaxed);
+    for (size_t i = (size_t)got * 2; i < (size_t)frames * 2; ++i) out[i] = 0.0f;
+    return got;
 }
 
 @end

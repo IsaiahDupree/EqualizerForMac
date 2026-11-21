@@ -14,9 +14,9 @@ This is a source implementation, not a claim that the route works on any device.
   extension; its developer agreement also contains applicable purpose limits.
   The reference uses an empty container entitlement for local playback. Its
   relationship to Apple's current requirements and review has not been resolved.
-- The inherited loopback TCP link does **not authenticate either peer**. Another
-  local app may be able to impersonate a peer or receive audio. Thread-safety,
-  buffer overruns, extension isolation and privacy require an independent audit
+- The loopback TCP link does **not authenticate either peer**. Another
+  local app may be able to impersonate a peer or receive audio. End-to-end
+  thread-safety, extension isolation and privacy require an independent audit
   and a validated authenticated transport before using private audio or shipping.
   Do not install or route private material through this experiment as-is.
 - A different output sample rate is rejected rather than silently playing 48 kHz
@@ -32,8 +32,11 @@ at commit `0ed6091ec6e82d5aa9fb4320bef7a083260f6a0f`, under the license in
 [UPSTREAM-LICENSE](UPSTREAM-LICENSE). The bundle, protocol, endpoint port,
 device UUID and display name are distinct from the upstream. This branch adds
 debug-only distribution guards, a C11 atomic cutoff, refusal of mismatched
-sample rates, and a best-effort output loop stop. These changes have not been
-compiled against iOS 27 or tested on-device.
+sample rates, a best-effort output loop stop, and bounded single-producer /
+single-consumer audio queues. When full, the queues drop incoming frames instead
+of overwriting frames being read. Sender and receiver drop counts and receiver
+underruns are recorded. These changes have not been compiled against iOS 27 or
+tested on-device.
 
 ## Local checks
 
@@ -43,12 +46,19 @@ stereo parity and rejection of a non-finite cutoff. It does not exercise the
 extension, network link, operating-system routing, or audio session.
 
 `bash iOS/RouteExperiment/Tests/verify-local-link.sh` exercises the real sender
-and receiver over a temporary localhost connection on the Mac and checks stereo
-sample integrity. This narrow check does not establish peer authentication,
-thread safety, bounded latency or behavior in the iOS extension sandbox.
+and receiver over a temporary localhost connection on the Mac. It checks stereo
+samples, reconnects, non-finite samples, underruns and bounded overflow. It does
+not establish peer authentication, bounded latency or behavior in the iOS
+extension sandbox.
 
-On 2026-11-21, both checks passed on the Mac; the link check received 960 stereo
-frames. XcodeGen generated the project, Swift sources passed syntax parsing,
+`bash iOS/RouteExperiment/Tests/verify-audio-ring.sh` checks the queue's capacity,
+wrap, mono conversion, discard and 100,000 concurrent stereo frames. The test
+can be run with `ROUTE_TSAN=1` on a Mac with a working Thread Sanitizer runtime.
+On this Mac, the sanitizer process itself crashes, including for an empty C
+program; this is not a sanitizer pass.
+
+On 2026-11-21, the filter, link and audio-ring checks passed on the Mac.
+XcodeGen generated the project, Swift sources passed syntax parsing,
 property lists validated, and the localhost and atomic C sources passed an
 iOS 26 SDK syntax check. The iOS 27 target could not be built: this Mac has
 Xcode 26.0.1 and no iOS 27 SDK. None of these checks validates device routing.

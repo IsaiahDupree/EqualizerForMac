@@ -296,7 +296,7 @@ final class PassthroughExtension: MediaDeviceExtension, RealtimeSampleHandling {
         reportTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
             _ = self
-            log.notice("受信 frames=\(MDPDriver.shared.framesDelivered) 接続=\(MDPLinkSender.shared.connected) 送信=\(MDPLinkSender.shared.sentFrames)")
+            log.notice("受信 frames=\(MDPDriver.shared.framesDelivered) 接続=\(MDPLinkSender.shared.connected) 送信=\(MDPLinkSender.shared.sentFrames) dropped=\(MDPLinkSender.shared.droppedFrames)")
         }
     }
 

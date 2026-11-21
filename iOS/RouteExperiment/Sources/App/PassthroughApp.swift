@@ -55,6 +55,8 @@ struct ContentView: View {
                     LabeledContent("Extension",
                                    value: io.hasPeer ? "connected" : "waiting")
                     LabeledContent("Frames received", value: "\(io.received)")
+                    LabeledContent("Receiver dropped", value: "\(io.dropped) frames")
+                    LabeledContent("Output underrun", value: "\(io.underrun) frames")
                     LabeledContent("Buffered", value: "\(io.bufferedFrames) frames")
                 }
 

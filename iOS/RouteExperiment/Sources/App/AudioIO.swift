@@ -72,6 +72,8 @@ final class AudioIO: ObservableObject {
     @Published var listening = false
     @Published var hasPeer = false
     @Published var received: UInt64 = 0
+    @Published var dropped: UInt64 = 0
+    @Published var underrun: UInt64 = 0
     @Published var bufferedFrames: UInt32 = 0
     @Published var sampleRate: Double = 48000
     @Published var status = "Waiting for the extension"
@@ -223,8 +225,7 @@ final class AudioIO: ObservableObject {
                                     options: [.defaultToSpeaker, .mixWithOthers,
                                               .allowBluetoothA2DP])
             try session.setPreferredSampleRate(48000)
-            // 遅延の大半は受け側の再同期の置き場（MDPLinkReceiver.targetFrames、
-            // 2048 フレーム＝約 43ms）なので、ここを詰めても効き目は小さい。
+            // This is a preference, not a latency measurement or guarantee.
             try session.setPreferredIOBufferDuration(0.005)
             try session.setActive(true)
 
@@ -377,6 +378,11 @@ final class AudioIO: ObservableObject {
 
         let nowReceived = link.receivedFrames
         if received != nowReceived { received = nowReceived }
+
+        let nowDropped = link.droppedFrames
+        if dropped != nowDropped { dropped = nowDropped }
+        let nowUnderrun = link.underrunFrames
+        if underrun != nowUnderrun { underrun = nowUnderrun }
 
         let nowBuffered = link.bufferedFrames
         if bufferedFrames != nowBuffered { bufferedFrames = nowBuffered }
