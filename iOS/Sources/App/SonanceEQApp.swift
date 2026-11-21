@@ -4,20 +4,27 @@ import UniformTypeIdentifiers
 
 @main
 struct SonanceEQApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var session = EqualizerSession()
+
     var body: some Scene {
-        WindowGroup { EqualizerView() }
+        WindowGroup { EqualizerView(session: session) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { session.checkpointForBackground() }
+            }
     }
 }
 
 private struct EqualizerView: View {
-    private static let settingsKey = "sonance.eq.settings.v1"
     private static let accent = Color(light: Color(red: 0.12, green: 0.35, blue: 0.83),
                                       dark: Color(red: 0.58, green: 0.71, blue: 1))
 
-    @State private var settings = loadSettings()
-    @State private var player = PreviewPlayer()
-    @State private var selectedBand = 5
+    let session: EqualizerSession
     @State private var pickingFile = false
+
+    private var settings: MobileEQSettings { session.snapshot.settings }
+    private var selectedBand: Int { session.snapshot.selectedBand }
+    private var player: PreviewPlayer { session.player }
 
     var body: some View {
         NavigationStack {
@@ -43,12 +50,6 @@ private struct EqualizerView: View {
             switch result {
             case .success(let url): player.select(url)
             case .failure: player.error = "The audio file couldn’t be opened."
-            }
-        }
-        .onChange(of: settings, initial: true) { _, value in
-            player.apply(value)
-            if let data = try? JSONEncoder().encode(value) {
-                UserDefaults.standard.set(data, forKey: Self.settingsKey)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { notification in
@@ -128,8 +129,10 @@ private struct EqualizerView: View {
                 Menu {
                     ForEach(Presets.all) { preset in
                         Button(preset.name) {
-                            settings.bands = preset.bands
-                            settings.preamp = 0
+                            session.updateEQ {
+                                $0.bands = preset.bands
+                                $0.preamp = 0
+                            }
                         }
                     }
                 } label: {
@@ -140,9 +143,13 @@ private struct EqualizerView: View {
             ResponsePlot(bands: settings.bands, sampleRate: player.sampleRate,
                          selection: selectedBand, bypassed: settings.bypassed)
 
-            Toggle("Bypass EQ", isOn: $settings.bypassed)
+            Toggle("Bypass EQ", isOn: eqBinding(\.bypassed))
                 .font(.subheadline.weight(.medium))
                 .accessibilityIdentifier("bypassEQ")
+
+            if let message = session.storageMessage {
+                Text(message).font(.footnote).foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -155,7 +162,7 @@ private struct EqualizerView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 56), spacing: 5)], spacing: 5) {
                 ForEach(settings.bands.indices, id: \.self) { index in
                     Button {
-                        selectedBand = index
+                        session.selectBand(index)
                     } label: {
                         Text(settings.bands[index].freqLabel)
                             .font(.subheadline.monospacedDigit().weight(.medium))
@@ -166,24 +173,28 @@ private struct EqualizerView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Band \(index + 1), \(settings.bands[index].frequency.formatted(.number.precision(.fractionLength(0)))) hertz")
+                    .accessibilityIdentifier("eqBand\(index)")
                     .accessibilityAddTraits(selectedBand == index ? .isSelected : [])
                 }
             }
 
             let band = settings.bands[selectedBand]
-            sliderRow("Frequency", value: "\(band.frequency.formatted(.number.precision(.fractionLength(0)))) Hz") {
-                Slider(value: frequency, in: log10(20)...log10(20_000))
+            sliderRow("Frequency", id: "eqFrequency", value: "\(band.frequency.formatted(.number.precision(.fractionLength(0)))) Hz") {
+                Slider(value: frequency, in: log10(20)...log10(20_000), onEditingChanged: session.sliderEditingChanged)
             }
-            sliderRow("Gain", value: "\(band.gainLabel) dB") {
-                Slider(value: $settings.bands[selectedBand].gain, in: MobileEQ.gainRange, step: 0.5)
+            sliderRow("Gain", id: "eqGain", value: "\(band.gainLabel) dB") {
+                Slider(value: eqBinding(\.bands[selectedBand].gain), in: MobileEQ.gainRange, step: 0.5,
+                       onEditingChanged: session.sliderEditingChanged)
             }
-            sliderRow("Width (Q)", value: band.q.formatted(.number.precision(.fractionLength(2)))) {
-                Slider(value: $settings.bands[selectedBand].q,
-                       in: Double(MobileEQ.qualityRange.lowerBound)...Double(MobileEQ.qualityRange.upperBound), step: 0.05)
+            sliderRow("Width (Q)", id: "eqQuality", value: band.q.formatted(.number.precision(.fractionLength(2)))) {
+                Slider(value: eqBinding(\.bands[selectedBand].q),
+                       in: Double(MobileEQ.qualityRange.lowerBound)...Double(MobileEQ.qualityRange.upperBound), step: 0.05,
+                       onEditingChanged: session.sliderEditingChanged)
             }
             Divider()
-            sliderRow("Preamp", value: "\(settings.preamp.formatted(.number.precision(.fractionLength(1)))) dB") {
-                Slider(value: $settings.preamp, in: MobileEQ.preampRange, step: 0.5)
+            sliderRow("Preamp", id: "eqPreamp", value: "\(settings.preamp.formatted(.number.precision(.fractionLength(1)))) dB") {
+                Slider(value: eqBinding(\.preamp), in: MobileEQ.preampRange, step: 0.5,
+                       onEditingChanged: session.sliderEditingChanged)
             }
         }
         .padding(16)
@@ -191,14 +202,20 @@ private struct EqualizerView: View {
     }
 
     private var frequency: Binding<Double> {
-        Binding(get: { log10(settings.bands[selectedBand].frequency) }, set: { value in
+        let band = selectedBand
+        return Binding(get: { log10(settings.bands[band].frequency) }, set: { value in
             let range = MobileEQ.frequencyRange
-            settings.bands[selectedBand].frequency = min(max(pow(10, value), Double(range.lowerBound)),
-                                                          Double(range.upperBound))
+            session.updateEQ {
+                $0.bands[band].frequency = min(max(pow(10, value), Double(range.lowerBound)), Double(range.upperBound))
+            }
         })
     }
 
-    private func sliderRow(_ label: String, value: String, @ViewBuilder slider: () -> some View) -> some View {
+    private func eqBinding<Value>(_ key: WritableKeyPath<MobileEQSettings, Value>) -> Binding<Value> {
+        Binding(get: { settings[keyPath: key] }, set: { value in session.updateEQ { $0[keyPath: key] = value } })
+    }
+
+    private func sliderRow(_ label: String, id: String, value: String, @ViewBuilder slider: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
                 Text(label).font(.subheadline)
@@ -206,13 +223,13 @@ private struct EqualizerView: View {
                 Text(value).font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
             }
             .accessibilityHidden(true)
-            slider().accessibilityLabel(label).accessibilityValue(value)
+            slider().accessibilityLabel(label).accessibilityValue(value).accessibilityIdentifier(id)
         }
     }
 
     private var pluginHelp: some View {
         DisclosureGroup("Use Sonance EQ in another app") {
-            Text("In an app that hosts AUv3 effects, add Sonance EQ as an effect. The host supplies the audio and controls playback.")
+            Text("In an app that hosts AUv3 effects, add Sonance EQ as an effect. The host controls playback and manages its own EQ settings.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -220,14 +237,6 @@ private struct EqualizerView: View {
         }
         .padding(16)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    private static func loadSettings() -> MobileEQSettings {
-        guard let data = UserDefaults.standard.data(forKey: settingsKey),
-              let saved = try? JSONDecoder().decode(MobileEQSettings.self, from: data), saved.isValid else {
-            return MobileEQSettings()
-        }
-        return saved
     }
 }
 
