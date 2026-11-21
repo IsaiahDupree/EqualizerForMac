@@ -21,6 +21,7 @@ private struct EqualizerView: View {
     @State private var showingPresets = false
     @State private var showingCorrection = false
     @State private var showingListeningModes = false
+    @State private var showingGuide = false
     @State private var workspace = AudioWorkspace.equalizer
     @State private var floatingCurve = FloatingCurve()
 
@@ -81,6 +82,11 @@ private struct EqualizerView: View {
             .navigationTitle("Sonance EQ")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Getting Started", systemImage: "questionmark.circle") { showingGuide = true }
+                        .labelStyle(.iconOnly)
+                        .accessibilityIdentifier("gettingStarted")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Output Correction", systemImage: "headphones") { showingCorrection = true }
                         .labelStyle(.iconOnly)
@@ -99,6 +105,10 @@ private struct EqualizerView: View {
         }
         .sheet(isPresented: $showingListeningModes) {
             SpeechListeningView(session: session)
+                .tint(EqualizerEditor.accent)
+        }
+        .sheet(isPresented: $showingGuide) {
+            ListeningGuideView()
                 .tint(EqualizerEditor.accent)
         }
         .onChange(of: workspace) { _, current in floatingCurve.showSignal(current == .live) }
@@ -129,5 +139,35 @@ private struct EqualizerView: View {
         }
         .padding(14)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct ListeningGuideView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Play a file") {
+                    Label("Tap Open Audio and choose a mono or stereo file from Files.", systemImage: "1.circle")
+                    Label("Tap Play, then choose a preset or adjust the EQ curve.", systemImage: "2.circle")
+                    Label("Use Bypass EQ to compare the original and adjusted sound.", systemImage: "3.circle")
+                }
+                Section("Listen to speech") {
+                    Text("Choose Speech Listening Modes for starting curves for podcasts, audiobooks, interviews and dialogue. You can edit and save any of them.")
+                }
+                Section("Use another audio app") {
+                    Text("Add Sonance EQ as an effect in a compatible AUv3 host. Choose a speech curve from the host's Sonance Presets menu. The host controls its own effect settings.")
+                    Text("The Sonance player does not receive other apps' audio directly. A separate compatible host and route are needed, and compatibility varies.")
+                        .foregroundStyle(.secondary)
+                }
+                Section("Keep your sound") {
+                    Text("Use Presets → Preset Library to save or export a curve. Output Correction can apply a saved preset to a recognized output during Sonance file playback.")
+                }
+            }
+            .navigationTitle("Getting Started")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
     }
 }
