@@ -77,7 +77,7 @@ struct PresetLibraryView: View {
         } message: { change in
             Text(change.preset.file.name)
         }
-        .fileImporter(isPresented: $importingFiles, allowedContentTypes: [.json], allowsMultipleSelection: true,
+        .fileImporter(isPresented: $importingFiles, allowedContentTypes: [.json, .plainText], allowsMultipleSelection: true,
                       onCompletion: importFiles)
         .fileExporter(isPresented: $exporting, document: document, contentType: .json,
                       defaultFilename: exportName) { result in

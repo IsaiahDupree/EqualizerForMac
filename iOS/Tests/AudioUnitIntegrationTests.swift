@@ -201,6 +201,54 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertNil(player.outputName)
     }
 
+    @MainActor
+    func testPlaybackAppliesSavedCorrectionAfterEQAndBypassesItIndependently() async throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appending(path: "Tone.wav")
+        let buffer = try makeTone(frequencies: [1_000], frames: 384_000)
+        do {
+            let file = try AVAudioFile(forWriting: url, settings: buffer.format.settings)
+            try file.write(from: buffer)
+        }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+        let player = session.player
+        defer { player.stop() }
+        session.updateEQ { $0.bands[5].gain = 6 }
+        player.select(url)
+        await player.play()
+        XCTAssertEqual(player.state, .playing, player.error ?? "")
+        let output = try XCTUnwrap(player.currentOutput)
+
+        func expectPeak(_ expected: Float, file: StaticString = #filePath, line: UInt = #line) async throws {
+            var peak: Float?
+            for _ in 0..<25 {
+                peak = player.readAnalysis()?.left.peak ?? peak
+                if let peak, abs(peak - expected) <= 0.6 { return }
+                try await Task.sleep(for: .milliseconds(60))
+            }
+            XCTAssertEqual(try XCTUnwrap(peak), expected, accuracy: 0.6, file: file, line: line)
+        }
+
+        try await expectPeak(-12.1)
+        let preset = SavedPreset(file: PresetFile(name: "Speaker", preampDb: -7, bands: [
+            EQBand(frequency: 1_000, gain: 2, q: 1, type: .peaking),
+        ]))
+        var correction = try OutputCorrection(preset: preset)
+        XCTAssertTrue(session.setCorrection(correction, for: output))
+        try await expectPeak(-17.1)
+        XCTAssertEqual(EqualizerSession(store: store).correction(for: output), correction)
+
+        session.updateEQ { $0.bypassed = true }
+        try await expectPeak(-23.1)
+        correction.enabled = false
+        XCTAssertTrue(session.setCorrection(correction, for: output))
+        try await expectPeak(-18.1)
+        XCTAssertEqual(EqualizerSession(store: store).correction(for: output), correction)
+    }
+
     private func installedEffect() async throws -> AVAudioUnit {
         let components = AVAudioUnitComponentManager.shared().components(matching: MobileEQ.component)
         XCTAssertEqual(components.count, 1, "The embedded AUv3 must be visible to hosts")

@@ -3,6 +3,40 @@ import XCTest
 
 final class PresetLibraryTests: XCTestCase {
     @MainActor
+    func testImportsAutoEqTextWithPreampShelvesAndDisabledBands() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let profile = directory.appending(path: "Headphones ParametricEQ.txt")
+        let unsupported = directory.appending(path: "Stereo.txt")
+        let filters = """
+            # Headphone correction
+            Preamp: -4.5 dB
+            Filter 1: ON LSC Fc 105 Hz Gain 3.2 dB Q 0.71
+            Filter 2: OFF PK Fc 400 Hz Gain 2.0 dB Q 1.00
+            Filter 3: ON HSC Fc 9000 Hz Gain -2.3 dB Q 0.70
+            """
+        try Data(filters.utf8).write(to: profile)
+        try Data((filters + "\nChannel: L").utf8).write(to: unsupported)
+
+        let result = PresetImport.read([profile, unsupported])
+        XCTAssertEqual(result.files.map(\.name), ["Headphones ParametricEQ"])
+        XCTAssertEqual(result.problems.count, 1)
+        XCTAssertTrue(try XCTUnwrap(result.problems.first).contains("Line 6"))
+
+        let storage = directory.appending(path: "presets.json")
+        XCTAssertEqual(try PresetLibrary(url: storage).append(result.files), 1)
+        let preset = try XCTUnwrap(PresetLibrary(url: storage).entries.first)
+        let settings = try MobileEQSettings(preset: preset.file)
+        XCTAssertEqual(settings.preamp, -4.5)
+        XCTAssertEqual(settings.bands.map(\.type), [.lowShelf, .peaking, .highShelf])
+        XCTAssertEqual(settings.bands.map(\.frequency), [105, 400, 9000])
+        XCTAssertEqual(settings.bands.map(\.gain), [3.2, 2, -2.3])
+        XCTAssertEqual(settings.bands.map(\.q), [0.71, 1, 0.70])
+        XCTAssertEqual(settings.bands.map(\.enabled), [true, false, true])
+    }
+
+    @MainActor
     func testLibrarySavesCurrentCurveAndBulkImportsMacFiles() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

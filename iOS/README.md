@@ -18,6 +18,14 @@ with up to 32 filters including shelves, cuts, and the Mac filter shapes.
 The preset keeps the filter values and enabled states. Bypass is a separate
 playback control.
 
+Use **Import Presets** in the library to open AutoEq `ParametricEQ.txt` files
+with bell and shelf filters. Tap the headphone icon to open **Output
+Correction** and assign a saved preset to the current output. Sonance keeps a
+copy of the preset for that output and restores the assignment and its on/off
+setting after relaunch. Corrections apply after your EQ to files played in
+Sonance. Use **Apply Correction** to compare that stage independently of
+**Bypass EQ**.
+
 Use **Set A** to capture a reference before tuning. **A · Reference**
 auditions the captured sound, and **B · Edited** returns to the working curve.
 The app keeps the working curve when auditioning A.
@@ -92,6 +100,12 @@ Build 5 passed 18 simulator tests. The band dropdown tracks the selected
 point, newly created and deleted bands survive relaunch, and the AUv3 host
 restores the band count and filter values. The original ten bands retain
 their AUv3 parameter addresses.
+
+Build 6 compiled the arm64 iPhone app and its simulator test bundles. A local
+offline render verified AutoEq import and measured the two EQ stages with
+each bypassed independently. The simulator service was unavailable for the
+UI run, and physical output switching and EffectDeck playback still need a
+device check.
 
 The UI lifecycle suite changes the EQ, goes to the Home Screen, and terminates
 and relaunches Sonance to verify restored settings. An independent test host

@@ -4,8 +4,12 @@ import Observation
 struct EqualizerSnapshot: Codable, Equatable {
     var settings = MobileEQSettings()
     var selectedBand: Int? = 5
+    var outputCorrections: [String: OutputCorrection]?
 
-    var isValid: Bool { settings.isValid && selectedBand == settings.selection(selectedBand) }
+    var isValid: Bool {
+        settings.isValid && selectedBand == settings.selection(selectedBand) &&
+            (outputCorrections?.values.allSatisfy(\.isValid) ?? true)
+    }
 }
 
 struct EqualizerStore {
@@ -68,6 +72,7 @@ final class EqualizerSession {
         savedSnapshot = loaded
         storageMessage = message
         player.apply(loaded.settings)
+        player.applyOutputCorrections(loaded.outputCorrections ?? [:])
     }
 
     func selectBand(_ index: Int?) {
@@ -85,6 +90,21 @@ final class EqualizerSession {
     func captureReference() {
         reference = snapshot.settings
         auditionReference(false)
+    }
+
+    func correction(for output: PlaybackOutput) -> OutputCorrection? {
+        snapshot.outputCorrections?[output.id]
+    }
+
+    @discardableResult
+    func setCorrection(_ correction: OutputCorrection?, for output: PlaybackOutput) -> Bool {
+        guard player.currentOutput?.id == output.id else { return false }
+        var assignments = snapshot.outputCorrections ?? [:]
+        assignments[output.id] = correction
+        snapshot.outputCorrections = assignments.isEmpty ? nil : assignments
+        player.applyOutputCorrections(assignments)
+        saveIfChanged()
+        return true
     }
 
     func auditionReference(_ enabled: Bool) {

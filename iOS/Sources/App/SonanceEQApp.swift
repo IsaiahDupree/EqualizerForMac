@@ -19,6 +19,7 @@ private struct EqualizerView: View {
     let session: EqualizerSession
     @State private var pickingFile = false
     @State private var showingPresets = false
+    @State private var showingCorrection = false
     @State private var workspace = AudioWorkspace.equalizer
     @State private var floatingCurve = FloatingCurve()
 
@@ -69,10 +70,21 @@ private struct EqualizerView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Sonance EQ")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Output Correction", systemImage: "headphones") { showingCorrection = true }
+                        .labelStyle(.iconOnly)
+                        .accessibilityIdentifier("outputCorrection")
+                }
+            }
         }
         .tint(EqualizerEditor.accent)
         .sheet(isPresented: $showingPresets) {
             PresetLibraryView(library: session.presets, session: session)
+                .tint(EqualizerEditor.accent)
+        }
+        .sheet(isPresented: $showingCorrection) {
+            OutputCorrectionView(session: session)
                 .tint(EqualizerEditor.accent)
         }
         .onChange(of: workspace) { _, current in floatingCurve.showSignal(current == .live) }

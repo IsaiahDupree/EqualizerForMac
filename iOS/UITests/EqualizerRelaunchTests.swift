@@ -38,6 +38,26 @@ final class EqualizerRelaunchTests: XCTestCase {
         app.staticTexts[name].tap()
         reveal(preamp, in: app)
         XCTAssertEqual(preamp.value as? String, level)
+
+        let outputCorrection = app.buttons["outputCorrection"]
+        outputCorrection.tap()
+        let picker = app.buttons["correctionPreset"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        picker.tap()
+        app.buttons[name].tap()
+        let enabled = app.switches["applyOutputCorrection"]
+        XCTAssertEqual(picker.value as? String, name)
+        XCTAssertEqual(enabled.value as? String, "1")
+        retainScreenshot("Output Correction", app)
+        enabled.tap()
+        XCTAssertEqual(enabled.value as? String, "0")
+        app.terminate()
+        app.launch()
+        outputCorrection.tap()
+        XCTAssertEqual(picker.value as? String, name)
+        XCTAssertEqual(enabled.value as? String, "0")
+        app.buttons["Clear Assignment"].tap()
+        XCTAssertEqual(picker.value as? String, "Choose")
     }
 
     @MainActor

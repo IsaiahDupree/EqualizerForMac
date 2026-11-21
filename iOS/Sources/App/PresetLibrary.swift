@@ -19,15 +19,17 @@ struct PresetCollection: Codable {
 
 enum PresetError: LocalizedError {
     case nameRequired, nameTaken, invalidFile, tooManyFilters, outOfRange, libraryUnavailable
+    case unsupportedAutoEqLine(Int)
 
     var errorDescription: String? {
         switch self {
         case .nameRequired: return "Enter a preset name between 1 and 100 characters."
         case .nameTaken: return "A preset with that name already exists."
-        case .invalidFile: return "Choose a Sonance EQ preset or preset collection."
+        case .invalidFile: return "Choose a Sonance EQ preset, preset collection, or AutoEq ParametricEQ text file."
         case .tooManyFilters: return "Sonance EQ for iPhone supports up to \(MobileEQ.maximumBandCount) filters per preset."
         case .outOfRange: return "A filter or preamp value is outside the iPhone editor’s range."
         case .libraryUnavailable: return "Saved presets couldn’t be opened. The existing library was preserved."
+        case .unsupportedAutoEqLine(let line): return "Line \(line) isn’t a supported AutoEq preamp, bell, or shelf setting."
         }
     }
 }
@@ -77,6 +79,10 @@ struct PresetImport {
         }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
         guard data.count <= limit else { throw PresetError.invalidFile }
+        if url.pathExtension.lowercased() == "txt" {
+            guard let text = String(data: data, encoding: .utf8) else { throw PresetError.invalidFile }
+            return [try AutoEqTextPreset.read(text, name: url.deletingPathExtension().lastPathComponent)]
+        }
         let decoder = JSONDecoder()
         if let collection = try? decoder.decode(PresetCollection.self, from: data),
            collection.app == "SonanceEQ", collection.version == 1, !collection.presets.isEmpty {
