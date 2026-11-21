@@ -48,6 +48,14 @@ effect supports planar Float32 mono and stereo from 8 to 192 kHz. Host control
 changes ramp during processing. Sample-accurate automation is outside this
 prototype’s scope.
 
+**Speech Listening Modes** offers starting curves for podcasts, audiobooks,
+interviews and dialogue. Selecting one replaces the current EQ and preamp and
+turns off bypass; save your existing curve first if you want to keep it. These
+are tonal EQ adjustments, not voice isolation, noise removal, or a compressor.
+The standalone player's settings apply to its Files playback. In a compatible
+AUv3 host, choose **Presets → Speech Listening** in the Sonance effect to use
+the same curves. Host settings are separate from the standalone player.
+
 ## Closing and reopening
 
 Sonance saves frequency, gain, Q, preamp, bypass, and the selected band on the
@@ -75,6 +83,10 @@ For a device build, use a development team that can provision
 `com.isaiahdupree.SonanceEQ.iOSPrototype` and its `.AudioUnit` extension.
 The prototype has its own bundle identifiers. The existing Mac app and its
 StoreKit products use the production identifiers.
+
+On a Mac with Xcode, `bash iOS/Tools/verify-speech-listening.sh` runs a bounded
+offline check of the actual speech profile filters with Accelerate. It checks
+filter behavior; it does not replace iPhone, AUv3 host, or listening tests.
 
 The initial validation used Xcode 26.0.1 and iOS Simulator 26.0. The simulator
 discovered the installed extension, measured the expected mono and stereo

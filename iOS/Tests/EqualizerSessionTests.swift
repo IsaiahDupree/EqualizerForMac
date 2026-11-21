@@ -3,6 +3,43 @@ import XCTest
 
 final class EqualizerSessionTests: XCTestCase {
     @MainActor
+    func testSpeechProfileIsAudibleEditableAndSurvivesRelaunch() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        let domain = "SonanceSpeechTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: domain))
+        defer {
+            defaults.removePersistentDomain(forName: domain)
+            try? FileManager.default.removeItem(at: directory)
+        }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: defaults)
+        let session = EqualizerSession(store: store)
+        session.updateEQ { $0.bypassed = true }
+        session.captureReference()
+        session.auditionReference(true)
+        session.applySpeechListening(.podcast)
+
+        XCTAssertFalse(session.playingReference)
+        XCTAssertFalse(session.snapshot.settings.bypassed)
+        XCTAssertEqual(session.player.settings, session.snapshot.settings)
+        XCTAssertEqual(session.snapshot.settings.preamp, -3)
+        XCTAssertEqual(session.snapshot.settings.bands.count, 10)
+        XCTAssertEqual(try store.load(), session.snapshot)
+        session.updateEQ { $0.bands[0].gain = -6 }
+        XCTAssertEqual(EqualizerSession(store: store).snapshot.settings.bands[0].gain, -6)
+    }
+
+    func testSpeechProfilesHaveValidCurvesWithReducedLowEnd() {
+        for profile in SpeechListening.allCases {
+            let settings = profile.settings
+            XCTAssertTrue(settings.isValid, profile.title)
+            let response = FrequencyResponse.curve(bands: settings.bands, sampleRate: 48_000,
+                                                   points: 3, fMin: 62.5, fMax: 2_000)
+            XCTAssertLessThan(response[0].db, response[2].db, profile.title)
+            XCTAssertLessThan(settings.preamp, 0, profile.title)
+        }
+    }
+
+    @MainActor
     func testAddedAndDeletedBandsPersistIncludingAnEmptyCurve() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }

@@ -57,6 +57,17 @@ struct EqualizerEditor: View {
                     }
                 }
             }
+            Menu("Speech Listening") {
+                ForEach(SpeechListening.allCases) { profile in
+                    Button(profile.title) {
+                        comparison?.audition(false)
+                        changeBands {
+                            $0 = profile.settings
+                            return $0.bands.firstIndex(where: \.enabled)
+                        }
+                    }
+                }
+            }
         } label: {
             Label("Presets", systemImage: "square.stack")
                 .font(.subheadline.weight(.medium))

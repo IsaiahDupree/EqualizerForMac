@@ -20,6 +20,7 @@ private struct EqualizerView: View {
     @State private var pickingFile = false
     @State private var showingPresets = false
     @State private var showingCorrection = false
+    @State private var showingListeningModes = false
     @State private var workspace = AudioWorkspace.equalizer
     @State private var floatingCurve = FloatingCurve()
 
@@ -53,6 +54,15 @@ private struct EqualizerView: View {
                         if let message = session.storageMessage {
                             Text(message).font(.footnote).foregroundStyle(.secondary)
                         }
+                        Button {
+                            showingListeningModes = true
+                        } label: {
+                            Label("Speech Listening Modes", systemImage: "waveform.and.mic")
+                                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 14)
+                        .background(.background, in: RoundedRectangle(cornerRadius: 16))
                         pluginHelp
                     }
                 }
@@ -85,6 +95,10 @@ private struct EqualizerView: View {
         }
         .sheet(isPresented: $showingCorrection) {
             OutputCorrectionView(session: session)
+                .tint(EqualizerEditor.accent)
+        }
+        .sheet(isPresented: $showingListeningModes) {
+            SpeechListeningView(session: session)
                 .tint(EqualizerEditor.accent)
         }
         .onChange(of: workspace) { _, current in floatingCurve.showSignal(current == .live) }

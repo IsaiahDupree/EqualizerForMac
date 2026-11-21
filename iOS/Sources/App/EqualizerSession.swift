@@ -92,6 +92,14 @@ final class EqualizerSession {
         auditionReference(false)
     }
 
+    func applySpeechListening(_ profile: SpeechListening) {
+        auditionReference(false)
+        editingChanged(true)
+        updateEQ { $0 = profile.settings }
+        selectBand(snapshot.settings.bands.firstIndex(where: \.enabled))
+        editingChanged(false)
+    }
+
     func correction(for output: PlaybackOutput) -> OutputCorrection? {
         snapshot.outputCorrections?[output.id]
     }
