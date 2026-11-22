@@ -59,13 +59,21 @@ int main(void) {
         float oversized[16384 * 2] = { 0 };
         [sender pushInterleaved:oversized frames:16384 channels:2];
         if (sender.droppedFrames < 8192) valid = NO;
-        [sender stop];
+
+        // The receiver can disappear while the sender still has samples queued.
+        // An unhandled SIGPIPE would terminate this process here.
         [receiver stop];
+        for (int i = 0; i < 100 && sender.connected; ++i) {
+            [sender pushInterleaved:block frames:480 channels:2];
+            usleep(10000);
+        }
+        if (sender.connected) valid = NO;
+        [sender stop];
         if (!valid) {
             fprintf(stderr, "Loopback, reconnection, sanitization or overflow check failed\n");
             return 1;
         }
-        puts("PASS: real localhost stereo, reconnect, non-finite sanitization, underrun and bounded overflow");
+        puts("PASS: localhost stereo, reconnect, sanitization, underrun, overflow and receiver loss");
         return 0;
     }
 }

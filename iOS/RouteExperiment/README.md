@@ -47,15 +47,35 @@ extension, network link, operating-system routing, or audio session.
 
 `bash iOS/RouteExperiment/Tests/verify-local-link.sh` exercises the real sender
 and receiver over a temporary localhost connection on the Mac. It checks stereo
-samples, reconnects, non-finite samples, underruns and bounded overflow. It does
-not establish peer authentication, bounded latency or behavior in the iOS
-extension sandbox.
+samples, reconnects, non-finite samples, underruns, bounded overflow and loss of
+the receiver while sending. It does not establish peer authentication, bounded
+latency or behavior in the iOS extension sandbox.
 
 `bash iOS/RouteExperiment/Tests/verify-audio-ring.sh` checks the queue's capacity,
 wrap, mono conversion, discard and 100,000 concurrent stereo frames. The test
 can be run with `ROUTE_TSAN=1` on a Mac with a working Thread Sanitizer runtime.
 On this Mac, the sanitizer process itself crashes, including for an empty C
 program; this is not a sanitizer pass.
+
+Both audio-ring and local-link checks also passed on the Mac with Undefined
+Behavior Sanitizer using `ROUTE_UBSAN=1`. Address Sanitizer did not complete its
+empty-program probe on this Mac, so it was not used for the real tests.
+
+`bash iOS/RouteExperiment/Tests/verify-tls-psk.sh` is a separate, loopback-only
+Network.framework feasibility test. It generates a fresh random key and data,
+checks the negotiated TLS 1.2 PSK cipher, verifies correct-key delivery, and
+checks that wrong-key, plaintext and impostor-server connections do not deliver
+the payload. It passed on this Mac on 2026-11-21. This test is **not connected**
+to the route lab's current socket, does not test Keychain sharing or the Media
+Device sandbox, and does not establish production readiness. The tested
+TLS-PSK cipher does not provide forward secrecy.
+
+Apple documents [keychain access groups](https://developer.apple.com/documentation/security/sharing-access-to-keychain-items-among-a-collection-of-apps)
+and [Network.framework's PSK limitations](https://developer.apple.com/documentation/technotes/tn3213-moving-from-multipeer-connectivity-to-network-framework).
+A candidate design is to generate a per-install key, share it between the two
+signed targets through Keychain, and use a reviewed authenticated encrypted
+transport. Extension access, key lifecycle, handshake failure behavior,
+real-time performance and the applicable Apple terms all remain to be tested.
 
 On 2026-11-21, the filter, link and audio-ring checks passed on the Mac.
 XcodeGen generated the project, Swift sources passed syntax parsing,

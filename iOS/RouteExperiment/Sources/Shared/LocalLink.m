@@ -139,6 +139,12 @@ static os_log_t MDPLinkLog(void) {
     }
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+    // A disappearing receiver must be reported as EPIPE, not kill the extension.
+    if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) != 0) {
+        os_log_error(MDPLinkLog(), "SO_NOSIGPIPE failed errno=%d", errno);
+        close(fd);
+        return;
+    }
 
     struct sockaddr_in a;
     memset(&a, 0, sizeof(a));
