@@ -67,6 +67,8 @@ is reviewed and accepted and the apps are rebuilt.
   analyzed first key/tempo. Multi-term search can combine metadata across
   fields, and result rows show up to two matching marker, loop, key, tempo,
   instrument, or pace labels. The library count reflects the active filter.
+  VoiceOver labels each selectable row with its duration, available analyzed
+  key and tempo, and the metadata explaining a search match.
   Music Understanding key results now display conventional note
   symbols rather than enum identifiers.
   Each track keeps its own practice data. A failed file import removes the

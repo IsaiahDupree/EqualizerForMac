@@ -237,7 +237,8 @@ struct TrackStudyView: View {
                         .padding(.vertical, 8)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Select \(item.title)\(selected ? ", currently selected" : "")")
+                    .accessibilityLabel(libraryTrackAccessibilityLabel(for: item, selected: selected))
+                    .accessibilityHint("Double-tap to select this track for practice.")
                     if item.id != visibleTracks.last?.id {
                         Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
                     }
@@ -331,6 +332,22 @@ struct TrackStudyView: View {
         }
         guard !hints.isEmpty else { return nil }
         return hints.prefix(2).joined(separator: " · ")
+    }
+
+    private func libraryTrackAccessibilityLabel(for track: PracticeTrack, selected: Bool) -> String {
+        var details = ["Select \(track.title)"]
+        if selected { details.append("currently selected") }
+        details.append("duration \(timeString(track.duration))")
+        if let key = track.analysis?.firstKeySpan?.key {
+            details.append("key \(key)")
+        }
+        if let tempo = track.analysis?.tempoBPM {
+            details.append("\(tempo) beats per minute")
+        }
+        if let matchHint = searchMatchHint(for: track) {
+            details.append("search match \(matchHint.replacingOccurrences(of: " · ", with: ", "))")
+        }
+        return details.joined(separator: ", ")
     }
 
     private func instrumentDisplayName(_ rawName: String) -> String {
