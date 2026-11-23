@@ -176,6 +176,12 @@ is reviewed and accepted and the apps are rebuilt.
   exercised. After CocoaPods regenerated the local module source list, the
   EverReach Simulator build succeeded again with arm64 and x86_64 slices and
   bundle ID `com.everreach.app`.
+- EverReach's native App Shortcuts now include an authenticated People search
+  that accepts a contact name and opens the filtered app screen; it does not
+  return contact notes through Siri. The contact name is not included in search
+  analytics, and People-screen debug logging no longer prints contact records.
+  The new App Intent and deep-link behavior remain uncompiled and unreviewed at
+  runtime because Xcode 27.2 first-use setup is pending.
 
 ## Implemented
 
