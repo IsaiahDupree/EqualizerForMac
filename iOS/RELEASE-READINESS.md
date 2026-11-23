@@ -83,6 +83,12 @@ iOS 27 cross-app product and has not been submitted or published.
   boundary behavior remain unexercised at runtime. Its iOS 27 Music
   Understanding adapter is gated to Swift 6.4 / Xcode 27 and is not compiled
   by the installed SDK.
+- Track Study now provides a Siri/Shortcuts action to mark the current
+  playhead on an imported track. The action adds a named marker without
+  starting recording or playback. The Xcode 26.0.1 Simulator build succeeded
+  for arm64 and x86_64 with bundle ID `com.isaiahdupree.trackstudy`; generated
+  App Intents metadata contains the marker action and Siri phrases. Runtime
+  behavior has not been exercised.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 - EverReach now has an optional Foundation Models note-drafting source path

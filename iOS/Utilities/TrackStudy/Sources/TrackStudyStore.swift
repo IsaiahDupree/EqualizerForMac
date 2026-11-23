@@ -4,6 +4,8 @@ import Foundation
 
 @MainActor
 final class TrackStudyStore: ObservableObject {
+    static let shared = TrackStudyStore()
+
     @Published private(set) var track: PracticeTrack?
     @Published private(set) var currentTime: TimeInterval = 0
     @Published private(set) var isPlaying = false
@@ -123,12 +125,13 @@ final class TrackStudyStore: ObservableObject {
         currentTime = clamped
     }
 
-    func addMarker(title: String) {
+    func addMarker(title: String, at position: TimeInterval? = nil) {
         guard var track else { return }
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let position = position ?? currentTime
         let marker = PracticeMarker(
             title: trimmed.isEmpty ? "Practice \(track.markers.count + 1)" : trimmed,
-            seconds: min(max(currentTime, 0), track.duration)
+            seconds: min(max(position, 0), track.duration)
         )
         track.markers.append(marker)
         track.markers.sort { $0.seconds < $1.seconds }

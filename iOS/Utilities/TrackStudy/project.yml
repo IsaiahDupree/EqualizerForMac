@@ -26,6 +26,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     dependencies:
       - sdk: AVFoundation.framework
+      - sdk: AppIntents.framework
 schemes:
   TrackStudy:
     build:

@@ -8,9 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		084FF66914F44D9EAD58DC2E /* TrackStudyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */; };
+		1E204DA340015910121A35C6 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3510B603DA702BF10E65394 /* AppIntents.framework */; };
 		24CBCD1348FC31361EE4D6D3 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74A0AF2A52328AC1EE88E6C5 /* AVFoundation.framework */; };
 		2BC1D0A63EDC4465678A6D0B /* MusicUnderstandingAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE256147BEB873D5680E1A1 /* MusicUnderstandingAnalyzer.swift */; };
 		93461F4B4C0DC14EA480EF10 /* TrackStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */; };
+		93AF6D71AD047E2E0420D939 /* TrackStudyAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0339D5167F1000139B5A5EF /* TrackStudyAppShortcuts.swift */; };
 		CFA507AF60909F2BB8971E70 /* TrackStudyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B91C1AE1D2E9A3A395813F /* TrackStudyModels.swift */; };
 		F7DF14E17ADF1CB33FA53791 /* TrackStudyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */; };
 /* End PBXBuildFile section */
@@ -22,6 +24,8 @@
 		7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyStore.swift; sourceTree = "<group>"; };
 		8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyView.swift; sourceTree = "<group>"; };
 		9A01EC167ACFFA33FA4001B4 /* TrackStudy.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TrackStudy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C3510B603DA702BF10E65394 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
+		D0339D5167F1000139B5A5EF /* TrackStudyAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyAppShortcuts.swift; sourceTree = "<group>"; };
 		E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -31,6 +35,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				24CBCD1348FC31361EE4D6D3 /* AVFoundation.framework in Frameworks */,
+				1E204DA340015910121A35C6 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -42,6 +47,7 @@
 			children = (
 				6AE256147BEB873D5680E1A1 /* MusicUnderstandingAnalyzer.swift */,
 				E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */,
+				D0339D5167F1000139B5A5EF /* TrackStudyAppShortcuts.swift */,
 				26B91C1AE1D2E9A3A395813F /* TrackStudyModels.swift */,
 				7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */,
 				8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */,
@@ -69,6 +75,7 @@
 		DDF474E6E526A2315FBB7A81 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C3510B603DA702BF10E65394 /* AppIntents.framework */,
 				74A0AF2A52328AC1EE88E6C5 /* AVFoundation.framework */,
 			);
 			name = Frameworks;
@@ -132,6 +139,7 @@
 			files = (
 				2BC1D0A63EDC4465678A6D0B /* MusicUnderstandingAnalyzer.swift in Sources */,
 				F7DF14E17ADF1CB33FA53791 /* TrackStudyApp.swift in Sources */,
+				93AF6D71AD047E2E0420D939 /* TrackStudyAppShortcuts.swift in Sources */,
 				CFA507AF60909F2BB8971E70 /* TrackStudyModels.swift in Sources */,
 				084FF66914F44D9EAD58DC2E /* TrackStudyStore.swift in Sources */,
 				93461F4B4C0DC14EA480EF10 /* TrackStudyView.swift in Sources */,
