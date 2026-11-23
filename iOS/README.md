@@ -104,6 +104,19 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 ## Build and verify
 
+Build all locally available Swift utility targets from their tracked XcodeGen
+specs with one bounded Simulator build command:
+
+```sh
+bash iOS/build-utilities.sh
+```
+
+This builds Sonance EQ, Screenshot Scout, Track Study, and Clear Record for a
+generic iOS Simulator. It does not run tests, sign for a phone, install an app,
+or deploy anything. EverReach Capture lives in its separate repository; its
+Expo JavaScript export and native workspace have separate commands in that
+repository's `docs/IOS_SCREENSHOT_CAPTURE.md`.
+
 ```sh
 xcodegen generate --spec iOS/project.yml --project iOS
 xcodebuild -project iOS/SonanceEQ.xcodeproj -scheme SonanceEQiOS \

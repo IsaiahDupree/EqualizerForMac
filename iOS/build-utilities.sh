@@ -11,8 +11,11 @@ if ! xcodebuild -showsdks >/dev/null 2>&1; then
   exit 2
 fi
 
-while IFS='|' read -r project scheme; do
+while IFS='|' read -r project scheme spec; do
   [[ -n "$project" ]] || continue
+  project_directory="$(dirname "$ios_root/$project")"
+  printf '\nGenerating %s from %s\n' "$scheme" "$spec"
+  xcodegen generate --spec "$ios_root/$spec" --project "$project_directory"
   printf '\nBuilding %s (%s)\n' "$scheme" "$destination"
   xcodebuild \
     -project "$ios_root/$project" \
@@ -23,10 +26,10 @@ while IFS='|' read -r project scheme; do
     CODE_SIGNING_ALLOWED=NO \
     -quiet build
 done <<'PROJECTS'
-SonanceEQ.xcodeproj|SonanceEQiOS
-Utilities/ScreenshotScout/ScreenshotScout.xcodeproj|ScreenshotScout
-Utilities/TrackStudy/TrackStudy.xcodeproj|TrackStudy
-Utilities/MeetingNotes/MeetingNotes.xcodeproj|MeetingNotes
+SonanceEQ.xcodeproj|SonanceEQiOS|project.yml
+Utilities/ScreenshotScout/ScreenshotScout.xcodeproj|ScreenshotScout|Utilities/ScreenshotScout/project.yml
+Utilities/TrackStudy/TrackStudy.xcodeproj|TrackStudy|Utilities/TrackStudy/project.yml
+Utilities/MeetingNotes/MeetingNotes.xcodeproj|MeetingNotes|Utilities/MeetingNotes/project.yml
 PROJECTS
 
 printf '\nAll local utility targets built successfully. No tests or device installs were run.\n'

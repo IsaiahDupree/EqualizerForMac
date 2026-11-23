@@ -77,6 +77,12 @@ is reviewed and accepted and the apps are rebuilt.
   stable. Xcode 27.2 simulator builds still stop before compilation because
   the first-use license has not been accepted. `git diff --check` passed; no
   tests, simulator interactions, or phone installs were run.
+- The bounded portfolio build command now regenerates Sonance EQ, Screenshot
+  Scout, Track Study, and Clear Record projects from their tracked XcodeGen
+  specs before Simulator builds. XcodeGen generation succeeded for all four
+  specs. `bash iOS/build-utilities.sh` then stopped at its SDK-discovery
+  preflight with exit code 2 because Xcode's first-use license is unaccepted;
+  no target compilation started.
 
 - Sonance EQ now exposes App Shortcuts to enable or disable bypass for the
   standalone file player. Both actions operate on the app's shared EQ session,
