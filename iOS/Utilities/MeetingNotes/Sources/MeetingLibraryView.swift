@@ -26,6 +26,9 @@ struct MeetingLibraryView: View {
                     store.errorMessage = "Recording stopped when Clear Record left the foreground. The saved portion is in your sessions."
                 }
             }
+            .onChange(of: store.isRecording) { _, isRecording in
+                if isRecording { consentConfirmed = false }
+            }
         }
     }
 
@@ -49,7 +52,7 @@ struct MeetingLibraryView: View {
                     .frame(width: 72, height: 72)
                     .background(.cyan.opacity(0.12), in: RoundedRectangle(cornerRadius: 23))
             }
-            Text("Record a conversation with everyone's agreement. Review the transcript later, stored on this device.")
+            Text("Record a conversation with everyone's agreement. Transcription is optional and requested only when you choose it.")
                 .font(.system(size: 14, design: .rounded))
                 .foregroundStyle(.white.opacity(0.64))
                 .fixedSize(horizontal: false, vertical: true)
@@ -99,16 +102,22 @@ struct MeetingLibraryView: View {
                 Button {
                     Task { await store.startRecording(consentConfirmed: consentConfirmed) }
                 } label: {
-                    Label("Start recording", systemImage: "record.circle")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
-                        .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
-                        .background(consentConfirmed ? Color.cyan : Color.gray.opacity(0.35), in: RoundedRectangle(cornerRadius: 15))
+                    Group {
+                        if store.isStartingRecording {
+                            HStack { ProgressView().tint(.black); Text("Starting…") }
+                        } else {
+                            Label("Start recording", systemImage: "record.circle")
+                        }
+                    }
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
+                    .background(consentConfirmed && !store.isStartingRecording ? Color.cyan : Color.gray.opacity(0.35), in: RoundedRectangle(cornerRadius: 15))
                 }
-                .disabled(!consentConfirmed)
+                .disabled(!consentConfirmed || store.isStartingRecording)
                 .accessibilityIdentifier("startRecording")
-                Text("You can stop at any time. Recording is limited to two hours.")
+                Text("You can stop at any time. Speech access is requested only if you later choose on-device transcription. Recording is limited to two hours.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.46))
             }

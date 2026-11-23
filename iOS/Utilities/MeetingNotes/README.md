@@ -4,7 +4,7 @@ Clear Record is a local meeting recorder and note organizer prototype for iPhone
 
 Transcription is a separate action after recording. The app requests Apple's Speech permission and sets `requiresOnDeviceRecognition`; it will not fall back to network recognition. If the current device or language does not support on-device recognition, the recording remains saved and the app reports that transcription is unavailable.
 
-The app does not record calls, read other apps, start in the background, upload media, or generate summaries. It supports review, rename, copy/share of transcript text, and explicit deletion of the local recording and note.
+The app does not record calls, read other apps, start in the background, upload media, or generate summaries. It supports review, transcript correction and local saving, rename, copy/share of transcript text, and explicit deletion of the local recording and note. Speech permission is requested only when the person chooses to transcribe a saved recording; recording itself requires microphone access and participant consent.
 
 Build locally with XcodeGen and Xcode:
 
@@ -13,4 +13,4 @@ xcodegen generate --spec iOS/Utilities/MeetingNotes/project.yml --project iOS/Ut
 xcodebuild -project iOS/Utilities/MeetingNotes/MeetingNotes.xcodeproj -scheme MeetingNotes -destination 'generic/platform=iOS Simulator' -jobs 1 CODE_SIGNING_ALLOWED=NO build
 ```
 
-No phone installation or release is part of this project.
+The latest simulator-target build succeeded with Xcode 26.0.1 on 2026-11-22. No runtime exercise, phone installation, or release is part of this project.

@@ -7,6 +7,7 @@ import Speech
 final class MeetingNotesStore {
     private(set) var sessions: [MeetingSession] = []
     private(set) var isRecording = false
+    private(set) var isStartingRecording = false
     private(set) var recordingSeconds = 0
     private(set) var transcribingID: UUID?
     var errorMessage: String?
@@ -39,14 +40,12 @@ final class MeetingNotesStore {
     }
 
     func startRecording(consentConfirmed: Bool) async {
+        guard !isRecording, !isStartingRecording else { return }
+        isStartingRecording = true
+        defer { isStartingRecording = false }
+
         guard consentConfirmed else {
             errorMessage = MeetingNotesError.consentRequired.localizedDescription
-            return
-        }
-
-        let speechStatus = await OnDeviceTranscriber.authorization()
-        guard speechStatus == .authorized else {
-            errorMessage = MeetingNotesError.speechDenied.localizedDescription
             return
         }
 
@@ -128,8 +127,11 @@ final class MeetingNotesStore {
     func transcribe(_ session: MeetingSession) async {
         guard transcribingID == nil else { return }
         transcribingID = session.id
+        defer { transcribingID = nil }
         errorMessage = nil
         do {
+            let speechStatus = await OnDeviceTranscriber.authorization()
+            guard speechStatus == .authorized else { throw MeetingNotesError.speechDenied }
             let transcript = try await OnDeviceTranscriber.transcribe(fileURL: audioURL(for: session))
             guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
             sessions[index].transcript = transcript
@@ -137,7 +139,22 @@ final class MeetingNotesStore {
         } catch {
             errorMessage = error.localizedDescription
         }
-        transcribingID = nil
+    }
+
+    @discardableResult
+    func updateTranscript(_ session: MeetingSession, to transcript: String) -> Bool {
+        guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return false }
+        let previous = sessions[index]
+        sessions[index].transcript = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            try saveIndex()
+            errorMessage = nil
+            return true
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     func rename(_ session: MeetingSession, to title: String) {

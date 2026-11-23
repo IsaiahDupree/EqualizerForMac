@@ -4,6 +4,8 @@ struct MeetingDetailView: View {
     @Environment(MeetingNotesStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
+    @State private var transcriptDraft = ""
+    @State private var isEditingTranscript = false
     @State private var confirmDelete = false
 
     let sessionID: UUID
@@ -28,7 +30,7 @@ struct MeetingDetailView: View {
                         ShareLink(item: store.shareAudioURL(for: session)) {
                             Label("Share audio file", systemImage: "waveform")
                         }
-                        if !session.transcript.isEmpty {
+                        if !session.transcript.isEmpty && !isEditingTranscript {
                             ShareLink(item: session.transcript) {
                                 Label("Share transcript", systemImage: "text.alignleft")
                             }
@@ -49,10 +51,21 @@ struct MeetingDetailView: View {
         } message: {
             Text("This permanently removes only this app's audio file and saved transcript.")
         }
-        .onAppear { title = session?.title ?? "" }
+        .alert("Clear Record", isPresented: errorPresented) {
+            Button("OK", role: .cancel) { store.errorMessage = nil }
+        } message: {
+            Text(store.errorMessage ?? "The requested action could not be completed.")
+        }
+        .onAppear {
+            title = session?.title ?? ""
+            transcriptDraft = session?.transcript ?? ""
+        }
         .onChange(of: title) { _, value in
             guard let session else { return }
             store.rename(session, to: value)
+        }
+        .onChange(of: session?.transcript) { _, value in
+            if !isEditingTranscript { transcriptDraft = value ?? "" }
         }
     }
 
@@ -109,13 +122,55 @@ struct MeetingDetailView: View {
                                 .tracking(1.4)
                                 .foregroundStyle(.cyan)
                             Spacer()
-                            ShareLink(item: session.transcript) { Image(systemName: "square.and.arrow.up").foregroundStyle(.cyan) }
+                            if !isEditingTranscript {
+                                ShareLink(item: session.transcript) {
+                                    Image(systemName: "square.and.arrow.up").foregroundStyle(.cyan)
+                                }
+                                Button("Edit") {
+                                    transcriptDraft = session.transcript
+                                    isEditingTranscript = true
+                                }
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.cyan)
+                            }
                         }
-                        Text(session.transcript)
-                            .font(.system(size: 15, design: .rounded))
-                            .lineSpacing(5)
-                            .foregroundStyle(.white.opacity(0.88))
-                            .textSelection(.enabled)
+                        if isEditingTranscript {
+                            TextEditor(text: $transcriptDraft)
+                                .font(.system(size: 15, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.9))
+                                .scrollContentBackground(.hidden)
+                                .frame(minHeight: 260)
+                                .padding(9)
+                                .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+                            HStack(spacing: 10) {
+                                Button("Cancel") {
+                                    transcriptDraft = session.transcript
+                                    isEditingTranscript = false
+                                }
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.7))
+                                Spacer()
+                                Button {
+                                    if store.updateTranscript(session, to: transcriptDraft) {
+                                        transcriptDraft = transcriptDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        isEditingTranscript = false
+                                    }
+                                } label: {
+                                    Label("Save corrections", systemImage: "checkmark")
+                                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.black)
+                                        .padding(.horizontal, 13)
+                                        .padding(.vertical, 9)
+                                        .background(Color.cyan, in: Capsule())
+                                }
+                            }
+                        } else {
+                            Text(session.transcript)
+                                .font(.system(size: 15, design: .rounded))
+                                .lineSpacing(5)
+                                .foregroundStyle(.white.opacity(0.88))
+                                .textSelection(.enabled)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(17)
@@ -128,5 +183,9 @@ struct MeetingDetailView: View {
             }
             .padding(20)
         }
+    }
+
+    private var errorPresented: Binding<Bool> {
+        Binding(get: { store.errorMessage != nil }, set: { if !$0 { store.errorMessage = nil } })
     }
 }

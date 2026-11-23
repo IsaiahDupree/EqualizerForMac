@@ -33,6 +33,11 @@ iOS 27 cross-app product and has not been submitted or published.
   on-device English transcription only. Its iOS Simulator build succeeded with
   Xcode 26.0.1; microphone behavior and transcription have not been exercised
   at runtime.
+- Clear Record now requests Speech permission only when the person chooses to
+  transcribe a saved recording, so microphone capture is not blocked by optional
+  speech access. A transcript can be corrected and saved locally. This update
+  compiled for a generic iOS Simulator destination with Xcode 26.0.1 on
+  2026-11-22. Recording and transcription were not exercised at runtime.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 
