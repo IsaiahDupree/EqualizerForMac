@@ -32,6 +32,11 @@ final class TrackStudyStore: ObservableObject {
             .first(where: { abs($0.rawValue - savedRate) < 0.001 })?.rawValue ?? PracticePlaybackRate.normal.rawValue
         player.defaultRate = playbackRate
         loadSavedTrack()
+        do {
+            try applyBackupExclusions()
+        } catch {
+            errorMessage = "Some Track Study files could not be marked for backup exclusion: \(error.localizedDescription)"
+        }
         periodicTimeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.2, preferredTimescale: 600),
             queue: .main
@@ -63,6 +68,7 @@ final class TrackStudyStore: ObservableObject {
             if didStartAccess { pickedURL.stopAccessingSecurityScopedResource() }
         }
 
+        let previousTrack = track
         var copiedURL: URL?
         do {
             let identifier = UUID()
@@ -70,6 +76,7 @@ final class TrackStudyStore: ObservableObject {
             let destination = try tracksDirectory().appendingPathComponent("\(identifier.uuidString).\(fileExtension)")
             try FileManager.default.copyItem(at: pickedURL, to: destination)
             copiedURL = destination
+            try markExcludedFromBackup(at: destination)
 
             let asset = AVURLAsset(url: destination)
             let duration = try await asset.load(.duration).seconds
@@ -95,11 +102,8 @@ final class TrackStudyStore: ObservableObject {
             isPlaying = false
         } catch {
             if let copiedURL { try? FileManager.default.removeItem(at: copiedURL) }
-            track = nil
-            playbackRequested = false
-            isPlaying = false
-            activeLoopID = nil
-            player.replaceCurrentItem(with: nil)
+            track = previousTrack
+            try? saveTrack()
             errorMessage = error.localizedDescription
         }
     }
@@ -339,7 +343,9 @@ final class TrackStudyStore: ObservableObject {
             return
         }
         let data = try encoder.encode(track)
-        try data.write(to: indexURL(), options: .atomic)
+        let destination = try indexURL()
+        try data.write(to: destination, options: .atomic)
+        try markExcludedFromBackup(at: destination)
     }
 
     private func makePlayerItem(url: URL) -> AVPlayerItem {
@@ -357,17 +363,37 @@ final class TrackStudyStore: ObservableObject {
         )
         let directory = support.appendingPathComponent("TrackStudy", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        var values = URLResourceValues()
-        values.isExcludedFromBackup = true
-        var localOnlyDirectory = directory
-        try localOnlyDirectory.setResourceValues(values)
-        return localOnlyDirectory
+        try markExcludedFromBackup(at: directory)
+        return directory
     }
 
     private func tracksDirectory() throws -> URL {
         let directory = try baseDirectory().appendingPathComponent("Tracks", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try markExcludedFromBackup(at: directory)
         return directory
+    }
+
+    private func applyBackupExclusions() throws {
+        _ = try baseDirectory()
+        _ = try tracksDirectory()
+        if let track {
+            let audioURL = try fileURL(for: track)
+            if FileManager.default.fileExists(atPath: audioURL.path) {
+                try markExcludedFromBackup(at: audioURL)
+            }
+        }
+        let index = try indexURL()
+        if FileManager.default.fileExists(atPath: index.path) {
+            try markExcludedFromBackup(at: index)
+        }
+    }
+
+    private func markExcludedFromBackup(at url: URL) throws {
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        var localURL = url
+        try localURL.setResourceValues(values)
     }
 
     private func indexURL() throws -> URL {

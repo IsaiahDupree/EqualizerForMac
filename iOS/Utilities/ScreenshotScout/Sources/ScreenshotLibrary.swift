@@ -10,6 +10,7 @@ final class ScreenshotLibrary: ObservableObject {
     @Published private(set) var videos: [IndexedVideo] = []
     @Published private(set) var reviewQueue: [ReviewQueueEntry] = []
     @Published private(set) var isImporting = false
+    @Published private(set) var isCancellingImageImport = false
     @Published private(set) var isImportingVideos = false
     @Published private(set) var isFindingSimilar = false
     @Published private(set) var similarityTargetID: UUID?
@@ -27,7 +28,10 @@ final class ScreenshotLibrary: ObservableObject {
     private var activeSearchID = UUID()
     private var videoHashTask: Task<String, Error>?
     private var videoAnalysisTask: Task<ProcessedVideo, Error>?
+    private var imageCancelRequested = false
     private var videoCancelRequested = false
+    private var imageDigests = Set<String>()
+    private var videoDigests = Set<String>()
 
     private var libraryDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -49,24 +53,44 @@ final class ScreenshotLibrary: ObservableObject {
     init() {
         loadIndex()
         loadReviewQueue()
+        do {
+            try applyBackupExclusions()
+        } catch {
+            errorMessage = "Some Screenshot Scout files could not be marked for backup exclusion: \(error.localizedDescription)"
+        }
     }
 
     func importItems(_ selections: [PhotosPickerItem]) async {
         guard !selections.isEmpty else { return }
+        imageCancelRequested = false
+        isCancellingImageImport = false
         isImporting = true
+        errorMessage = nil
         statusMessage = nil
         var added = 0
         var duplicates = 0
+        var cancelled = false
 
         for selection in selections {
+            guard !imageCancelRequested else {
+                cancelled = true
+                break
+            }
+            var storedImageURL: URL?
+            var insertedID: UUID?
+            var insertedDigest: String?
             do {
                 guard let data = try await selection.loadTransferable(type: Data.self),
                       !data.isEmpty else {
                     throw LibraryError.unreadableImage
                 }
+                guard !imageCancelRequested else {
+                    cancelled = true
+                    break
+                }
 
                 let digest = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
-                guard !images.contains(where: { $0.sha256 == digest }) else {
+                guard !imageDigests.contains(digest) else {
                     duplicates += 1
                     continue
                 }
@@ -80,6 +104,8 @@ final class ScreenshotLibrary: ObservableObject {
                 let fileName = "\(id.uuidString).jpg"
                 let destination = libraryDirectory.appendingPathComponent(fileName)
                 try processed.jpegData.write(to: destination, options: .atomic)
+                storedImageURL = destination
+                try markExcludedFromBackup(at: destination)
 
                 let record = IndexedImage(
                     id: id,
@@ -90,16 +116,40 @@ final class ScreenshotLibrary: ObservableObject {
                     sha256: digest
                 )
                 images.insert(record, at: 0)
+                imageDigests.insert(digest)
+                insertedID = id
+                insertedDigest = digest
                 searchRevision &+= 1
-                added += 1
                 try saveIndex()
+                added += 1
+                storedImageURL = nil
+                if imageCancelRequested {
+                    cancelled = true
+                    break
+                }
             } catch {
+                if let insertedID {
+                    images.removeAll { $0.id == insertedID }
+                    if let insertedDigest { imageDigests.remove(insertedDigest) }
+                    searchRevision &+= 1
+                    try? saveIndex()
+                }
+                if let storedImageURL { try? FileManager.default.removeItem(at: storedImageURL) }
                 errorMessage = error.localizedDescription
             }
         }
 
         isImporting = false
-        statusMessage = "\(added) added · \(duplicates) exact duplicate\(duplicates == 1 ? "" : "s") skipped"
+        isCancellingImageImport = false
+        imageCancelRequested = false
+        let summary = "\(added) added · \(duplicates) exact duplicate\(duplicates == 1 ? "" : "s") skipped"
+        statusMessage = cancelled ? "\(summary) · stopped early" : summary
+    }
+
+    func cancelImageImport() {
+        guard isImporting, !isCancellingImageImport else { return }
+        imageCancelRequested = true
+        isCancellingImageImport = true
     }
 
     func imageURL(for item: IndexedImage) -> URL {
@@ -126,6 +176,7 @@ final class ScreenshotLibrary: ObservableObject {
         let searchID = UUID()
         activeSearchID = searchID
         isSearching = true
+        let queryTerms = normalizedQuery.split(whereSeparator: \.isWhitespace).map(String.init)
         let imageSnapshot = images
         let videoSnapshot = videos
         let task = Task.detached(priority: .userInitiated) {
@@ -134,7 +185,7 @@ final class ScreenshotLibrary: ObservableObject {
             for image in imageSnapshot {
                 try Task.checkCancellation()
                 let searchable = ([image.recognizedText, image.sceneDescription ?? ""] + image.labels).joined(separator: " ")
-                if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
+                if queryTerms.allSatisfy({ searchable.localizedCaseInsensitiveContains($0) }) {
                     matchedImages.append(image)
                 }
             }
@@ -144,7 +195,7 @@ final class ScreenshotLibrary: ObservableObject {
             for video in videoSnapshot {
                 try Task.checkCancellation()
                 let searchable = ([video.recognizedText, video.sceneDescriptions] + video.labels).joined(separator: " ")
-                if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
+                if queryTerms.allSatisfy({ searchable.localizedCaseInsensitiveContains($0) }) {
                     matchedVideos.append(video)
                 }
             }
@@ -253,6 +304,8 @@ final class ScreenshotLibrary: ObservableObject {
             try prepareLocalLibrary()
             try FileManager.default.createDirectory(at: videosDirectory, withIntermediateDirectories: true)
             try FileManager.default.createDirectory(at: videoFramesDirectory, withIntermediateDirectories: true)
+            try markExcludedFromBackup(at: videosDirectory)
+            try markExcludedFromBackup(at: videoFramesDirectory)
         } catch {
             isImportingVideos = false
             errorMessage = error.localizedDescription
@@ -263,6 +316,7 @@ final class ScreenshotLibrary: ObservableObject {
             var storedVideoURL: URL?
             var storedFrameURLs: [URL] = []
             var insertedID: UUID?
+            var insertedDigest: String?
             do {
                 guard let imported = try await selection.loadTransferable(type: ImportedVideo.self) else {
                     throw LibraryError.unreadableVideo
@@ -277,7 +331,7 @@ final class ScreenshotLibrary: ObservableObject {
                 let digest = try await hashTask.value
                 videoHashTask = nil
                 guard !videoCancelRequested else { throw CancellationError() }
-                guard !videos.contains(where: { $0.sha256 == digest }) else {
+                guard !videoDigests.contains(digest) else {
                     duplicates += 1
                     continue
                 }
@@ -289,6 +343,7 @@ final class ScreenshotLibrary: ObservableObject {
                     try FileManager.default.copyItem(at: imported.url, to: destination)
                 }.value
                 storedVideoURL = destination
+                try markExcludedFromBackup(at: destination)
                 guard !videoCancelRequested else { throw CancellationError() }
 
                 let analysisTask = Task.detached(priority: .utility) {
@@ -304,6 +359,7 @@ final class ScreenshotLibrary: ObservableObject {
                     let frameURL = videoFramesDirectory.appendingPathComponent(fileName)
                     try frame.jpegData.write(to: frameURL, options: .atomic)
                     storedFrameURLs.append(frameURL)
+                    try markExcludedFromBackup(at: frameURL)
                     indexedFrames.append(
                         IndexedVideoFrame(
                             index: index,
@@ -327,12 +383,18 @@ final class ScreenshotLibrary: ObservableObject {
                     frames: indexedFrames
                 )
                 videos.insert(record, at: 0)
+                videoDigests.insert(digest)
                 searchRevision &+= 1
                 insertedID = id
+                insertedDigest = digest
                 try saveIndex()
                 added += 1
             } catch {
-                if let insertedID { videos.removeAll { $0.id == insertedID } }
+                if let insertedID {
+                    videos.removeAll { $0.id == insertedID }
+                    if let insertedDigest { videoDigests.remove(insertedDigest) }
+                    searchRevision &+= 1
+                }
                 for url in storedFrameURLs { try? FileManager.default.removeItem(at: url) }
                 if let storedVideoURL { try? FileManager.default.removeItem(at: storedVideoURL) }
                 if error is CancellationError || videoCancelRequested {
@@ -501,6 +563,7 @@ final class ScreenshotLibrary: ObservableObject {
                 try FileManager.default.removeItem(at: url)
             }
             images.removeAll { $0.id == item.id }
+            imageDigests.remove(item.sha256)
             reviewQueue.removeAll { $0.mediaKind == .image && $0.mediaID == item.id }
             searchRevision &+= 1
             try saveIndex()
@@ -519,6 +582,7 @@ final class ScreenshotLibrary: ObservableObject {
             let url = videoURL(for: item)
             if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
             videos.removeAll { $0.id == item.id }
+            videoDigests.remove(item.sha256)
             reviewQueue.removeAll { $0.mediaKind == .video && $0.mediaID == item.id }
             searchRevision &+= 1
             try saveIndex()
@@ -533,6 +597,7 @@ final class ScreenshotLibrary: ObservableObject {
            let saved = try? decoder.decode([IndexedImage].self, from: data) {
             images = saved.filter { FileManager.default.fileExists(atPath: imageURL(for: $0).path) }
         }
+        imageDigests = Set(images.map(\.sha256))
 
         if let videoData = try? Data(contentsOf: videoIndexURL),
            let savedVideos = try? decoder.decode([IndexedVideo].self, from: videoData) {
@@ -541,6 +606,7 @@ final class ScreenshotLibrary: ObservableObject {
                     && video.frames.allSatisfy { FileManager.default.fileExists(atPath: frameURL(for: $0).path) }
             }
         }
+        videoDigests = Set(videos.map(\.sha256))
     }
 
     private func saveIndex() throws {
@@ -548,6 +614,8 @@ final class ScreenshotLibrary: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         try encoder.encode(images).write(to: indexURL, options: .atomic)
         try encoder.encode(videos).write(to: videoIndexURL, options: .atomic)
+        try markExcludedFromBackup(at: indexURL)
+        try markExcludedFromBackup(at: videoIndexURL)
     }
 
     private func loadReviewQueue() {
@@ -566,13 +634,39 @@ final class ScreenshotLibrary: ObservableObject {
         try prepareLocalLibrary()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         try encoder.encode(reviewQueue).write(to: reviewQueueURL, options: .atomic)
+        try markExcludedFromBackup(at: reviewQueueURL)
     }
 
     private func prepareLocalLibrary() throws {
         try FileManager.default.createDirectory(at: libraryDirectory, withIntermediateDirectories: true)
+        try markExcludedFromBackup(at: libraryDirectory)
+    }
+
+    private func applyBackupExclusions() throws {
+        try prepareLocalLibrary()
+        for image in images {
+            try markExcludedFromBackup(at: imageURL(for: image))
+        }
+        for video in videos {
+            try markExcludedFromBackup(at: videoURL(for: video))
+            for frame in video.frames {
+                try markExcludedFromBackup(at: frameURL(for: frame))
+            }
+        }
+        for directory in [videosDirectory, videoFramesDirectory]
+        where FileManager.default.fileExists(atPath: directory.path) {
+            try markExcludedFromBackup(at: directory)
+        }
+        for url in [indexURL, videoIndexURL, reviewQueueURL]
+        where FileManager.default.fileExists(atPath: url.path) {
+            try markExcludedFromBackup(at: url)
+        }
+    }
+
+    private func markExcludedFromBackup(at url: URL) throws {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
-        var directory = libraryDirectory
-        try directory.setResourceValues(values)
+        var localURL = url
+        try localURL.setResourceValues(values)
     }
 }

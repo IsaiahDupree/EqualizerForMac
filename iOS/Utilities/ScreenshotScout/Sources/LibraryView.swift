@@ -212,9 +212,18 @@ struct LibraryView: View {
             if library.isImporting {
                 HStack(spacing: 10) {
                     ProgressView().tint(.cyan)
-                    Text("Reading text and image details on this device…")
+                    Text(library.isCancellingImageImport
+                         ? "Stopping after the current image…"
+                         : "Reading text and image details on this device…")
                         .font(.footnote)
                         .foregroundStyle(.white.opacity(0.7))
+                    Spacer(minLength: 0)
+                    Button(library.isCancellingImageImport ? "Stopping…" : "Stop") {
+                        library.cancelImageImport()
+                    }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.cyan)
+                    .disabled(library.isCancellingImageImport)
                 }
             } else if library.isImportingVideos {
                 HStack(spacing: 10) {

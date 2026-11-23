@@ -4,6 +4,7 @@ struct MeetingLibraryView: View {
     @Environment(MeetingNotesStore.self) private var store
     @Environment(\.scenePhase) private var scenePhase
     @State private var consentConfirmed = false
+    @State private var summaryReviewDraft: MeetingSummaryDraft?
 
     var body: some View {
         NavigationStack {
@@ -20,6 +21,16 @@ struct MeetingLibraryView: View {
             }
             .background(Color(red: 0.055, green: 0.065, blue: 0.09).ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(item: $summaryReviewDraft) { draft in
+                MeetingSummaryReviewView(draft: draft)
+                    .environment(store)
+            }
+            .onAppear {
+                summaryReviewDraft = store.pendingShortcutSummaryDraft
+            }
+            .onChange(of: store.pendingShortcutSummaryDraft) { _, draft in
+                summaryReviewDraft = draft
+            }
             .onChange(of: scenePhase) { _, phase in
                 if phase != .active && store.isRecording {
                     store.stopRecording()
@@ -158,7 +169,7 @@ struct MeetingLibraryView: View {
     }
 
     private var privacyNote: some View {
-        Label("Audio stays in this app. Transcription requires on-device recognition and never falls back to network processing.", systemImage: "lock.shield")
+        Label("Audio and notes stay in this app and are marked for backup exclusion. Transcription stays on device.", systemImage: "lock.shield")
             .font(.system(size: 12, design: .rounded))
             .foregroundStyle(.white.opacity(0.47))
             .fixedSize(horizontal: false, vertical: true)

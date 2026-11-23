@@ -49,6 +49,23 @@ struct SpeechListeningView: View {
                     preferencePicker("Treble comfort", selection: $trebleComfort,
                                      options: [(1, "Brighter"), (0, "Balanced"), (-1, "Softer")])
 
+                    VStack(alignment: .leading, spacing: 9) {
+                        Text("Suggested Curve")
+                            .font(.subheadline.weight(.medium))
+                        ResponsePlot(
+                            bands: suggestedSettings.bands,
+                            sampleRate: 48_000,
+                            selection: nil,
+                            bypassed: false
+                        )
+                        .accessibilityLabel("Suggested headphone profile frequency response")
+                        .accessibilityIdentifier("headphoneProfilePreview")
+                        Text("Suggested preamp: \(suggestedSettings.preamp.formatted(.number.precision(.fractionLength(1)))) dB")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 5)
+
                     Button("Save Profile to Presets", systemImage: "bookmark") {
                         saveProfile()
                     }

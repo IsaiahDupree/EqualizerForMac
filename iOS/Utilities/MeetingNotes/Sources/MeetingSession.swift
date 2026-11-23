@@ -11,6 +11,15 @@ struct MeetingSession: Identifiable, Codable, Hashable {
     var summarySourceDigest: String?
 }
 
+struct MeetingSummaryDraft: Identifiable, Equatable {
+    let sessionID: UUID
+    let sessionTitle: String
+    let transcriptSnapshot: String
+    let summary: String
+
+    var id: UUID { sessionID }
+}
+
 enum MeetingNotesError: LocalizedError {
     case consentRequired
     case microphoneDenied
@@ -19,6 +28,11 @@ enum MeetingNotesError: LocalizedError {
     case speechServiceUnavailable
     case recordingCouldNotStart
     case recordingNotFound
+    case playbackCouldNotStart
+    case summaryAlreadyInProgress
+    case summaryReviewAlreadyOpen
+    case summaryTranscriptChanged
+    case summaryRequiresTranscript
 
     var errorDescription: String? {
         switch self {
@@ -36,6 +50,16 @@ enum MeetingNotesError: LocalizedError {
             "The recording could not start. Check microphone access and try again."
         case .recordingNotFound:
             "This saved recording could not be found."
+        case .playbackCouldNotStart:
+            "The saved recording could not be played. Try sharing the audio file to check that it is available."
+        case .summaryAlreadyInProgress:
+            "A summary draft is already being prepared. Wait for it to finish before starting another."
+        case .summaryReviewAlreadyOpen:
+            "Review or discard the current summary draft before preparing another one."
+        case .summaryTranscriptChanged:
+            "The transcript changed while the summary was being prepared. Generate a fresh draft."
+        case .summaryRequiresTranscript:
+            "Transcribe the saved recording before creating a summary."
         }
     }
 }

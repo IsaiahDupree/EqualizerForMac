@@ -3,6 +3,7 @@ import SwiftUI
 struct MeetingDetailView: View {
     @Environment(MeetingNotesStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var title = ""
     @State private var transcriptDraft = ""
     @State private var summaryDraft = ""
@@ -14,6 +15,8 @@ struct MeetingDetailView: View {
     @State private var onDeviceLocales: [Locale] = []
     @State private var confirmDelete = false
     @AppStorage("clearRecord.transcriptionLocaleIdentifier") private var transcriptionLocaleIdentifier = "en-US"
+
+    private let playbackRates: [Float] = [0.75, 1, 1.25, 1.5, 2]
 
     let sessionID: UUID
 
@@ -101,8 +104,12 @@ struct MeetingDetailView: View {
             summaryTranscriptSnapshot = value ?? ""
             isEditingSummary = false
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { store.stopPlayback(for: sessionID) }
+        }
         .onDisappear {
             summaryGenerationTask?.cancel()
+            store.stopPlayback(for: sessionID)
         }
     }
 
@@ -123,6 +130,8 @@ struct MeetingDetailView: View {
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(.white.opacity(0.5))
                 }
+
+                playbackCard(session)
 
                 if session.transcript.isEmpty {
                     VStack(alignment: .leading, spacing: 13) {
@@ -239,12 +248,104 @@ struct MeetingDetailView: View {
                     summaryCard(session)
                 }
 
-                Label("Audio file stored in this app's protected local folder.", systemImage: "lock.fill")
+                Label("Audio stays local and is marked for backup exclusion.", systemImage: "lock.fill")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.45))
             }
             .padding(20)
         }
+    }
+
+    private func playbackCard(_ session: MeetingSession) -> some View {
+        let isActiveSession = store.playbackSessionID == session.id
+        let currentTime = isActiveSession ? store.playbackCurrentTime : 0
+        let duration = isActiveSession ? store.playbackDuration : session.duration
+        let canStartPlayback = !store.isRecording && !store.isStartingRecording && store.transcribingID == nil
+
+        return VStack(alignment: .leading, spacing: 14) {
+            Label("RECORDING PLAYBACK", systemImage: "waveform")
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .tracking(1.4)
+                .foregroundStyle(.cyan)
+
+            HStack(spacing: 20) {
+                Button {
+                    store.seekPlayback(to: max(0, currentTime - 15), in: session)
+                } label: {
+                    Image(systemName: "gobackward.15")
+                        .font(.system(size: 24, weight: .medium))
+                }
+                .accessibilityLabel("Back 15 seconds")
+                .disabled(!isActiveSession)
+
+                Button {
+                    store.togglePlayback(session)
+                } label: {
+                    Image(systemName: isActiveSession && store.isPlayingAudio ? "pause.fill" : "play.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .frame(width: 54, height: 54)
+                        .foregroundStyle(.black)
+                        .background(Color.cyan, in: Circle())
+                }
+                .accessibilityLabel(isActiveSession && store.isPlayingAudio ? "Pause recording" : "Play recording")
+                .disabled(!canStartPlayback)
+
+                Button {
+                    store.seekPlayback(to: min(duration, currentTime + 15), in: session)
+                } label: {
+                    Image(systemName: "goforward.15")
+                        .font(.system(size: 24, weight: .medium))
+                }
+                .accessibilityLabel("Forward 15 seconds")
+                .disabled(!isActiveSession)
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+
+            HStack {
+                Label("Speed", systemImage: "speedometer")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.65))
+                Spacer()
+                Picker("Playback speed", selection: Binding(
+                    get: { store.playbackRate },
+                    set: { store.setPlaybackRate($0) }
+                )) {
+                    ForEach(playbackRates, id: \.self) { rate in
+                        Text(String(format: "%g×", rate)).tag(rate)
+                    }
+                }
+                .pickerStyle(.menu)
+                .tint(.cyan)
+                .accessibilityLabel("Playback speed")
+            }
+
+            Slider(
+                value: Binding(
+                    get: { store.playbackTime(for: session.id) },
+                    set: { store.seekPlayback(to: $0, in: session) }
+                ),
+                in: 0...max(duration, 1)
+            )
+            .tint(.cyan)
+            .disabled(!isActiveSession || duration <= 0)
+            .accessibilityLabel("Recording position")
+
+            HStack {
+                Text(playbackTimestamp(currentTime))
+                Spacer()
+                Text("−\(playbackTimestamp(max(0, duration - currentTime)))")
+            }
+            .font(.system(size: 11, weight: .medium, design: .monospaced))
+            .foregroundStyle(.white.opacity(0.55))
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func playbackTimestamp(_ time: TimeInterval) -> String {
+        let seconds = max(0, Int(time.rounded(.down)))
+        return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 
     private func summaryCard(_ session: MeetingSession) -> some View {
@@ -342,7 +443,7 @@ struct MeetingDetailView: View {
                     else { Image(systemName: "sparkles") }
                     Text(isGeneratingSummary
                          ? (session.transcript.count > 6_000 ? "Summarizing sections on this device…" : "Drafting on this device…")
-                         : (session.aiSummary == nil ? "Create editable draft" : "Refresh draft"))
+                         : (store.summaryDraftingSessionID != nil ? "Another draft is in progress…" : (session.aiSummary == nil ? "Create editable draft" : "Refresh draft")))
                 }
                 .font(.system(size: 13, weight: .bold, design: .rounded))
                 .frame(maxWidth: .infinity)
@@ -356,6 +457,7 @@ struct MeetingDetailView: View {
                     || isEditingTranscript
                     || isEditingSummary
                     || store.transcribingID == session.id
+                    || store.summaryDraftingSessionID != nil
             )
             .opacity(FoundationModelsMeetingSummarizer.isAvailable ? 1 : 0.48)
 
@@ -399,12 +501,7 @@ struct MeetingDetailView: View {
             summaryGenerationTask = nil
         }
         do {
-            let draft = try await FoundationModelsMeetingSummarizer.summarize(transcript: transcriptSnapshot)
-            try Task.checkCancellation()
-            guard store.sessions.first(where: { $0.id == session.id })?.transcript == transcriptSnapshot else {
-                store.errorMessage = "The transcript changed while the summary was being prepared. Generate a fresh draft."
-                return
-            }
+            let draft = try await store.createSummaryDraft(for: session, transcriptSnapshot: transcriptSnapshot)
             summaryDraft = draft
             isEditingSummary = true
         } catch is CancellationError {

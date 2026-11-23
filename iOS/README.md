@@ -69,7 +69,10 @@ prototype’s scope.
 interviews and dialogue. Selecting one replaces the current EQ and preamp and
 turns off bypass; save your existing curve first if you want to keep it. These
 are tonal EQ adjustments, not voice isolation, noise removal, or a compressor.
-The standalone player's settings apply to its Files playback. In a compatible
+The headphone profile assistant previews its generated response curve and
+preamp headroom before saving or applying the profile. These preferences are
+editable starting points, not measured corrections for a headphone model. The
+standalone player's settings apply to its Files playback. In a compatible
 AUv3 host, choose **Presets → Speech Listening** in the Sonance effect to use
 the same curves. Host settings are separate from the standalone player.
 

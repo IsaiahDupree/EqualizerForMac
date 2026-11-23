@@ -12,6 +12,7 @@
 		4800986445F90DD68B764BD7 /* Speech.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAEE8500ED7FCA3D20E5FBFB /* Speech.framework */; };
 		538ABF6060D121A3559A4E17 /* MeetingNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC892F0CDC165645B9F7E87 /* MeetingNotesApp.swift */; };
 		616EA11CD9FF6873E8924F3B /* FoundationModelsMeetingSummarizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3501DDF836CC42CBA644DF59 /* FoundationModelsMeetingSummarizer.swift */; };
+		6A989EDD0D7C8881AAA3BC26 /* MeetingSummaryReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87E78CEBAF3F7C754CA1572 /* MeetingSummaryReviewView.swift */; };
 		86A35FBE55AC151EE8045D16 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3C579C66E912BFA47FBE67B /* AVFAudio.framework */; };
 		99A2C26257F9240301D935E6 /* OnDeviceTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */; };
 		A9D3F7A7126BD5333517C1A7 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 710012B4838BFD49FFFF122F /* AppIntents.framework */; };
@@ -33,6 +34,7 @@
 		B9EF959B5466A87FFDFECA58 /* MeetingNotesAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotesAppShortcuts.swift; sourceTree = "<group>"; };
 		CAEE8500ED7FCA3D20E5FBFB /* Speech.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Speech.framework; path = System/Library/Frameworks/Speech.framework; sourceTree = SDKROOT; };
 		D4762F02645020C9936330A8 /* MeetingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingSession.swift; sourceTree = "<group>"; };
+		D87E78CEBAF3F7C754CA1572 /* MeetingSummaryReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingSummaryReviewView.swift; sourceTree = "<group>"; };
 		DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceTranscriber.swift; sourceTree = "<group>"; };
 		E3C579C66E912BFA47FBE67B /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -70,6 +72,7 @@
 				35754ACD50AA7265AF5DC04E /* MeetingNotesExport.swift */,
 				A50C9F2DE6DF64BFE10891EE /* MeetingNotesStore.swift */,
 				D4762F02645020C9936330A8 /* MeetingSession.swift */,
+				D87E78CEBAF3F7C754CA1572 /* MeetingSummaryReviewView.swift */,
 				DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */,
 			);
 			path = Sources;
@@ -158,6 +161,7 @@
 				C072BF1CC8837B0CD1232908 /* MeetingNotesExport.swift in Sources */,
 				CF01EA59F8A2AF3150B4182B /* MeetingNotesStore.swift in Sources */,
 				CC7EE74B8A5CB1B5DC2E5A8D /* MeetingSession.swift in Sources */,
+				6A989EDD0D7C8881AAA3BC26 /* MeetingSummaryReviewView.swift in Sources */,
 				99A2C26257F9240301D935E6 /* OnDeviceTranscriber.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

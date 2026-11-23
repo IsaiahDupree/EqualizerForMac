@@ -10,6 +10,34 @@ is reviewed and accepted and the apps are rebuilt.
 
 ## Utility portfolio progress — 2026-11-23
 
+- Sonance's headphone profile assistant now displays a read-only preview of the
+  generated frequency response and suggested preamp before saving or applying
+  the curve. It remains a preference-based starting point, not a measured
+  headphone correction.
+- Screenshot Scout reapplies device-backup exclusion hints to its selected
+  images, videos, sampled frames, and indexes. A failed image-index save now
+  rolls back the in-memory record and removes its private media copy.
+- Screenshot Scout now rebuilds image and video SHA-256 lookup sets from its
+  JSON indexes and updates them during import, rollback, and removal. This
+  avoids a full saved-record scan for every duplicate check. Source review and
+  `git diff --check` passed; Xcode compilation remains license-gated.
+- Track Study reapplies backup-exclusion hints to the local directories, audio
+  file, and track index. If a replacement import fails, it preserves the
+  previously saved track and removes the partial copy.
+- Clear Record's iOS 27 summary shortcut now prepares the latest transcript's
+  draft in memory, opens an editable review sheet, and saves only after an
+  explicit user action. Siri receives only a neutral status dialog.
+- EverReach Capture now discards an on-device note suggestion if the user edits
+  the draft or changes the screenshot/OCR source while generation is running.
+  Leaving the screen invalidates the request, and obsolete errors are ignored.
+  Focused ESLint passed; native compilation remains blocked by Xcode's
+  unaccepted first-use license. No iPhone installation was performed.
+- Apple's release page was checked on 2026-11-23: iOS 27.2.1 remains public,
+  iOS 27.3 beta 2 v2 remains the newest listed iOS beta, and Xcode 27.2 remains
+  stable. Xcode 27.2 simulator builds still stop before compilation because
+  the first-use license has not been accepted. `git diff --check` passed; no
+  tests, simulator interactions, or phone installs were run.
+
 - Sonance EQ now exposes App Shortcuts to enable or disable bypass for the
   standalone file player. Both actions operate on the app's shared EQ session,
   preserve its current curve, and do not claim to control audio in other apps.
