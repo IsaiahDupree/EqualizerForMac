@@ -27,7 +27,9 @@ point left or right to change frequency and up or down to change gain.
 Press **+** to create and select a flat 1 kHz bell, or **−** to remove the
 selected band. The iPhone editor supports up to 32 bands. The sliders remain
 available for fine adjustments and Q. Preamp controls the overall level. The
-graph uses the selected file’s sample rate.
+graph uses the selected file’s sample rate. VoiceOver reports the enabled-band
+count and the selected filter’s type, frequency, and gain when that setting
+applies, then points to the controls below for editing.
 
 Open **Presets → Preset Library** to save the entire curve and preamp under a
 name. The library can import multiple Sonance EQ files at once, export a

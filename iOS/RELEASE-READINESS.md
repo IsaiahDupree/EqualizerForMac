@@ -21,6 +21,10 @@ is reviewed and accepted and the apps are rebuilt.
   playback volume. `git diff --check` passed. The focused profile verification
   and app build both stop before compilation because Xcode's first-use license
   remains unaccepted.
+- Sonance EQ's response plot now gives VoiceOver the enabled-filter count and
+  selected filter type, frequency, and applicable gain, with a hint to use the
+  accessible controls below for editing. Source review and `git diff --check`
+  passed; current Xcode compilation remains license-gated.
 - Screenshot Scout reapplies device-backup exclusion hints to its selected
   images, videos, sampled frames, and indexes. A failed image-index save now
   rolls back the in-memory record and removes its private media copy.

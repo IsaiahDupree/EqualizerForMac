@@ -54,7 +54,27 @@ struct ResponsePlot: View {
         .onDisappear(perform: finishDrag)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(bypassed ? "Equalizer response, bypassed" : "Equalizer frequency response in decibels")
+        .accessibilityValue(accessibilitySummary)
+        .accessibilityHint("Use Filter Bands and the controls below to select and adjust a filter.")
         .accessibilityIdentifier("eqResponse")
+    }
+
+    private var accessibilitySummary: String {
+        let enabledCount = bands.filter(\.enabled).count
+        guard let selection,
+              let selectedBand = bands.first(where: { $0.id == selection }) else {
+            return "\(enabledCount) enabled filter bands."
+        }
+
+        let frequency = selectedBand.frequency.formatted(.number.precision(.fractionLength(0)))
+        var details = "Selected \(selectedBand.type.mobileName) at \(frequency) hertz"
+        if selectedBand.type.usesGain {
+            details += ", gain \(selectedBand.gainLabel) decibels"
+        }
+        if !selectedBand.enabled {
+            details += ", filter disabled"
+        }
+        return "\(enabledCount) enabled filter bands. \(details)."
     }
 
     private func bandGesture(points: [BandPoint], scale: PlotScale, interaction: Interaction) -> some Gesture {
