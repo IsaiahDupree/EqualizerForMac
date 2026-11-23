@@ -50,8 +50,13 @@ private actor MusicUnderstandingOperation: MusicAnalysisOperation {
             .rhythm, .key, .structure, .pace, .instrumentActivity, .loudness
         ])
         let keySpans = (result.key?.ranges ?? []).map { value in
-            KeySpan(
-                key: "\(value.value.tonic.rawValue) \(value.value.mode.rawValue)",
+            let rawTonic = value.value.tonic.rawValue
+            let accidental = String(rawTonic.dropFirst())
+                .replacingOccurrences(of: "Flat", with: "♭")
+                .replacingOccurrences(of: "Sharp", with: "♯")
+            let tonic = String(rawTonic.prefix(1)).uppercased() + accidental
+            return KeySpan(
+                key: "\(tonic) \(value.value.mode.rawValue.capitalized)",
                 startSeconds: value.range.start.seconds,
                 durationSeconds: value.range.duration.seconds
             )
