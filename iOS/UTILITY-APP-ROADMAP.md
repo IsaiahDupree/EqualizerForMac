@@ -16,7 +16,7 @@ Updated 2026-11-22. This is a build roadmap for locally built apps and prototype
 | Order | App / product | Form | Build boundary and next milestone |
 |---|---|---|---|
 | 1 | Sonance EQ for iPhone | Standalone app plus AUv3 | Existing prototype plays user-selected files with parametric EQ, presets, A/B, live meters, output correction, and speech modes. Keep improving this on stable APIs. Treat cross-app route support as an isolated iOS 27 experiment until Apple requirements and a working entitlement are resolved. |
-| 2 | Screenshot Scout | Standalone utility | Build a private local index of user-selected screenshots and photos with OCR, Vision labels, search, and exact duplicate detection. Next: review usability and library-scale performance in the simulator; later consider user-reviewed related-image suggestions. |
+| 2 | Screenshot Scout | Standalone utility | Build a private local index of user-selected screenshots and photos with OCR, Vision labels, search, exact duplicate detection, and cancellable visual-similarity ranking for manual review. Next: library-scale performance and user-selected video indexing. |
 | 3 | EverReach Capture | Feature in EverReach | Evolve the existing share-in screenshot and voice-note flows: extract visible text, suggest a contact and note, show a preview, then let the user save and draft a follow-up. Foundation Models can improve interpretation when the iOS 27 SDK and device are available. |
 | 4 | Sonance Voice and Headphone Profiles | Sonance EQ modes | Keep dialogue, podcast, audiobook, headphone, sleep, focus, speaker, and A/B profiles within the EQ product while they use the same playback and DSP engine. A 15–90 minute sleep timer is now part of the player prototype. Split only if customer evidence supports a distinct app. |
 | 5 | Music practice and discovery | New app candidate | Prototype file-based tempo, key, loudness, pace, and structure analysis with Music Understanding after the iOS 27 SDK is installed. Keep the file importer and library UX separate from protected subscription streams. |
@@ -30,7 +30,7 @@ The named products above are intentionally fewer than the idea list: Voice, head
 ## Build sequence
 
 1. Keep Sonance EQ as the first product and continue its standalone file-player and AUv3 experience.
-2. Build Screenshot Scout as a separate local iOS target with stable PhotosUI and Vision APIs; add user-reviewed related image and video indexing.
+2. Build Screenshot Scout as a separate local iOS target with stable PhotosUI and Vision APIs; refine library-scale performance and add video indexing.
 3. Build Clear Record on stable speech/audio APIs and refine locale support and review controls.
 4. Audit the canonical EverReach iOS app and implement its share-in capture flow in that codebase.
 5. When Xcode 27 is available locally, add isolated Foundation Models and Music Understanding prototypes with feature-availability handling.

@@ -8,11 +8,15 @@ import SwiftUI
 final class ScreenshotLibrary: ObservableObject {
     @Published private(set) var images: [IndexedImage] = []
     @Published private(set) var isImporting = false
+    @Published private(set) var isFindingSimilar = false
+    @Published private(set) var similarityTargetID: UUID?
+    @Published private(set) var similarMatches: [SimilarityMatch] = []
     @Published var errorMessage: String?
     @Published var statusMessage: String?
 
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private var similarityTask: Task<[SimilarityMatch], Error>?
 
     private var libraryDirectory: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -79,7 +83,41 @@ final class ScreenshotLibrary: ObservableObject {
         libraryDirectory.appendingPathComponent(item.fileName)
     }
 
+    func findSimilar(to item: IndexedImage) async {
+        guard !isFindingSimilar else { return }
+        isFindingSimilar = true
+        similarityTargetID = item.id
+        similarMatches = []
+        errorMessage = nil
+
+        let targetURL = imageURL(for: item)
+        let candidates = images
+            .filter { $0.id != item.id }
+            .map { SimilarityCandidate(id: $0.id, url: imageURL(for: $0)) }
+
+        do {
+            let task = Task.detached(priority: .utility) {
+                try LocalImageAnalyzer.rankSimilar(to: targetURL, candidates: candidates)
+            }
+            similarityTask = task
+            let matches = try await task.value
+            similarMatches = Array(matches.prefix(12))
+        } catch is CancellationError {
+            similarMatches = []
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        similarityTask = nil
+        isFindingSimilar = false
+    }
+
+    func cancelSimilaritySearch() {
+        similarityTask?.cancel()
+    }
+
     func remove(_ item: IndexedImage) {
+        if similarityTargetID == item.id { cancelSimilaritySearch() }
         let url = imageURL(for: item)
         do {
             if FileManager.default.fileExists(atPath: url.path) {

@@ -15,6 +15,17 @@ struct ProcessedImage: Sendable {
     var labels: [String]
 }
 
+struct SimilarityCandidate: Sendable {
+    var id: UUID
+    var url: URL
+}
+
+struct SimilarityMatch: Identifiable, Sendable {
+    var assetID: UUID
+    var distance: Float
+    var id: UUID { assetID }
+}
+
 enum LibraryError: LocalizedError, Sendable {
     case unreadableImage
     case couldNotSave

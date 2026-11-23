@@ -12,7 +12,9 @@ iOS 27 cross-app product and has not been submitted or published.
   `Utilities/ScreenshotScout/`. It imports only images selected through
   PhotosUI, runs Vision OCR and image classification on-device, searches the
   local index, skips byte-identical reimports, and stores resized JPEG copies
-  in its app container. Its iOS Simulator build succeeded with Xcode 26.0.1.
+  in its app container. It also ranks closest indexed images through Vision
+  feature prints for manual review, with a cancel control and no auto deletion.
+  Its iOS Simulator build succeeded with Xcode 26.0.1.
 - Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
   It requires an explicit consent confirmation, records in the foreground,
   saves on an interruption or background transition, and asks Speech for

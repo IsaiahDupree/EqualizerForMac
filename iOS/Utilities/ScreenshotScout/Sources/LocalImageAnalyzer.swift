@@ -52,4 +52,28 @@ enum LocalImageAnalyzer {
 
         return ProcessedImage(jpegData: encoded as Data, recognizedText: text, labels: labels)
     }
+
+    static func rankSimilar(to targetURL: URL, candidates: [SimilarityCandidate]) throws -> [SimilarityMatch] {
+        let target = try featurePrint(at: targetURL)
+        var matches: [SimilarityMatch] = []
+        matches.reserveCapacity(candidates.count)
+
+        for candidate in candidates {
+            try Task.checkCancellation()
+            guard let candidatePrint = try? featurePrint(at: candidate.url) else { continue }
+            var distance: Float = 0
+            try target.computeDistance(&distance, to: candidatePrint)
+            matches.append(SimilarityMatch(assetID: candidate.id, distance: distance))
+        }
+
+        try Task.checkCancellation()
+        return matches.sorted { $0.distance < $1.distance }
+    }
+
+    private static func featurePrint(at url: URL) throws -> VNFeaturePrintObservation {
+        let request = VNGenerateImageFeaturePrintRequest()
+        try VNImageRequestHandler(url: url).perform([request])
+        guard let observation = request.results?.first else { throw LibraryError.unreadableImage }
+        return observation
+    }
 }
