@@ -1,5 +1,10 @@
 # Sonance EQ for iOS
 
+For automated AUv3 quality/continuity checks and a separate physical Bluetooth
+acceptance run, see [Audio validation](AudioValidation/README.md). Run the digital
+suite on a Mac with `bash iOS/Tools/test-audio-quality.sh`; a simulator pass does
+not certify Bluetooth playback.
+
 The Sonance prototype and the broader iOS utility portfolio are tracked in
 [the utility app roadmap](UTILITY-APP-ROADMAP.md). The first separate utility
 prototype, Screenshot Scout / Creator Library, is in
