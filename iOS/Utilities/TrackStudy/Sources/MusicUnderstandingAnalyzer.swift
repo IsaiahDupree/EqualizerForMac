@@ -13,7 +13,7 @@ enum MusicUnderstandingAnalyzer {
         return false
     }
 
-    static func analyze(fileURL: URL) async throws -> MusicAnalysis {
+    static func makeOperation(fileURL: URL) async throws -> any MusicAnalysisOperation {
         #if compiler(>=6.4) && canImport(MusicUnderstanding)
         guard #available(iOS 27.0, *) else {
             throw TrackStudyError.musicUnderstandingRequiresIOS27
@@ -24,6 +24,28 @@ enum MusicUnderstandingAnalyzer {
             options: [AVURLAssetPreferPreciseDurationAndTimingKey: true]
         )
         let session = try await MusicUnderstandingSession(asset: asset)
+        return MusicUnderstandingOperation(session: session)
+        #else
+        throw TrackStudyError.musicUnderstandingRequiresCurrentSDK
+        #endif
+    }
+}
+
+protocol MusicAnalysisOperation: Sendable {
+    func analyze() async throws -> MusicAnalysis
+    func cancel() async
+}
+
+#if compiler(>=6.4) && canImport(MusicUnderstanding)
+@available(iOS 27.0, *)
+private actor MusicUnderstandingOperation: MusicAnalysisOperation {
+    private let session: MusicUnderstandingSession
+
+    init(session: MusicUnderstandingSession) {
+        self.session = session
+    }
+
+    func analyze() async throws -> MusicAnalysis {
         let result = try await session.analyze(for: [
             .rhythm, .key, .structure, .pace, .instrumentActivity, .loudness
         ])
@@ -69,8 +91,10 @@ enum MusicUnderstandingAnalyzer {
             integratedLoudnessLUFS: result.loudness.map { Double($0.integrated.value) },
             peakDecibels: result.loudness.map { Double($0.peak.value) }
         )
-        #else
-        throw TrackStudyError.musicUnderstandingRequiresCurrentSDK
-        #endif
+    }
+
+    func cancel() async {
+        await session.cancel()
     }
 }
+#endif

@@ -20,6 +20,8 @@ final class TrackStudyStore: ObservableObject {
     private var periodicTimeObserver: Any?
     private var playbackRequested = false
     private var isWrappingLoop = false
+    private var activeAnalysisID: UUID?
+    private var activeAnalysisOperation: (any MusicAnalysisOperation)?
 
     init() {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -190,22 +192,54 @@ final class TrackStudyStore: ObservableObject {
     }
 
     func analyzeTrack() async {
-        guard var track, !isAnalyzing else { return }
+        guard let sourceTrack = track, !isAnalyzing else { return }
+        let analysisID = UUID()
+        activeAnalysisID = analysisID
         isAnalyzing = true
         errorMessage = nil
-        defer { isAnalyzing = false }
+        defer {
+            if activeAnalysisID == analysisID {
+                activeAnalysisID = nil
+                activeAnalysisOperation = nil
+                isAnalyzing = false
+            }
+        }
 
         do {
-            let result = try await MusicUnderstandingAnalyzer.analyze(fileURL: fileURL(for: track))
-            track.analysis = result
-            self.track = track
+            let operation = try await MusicUnderstandingAnalyzer.makeOperation(fileURL: fileURL(for: sourceTrack))
+            guard activeAnalysisID == analysisID, track?.id == sourceTrack.id else {
+                await operation.cancel()
+                return
+            }
+            activeAnalysisOperation = operation
+
+            let result = try await operation.analyze()
+            try Task.checkCancellation()
+            guard activeAnalysisID == analysisID, track?.id == sourceTrack.id else { return }
+
+            var updatedTrack = sourceTrack
+            updatedTrack.analysis = result
+            track = updatedTrack
             try saveTrack()
         } catch {
+            guard activeAnalysisID == analysisID else { return }
+            if error is CancellationError { return }
             errorMessage = error.localizedDescription
         }
     }
 
+    func cancelAnalysis() {
+        guard activeAnalysisID != nil else { return }
+        let operation = activeAnalysisOperation
+        activeAnalysisID = nil
+        activeAnalysisOperation = nil
+        isAnalyzing = false
+        guard let operation else { return }
+        Task { await operation.cancel() }
+    }
+
     func removeTrack() {
+        cancelAnalysis()
         player.pause()
         playbackRequested = false
         player.replaceCurrentItem(with: nil)
@@ -301,7 +335,11 @@ final class TrackStudyStore: ObservableObject {
         )
         let directory = support.appendingPathComponent("TrackStudy", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        var localOnlyDirectory = directory
+        try localOnlyDirectory.setResourceValues(values)
+        return localOnlyDirectory
     }
 
     private func tracksDirectory() throws -> URL {

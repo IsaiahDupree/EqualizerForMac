@@ -52,6 +52,7 @@ struct TrackStudyView: View {
                 Button("Remove track", role: .destructive) { store.removeTrack() }
                 Button("Cancel", role: .cancel) {}
             }
+            .onDisappear { store.cancelAnalysis() }
         }
     }
 
@@ -85,10 +86,10 @@ struct TrackStudyView: View {
 
     private var importCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("Your file stays on this device", systemImage: "lock.shield")
+            Label("Your audio stays on this device", systemImage: "lock.shield")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
-            Text("Choose an audio file you own or have permission to use. Track Study copies it into its private app storage so playback and practice markers stay together.")
+            Text("Choose an audio file you own or have permission to use. Track Study copies it into private app storage for playback and on-device analysis. This data is excluded from device backups.")
                 .font(.system(size: 13, design: .rounded))
                 .foregroundStyle(.white.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
@@ -319,6 +320,15 @@ struct TrackStudyView: View {
                     .background(MusicUnderstandingAnalyzer.isAvailable ? Color.mint : Color.gray.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
                 }
                 .disabled(!MusicUnderstandingAnalyzer.isAvailable || store.isAnalyzing)
+                if store.isAnalyzing {
+                    Button("Cancel analysis", systemImage: "xmark.circle") {
+                        store.cancelAnalysis()
+                    }
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.78))
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 2)
+                }
             }
         }
         .padding(17)
@@ -499,7 +509,7 @@ struct TrackStudyView: View {
     }
 
     private var privacyNote: some View {
-        Label("Only files you choose are indexed. Imported audio and practice notes remain in Track Study's app storage.", systemImage: "lock.shield")
+        Label("Only files you choose are indexed. Audio and practice notes stay on this device and are excluded from device backups.", systemImage: "lock.shield")
             .font(.system(size: 11, design: .rounded))
             .foregroundStyle(.white.opacity(0.47))
             .fixedSize(horizontal: false, vertical: true)
