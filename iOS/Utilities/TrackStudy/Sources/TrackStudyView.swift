@@ -254,8 +254,9 @@ struct TrackStudyView: View {
 
     private var sortedLibraryTracks: [PracticeTrack] {
         let query = librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let queryTerms = query.split(whereSeparator: \.isWhitespace).map(String.init)
         let matchingTracks = store.tracks.filter { track in
-            guard !query.isEmpty else { return true }
+            guard !queryTerms.isEmpty else { return true }
             let searchableValues = [
                 track.title,
                 track.analysis?.tempoBPM.map { "\($0) BPM" } ?? ""
@@ -265,7 +266,9 @@ struct TrackStudyView: View {
                 + (track.analysis?.instrumentSpans?.map { instrumentDisplayName($0.instrument) } ?? [])
                 + track.markers.map(\.title)
                 + track.loops.map(\.title)
-            return searchableValues.contains { $0.localizedStandardContains(query) }
+            return queryTerms.allSatisfy { term in
+                searchableValues.contains { $0.localizedStandardContains(term) }
+            }
         }
 
         return matchingTracks.sorted { left, right in
@@ -291,35 +294,43 @@ struct TrackStudyView: View {
     }
 
     private func searchMatchHint(for track: PracticeTrack) -> String? {
-        let query = librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty, !track.title.localizedStandardContains(query) else { return nil }
-
-        if let marker = track.markers.first(where: { $0.title.localizedStandardContains(query) }) {
-            return "MARKER · \(marker.title)"
+        let queryTerms = librarySearchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        guard !queryTerms.isEmpty else { return nil }
+        func matches(_ value: String) -> Bool {
+            queryTerms.contains { value.localizedStandardContains($0) }
         }
-        if let loop = track.loops.first(where: { $0.title.localizedStandardContains(query) }) {
-            return "LOOP · \(loop.title)"
+
+        var hints: [String] = []
+        if let marker = track.markers.first(where: { matches($0.title) }) {
+            hints.append("MARKER · \(marker.title)")
+        }
+        if let loop = track.loops.first(where: { matches($0.title) }) {
+            hints.append("LOOP · \(loop.title)")
         }
         if let key = track.analysis?.keySpans.first(where: {
-            $0.key.localizedStandardContains(query)
+            matches($0.key)
         })?.key {
-            return "KEY · \(key)"
+            hints.append("KEY · \(key)")
         }
         if let tempo = track.analysis?.tempoBPM,
-           "\(tempo) BPM".localizedStandardContains(query) {
-            return "TEMPO · \(tempo) BPM"
+           matches("\(tempo) BPM") {
+            hints.append("TEMPO · \(tempo) BPM")
         }
         if let pace = track.analysis?.paceSpans.first(where: {
-            "\(Int($0.pace.rounded())) events/min".localizedStandardContains(query)
+            matches("\(Int($0.pace.rounded())) events/min")
         }) {
-            return "PACE · \(Int(pace.pace.rounded())) events/min"
+            hints.append("PACE · \(Int(pace.pace.rounded())) events/min")
         }
         if let instrument = track.analysis?.instrumentSpans?.first(where: {
-            instrumentDisplayName($0.instrument).localizedStandardContains(query)
+            matches(instrumentDisplayName($0.instrument))
         }) {
-            return "INSTRUMENT · \(instrumentDisplayName(instrument.instrument))"
+            hints.append("INSTRUMENT · \(instrumentDisplayName(instrument.instrument))")
         }
-        return nil
+        guard !hints.isEmpty else { return nil }
+        return hints.prefix(2).joined(separator: " · ")
     }
 
     private func instrumentDisplayName(_ rawName: String) -> String {
