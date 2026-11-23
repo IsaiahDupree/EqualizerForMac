@@ -52,6 +52,11 @@ is reviewed and accepted and the apps are rebuilt.
 - Screenshot Scout now keeps a pending state during search debounce and local
   index lookup, preventing a stale empty-results message from flashing between
   successive queries. Xcode compilation remains license-gated.
+- Screenshot Scout library cards and review-queue rows now give VoiceOver a
+  concise media label, key labels, a shortened OCR or scene-description excerpt,
+  and matching sampled timestamps for video search results. The UI exposes the
+  full media details after opening the card. Native compilation remains
+  license-gated.
 - Clear Record now writes its session index before deleting a recording and
   restores the session if that save fails. Transcript and rename edits also
   revert in memory when index persistence fails.

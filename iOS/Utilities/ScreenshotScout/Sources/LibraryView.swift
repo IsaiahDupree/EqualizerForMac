@@ -55,6 +55,41 @@ struct LibraryView: View {
         }
     }
 
+    private func accessibilityDescription(kind: String, labels: [String], recognizedText: String, extra: String? = nil) -> String {
+        var details = [kind]
+        let visibleLabels = labels.prefix(3).joined(separator: ", ")
+        if !visibleLabels.isEmpty { details.append("Labels: \(visibleLabels)") }
+        let text = recognizedText.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        if !text.isEmpty { details.append("Recognized text: \(textPrefix(text))") }
+        if let extra, !extra.isEmpty { details.append(extra) }
+        return details.joined(separator: ". ")
+    }
+
+    private func textPrefix(_ text: String) -> String {
+        let prefix = String(text.prefix(120))
+        return text.count > 120 ? "\(prefix)…" : prefix
+    }
+
+    private func sampleTimestamp(_ seconds: Double) -> String {
+        guard seconds.isFinite else { return "unknown" }
+        let total = Int(min(max(seconds.rounded(), 0), 4_000_000_000))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let remainingSeconds = total % 60
+        return hours > 0
+            ? String(format: "%d:%02d:%02d", hours, minutes, remainingSeconds)
+            : String(format: "%d:%02d", minutes, remainingSeconds)
+    }
+
+    private func videoAccessibilityExtra(for video: IndexedVideo) -> String? {
+        var details: [String] = []
+        let descriptions = video.sceneDescriptions.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        if !descriptions.isEmpty { details.append("Frame descriptions: \(textPrefix(descriptions))") }
+        let times = matchingFrames(for: video).map { sampleTimestamp($0.timeSeconds) }
+        if !times.isEmpty { details.append("Search matches at sampled moments \(times.joined(separator: ", "))") }
+        return details.isEmpty ? nil : details.joined(separator: ". ")
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -332,6 +367,12 @@ struct LibraryView: View {
                     ForEach(filteredImages) { item in
                         Button { presentedSheet = .image(item) } label: { ImageCard(item: item, url: library.imageURL(for: item)) }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(accessibilityDescription(
+                                kind: "Image",
+                                labels: item.labels,
+                                recognizedText: item.recognizedText
+                            ))
+                            .accessibilityHint("Opens image details, the full recognized text, and review actions.")
                     }
                 }
             }
@@ -397,6 +438,13 @@ struct LibraryView: View {
                             )
                         }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(accessibilityDescription(
+                                kind: "Video",
+                                labels: item.labels,
+                                recognizedText: item.recognizedText,
+                                extra: videoAccessibilityExtra(for: item)
+                            ))
+                            .accessibilityHint("Opens the video and its sampled moments for review.")
                     }
                 }
             }

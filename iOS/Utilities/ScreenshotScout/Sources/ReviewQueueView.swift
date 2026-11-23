@@ -140,6 +140,14 @@ struct ReviewQueueView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityDescription(
+            kind: "Queued image",
+            labels: item.labels,
+            recognizedText: item.recognizedText,
+            queuedAt: entry.queuedAt,
+            descriptions: item.sceneDescription ?? ""
+        ))
+        .accessibilityHint("Opens this image for review. The original in Photos stays unchanged.")
         .listRowBackground(Color(uiColor: .secondarySystemGroupedBackground))
         .swipeActions(edge: .trailing) {
             Button { library.removeFromReviewQueue(entry) } label: {
@@ -185,6 +193,14 @@ struct ReviewQueueView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityDescription(
+            kind: "Queued video",
+            labels: item.labels,
+            recognizedText: item.recognizedText,
+            queuedAt: entry.queuedAt,
+            descriptions: item.sceneDescriptions
+        ))
+        .accessibilityHint("Opens this video and its sampled moments for review. The original in Photos stays unchanged.")
         .listRowBackground(Color(uiColor: .secondarySystemGroupedBackground))
         .swipeActions(edge: .trailing) {
             Button { library.removeFromReviewQueue(entry) } label: {
@@ -211,6 +227,24 @@ struct ReviewQueueView: View {
         Text("Added \(date.formatted(date: .abbreviated, time: .shortened))")
             .font(.system(size: 10, weight: .medium, design: .rounded))
             .foregroundStyle(.secondary)
+    }
+
+    private func accessibilityDescription(kind: String, labels: [String], recognizedText: String, queuedAt: Date, descriptions: String) -> String {
+        var details = [kind]
+        let visibleLabels = labels.prefix(3).joined(separator: ", ")
+        if !visibleLabels.isEmpty { details.append("Labels: \(visibleLabels)") }
+        let text = recognizedText.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        if !text.isEmpty {
+            let prefix = String(text.prefix(120))
+            details.append("Recognized text: \(text.count > 120 ? "\(prefix)…" : prefix)")
+        }
+        let descriptionText = descriptions.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        if !descriptionText.isEmpty {
+            let prefix = String(descriptionText.prefix(120))
+            details.append("Description: \(descriptionText.count > 120 ? "\(prefix)…" : prefix)")
+        }
+        details.append("Added \(queuedAt.formatted(date: .long, time: .shortened))")
+        return details.joined(separator: ". ")
     }
 
     private var errorPresented: Binding<Bool> {
