@@ -5,10 +5,11 @@ struct AddTrackStudyMarkerIntent: AppIntent {
     static var title: LocalizedStringResource = "Mark Practice Point"
     static var description = IntentDescription("Save a practice marker at the current Track Study playhead.")
 
-    #if compiler(>=6.4)
-    static var supportedModes: IntentModes { .foreground(.immediate) }
-    #else
     static var openAppWhenRun: Bool { true }
+
+    #if compiler(>=6.4)
+    @available(iOS 26.0, *)
+    static var supportedModes: IntentModes { .foreground(.immediate) }
     #endif
 
     @MainActor

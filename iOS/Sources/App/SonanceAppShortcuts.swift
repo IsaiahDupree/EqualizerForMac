@@ -5,10 +5,11 @@ struct EnableSonanceBypassIntent: AppIntent {
     static var title: LocalizedStringResource = "Enable EQ Bypass"
     static var description = IntentDescription("Turn off EQ processing for audio played in Sonance EQ.")
 
-    #if compiler(>=6.4)
-    static var supportedModes: IntentModes { .foreground(.immediate) }
-    #else
     static var openAppWhenRun: Bool { true }
+
+    #if compiler(>=6.4)
+    @available(iOS 26.0, *)
+    static var supportedModes: IntentModes { .foreground(.immediate) }
     #endif
 
     @MainActor
@@ -22,10 +23,11 @@ struct DisableSonanceBypassIntent: AppIntent {
     static var title: LocalizedStringResource = "Disable EQ Bypass"
     static var description = IntentDescription("Apply the current EQ settings to audio played in Sonance EQ.")
 
-    #if compiler(>=6.4)
-    static var supportedModes: IntentModes { .foreground(.immediate) }
-    #else
     static var openAppWhenRun: Bool { true }
+
+    #if compiler(>=6.4)
+    @available(iOS 26.0, *)
+    static var supportedModes: IntentModes { .foreground(.immediate) }
     #endif
 
     @MainActor

@@ -10,6 +10,7 @@ struct MeetingDetailView: View {
     @State private var isEditingTranscript = false
     @State private var isEditingSummary = false
     @State private var isGeneratingSummary = false
+    @State private var summaryGenerationTask: Task<Void, Never>?
     @State private var onDeviceLocales: [Locale] = []
     @State private var confirmDelete = false
     @AppStorage("clearRecord.transcriptionLocaleIdentifier") private var transcriptionLocaleIdentifier = "en-US"
@@ -88,6 +89,9 @@ struct MeetingDetailView: View {
             summaryDraft = session?.aiSummary ?? ""
             summaryTranscriptSnapshot = value ?? ""
             isEditingSummary = false
+        }
+        .onDisappear {
+            summaryGenerationTask?.cancel()
         }
     }
 
@@ -174,6 +178,7 @@ struct MeetingDetailView: View {
                                 }
                                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.cyan)
+                                .disabled(isEditingSummary || isGeneratingSummary)
                             }
                         }
                         if isEditingTranscript {
@@ -267,10 +272,12 @@ struct MeetingDetailView: View {
                     }
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(.cyan)
+                    .disabled(isEditingTranscript || isGeneratingSummary)
                     Button("Remove summary", role: .destructive) {
                         if store.clearSummary(session.id) { summaryDraft = "" }
                     }
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .disabled(isEditingTranscript || isGeneratingSummary)
                 }
             } else if isEditingSummary {
                 Text("Review names, decisions, action items, and dates. The model can make mistakes.")
@@ -317,13 +324,13 @@ struct MeetingDetailView: View {
             }
 
             Button {
-                Task { await createSummary(for: session) }
+                summaryGenerationTask = Task { await createSummary(for: session) }
             } label: {
                 HStack {
                     if isGeneratingSummary { ProgressView().tint(.black) }
                     else { Image(systemName: "sparkles") }
                     Text(isGeneratingSummary
-                         ? "Drafting on this device…"
+                         ? (session.transcript.count > 6_000 ? "Summarizing sections on this device…" : "Drafting on this device…")
                          : (session.aiSummary == nil ? "Create editable draft" : "Refresh draft"))
                 }
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -332,8 +339,29 @@ struct MeetingDetailView: View {
                 .foregroundStyle(.black)
                 .background(Color.cyan, in: RoundedRectangle(cornerRadius: 13))
             }
-            .disabled(!FoundationModelsMeetingSummarizer.isAvailable || isGeneratingSummary || store.transcribingID == session.id)
+            .disabled(
+                !FoundationModelsMeetingSummarizer.isAvailable
+                    || isGeneratingSummary
+                    || isEditingTranscript
+                    || isEditingSummary
+                    || store.transcribingID == session.id
+            )
             .opacity(FoundationModelsMeetingSummarizer.isAvailable ? 1 : 0.48)
+
+            if isGeneratingSummary {
+                Button("Cancel local draft", role: .cancel) {
+                    summaryGenerationTask?.cancel()
+                }
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.7))
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            if session.transcript.count > 6_000 {
+                Text("Long transcripts are summarized in local sections and combined. Review names, decisions, and action items before sharing.")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.48))
+            }
 
             if !FoundationModelsMeetingSummarizer.isAvailable {
                 Text(FoundationModelsMeetingSummarizer.unavailableMessage)
@@ -351,19 +379,25 @@ struct MeetingDetailView: View {
 
     @MainActor
     private func createSummary(for session: MeetingSession) async {
-        guard !isGeneratingSummary else { return }
+        guard !isGeneratingSummary, !isEditingTranscript, !isEditingSummary else { return }
         isGeneratingSummary = true
         let transcriptSnapshot = session.transcript
         summaryTranscriptSnapshot = transcriptSnapshot
-        defer { isGeneratingSummary = false }
+        defer {
+            isGeneratingSummary = false
+            summaryGenerationTask = nil
+        }
         do {
             let draft = try await FoundationModelsMeetingSummarizer.summarize(transcript: transcriptSnapshot)
+            try Task.checkCancellation()
             guard store.sessions.first(where: { $0.id == session.id })?.transcript == transcriptSnapshot else {
                 store.errorMessage = "The transcript changed while the summary was being prepared. Generate a fresh draft."
                 return
             }
             summaryDraft = draft
             isEditingSummary = true
+        } catch is CancellationError {
+            // Cancellation leaves the saved transcript and any existing summary unchanged.
         } catch {
             store.errorMessage = error.localizedDescription
         }

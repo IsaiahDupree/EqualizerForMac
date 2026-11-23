@@ -5,10 +5,11 @@ struct TranscribeLatestMeetingIntent: AppIntent {
     static var title: LocalizedStringResource = "Transcribe Latest Recording"
     static var description = IntentDescription("Transcribe the newest saved meeting recording using on-device speech recognition.")
 
-    #if compiler(>=6.4)
-    static var supportedModes: IntentModes { .foreground(.immediate) }
-    #else
     static var openAppWhenRun: Bool { true }
+
+    #if compiler(>=6.4)
+    @available(iOS 26.0, *)
+    static var supportedModes: IntentModes { .foreground(.immediate) }
     #endif
 
     @MainActor
