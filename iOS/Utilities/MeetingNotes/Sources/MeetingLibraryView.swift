@@ -192,7 +192,11 @@ struct MeetingLibraryView: View {
                     NavigationLink {
                         MeetingDetailView(sessionID: session.id)
                     } label: {
-                        SessionRow(session: session, isTranscribing: store.transcribingID == session.id)
+                        SessionRow(
+                            session: session,
+                            searchQuery: sessionSearch.trimmingCharacters(in: .whitespacesAndNewlines),
+                            isTranscribing: store.transcribingID == session.id
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -235,7 +239,36 @@ struct MeetingLibraryView: View {
 
 private struct SessionRow: View {
     let session: MeetingSession
+    let searchQuery: String
     let isTranscribing: Bool
+
+    private var matchingExcerpt: (source: String, text: String)? {
+        guard !searchQuery.isEmpty,
+              !session.title.localizedStandardContains(searchQuery) else { return nil }
+
+        if let excerpt = excerpt(in: session.transcript, for: searchQuery) {
+            return ("TRANSCRIPT", excerpt)
+        }
+        if let summary = session.aiSummary,
+           let excerpt = excerpt(in: summary, for: searchQuery) {
+            return ("SUMMARY", excerpt)
+        }
+        return nil
+    }
+
+    private func excerpt(in text: String, for query: String) -> String? {
+        let source = text as NSString
+        let match = source.range(of: query, options: [.caseInsensitive, .diacriticInsensitive])
+        guard match.location != NSNotFound else { return nil }
+
+        let context = 34
+        let start = max(0, match.location - context)
+        let end = min(source.length, NSMaxRange(match) + context)
+        let snippet = source.substring(with: NSRange(location: start, length: end - start))
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
+        return (start > 0 ? "…" : "") + snippet + (end < source.length ? "…" : "")
+    }
 
     var body: some View {
         HStack(spacing: 13) {
@@ -244,10 +277,23 @@ private struct SessionRow: View {
                 .foregroundStyle(.cyan)
                 .frame(width: 45, height: 45)
                 .background(.cyan.opacity(0.11), in: RoundedRectangle(cornerRadius: 14))
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(session.title).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(.white).lineLimit(1)
                 Text("\(session.createdAt.formatted(date: .abbreviated, time: .shortened)) · \(Int(session.duration / 60)) min")
                     .font(.system(size: 11, design: .rounded)).foregroundStyle(.white.opacity(0.48))
+                if let matchingExcerpt {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(matchingExcerpt.source)
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .tracking(0.6)
+                            .foregroundStyle(.cyan.opacity(0.85))
+                        Text(matchingExcerpt.text)
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.65))
+                            .lineLimit(2)
+                    }
+                    .padding(.top, 2)
+                }
             }
             Spacer(minLength: 0)
             if isTranscribing { ProgressView().tint(.cyan) }

@@ -44,8 +44,9 @@ is reviewed and accepted and the apps are rebuilt.
   revert in memory when index persistence fails.
 - Clear Record's session library now filters locally across session titles,
   transcripts, and saved summaries, with a visible match count and empty state.
-  Search does not call a service; source review and `git diff --check` are the
-  available verification while Xcode remains license-gated.
+  Transcript and summary hits now show a short labeled excerpt to explain each
+  result. Search does not call a service; source review and `git diff --check`
+  are the available verification while Xcode remains license-gated.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, searches title/key/
   tempo/marker/loop metadata, and sorts by title/date plus analyzed first
