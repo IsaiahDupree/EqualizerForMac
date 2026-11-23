@@ -302,6 +302,12 @@ is reviewed and accepted and the apps are rebuilt.
   analytics, and People-screen debug logging no longer prints contact records.
   The new App Intent and deep-link behavior remain uncompiled and unreviewed at
   runtime because Xcode 27.2 first-use setup is pending.
+- Screenshot Scout now has a local-storage review screen that measures indexed
+  private image/video/frame copies, sorts by size, and requires explicit
+  confirmation before removing one. It does not delete the Photos original.
+  XcodeGen regenerated the project and the new file appears in the app target;
+  `git diff --check` passed. Native compilation is still stopped by Xcode's
+  first-use license gate, so the screen has not been compiled or exercised.
 
 ## Implemented
 
