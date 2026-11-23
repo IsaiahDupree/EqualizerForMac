@@ -25,6 +25,12 @@ is reviewed and accepted and the apps are rebuilt.
   after user edits, save/clear actions, source removal, or leaving the detail
   screen. Late model results and errors no longer overwrite the active review.
   Xcode compilation remains license-gated.
+- Screenshot Scout now writes updated image, video, and review-queue indexes
+  before deleting private media. If index persistence fails, it restores the
+  in-memory records and keeps the media; failed cleanup is reported separately.
+- Clear Record now writes its session index before deleting a recording and
+  restores the session if that save fails. Transcript and rename edits also
+  revert in memory when index persistence fails.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, and sorts by title/import date plus analyzed first key/tempo.
   Each track keeps its own practice data. A failed file import removes the
@@ -37,8 +43,10 @@ is reviewed and accepted and the apps are rebuilt.
 - EverReach Capture now discards an on-device note suggestion if the user edits
   the draft or changes the screenshot/OCR source while generation is running.
   Leaving the screen invalidates the request, and obsolete errors are ignored.
-  Focused ESLint passed; native compilation remains blocked by Xcode's
-  unaccepted first-use license. No iPhone installation was performed.
+  Attachment paths are unique and capture controls are locked during save.
+  Focused ESLint passed and the Expo iOS JavaScript export bundled 3,699
+  modules on 2026-11-23. Native extension compilation remains blocked by
+  Xcode's unaccepted first-use license. No iPhone installation was performed.
 - Apple's release page was checked on 2026-11-23: iOS 27.2.1 remains public,
   iOS 27.3 beta 2 v2 remains the newest listed iOS beta, and Xcode 27.2 remains
   stable. Xcode 27.2 simulator builds still stop before compilation because
