@@ -310,6 +310,11 @@ is reviewed and accepted and the apps are rebuilt.
   specs, and the new file appears in the Screenshot Scout target;
   `git diff --check` passed. Native compilation is still stopped by Xcode's
   first-use license gate, so the screen has not been compiled or exercised.
+- Sonance EQ's A/B controls now give VoiceOver explicit reference/edited labels,
+  selection values, and audition hints. The comparison also discloses that A and
+  B retain their saved preamp levels instead of claiming a loudness match.
+  `git diff --check` passed; native compilation and listening-level review remain
+  open because Xcode's first-use license is pending and iPhone testing is out of scope.
 
 ## Implemented
 

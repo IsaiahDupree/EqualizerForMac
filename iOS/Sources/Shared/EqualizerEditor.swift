@@ -319,6 +319,10 @@ struct EqualizerComparison: View {
                 option("A · Reference", reference: true).disabled(!hasReference)
                 option("B · Edited", reference: false)
             }
+            Text("A and B use their saved preamp levels; playback is not loudness-matched.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("comparisonLevelDisclosure")
         }
     }
 
@@ -334,6 +338,11 @@ struct EqualizerComparison: View {
                             in: RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(reference ? "A, reference EQ" : "B, edited EQ")
+        .accessibilityValue(selected ? "Selected" : "Not selected")
+        .accessibilityHint(reference
+            ? "Auditions the saved reference equalizer settings."
+            : "Auditions the current edited equalizer settings.")
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier(reference ? "comparisonA" : "comparisonB")
     }

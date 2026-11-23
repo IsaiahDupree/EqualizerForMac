@@ -49,7 +49,9 @@ Sonance. Use **Apply Correction** to compare that stage independently of
 
 Use **Set A** to capture a reference before tuning. **A · Reference**
 auditions the captured sound, and **B · Edited** returns to the working curve.
-The app keeps the working curve when auditioning A.
+The app keeps the working curve when auditioning A. A and B use their saved
+preamp settings, so this comparison does not loudness-match playback; a
+perceived volume change can influence which curve sounds preferable.
 
 Switch to **Live** to see the spectrum, waveform, and output levels after
 the EQ. Stereo audio shows meters for both channels. The custom AUv3 editor
