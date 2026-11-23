@@ -103,6 +103,12 @@ is reviewed and accepted and the apps are rebuilt.
   into a 10.4 MB bundle on 2026-11-23. Native extension, App Group, and iOS 27
   model compilation remain blocked by Xcode's unaccepted first-use license. No
   iPhone installation was performed.
+- EverReach's Goal Picker and message composer no longer invent imported-contact
+  history, sample interests, or screenshot-analysis results. Suggested contact
+  goals use saved fields and interactions; choosing a screenshot opens the
+  existing review flow with the selected image and contact. Focused ESLint and
+  the local Expo iOS export passed after these changes; no device install or
+  service call was performed.
 - Apple's release page was checked on 2026-11-23: iOS 27.2.1 remains public,
   iOS 27.3 beta 2 v2 remains the newest listed iOS beta, and Xcode 27.2 remains
   stable. Xcode 27.2 simulator builds still stop before compilation because
