@@ -55,17 +55,17 @@ private actor MusicUnderstandingOperation: MusicAnalysisOperation {
                 startSeconds: value.range.start.seconds,
                 durationSeconds: value.range.duration.seconds
             )
-        }
+        }.sorted { $0.startSeconds < $1.startSeconds }
         let sectionSpans = (result.structure?.sections ?? []).map { range in
             TimeSpan(startSeconds: range.start.seconds, durationSeconds: range.duration.seconds)
-        }
+        }.sorted { $0.startSeconds < $1.startSeconds }
         let paceSpans = (result.pace?.ranges ?? []).map { value in
             PaceSpan(
                 startSeconds: value.range.start.seconds,
                 durationSeconds: value.range.duration.seconds,
                 pace: value.value
             )
-        }
+        }.sorted { $0.startSeconds < $1.startSeconds }
         let instrumentSpans = (result.instrumentActivity?.ranges ?? [:])
             .flatMap { instrument, ranges in
                 ranges.map { range in

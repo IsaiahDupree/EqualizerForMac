@@ -12,10 +12,12 @@ Clear Record is a second separate utility prototype in
 extension path for one locally staged image at a time; its build and App Group
 signing still need validation.
 Track Study is a third standalone utility in `iOS/Utilities/TrackStudy/`; it
-imports a chosen audio file, supports local playback, pitch-preserving speed
-control and practice markers, and gates Apple Music Understanding analysis
-behind iOS 27 SDK availability. It can share a text practice plan with markers
-and loops without attaching audio.
+keeps a private multi-track file library, sorts by title/date and by first
+detected key/tempo after analysis, and preserves per-track practice markers
+and loops. It offers local playback and pitch-preserving speed control, and
+gates Apple Music Understanding analysis behind iOS 27 SDK availability. It
+can share a text practice plan without attaching audio. Batch import can be
+stopped after the current file.
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app

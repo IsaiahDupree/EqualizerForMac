@@ -1,6 +1,15 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private enum TrackLibrarySort: String, CaseIterable, Identifiable {
+    case recent = "Recent"
+    case title = "Title"
+    case key = "First key"
+    case tempo = "Tempo"
+
+    var id: String { rawValue }
+}
+
 struct TrackStudyView: View {
     @EnvironmentObject private var store: TrackStudyStore
     @State private var showingImporter = false
@@ -9,6 +18,7 @@ struct TrackStudyView: View {
     @State private var loopStartDraft: TimeInterval?
     @State private var loopEndDraft: TimeInterval?
     @State private var showingRemoveConfirmation = false
+    @State private var librarySort: TrackLibrarySort = .recent
 
     var body: some View {
         NavigationStack {
@@ -16,13 +26,27 @@ struct TrackStudyView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     hero
                     if let error = store.errorMessage { errorCard(error) }
+                    if let status = store.importStatusMessage {
+                        Text(status)
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundStyle(.mint)
+                    }
+                    if store.isImporting {
+                        Button(store.isCancellingImport ? "Stopping after current file…" : "Stop after current file") {
+                            store.cancelImport()
+                        }
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.mint)
+                        .disabled(store.isCancellingImport)
+                    }
+                    if !store.tracks.isEmpty { trackLibraryCard }
                     if let track = store.track {
                         playbackCard(track)
                         analysisCard(track)
                         markersCard(track)
                         loopsCard(track)
                         exportCard(track)
-                        Button("Remove imported track", systemImage: "trash", role: .destructive) {
+                        Button("Remove selected track", systemImage: "trash", role: .destructive) {
                             showingRemoveConfirmation = true
                         }
                         .font(.system(size: 13, weight: .medium, design: .rounded))
@@ -37,10 +61,10 @@ struct TrackStudyView: View {
             }
             .background(Color(red: 0.045, green: 0.06, blue: 0.09).ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.audio]) { result in
+            .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in
                 switch result {
-                case .success(let url):
-                    Task { await store.importTrack(from: url) }
+                case .success(let urls):
+                    Task { await store.importTracks(from: urls) }
                 case .failure(let error):
                     store.errorMessage = error.localizedDescription
                 }
@@ -77,7 +101,7 @@ struct TrackStudyView: View {
                     .frame(width: 66, height: 66)
                     .background(.mint.opacity(0.12), in: RoundedRectangle(cornerRadius: 21))
             }
-            Text("Bring in an audio file, find the part you want to practice, and save a marker to return to it.")
+            Text("Build a local music shelf, choose a track to practice, and save markers for the passages you want to revisit.")
                 .font(.system(size: 14, design: .rounded))
                 .foregroundStyle(.white.opacity(0.66))
                 .fixedSize(horizontal: false, vertical: true)
@@ -90,14 +114,14 @@ struct TrackStudyView: View {
             Label("Your audio stays on this device", systemImage: "lock.shield")
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
-            Text("Choose an audio file you own or have permission to use. Track Study copies it into private app storage for playback and on-device analysis. This data is excluded from device backups.")
+            Text("Choose audio files you own or have permission to use. Track Study keeps private copies for playback and on-device analysis, with your practice markers and loops. These files are excluded from device backups.")
                 .font(.system(size: 13, design: .rounded))
                 .foregroundStyle(.white.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
             Button {
                 showingImporter = true
             } label: {
-                Label(store.isImporting ? "Importing…" : "Choose an audio file", systemImage: "folder")
+                Label(store.isImporting ? "Importing…" : "Import audio files", systemImage: "folder")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
@@ -108,6 +132,105 @@ struct TrackStudyView: View {
         }
         .padding(18)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private var trackLibraryCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                sectionHeading("LOCAL TRACK LIBRARY · \(store.tracks.count)", symbol: "music.note.list")
+                Spacer(minLength: 8)
+                Button {
+                    showingImporter = true
+                } label: {
+                    Label(store.isImporting ? "Importing…" : "Add audio files", systemImage: "plus")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                }
+                .buttonStyle(.bordered)
+                .tint(.mint)
+                .disabled(store.isImporting)
+            }
+
+            Picker("Sort local tracks", selection: $librarySort) {
+                ForEach(TrackLibrarySort.allCases) { order in
+                    Text(order.rawValue).tag(order)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ForEach(sortedLibraryTracks) { item in
+                let selected = store.selectedTrackID == item.id
+                Button {
+                    store.selectTrack(item.id)
+                } label: {
+                    HStack(spacing: 11) {
+                        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(selected ? .mint : .white.opacity(0.35))
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(item.title)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                            HStack(spacing: 8) {
+                                if let key = item.analysis?.firstKeySpan?.key {
+                                    Text(key)
+                                } else {
+                                    Text("Key not analyzed")
+                                }
+                                if let tempo = item.analysis?.tempoBPM {
+                                    Text("· \(tempo) BPM")
+                                }
+                                Text("· \(timeString(item.duration))")
+                            }
+                            .font(.system(size: 10, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.54))
+                        }
+                        Spacer(minLength: 0)
+                        if selected { Text("SELECTED")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(.mint)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Select \(item.title)\(selected ? ", currently selected" : "")")
+                if item.id != sortedLibraryTracks.last?.id {
+                    Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
+                }
+            }
+            Text("Files stay in Track Study. First-key and tempo sorting uses on-device Music Understanding analysis when available.")
+                .font(.system(size: 10, design: .rounded))
+                .foregroundStyle(.white.opacity(0.46))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private var sortedLibraryTracks: [PracticeTrack] {
+        store.tracks.sorted { left, right in
+            switch librarySort {
+            case .recent:
+                if left.importedAt != right.importedAt { return left.importedAt > right.importedAt }
+                return left.title.localizedStandardCompare(right.title) == .orderedAscending
+            case .title:
+                return left.title.localizedStandardCompare(right.title) == .orderedAscending
+            case .key:
+                let leftKey = left.analysis?.firstKeySpan?.key ?? "~"
+                let rightKey = right.analysis?.firstKeySpan?.key ?? "~"
+                let order = leftKey.localizedCaseInsensitiveCompare(rightKey)
+                if order != .orderedSame { return order == .orderedAscending }
+                return left.title.localizedStandardCompare(right.title) == .orderedAscending
+            case .tempo:
+                let leftTempo = left.analysis?.tempoBPM ?? Int.max
+                let rightTempo = right.analysis?.tempoBPM ?? Int.max
+                if leftTempo != rightTempo { return leftTempo < rightTempo }
+                return left.title.localizedStandardCompare(right.title) == .orderedAscending
+            }
+        }
     }
 
     private func playbackCard(_ track: PracticeTrack) -> some View {
@@ -209,7 +332,7 @@ struct TrackStudyView: View {
             if let analysis = track.analysis {
                 HStack(spacing: 10) {
                     metricCard("TEMPO", value: analysis.tempoBPM.map { "\($0) BPM" } ?? "Not found")
-                    metricCard("KEY", value: analysis.keySpans.first?.key ?? "Not found")
+                    metricCard("KEY", value: analysis.firstKeySpan?.key ?? "Not found")
                 }
                 HStack(spacing: 10) {
                     metricCard(

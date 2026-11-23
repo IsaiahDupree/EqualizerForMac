@@ -58,6 +58,18 @@ struct PracticeTrack: Identifiable, Codable, Sendable {
     }
 }
 
+struct PracticeLibraryDocument: Codable, Sendable {
+    var schemaVersion: Int
+    var tracks: [PracticeTrack]
+    var selectedTrackID: UUID?
+
+    init(tracks: [PracticeTrack], selectedTrackID: UUID?) {
+        schemaVersion = 1
+        self.tracks = tracks
+        self.selectedTrackID = selectedTrackID
+    }
+}
+
 struct PracticeMarker: Identifiable, Codable, Sendable {
     let id: UUID
     var title: String
@@ -92,6 +104,10 @@ struct MusicAnalysis: Codable, Sendable {
     var instrumentSpans: [InstrumentSpan]?
     var integratedLoudnessLUFS: Double?
     var peakDecibels: Double?
+
+    var firstKeySpan: KeySpan? {
+        keySpans.min { $0.startSeconds < $1.startSeconds }
+    }
 }
 
 struct KeySpan: Codable, Sendable, Identifiable {
@@ -124,6 +140,7 @@ struct InstrumentSpan: Codable, Sendable, Identifiable {
 enum TrackStudyError: LocalizedError {
     case invalidAudioFile
     case audioFileMissing
+    case unsupportedLibraryVersion
     case musicUnderstandingRequiresCurrentSDK
     case musicUnderstandingRequiresIOS27
 
@@ -133,6 +150,8 @@ enum TrackStudyError: LocalizedError {
             "This file does not contain a readable audio track."
         case .audioFileMissing:
             "The saved audio file is missing. Import the track again to continue."
+        case .unsupportedLibraryVersion:
+            "This Track Study library was saved by a newer app version. Update Track Study before changing its contents."
         case .musicUnderstandingRequiresCurrentSDK:
             "Music analysis requires an iOS 27 SDK. This build still supports playback and practice markers."
         case .musicUnderstandingRequiresIOS27:

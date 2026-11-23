@@ -6,11 +6,14 @@ import Foundation
 final class TrackStudyStore: ObservableObject {
     static let shared = TrackStudyStore()
 
-    @Published private(set) var track: PracticeTrack?
+    @Published private(set) var tracks: [PracticeTrack] = []
+    @Published private(set) var selectedTrackID: UUID?
     @Published private(set) var currentTime: TimeInterval = 0
     @Published private(set) var isPlaying = false
     @Published private(set) var playbackRate: Float
     @Published private(set) var isImporting = false
+    @Published private(set) var isCancellingImport = false
+    @Published private(set) var importStatusMessage: String?
     @Published private(set) var isAnalyzing = false
     @Published private(set) var activeLoopID: UUID?
     @Published var errorMessage: String?
@@ -22,6 +25,7 @@ final class TrackStudyStore: ObservableObject {
     private var periodicTimeObserver: Any?
     private var playbackRequested = false
     private var isWrappingLoop = false
+    private var importCancelRequested = false
     private var activeAnalysisID: UUID?
     private var activeAnalysisOperation: (any MusicAnalysisOperation)?
 
@@ -55,26 +59,75 @@ final class TrackStudyStore: ObservableObject {
         }
     }
 
+    var track: PracticeTrack? {
+        guard let selectedTrackID else { return nil }
+        return tracks.first { $0.id == selectedTrackID }
+    }
+
     var duration: TimeInterval { track?.duration ?? 0 }
 
-    func importTrack(from pickedURL: URL) async {
-        guard !isImporting else { return }
+    func importTracks(from pickedURLs: [URL]) async {
+        guard !pickedURLs.isEmpty, !isImporting else { return }
         isImporting = true
+        importCancelRequested = false
+        isCancellingImport = false
         errorMessage = nil
-        defer { isImporting = false }
+        importStatusMessage = nil
+        defer {
+            isImporting = false
+            isCancellingImport = false
+            importCancelRequested = false
+        }
 
+        var importedCount = 0
+        var failures: [String] = []
+        for (index, pickedURL) in pickedURLs.enumerated() {
+            guard !importCancelRequested else { break }
+            importStatusMessage = "Importing file \(index + 1) of \(pickedURLs.count)…"
+            do {
+                try await importTrackFile(from: pickedURL)
+                importedCount += 1
+            } catch is CancellationError {
+                break
+            } catch {
+                failures.append("\(pickedURL.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
+
+        let stopped = importCancelRequested
+        importStatusMessage = stopped
+            ? "\(importedCount) added · stopped after the current file."
+            : "\(importedCount) of \(pickedURLs.count) audio file\(pickedURLs.count == 1 ? "" : "s") added."
+        if !failures.isEmpty {
+            let displayedFailures = failures.prefix(3).joined(separator: " · ")
+            let remainingCount = failures.count - min(failures.count, 3)
+            let remaining = remainingCount > 0 ? " · \(remainingCount) more failed" : ""
+            errorMessage = "Some files could not be imported: \(displayedFailures)\(remaining)"
+        }
+    }
+
+    func cancelImport() {
+        guard isImporting, !isCancellingImport else { return }
+        importCancelRequested = true
+        isCancellingImport = true
+    }
+
+    private func importTrackFile(from pickedURL: URL) async throws {
         let didStartAccess = pickedURL.startAccessingSecurityScopedResource()
         defer {
             if didStartAccess { pickedURL.stopAccessingSecurityScopedResource() }
         }
 
-        let previousTrack = track
+        let previousTracks = tracks
+        let previousSelectedTrackID = selectedTrackID
         var copiedURL: URL?
         do {
             let identifier = UUID()
             let fileExtension = pickedURL.pathExtension.isEmpty ? "audio" : pickedURL.pathExtension
             let destination = try tracksDirectory().appendingPathComponent("\(identifier.uuidString).\(fileExtension)")
-            try FileManager.default.copyItem(at: pickedURL, to: destination)
+            try await Task.detached(priority: .utility) {
+                try FileManager.default.copyItem(at: pickedURL, to: destination)
+            }.value
             copiedURL = destination
             try markExcludedFromBackup(at: destination)
 
@@ -91,8 +144,11 @@ final class TrackStudyStore: ObservableObject {
                 markers: [],
                 analysis: nil
             )
-            track = imported
-            try saveTrack()
+            tracks.insert(imported, at: 0)
+            selectedTrackID = imported.id
+            try saveLibrary()
+            cancelAnalysis()
+            player.pause()
             playbackRequested = false
             isPlaying = false
             activeLoopID = nil
@@ -102,10 +158,32 @@ final class TrackStudyStore: ObservableObject {
             isPlaying = false
         } catch {
             if let copiedURL { try? FileManager.default.removeItem(at: copiedURL) }
-            track = previousTrack
-            try? saveTrack()
-            errorMessage = error.localizedDescription
+            tracks = previousTracks
+            selectedTrackID = previousSelectedTrackID
+            throw error
         }
+    }
+
+    func selectTrack(_ identifier: UUID) {
+        guard identifier != selectedTrackID,
+              tracks.contains(where: { $0.id == identifier }) else { return }
+        let previousSelectedTrackID = selectedTrackID
+        selectedTrackID = identifier
+        do {
+            try saveLibrary()
+        } catch {
+            selectedTrackID = previousSelectedTrackID
+            errorMessage = error.localizedDescription
+            return
+        }
+        cancelAnalysis()
+        player.pause()
+        playbackRequested = false
+        isPlaying = false
+        activeLoopID = nil
+        currentTime = 0
+        loadSelectedTrackIntoPlayer()
+        player.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
     }
 
     func togglePlayback() {
@@ -157,15 +235,13 @@ final class TrackStudyStore: ObservableObject {
         )
         track.markers.append(marker)
         track.markers.sort { $0.seconds < $1.seconds }
-        self.track = track
-        persistOrReport()
+        replaceSelectedTrack(with: track)
     }
 
     func removeMarker(_ marker: PracticeMarker) {
         guard var track else { return }
         track.markers.removeAll { $0.id == marker.id }
-        self.track = track
-        persistOrReport()
+        replaceSelectedTrack(with: track)
     }
 
     func jumpToMarker(_ marker: PracticeMarker) {
@@ -189,8 +265,7 @@ final class TrackStudyStore: ObservableObject {
         )
         track.loops.append(loop)
         track.loops.sort { $0.startSeconds < $1.startSeconds }
-        self.track = track
-        persistOrReport()
+        replaceSelectedTrack(with: track)
     }
 
     func toggleLoopPlayback(_ loop: PracticeLoop) {
@@ -207,8 +282,7 @@ final class TrackStudyStore: ObservableObject {
         guard var track else { return }
         track.loops.removeAll { $0.id == loop.id }
         if activeLoopID == loop.id { activeLoopID = nil }
-        self.track = track
-        persistOrReport()
+        replaceSelectedTrack(with: track)
     }
 
     func analyzeTrack() async {
@@ -239,8 +313,7 @@ final class TrackStudyStore: ObservableObject {
 
             var updatedTrack = sourceTrack
             updatedTrack.analysis = result
-            track = updatedTrack
-            try saveTrack()
+            replaceSelectedTrack(with: updatedTrack)
         } catch {
             guard activeAnalysisID == analysisID else { return }
             if error is CancellationError { return }
@@ -259,48 +332,91 @@ final class TrackStudyStore: ObservableObject {
     }
 
     func removeTrack() {
+        guard let removedTrack = track else { return }
         cancelAnalysis()
         player.pause()
         playbackRequested = false
         player.replaceCurrentItem(with: nil)
         isPlaying = false
         currentTime = 0
-        if let track, let audioURL = try? fileURL(for: track) {
-            try? FileManager.default.removeItem(at: audioURL)
-        }
-        track = nil
         activeLoopID = nil
+        tracks.removeAll { $0.id == removedTrack.id }
+        selectedTrackID = tracks.first?.id
         do {
-            try FileManager.default.removeItem(at: indexURL())
-        } catch let error as CocoaError where error.code == .fileNoSuchFile {
-            return
+            try saveLibrary()
         } catch {
+            tracks.append(removedTrack)
+            tracks.sort { $0.importedAt > $1.importedAt }
+            selectedTrackID = removedTrack.id
+            loadSelectedTrackIntoPlayer()
             errorMessage = error.localizedDescription
+            return
         }
+
+        var audioCleanupWarning: String?
+        do {
+            let audioURL = try fileURL(for: removedTrack)
+            if FileManager.default.fileExists(atPath: audioURL.path) {
+                try FileManager.default.removeItem(at: audioURL)
+            }
+        } catch {
+            audioCleanupWarning = "Track removed from the library, but its private audio copy could not be deleted: \(error.localizedDescription)"
+        }
+        loadSelectedTrackIntoPlayer()
+        if let audioCleanupWarning { errorMessage = audioCleanupWarning }
     }
 
     private func loadSavedTrack() {
+        var libraryUpgradeWarning: String?
         do {
             let data = try Data(contentsOf: indexURL())
-            let saved = try decoder.decode(PracticeTrack.self, from: data)
-            let audioURL = try fileURL(for: saved)
-            guard FileManager.default.fileExists(atPath: audioURL.path) else {
-                track = saved
-                errorMessage = TrackStudyError.audioFileMissing.localizedDescription
-                return
+            if let savedLibrary = try? decoder.decode(PracticeLibraryDocument.self, from: data) {
+                guard savedLibrary.schemaVersion == 1 else {
+                    throw TrackStudyError.unsupportedLibraryVersion
+                }
+                tracks = savedLibrary.tracks
+                selectedTrackID = savedLibrary.selectedTrackID.flatMap { id in
+                    tracks.contains(where: { $0.id == id }) ? id : nil
+                } ?? tracks.first?.id
+            } else {
+                let legacyTrack = try decoder.decode(PracticeTrack.self, from: data)
+                tracks = [legacyTrack]
+                selectedTrackID = legacyTrack.id
+                do {
+                    try saveLibrary()
+                } catch {
+                    libraryUpgradeWarning = "Track loaded, but the library format could not be upgraded: \(error.localizedDescription)"
+                }
             }
-            track = saved
-            player.replaceCurrentItem(with: makePlayerItem(url: audioURL))
+            loadSelectedTrackIntoPlayer()
+            if let libraryUpgradeWarning {
+                let playerWarning = errorMessage
+                errorMessage = [libraryUpgradeWarning, playerWarning]
+                    .compactMap { $0 }
+                    .joined(separator: " ")
+            }
         } catch let error as CocoaError where error.code == .fileNoSuchFile {
-            track = nil
+            tracks = []
+            selectedTrackID = nil
         } catch {
-            errorMessage = "The saved track record could not be read: \(error.localizedDescription)"
+            errorMessage = "The saved track library could not be read: \(error.localizedDescription)"
         }
     }
 
-    private func persistOrReport() {
-        do { try saveTrack() }
-        catch { errorMessage = error.localizedDescription }
+    private func loadSelectedTrackIntoPlayer() {
+        guard let track else {
+            player.replaceCurrentItem(with: nil)
+            errorMessage = nil
+            return
+        }
+        guard let audioURL = try? fileURL(for: track),
+              FileManager.default.fileExists(atPath: audioURL.path) else {
+            player.replaceCurrentItem(with: nil)
+            errorMessage = TrackStudyError.audioFileMissing.localizedDescription
+            return
+        }
+        player.replaceCurrentItem(with: makePlayerItem(url: audioURL))
+        errorMessage = nil
     }
 
     private func wrapPlaybackLoopIfNeeded(at seconds: TimeInterval) {
@@ -337,15 +453,41 @@ final class TrackStudyStore: ObservableObject {
         activeLoop?.startSeconds
     }
 
-    private func saveTrack() throws {
-        guard let track else {
-            try? FileManager.default.removeItem(at: indexURL())
-            return
-        }
-        let data = try encoder.encode(track)
+    private func saveLibrary() throws {
+        let document = PracticeLibraryDocument(tracks: tracks, selectedTrackID: selectedTrackID)
+        let data = try encoder.encode(document)
         let destination = try indexURL()
+        let previousData: Data?
+        if FileManager.default.fileExists(atPath: destination.path) {
+            previousData = try Data(contentsOf: destination)
+        } else {
+            previousData = nil
+        }
         try data.write(to: destination, options: .atomic)
-        try markExcludedFromBackup(at: destination)
+        do {
+            try markExcludedFromBackup(at: destination)
+        } catch {
+            if let previousData {
+                try? previousData.write(to: destination, options: .atomic)
+                try? markExcludedFromBackup(at: destination)
+            } else {
+                try? FileManager.default.removeItem(at: destination)
+            }
+            throw error
+        }
+    }
+
+    private func replaceSelectedTrack(with updatedTrack: PracticeTrack) {
+        guard let index = tracks.firstIndex(where: { $0.id == updatedTrack.id }) else { return }
+        let previousTrack = tracks[index]
+        tracks[index] = updatedTrack
+        do {
+            try saveLibrary()
+            errorMessage = nil
+        } catch {
+            tracks[index] = previousTrack
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func makePlayerItem(url: URL) -> AVPlayerItem {
@@ -377,7 +519,7 @@ final class TrackStudyStore: ObservableObject {
     private func applyBackupExclusions() throws {
         _ = try baseDirectory()
         _ = try tracksDirectory()
-        if let track {
+        for track in tracks {
             let audioURL = try fileURL(for: track)
             if FileManager.default.fileExists(atPath: audioURL.path) {
                 try markExcludedFromBackup(at: audioURL)

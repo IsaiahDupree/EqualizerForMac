@@ -25,9 +25,12 @@ is reviewed and accepted and the apps are rebuilt.
   after user edits, save/clear actions, source removal, or leaving the detail
   screen. Late model results and errors no longer overwrite the active review.
   Xcode compilation remains license-gated.
-- Track Study reapplies backup-exclusion hints to the local directories, audio
-  file, and track index. If a replacement import fails, it preserves the
-  previously saved track and removes the partial copy.
+- Track Study now keeps a multi-track local library, migrates the previous
+  single-track index, supports stoppable batch imports, and sorts by title/import date plus analyzed first key/tempo.
+  Each track keeps its own practice data. A failed file import removes the
+  partial copy, leaves existing records intact, and reapplies backup-exclusion
+  hints to each stored audio file and the shared index. Xcode verification
+  remains blocked by its first-use license.
 - Clear Record's iOS 27 summary shortcut now prepares the latest transcript's
   draft in memory, opens an editable review sheet, and saves only after an
   explicit user action. Siri receives only a neutral status dialog.
