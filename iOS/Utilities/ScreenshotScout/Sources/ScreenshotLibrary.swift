@@ -8,6 +8,7 @@ import SwiftUI
 final class ScreenshotLibrary: ObservableObject {
     @Published private(set) var images: [IndexedImage] = []
     @Published private(set) var videos: [IndexedVideo] = []
+    @Published private(set) var reviewQueue: [ReviewQueueEntry] = []
     @Published private(set) var isImporting = false
     @Published private(set) var isImportingVideos = false
     @Published private(set) var isFindingSimilar = false
@@ -43,9 +44,11 @@ final class ScreenshotLibrary: ObservableObject {
 
     private var indexURL: URL { libraryDirectory.appendingPathComponent("index.json") }
     private var videoIndexURL: URL { libraryDirectory.appendingPathComponent("videos.json") }
+    private var reviewQueueURL: URL { libraryDirectory.appendingPathComponent("review-queue.json") }
 
     init() {
         loadIndex()
+        loadReviewQueue()
     }
 
     func importItems(_ selections: [PhotosPickerItem]) async {
@@ -130,7 +133,7 @@ final class ScreenshotLibrary: ObservableObject {
             matchedImages.reserveCapacity(min(imageSnapshot.count, 100))
             for image in imageSnapshot {
                 try Task.checkCancellation()
-                let searchable = ([image.recognizedText] + image.labels).joined(separator: " ")
+                let searchable = ([image.recognizedText, image.sceneDescription ?? ""] + image.labels).joined(separator: " ")
                 if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
                     matchedImages.append(image)
                 }
@@ -179,6 +182,7 @@ final class ScreenshotLibrary: ObservableObject {
     func makeInventoryExport(includeRecognizedDetails: Bool) async throws -> Data {
         let imageRecords = images
         let videoRecords = videos
+        let reviewQueueRecords = reviewQueue
         let libraryDirectory = libraryDirectory
 
         return try await Task.detached(priority: .utility) {
@@ -196,7 +200,8 @@ final class ScreenshotLibrary: ObservableObject {
                     byteCount: byteCount(at: libraryDirectory.appendingPathComponent(item.fileName)),
                     sha256: item.sha256,
                     labels: includeRecognizedDetails ? item.labels : nil,
-                    recognizedText: includeRecognizedDetails ? item.recognizedText : nil
+                    recognizedText: includeRecognizedDetails ? item.recognizedText : nil,
+                    sceneDescription: includeRecognizedDetails ? item.sceneDescription : nil
                 )
             }
             let exportedVideos = videoRecords.map { item in
@@ -220,10 +225,11 @@ final class ScreenshotLibrary: ObservableObject {
                 )
             }
             let inventory = LibraryInventoryExport(
-                schemaVersion: 1,
+                schemaVersion: 3,
                 exportedAt: Date(),
                 images: exportedImages,
-                videos: exportedVideos
+                videos: exportedVideos,
+                reviewQueue: reviewQueueRecords
             )
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
@@ -383,6 +389,89 @@ final class ScreenshotLibrary: ObservableObject {
         similarityTask?.cancel()
     }
 
+    func updateSceneDescription(for imageID: UUID, description: String?) throws {
+        guard let index = images.firstIndex(where: { $0.id == imageID }) else {
+            throw LibraryError.imageNoLongerAvailable
+        }
+        let normalized = description?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = normalized?.isEmpty == false ? normalized : nil
+        guard images[index].sceneDescription != value else { return }
+
+        let previous = images[index]
+        images[index].sceneDescription = value
+        do {
+            try saveIndex()
+            searchRevision &+= 1
+        } catch {
+            images[index] = previous
+            throw error
+        }
+    }
+
+    func isInReviewQueue(_ item: IndexedImage) -> Bool {
+        reviewQueue.contains { $0.mediaKind == .image && $0.mediaID == item.id }
+    }
+
+    func isInReviewQueue(_ item: IndexedVideo) -> Bool {
+        reviewQueue.contains { $0.mediaKind == .video && $0.mediaID == item.id }
+    }
+
+    func addToReviewQueue(_ item: IndexedImage) {
+        addToReviewQueue(mediaKind: .image, mediaID: item.id)
+    }
+
+    func addToReviewQueue(_ item: IndexedVideo) {
+        addToReviewQueue(mediaKind: .video, mediaID: item.id)
+    }
+
+    func toggleReviewQueue(_ item: IndexedImage) {
+        if isInReviewQueue(item) {
+            let previousQueue = reviewQueue
+            reviewQueue.removeAll { $0.mediaKind == .image && $0.mediaID == item.id }
+            do { try saveReviewQueue() }
+            catch {
+                reviewQueue = previousQueue
+                errorMessage = error.localizedDescription
+            }
+        } else {
+            addToReviewQueue(item)
+        }
+    }
+
+    func toggleReviewQueue(_ item: IndexedVideo) {
+        if isInReviewQueue(item) {
+            let previousQueue = reviewQueue
+            reviewQueue.removeAll { $0.mediaKind == .video && $0.mediaID == item.id }
+            do { try saveReviewQueue() }
+            catch {
+                reviewQueue = previousQueue
+                errorMessage = error.localizedDescription
+            }
+        } else {
+            addToReviewQueue(item)
+        }
+    }
+
+    func removeFromReviewQueue(_ entry: ReviewQueueEntry) {
+        let previousQueue = reviewQueue
+        reviewQueue.removeAll { $0.id == entry.id }
+        do { try saveReviewQueue() }
+        catch {
+            reviewQueue = previousQueue
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func addToReviewQueue(mediaKind: ReviewQueueMediaKind, mediaID: UUID) {
+        guard !reviewQueue.contains(where: { $0.mediaKind == mediaKind && $0.mediaID == mediaID }) else { return }
+        reviewQueue.insert(ReviewQueueEntry(mediaKind: mediaKind, mediaID: mediaID, queuedAt: Date()), at: 0)
+        do { try saveReviewQueue() }
+        catch {
+            reviewQueue.removeAll { $0.mediaKind == mediaKind && $0.mediaID == mediaID }
+            errorMessage = error.localizedDescription
+        }
+    }
+
     func remove(_ item: IndexedImage) {
         if similarityTargetID == item.id { cancelSimilaritySearch() }
         let url = imageURL(for: item)
@@ -391,8 +480,10 @@ final class ScreenshotLibrary: ObservableObject {
                 try FileManager.default.removeItem(at: url)
             }
             images.removeAll { $0.id == item.id }
+            reviewQueue.removeAll { $0.mediaKind == .image && $0.mediaID == item.id }
             searchRevision &+= 1
             try saveIndex()
+            try saveReviewQueue()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -407,8 +498,10 @@ final class ScreenshotLibrary: ObservableObject {
             let url = videoURL(for: item)
             if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
             videos.removeAll { $0.id == item.id }
+            reviewQueue.removeAll { $0.mediaKind == .video && $0.mediaID == item.id }
             searchRevision &+= 1
             try saveIndex()
+            try saveReviewQueue()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -434,6 +527,24 @@ final class ScreenshotLibrary: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         try encoder.encode(images).write(to: indexURL, options: .atomic)
         try encoder.encode(videos).write(to: videoIndexURL, options: .atomic)
+    }
+
+    private func loadReviewQueue() {
+        guard let data = try? Data(contentsOf: reviewQueueURL),
+              let saved = try? decoder.decode([ReviewQueueEntry].self, from: data) else { return }
+        reviewQueue = saved.filter { entry in
+            switch entry.mediaKind {
+            case .image: images.contains { $0.id == entry.mediaID }
+            case .video: videos.contains { $0.id == entry.mediaID }
+            }
+        }
+        if reviewQueue.count != saved.count { try? saveReviewQueue() }
+    }
+
+    private func saveReviewQueue() throws {
+        try prepareLocalLibrary()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(reviewQueue).write(to: reviewQueueURL, options: .atomic)
     }
 
     private func prepareLocalLibrary() throws {

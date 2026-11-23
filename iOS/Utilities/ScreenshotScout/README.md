@@ -4,9 +4,11 @@ Screenshot Scout makes a searchable local index of images and videos a person ex
 
 For a selected video, the app keeps a private full-resolution copy and samples five frames across its duration. Vision reads visible text and scene labels from those frames. Search results point to the video and sampled moments; the person reviews the original before using any clip. Video indexing can be cancelled, and exact duplicate videos are skipped using a streaming SHA-256 pass.
 
-The library exports a JSON inventory without media copies. The user chooses metadata only or an explicit option to include recognized text and Vision labels.
+The library exports a JSON inventory without media copies. The user chooses metadata only or an explicit option to include recognized text, Vision labels, and any saved scene descriptions. A persistent review queue lets the user save selected images and videos for later inspection, open each item from the queue, and remove it from the queue after review. Queue entries are included in the JSON inventory; nothing is deleted automatically.
 
-Image copies, selected video copies, sampled frames, and JSON indexes are stored in the app's Documents folder. The app marks that folder as excluded from device backups, performs analysis locally, and does not scan the photo library, access other apps, upload media, or delete originals from Photos. Removing an item deletes only Screenshot Scout's private copy and index data.
+On iOS 27 builds, an optional Foundation Models path can suggest a short visual scene description for one image at a time. It passes the local image URL to Apple's on-device model only when the system reports the model ready and image support available. The user reviews or edits the suggestion and explicitly saves it to the local search index. The description is a search aid, not verified image metadata. This path is compile-gated for the Swift 6.4 compiler in Xcode 27 and is not compiled by this Mac's iOS 26 SDK.
+
+Image copies, selected video copies, sampled frames, review queue, and JSON indexes are stored in the app's Documents folder. The app marks that folder as excluded from device backups and performs analysis locally. It does not scan the photo library, access other apps, upload media, or delete originals from Photos. Removing an item deletes only Screenshot Scout's private copy and index data.
 
 Build the project with XcodeGen and Xcode:
 
@@ -15,4 +17,4 @@ xcodegen generate --spec iOS/Utilities/ScreenshotScout/project.yml --project iOS
 xcodebuild -project iOS/Utilities/ScreenshotScout/ScreenshotScout.xcodeproj -scheme ScreenshotScout -destination 'generic/platform=iOS Simulator' -jobs 1 CODE_SIGNING_ALLOWED=NO build
 ```
 
-This initial app targets iOS 17. It does not depend on beta-only iOS 27 APIs. The image and video targets have been compiled locally; camera/photo runtime behavior has not been exercised. No phone install or release is part of this project.
+The app's core image and video features target iOS 17 and do not depend on iOS 27 APIs. The optional scene-description feature is compile-gated for iOS 27. The image and video targets have been compiled locally; camera/photo runtime behavior has not been exercised. No phone install or release is part of this project.

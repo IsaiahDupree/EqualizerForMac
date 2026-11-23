@@ -13,8 +13,7 @@ struct LibraryView: View {
     @State private var selectedVideoItems: [PhotosPickerItem] = []
     @State private var searchText = ""
     @State private var mediaKind: MediaKind = .images
-    @State private var selectedImage: IndexedImage?
-    @State private var selectedVideo: IndexedVideo?
+    @State private var presentedSheet: LibraryPresentation?
     @State private var inventoryDocument: InventoryExportDocument?
     @State private var isExportingInventory = false
     @State private var isPreparingInventoryExport = false
@@ -66,15 +65,21 @@ struct LibraryView: View {
             }
             .background(Color(red: 0.055, green: 0.065, blue: 0.09).ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .sheet(item: $selectedImage) { item in
-                ImageDetailView(item: item)
-                    .environmentObject(library)
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $selectedVideo) { item in
-                VideoDetailView(item: item)
-                    .environmentObject(library)
-                    .presentationDragIndicator(.visible)
+            .sheet(item: $presentedSheet) { presentation in
+                switch presentation {
+                case .image(let item):
+                    ImageDetailView(item: item)
+                        .environmentObject(library)
+                        .presentationDragIndicator(.visible)
+                case .video(let item):
+                    VideoDetailView(item: item)
+                        .environmentObject(library)
+                        .presentationDragIndicator(.visible)
+                case .reviewQueue:
+                    ReviewQueueView()
+                        .environmentObject(library)
+                        .presentationDragIndicator(.visible)
+                }
             }
             .fileExporter(
                 isPresented: $isExportingInventory,
@@ -194,6 +199,16 @@ struct LibraryView: View {
                     .foregroundStyle(.white.opacity(0.48))
             }
 
+            Button { presentedSheet = .reviewQueue } label: {
+                Label("Review queue · \(library.reviewQueue.count)", systemImage: "tray.full")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.cyan)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 10)
+                    .background(.white.opacity(0.08), in: Capsule())
+            }
+            .buttonStyle(.plain)
+
             if library.isImporting {
                 HStack(spacing: 10) {
                     ProgressView().tint(.cyan)
@@ -283,7 +298,7 @@ struct LibraryView: View {
             } else {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(filteredImages) { item in
-                        Button { selectedImage = item } label: { ImageCard(item: item, url: library.imageURL(for: item)) }
+                        Button { presentedSheet = .image(item) } label: { ImageCard(item: item, url: library.imageURL(for: item)) }
                             .buttonStyle(.plain)
                     }
                 }
@@ -342,7 +357,7 @@ struct LibraryView: View {
             } else {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(filteredVideos) { item in
-                        Button { selectedVideo = item } label: {
+                        Button { presentedSheet = .video(item) } label: {
                             VideoCard(item: item, thumbnailURL: item.frames.first.map { library.frameURL(for: $0) })
                         }
                             .buttonStyle(.plain)
@@ -392,6 +407,20 @@ struct LibraryView: View {
                 library.errorMessage = error.localizedDescription
             }
             isPreparingInventoryExport = false
+        }
+    }
+}
+
+private enum LibraryPresentation: Identifiable {
+    case image(IndexedImage)
+    case video(IndexedVideo)
+    case reviewQueue
+
+    var id: String {
+        switch self {
+        case .image(let item): "image:\(item.id.uuidString)"
+        case .video(let item): "video:\(item.id.uuidString)"
+        case .reviewQueue: "review-queue"
         }
     }
 }

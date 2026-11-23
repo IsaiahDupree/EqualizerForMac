@@ -5,6 +5,11 @@ struct ImageDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemoval = false
     @State private var selectedSimilar: IndexedImage?
+    @State private var canDescribeOnDevice = false
+    @State private var isDescribingOnDevice = false
+    @State private var sceneDescriptionDraft = ""
+    @State private var savedSceneDescription: String?
+    @State private var sceneDescriptionError: String?
 
     let item: IndexedImage
 
@@ -21,6 +26,8 @@ struct ImageDetailView: View {
                             .frame(maxWidth: .infinity)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                     }
+
+                    sceneDescriptionSection
 
                     VStack(alignment: .leading, spacing: 12) {
                         sectionTitle("IMAGE LABELS", symbol: "sparkles")
@@ -45,6 +52,18 @@ struct ImageDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
                     .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
+
+                    Button {
+                        library.toggleReviewQueue(item)
+                    } label: {
+                        Label(
+                            library.isInReviewQueue(item) ? "Remove from review queue" : "Add to review queue",
+                            systemImage: library.isInReviewQueue(item) ? "checkmark.circle.fill" : "tray.and.arrow.down"
+                        )
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
 
                     similarImages(for: item)
 
@@ -84,7 +103,116 @@ struct ImageDetailView: View {
                     .environmentObject(library)
                     .presentationDragIndicator(.visible)
             }
+            .onAppear {
+                canDescribeOnDevice = FoundationModelsImageDescriber.isAvailable
+                savedSceneDescription = item.sceneDescription
+                sceneDescriptionDraft = item.sceneDescription ?? ""
+            }
+            .alert("Could not create scene description", isPresented: sceneDescriptionErrorPresented) {
+                Button("OK", role: .cancel) { sceneDescriptionError = nil }
+            } message: {
+                Text(sceneDescriptionError ?? "Try again or enter a description yourself.")
+            }
         }
+    }
+
+    private var sceneDescriptionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("SEARCH DESCRIPTION", symbol: "text.magnifyingglass")
+            Text("Add a short description to make this image easier to find. Review and edit model suggestions before saving.")
+                .font(.system(size: 12, design: .rounded))
+                .foregroundStyle(.secondary)
+
+            if canDescribeOnDevice {
+                Button {
+                    Task { await describeSceneOnDevice() }
+                } label: {
+                    HStack {
+                        if isDescribingOnDevice {
+                            ProgressView().tint(.cyan)
+                        } else {
+                            Image(systemName: "sparkles")
+                        }
+                        Text(isDescribingOnDevice ? "Describing on this device…" : "Suggest description on this device")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.cyan)
+                .disabled(isDescribingOnDevice)
+            } else {
+                Text("Automatic descriptions require iOS 27, Apple Intelligence, and an available on-device model with image support.")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            TextEditor(text: $sceneDescriptionDraft)
+                .font(.system(size: 14, design: .rounded))
+                .frame(minHeight: 88)
+                .scrollContentBackground(.hidden)
+                .padding(8)
+                .background(Color(uiColor: .tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+
+            HStack {
+                Button("Save searchable description") {
+                    saveSceneDescription()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.cyan)
+                .disabled(sceneDescriptionDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                          || sceneDescriptionDraft.trimmingCharacters(in: .whitespacesAndNewlines) == savedSceneDescription)
+
+                if savedSceneDescription != nil {
+                    Button("Clear", role: .destructive) {
+                        clearSceneDescription()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    @MainActor
+    private func describeSceneOnDevice() async {
+        guard canDescribeOnDevice, !isDescribingOnDevice else { return }
+        isDescribingOnDevice = true
+        defer { isDescribingOnDevice = false }
+        do {
+            sceneDescriptionDraft = try await FoundationModelsImageDescriber.describe(
+                imageURL: library.imageURL(for: item)
+            )
+        } catch {
+            canDescribeOnDevice = FoundationModelsImageDescriber.isAvailable
+            sceneDescriptionError = error.localizedDescription
+        }
+    }
+
+    private func saveSceneDescription() {
+        do {
+            try library.updateSceneDescription(for: item.id, description: sceneDescriptionDraft)
+            let value = sceneDescriptionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+            sceneDescriptionDraft = value
+            savedSceneDescription = value
+        } catch {
+            sceneDescriptionError = error.localizedDescription
+        }
+    }
+
+    private func clearSceneDescription() {
+        do {
+            try library.updateSceneDescription(for: item.id, description: nil)
+            sceneDescriptionDraft = ""
+            savedSceneDescription = nil
+        } catch {
+            sceneDescriptionError = error.localizedDescription
+        }
+    }
+
+    private var sceneDescriptionErrorPresented: Binding<Bool> {
+        Binding(get: { sceneDescriptionError != nil }, set: { if !$0 { sceneDescriptionError = nil } })
     }
 
     @ViewBuilder

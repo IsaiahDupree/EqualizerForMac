@@ -28,6 +28,17 @@ iOS 27 cross-app product and has not been submitted or published.
   text and Vision labels. The manifest omits app-container file paths. The
   updated target compiled for a generic iOS Simulator destination with Xcode
   26.0.1 on 2026-11-22. Export UI has not been exercised at runtime.
+- Screenshot Scout source now includes a persistent image/video review queue,
+  a queue view that opens media for inspection, explicit queue removal after
+  review, and queue metadata in the JSON manifest. It also has an optional
+  iOS 27 Foundation Models image-description path. That path passes a locally
+  stored, user-selected image to the on-device model only when the model
+  reports availability and image capability, then requires review before
+  saving the description to the local search index. The Xcode 26.0.1 / iOS 26
+  Simulator build succeeded on 2026-11-22 for arm64 and x86_64, bundle ID
+  `com.isaiahdupree.ScreenshotScout`; the iOS 27 path compiles only with Xcode
+  27 and has not been compiled or exercised. The queue and description flows
+  have not been exercised at runtime.
 - Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
   It requires an explicit consent confirmation, records in the foreground,
   saves on an interruption or background transition, and offers on-device

@@ -11,12 +11,14 @@
 		0EDA5C62BA22311895B26385 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 590BF48AB0064BB0474756AD /* ImageIO.framework */; };
 		14D8B90FB28E5BBCD9E9B187 /* ScreenshotScoutApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF5A4D000AA0B891A0F3C6D /* ScreenshotScoutApp.swift */; };
 		1AAB9E085D8702E16C38EC39 /* LibraryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 277A13DB6337242469455F32 /* LibraryModels.swift */; };
+		1D7937DAD51427FBFA9DD686 /* FoundationModelsImageDescriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1321C501322D86991D47FCD1 /* FoundationModelsImageDescriber.swift */; };
 		2FA00983C2ACA76BF62268FF /* ImageDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0D9EAFB847956566C6F498 /* ImageDetailView.swift */; };
 		360AF56ABF4BC91AC1391F12 /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04B9BDA70B235296E8F36ED2 /* Vision.framework */; };
 		39969463C7A74E73C2E6BC9E /* ImportedVideo.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0F14751ECDE7DD1FCBD57A0 /* ImportedVideo.swift */; };
 		46BAE404065BEBB70EADE3AC /* ScreenshotLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA86A5DDB77B4E53090309A7 /* ScreenshotLibrary.swift */; };
 		4EC5EDBE06D0771F1952B631 /* PhotosUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 078E3EA7E9582C4AC4650720 /* PhotosUI.framework */; };
 		6785788B7E8587D5871803BF /* LocalVideoAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C6BDD061BDE9A44F95ACEB /* LocalVideoAnalyzer.swift */; };
+		693C2DF94BE39754B15796A0 /* ReviewQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C708FF60DCB44C0F16759526 /* ReviewQueueView.swift */; };
 		6C505CA49A3721E0DC7C17BC /* CryptoKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6F069BBC8E295EC1072BD94 /* CryptoKit.framework */; };
 		7DE64604373208FC9AB1B722 /* VideoViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A82E59B1F23EF9F7568F7574 /* VideoViews.swift */; };
 		99F512FDDDE671A3DD4C0F49 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 924B814D799C77FC81B186D3 /* UniformTypeIdentifiers.framework */; };
@@ -26,6 +28,7 @@
 /* Begin PBXFileReference section */
 		04B9BDA70B235296E8F36ED2 /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
 		078E3EA7E9582C4AC4650720 /* PhotosUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PhotosUI.framework; path = System/Library/Frameworks/PhotosUI.framework; sourceTree = SDKROOT; };
+		1321C501322D86991D47FCD1 /* FoundationModelsImageDescriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationModelsImageDescriber.swift; sourceTree = "<group>"; };
 		277A13DB6337242469455F32 /* LibraryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryModels.swift; sourceTree = "<group>"; };
 		2BF5A4D000AA0B891A0F3C6D /* ScreenshotScoutApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotScoutApp.swift; sourceTree = "<group>"; };
 		590BF48AB0064BB0474756AD /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
@@ -38,6 +41,7 @@
 		BADBD99CF806F2599390D5E5 /* ScreenshotScout.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ScreenshotScout.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE0D9EAFB847956566C6F498 /* ImageDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDetailView.swift; sourceTree = "<group>"; };
 		C4C6BDD061BDE9A44F95ACEB /* LocalVideoAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalVideoAnalyzer.swift; sourceTree = "<group>"; };
+		C708FF60DCB44C0F16759526 /* ReviewQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewQueueView.swift; sourceTree = "<group>"; };
 		E0F14751ECDE7DD1FCBD57A0 /* ImportedVideo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportedVideo.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -69,12 +73,14 @@
 		39A8637FC2B5EE6845DCA001 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				1321C501322D86991D47FCD1 /* FoundationModelsImageDescriber.swift */,
 				BE0D9EAFB847956566C6F498 /* ImageDetailView.swift */,
 				E0F14751ECDE7DD1FCBD57A0 /* ImportedVideo.swift */,
 				277A13DB6337242469455F32 /* LibraryModels.swift */,
 				7C3E771DA1401E79645EFE63 /* LibraryView.swift */,
 				96E59CCB6D652C785B0F395D /* LocalImageAnalyzer.swift */,
 				C4C6BDD061BDE9A44F95ACEB /* LocalVideoAnalyzer.swift */,
+				C708FF60DCB44C0F16759526 /* ReviewQueueView.swift */,
 				AA86A5DDB77B4E53090309A7 /* ScreenshotLibrary.swift */,
 				2BF5A4D000AA0B891A0F3C6D /* ScreenshotScoutApp.swift */,
 				A82E59B1F23EF9F7568F7574 /* VideoViews.swift */,
@@ -158,12 +164,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D7937DAD51427FBFA9DD686 /* FoundationModelsImageDescriber.swift in Sources */,
 				2FA00983C2ACA76BF62268FF /* ImageDetailView.swift in Sources */,
 				39969463C7A74E73C2E6BC9E /* ImportedVideo.swift in Sources */,
 				1AAB9E085D8702E16C38EC39 /* LibraryModels.swift in Sources */,
 				9A744D2B5DE0658635ABEA2F /* LibraryView.swift in Sources */,
 				02DBF6060DC32B859A6F1B27 /* LocalImageAnalyzer.swift in Sources */,
 				6785788B7E8587D5871803BF /* LocalVideoAnalyzer.swift in Sources */,
+				693C2DF94BE39754B15796A0 /* ReviewQueueView.swift in Sources */,
 				46BAE404065BEBB70EADE3AC /* ScreenshotLibrary.swift in Sources */,
 				14D8B90FB28E5BBCD9E9B187 /* ScreenshotScoutApp.swift in Sources */,
 				7DE64604373208FC9AB1B722 /* VideoViews.swift in Sources */,

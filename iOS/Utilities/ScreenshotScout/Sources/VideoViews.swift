@@ -42,6 +42,18 @@ struct VideoDetailView: View {
                         }
                     }
 
+                    Button {
+                        library.toggleReviewQueue(item)
+                    } label: {
+                        Label(
+                            library.isInReviewQueue(item) ? "Remove from review queue" : "Add to review queue",
+                            systemImage: library.isInReviewQueue(item) ? "checkmark.circle.fill" : "tray.and.arrow.down"
+                        )
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
+
                     VStack(alignment: .leading, spacing: 11) {
                         Text("SAMPLED MOMENTS")
                             .font(.system(size: 11, weight: .bold, design: .rounded))

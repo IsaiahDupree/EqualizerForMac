@@ -7,6 +7,7 @@ struct IndexedImage: Identifiable, Codable, Hashable, Sendable {
     var recognizedText: String
     var labels: [String]
     var sha256: String
+    var sceneDescription: String? = nil
 }
 
 struct IndexedVideo: Identifiable, Codable, Hashable, Sendable {
@@ -34,6 +35,19 @@ struct IndexedVideoFrame: Codable, Hashable, Identifiable, Sendable {
     var recognizedText: String
     var labels: [String]
     var id: Int { index }
+}
+
+enum ReviewQueueMediaKind: String, Codable, Hashable, Sendable {
+    case image
+    case video
+}
+
+struct ReviewQueueEntry: Codable, Hashable, Identifiable, Sendable {
+    var mediaKind: ReviewQueueMediaKind
+    var mediaID: UUID
+    var queuedAt: Date
+
+    var id: String { "\(mediaKind.rawValue):\(mediaID.uuidString)" }
 }
 
 struct ProcessedImage: Sendable {
@@ -76,6 +90,7 @@ struct LibraryInventoryExport: Codable, Sendable {
     var exportedAt: Date
     var images: [InventoryImageRecord]
     var videos: [InventoryVideoRecord]
+    var reviewQueue: [ReviewQueueEntry]
 }
 
 struct InventoryImageRecord: Codable, Sendable {
@@ -85,6 +100,7 @@ struct InventoryImageRecord: Codable, Sendable {
     var sha256: String
     var labels: [String]?
     var recognizedText: String?
+    var sceneDescription: String?
 }
 
 struct InventoryVideoRecord: Codable, Sendable {
@@ -108,6 +124,7 @@ struct InventoryVideoFrameRecord: Codable, Sendable {
 
 enum LibraryError: LocalizedError, Sendable {
     case unreadableImage
+    case imageNoLongerAvailable
     case couldNotSave
     case unreadableVideo
     case noVideoFrames
@@ -115,6 +132,7 @@ enum LibraryError: LocalizedError, Sendable {
     var errorDescription: String? {
         switch self {
         case .unreadableImage: "This item could not be read as an image."
+        case .imageNoLongerAvailable: "This image is no longer in the Screenshot Scout library."
         case .couldNotSave: "Screenshot Scout could not save this image locally."
         case .unreadableVideo: "This video could not be opened. Try selecting a different video."
         case .noVideoFrames: "Screenshot Scout could not read any frames from this video."
