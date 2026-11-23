@@ -129,6 +129,10 @@ struct LibraryView: View {
                     ReviewQueueView()
                         .environmentObject(library)
                         .presentationDragIndicator(.visible)
+                case .storageReview:
+                    StorageReviewView()
+                        .environmentObject(library)
+                        .presentationDragIndicator(.visible)
                 }
             }
             .fileExporter(
@@ -259,6 +263,16 @@ struct LibraryView: View {
 
             Button { presentedSheet = .reviewQueue } label: {
                 Label("Review queue · \(library.reviewQueue.count)", systemImage: "tray.full")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.cyan)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 10)
+                    .background(.white.opacity(0.08), in: Capsule())
+            }
+            .buttonStyle(.plain)
+
+            Button { presentedSheet = .storageReview } label: {
+                Label("Review local storage", systemImage: "internaldrive")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(.cyan)
                     .padding(.horizontal, 13)
@@ -499,12 +513,14 @@ private enum LibraryPresentation: Identifiable {
     case image(IndexedImage)
     case video(IndexedVideo)
     case reviewQueue
+    case storageReview
 
     var id: String {
         switch self {
         case .image(let item): "image:\(item.id.uuidString)"
         case .video(let item): "video:\(item.id.uuidString)"
         case .reviewQueue: "review-queue"
+        case .storageReview: "storage-review"
         }
     }
 }
