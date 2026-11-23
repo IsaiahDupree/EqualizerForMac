@@ -32,8 +32,9 @@ is reviewed and accepted and the apps are rebuilt.
   restores the session if that save fails. Transcript and rename edits also
   revert in memory when index persistence fails.
 - Track Study now keeps a multi-track local library, migrates the previous
-  single-track index, supports stoppable batch imports, and sorts by title/import date plus analyzed first key/tempo.
-  Each track keeps its own practice data. A failed file import removes the
+  single-track index, supports stoppable batch imports, searches title/key/
+  tempo/marker/loop metadata, and sorts by title/date plus analyzed first
+  key/tempo. Each track keeps its own practice data. A failed file import removes the
   partial copy, leaves existing records intact, and reapplies backup-exclusion
   hints to each stored audio file and the shared index. Xcode verification
   remains blocked by its first-use license.

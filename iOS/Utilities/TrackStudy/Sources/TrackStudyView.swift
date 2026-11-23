@@ -19,6 +19,7 @@ struct TrackStudyView: View {
     @State private var loopEndDraft: TimeInterval?
     @State private var showingRemoveConfirmation = false
     @State private var librarySort: TrackLibrarySort = .recent
+    @State private var librarySearchText = ""
 
     var body: some View {
         NavigationStack {
@@ -135,7 +136,8 @@ struct TrackStudyView: View {
     }
 
     private var trackLibraryCard: some View {
-        VStack(alignment: .leading, spacing: 13) {
+        let visibleTracks = sortedLibraryTracks
+        return VStack(alignment: .leading, spacing: 13) {
             HStack {
                 sectionHeading("LOCAL TRACK LIBRARY · \(store.tracks.count)", symbol: "music.note.list")
                 Spacer(minLength: 8)
@@ -150,6 +152,30 @@ struct TrackStudyView: View {
                 .disabled(store.isImporting)
             }
 
+            HStack(spacing: 9) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.mint.opacity(0.8))
+                TextField("Search title, key, BPM, or marker", text: $librarySearchText)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundStyle(.white)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .accessibilityLabel("Search local tracks by title, key, tempo, or marker")
+                if !librarySearchText.isEmpty {
+                    Button {
+                        librarySearchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Clear track search")
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .background(.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 13))
+
             Picker("Sort local tracks", selection: $librarySort) {
                 ForEach(TrackLibrarySort.allCases) { order in
                     Text(order.rawValue).tag(order)
@@ -157,48 +183,56 @@ struct TrackStudyView: View {
             }
             .pickerStyle(.segmented)
 
-            ForEach(sortedLibraryTracks) { item in
-                let selected = store.selectedTrackID == item.id
-                Button {
-                    store.selectTrack(item.id)
-                } label: {
-                    HStack(spacing: 11) {
-                        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(selected ? .mint : .white.opacity(0.35))
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(item.title)
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            HStack(spacing: 8) {
-                                if let key = item.analysis?.firstKeySpan?.key {
-                                    Text(key)
-                                } else {
-                                    Text("Key not analyzed")
-                                }
-                                if let tempo = item.analysis?.tempoBPM {
-                                    Text("· \(tempo) BPM")
-                                }
-                                Text("· \(timeString(item.duration))")
-                            }
-                            .font(.system(size: 10, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.54))
-                        }
-                        Spacer(minLength: 0)
-                        if selected { Text("SELECTED")
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
-                            .tracking(0.7)
-                            .foregroundStyle(.mint)
-                        }
-                    }
-                    .contentShape(Rectangle())
+            if visibleTracks.isEmpty {
+                Text("No tracks match “\(librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines))”.")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.58))
                     .padding(.vertical, 8)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Select \(item.title)\(selected ? ", currently selected" : "")")
-                if item.id != sortedLibraryTracks.last?.id {
-                    Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
+            } else {
+                ForEach(visibleTracks) { item in
+                    let selected = store.selectedTrackID == item.id
+                    Button {
+                        store.selectTrack(item.id)
+                    } label: {
+                        HStack(spacing: 11) {
+                            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(selected ? .mint : .white.opacity(0.35))
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(item.title)
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                HStack(spacing: 8) {
+                                    if let key = item.analysis?.firstKeySpan?.key {
+                                        Text(key)
+                                    } else {
+                                        Text("Key not analyzed")
+                                    }
+                                    if let tempo = item.analysis?.tempoBPM {
+                                        Text("· \(tempo) BPM")
+                                    }
+                                    Text("· \(timeString(item.duration))")
+                                }
+                                .font(.system(size: 10, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.54))
+                            }
+                            Spacer(minLength: 0)
+                            if selected {
+                                Text("SELECTED")
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .tracking(0.7)
+                                    .foregroundStyle(.mint)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .padding(.vertical, 8)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Select \(item.title)\(selected ? ", currently selected" : "")")
+                    if item.id != visibleTracks.last?.id {
+                        Rectangle().fill(.white.opacity(0.07)).frame(height: 1)
+                    }
                 }
             }
             Text("Files stay in Track Study. First-key and tempo sorting uses on-device Music Understanding analysis when available.")
@@ -211,7 +245,18 @@ struct TrackStudyView: View {
     }
 
     private var sortedLibraryTracks: [PracticeTrack] {
-        store.tracks.sorted { left, right in
+        let query = librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let matchingTracks = store.tracks.filter { track in
+            guard !query.isEmpty else { return true }
+            let searchableValues = [
+                track.title,
+                track.analysis?.firstKeySpan?.key ?? "",
+                track.analysis?.tempoBPM.map { String($0) } ?? ""
+            ] + track.markers.map(\.title) + track.loops.map(\.title)
+            return searchableValues.contains { $0.localizedStandardContains(query) }
+        }
+
+        return matchingTracks.sorted { left, right in
             switch librarySort {
             case .recent:
                 if left.importedAt != right.importedAt { return left.importedAt > right.importedAt }
