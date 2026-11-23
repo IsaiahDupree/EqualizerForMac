@@ -24,6 +24,7 @@ struct FloatingPlayer: View {
                     .accessibilityIdentifier("floatingCurve")
                 }
                 if player.state == .playing || player.state == .paused {
+                    sleepTimer
                     Button(action: player.stop) {
                         Image(systemName: "stop.fill")
                             .font(.subheadline.weight(.semibold))
@@ -129,5 +130,28 @@ struct FloatingPlayer: View {
         .disabled(player.fileName == nil)
         .accessibilityLabel(title)
         .accessibilityIdentifier("playAudio")
+    }
+
+    private var sleepTimer: some View {
+        Menu {
+            ForEach([15, 30, 45, 60, 90], id: \.self) { minutes in
+                Button("Stop in \(minutes) minutes") {
+                    player.setSleepTimer(minutes: minutes)
+                }
+            }
+            if player.sleepTimerMinutes != nil {
+                Button("Cancel sleep timer", role: .destructive) {
+                    player.setSleepTimer(minutes: nil)
+                }
+            }
+        } label: {
+            Image(systemName: player.sleepTimerMinutes == nil ? "moon.zzz" : "moon.zzz.fill")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(EqualizerEditor.accent)
+                .frame(width: 40, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(player.sleepTimerMinutes.map { "Sleep timer, stops in \($0) minutes" } ?? "Set sleep timer")
+        .accessibilityIdentifier("sleepTimer")
     }
 }

@@ -22,6 +22,8 @@ final class PreviewPlayer {
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
     @ObservationIgnored private var analysis: AudioAnalysisMonitor?
     @ObservationIgnored private var outputCorrections: [String: OutputCorrection] = [:]
+    @ObservationIgnored private var sleepTimerTask: Task<Void, Never>?
+    private(set) var sleepTimerMinutes: Int?
     private static let bypassedCorrection = MobileEQSettings(bands: [], bypassed: true)
 
     func readAnalysis() -> AudioAnalysisFrame? {
@@ -52,6 +54,20 @@ final class PreviewPlayer {
     func applyOutputCorrections(_ corrections: [String: OutputCorrection]) {
         outputCorrections = corrections
         refreshOutput()
+    }
+
+    func setSleepTimer(minutes: Int?) {
+        sleepTimerTask?.cancel()
+        sleepTimerTask = nil
+        sleepTimerMinutes = minutes
+        guard let minutes else { return }
+
+        sleepTimerTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(minutes) * 60 * 1_000_000_000)
+            guard !Task.isCancelled, let self else { return }
+            self.error = "Sleep timer ended playback."
+            self.stop()
+        }
     }
 
     func refreshOutput() {
@@ -151,6 +167,9 @@ final class PreviewPlayer {
 
     func stop() {
         playRequest = nil
+        sleepTimerTask?.cancel()
+        sleepTimerTask = nil
+        sleepTimerMinutes = nil
         graph?.player.stop()
         graph?.removeAnalysisTap()
         graph?.engine.stop()

@@ -1,5 +1,13 @@
 # Sonance EQ for iOS
 
+The Sonance prototype and the broader iOS utility portfolio are tracked in
+[the utility app roadmap](UTILITY-APP-ROADMAP.md). The first separate utility
+prototype, Screenshot Scout, is in `iOS/Utilities/ScreenshotScout/`.
+Sonance's file player also includes a selectable sleep timer while playback is
+active.
+Clear Record is a second separate utility prototype in
+`iOS/Utilities/MeetingNotes/`.
+
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app
 includes the Mac app’s ten starting bands and five presets. Choose a band

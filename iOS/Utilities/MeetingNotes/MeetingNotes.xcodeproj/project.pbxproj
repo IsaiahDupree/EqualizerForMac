@@ -1,0 +1,347 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		19B86F839265E793994E3A11 /* MeetingLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3657237F0D62CFD0E1FA5D93 /* MeetingLibraryView.swift */; };
+		29E8EFCD12555050765BD81E /* MeetingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5E825DBD1C296C22AEDD83 /* MeetingDetailView.swift */; };
+		4800986445F90DD68B764BD7 /* Speech.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAEE8500ED7FCA3D20E5FBFB /* Speech.framework */; };
+		538ABF6060D121A3559A4E17 /* MeetingNotesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC892F0CDC165645B9F7E87 /* MeetingNotesApp.swift */; };
+		86A35FBE55AC151EE8045D16 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E3C579C66E912BFA47FBE67B /* AVFAudio.framework */; };
+		99A2C26257F9240301D935E6 /* OnDeviceTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */; };
+		CC7EE74B8A5CB1B5DC2E5A8D /* MeetingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4762F02645020C9936330A8 /* MeetingSession.swift */; };
+		CF01EA59F8A2AF3150B4182B /* MeetingNotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50C9F2DE6DF64BFE10891EE /* MeetingNotesStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1F5E825DBD1C296C22AEDD83 /* MeetingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingDetailView.swift; sourceTree = "<group>"; };
+		2CC892F0CDC165645B9F7E87 /* MeetingNotesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotesApp.swift; sourceTree = "<group>"; };
+		3657237F0D62CFD0E1FA5D93 /* MeetingLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingLibraryView.swift; sourceTree = "<group>"; };
+		9B8A6BBD022A072C98F8CF21 /* MeetingNotes.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = MeetingNotes.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A50C9F2DE6DF64BFE10891EE /* MeetingNotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingNotesStore.swift; sourceTree = "<group>"; };
+		CAEE8500ED7FCA3D20E5FBFB /* Speech.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Speech.framework; path = System/Library/Frameworks/Speech.framework; sourceTree = SDKROOT; };
+		D4762F02645020C9936330A8 /* MeetingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingSession.swift; sourceTree = "<group>"; };
+		DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceTranscriber.swift; sourceTree = "<group>"; };
+		E3C579C66E912BFA47FBE67B /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D3A697D23E6702261164F529 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				86A35FBE55AC151EE8045D16 /* AVFAudio.framework in Frameworks */,
+				4800986445F90DD68B764BD7 /* Speech.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8975A53AAC5920ADB33D3178 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9B8A6BBD022A072C98F8CF21 /* MeetingNotes.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D81F895129E0981D223411F2 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				1F5E825DBD1C296C22AEDD83 /* MeetingDetailView.swift */,
+				3657237F0D62CFD0E1FA5D93 /* MeetingLibraryView.swift */,
+				2CC892F0CDC165645B9F7E87 /* MeetingNotesApp.swift */,
+				A50C9F2DE6DF64BFE10891EE /* MeetingNotesStore.swift */,
+				D4762F02645020C9936330A8 /* MeetingSession.swift */,
+				DDB52A817D9E15222B160F70 /* OnDeviceTranscriber.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		DDE744B15C6BD6C4997A2C4D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E3C579C66E912BFA47FBE67B /* AVFAudio.framework */,
+				CAEE8500ED7FCA3D20E5FBFB /* Speech.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E351E2A001A7B8B87E84F373 = {
+			isa = PBXGroup;
+			children = (
+				D81F895129E0981D223411F2 /* Sources */,
+				DDE744B15C6BD6C4997A2C4D /* Frameworks */,
+				8975A53AAC5920ADB33D3178 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		027616721B6070705A150A9E /* MeetingNotes */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7AE0062FDC8590DE5883F0F /* Build configuration list for PBXNativeTarget "MeetingNotes" */;
+			buildPhases = (
+				50A41AED7D25DDF6A3EC3BCA /* Sources */,
+				D3A697D23E6702261164F529 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MeetingNotes;
+			packageProductDependencies = (
+			);
+			productName = MeetingNotes;
+			productReference = 9B8A6BBD022A072C98F8CF21 /* MeetingNotes.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7250D62D92DA99ED9C81DD06 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 864E443AB23A46CB80A1D421 /* Build configuration list for PBXProject "MeetingNotes" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = E351E2A001A7B8B87E84F373;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 8975A53AAC5920ADB33D3178 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				027616721B6070705A150A9E /* MeetingNotes */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		50A41AED7D25DDF6A3EC3BCA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				29E8EFCD12555050765BD81E /* MeetingDetailView.swift in Sources */,
+				19B86F839265E793994E3A11 /* MeetingLibraryView.swift in Sources */,
+				538ABF6060D121A3559A4E17 /* MeetingNotesApp.swift in Sources */,
+				CF01EA59F8A2AF3150B4182B /* MeetingNotesStore.swift in Sources */,
+				CC7EE74B8A5CB1B5DC2E5A8D /* MeetingSession.swift in Sources */,
+				99A2C26257F9240301D935E6 /* OnDeviceTranscriber.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		24FC2F039E3F592F25D7CCD1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Clear Record";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Record a meeting only after you confirm everyone present has agreed.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Transcribe saved recordings on this device when on-device recognition is available.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.MeetingNotes;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		40BBE3A2426EAC1417A04DDA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		49BB167524707BDCE9BFBEE3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		4CC32148B0F748E198295C4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Clear Record";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Record a meeting only after you confirm everyone present has agreed.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Transcribe saved recordings on this device when on-device recognition is available.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.MeetingNotes;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		864E443AB23A46CB80A1D421 /* Build configuration list for PBXProject "MeetingNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				40BBE3A2426EAC1417A04DDA /* Debug */,
+				49BB167524707BDCE9BFBEE3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E7AE0062FDC8590DE5883F0F /* Build configuration list for PBXNativeTarget "MeetingNotes" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4CC32148B0F748E198295C4F /* Debug */,
+				24FC2F039E3F592F25D7CCD1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 7250D62D92DA99ED9C81DD06 /* Project object */;
+}

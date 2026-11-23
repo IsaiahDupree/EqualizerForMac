@@ -3,6 +3,25 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
+## Utility portfolio progress — 2026-11-22
+
+- Sonance's Files player now offers 15, 30, 45, 60, and 90 minute stop timers.
+  The Sonance iOS app and AUv3 target compiled for the iOS Simulator with
+  Xcode 26.0.1. The timer has not been exercised at runtime.
+- Screenshot Scout is a separate iOS 17 app target in
+  `Utilities/ScreenshotScout/`. It imports only images selected through
+  PhotosUI, runs Vision OCR and image classification on-device, searches the
+  local index, skips byte-identical reimports, and stores resized JPEG copies
+  in its app container. Its iOS Simulator build succeeded with Xcode 26.0.1.
+- Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
+  It requires an explicit consent confirmation, records in the foreground,
+  saves on an interruption or background transition, and asks Speech for
+  on-device English transcription only. Its iOS Simulator build succeeded with
+  Xcode 26.0.1; microphone behavior and transcription have not been exercised
+  at runtime.
+- These are local build results. No simulator interaction, phone installation,
+  or iPhone deployment was performed in this step.
+
 ## Implemented
 
 - Local mono/stereo audio file playback with a parametric equalizer, bypass,
