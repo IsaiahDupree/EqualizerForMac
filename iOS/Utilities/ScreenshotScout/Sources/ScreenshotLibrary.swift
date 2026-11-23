@@ -184,8 +184,7 @@ final class ScreenshotLibrary: ObservableObject {
             matchedImages.reserveCapacity(min(imageSnapshot.count, 100))
             for image in imageSnapshot {
                 try Task.checkCancellation()
-                let searchable = ([image.recognizedText, image.sceneDescription ?? ""] + image.labels).joined(separator: " ")
-                if queryTerms.allSatisfy({ searchable.localizedCaseInsensitiveContains($0) }) {
+                if image.matches(searchTerms: queryTerms) {
                     matchedImages.append(image)
                 }
             }
@@ -194,8 +193,7 @@ final class ScreenshotLibrary: ObservableObject {
             matchedVideos.reserveCapacity(min(videoSnapshot.count, 100))
             for video in videoSnapshot {
                 try Task.checkCancellation()
-                let searchable = ([video.recognizedText, video.sceneDescriptions] + video.labels).joined(separator: " ")
-                if queryTerms.allSatisfy({ searchable.localizedCaseInsensitiveContains($0) }) {
+                if video.matches(searchTerms: queryTerms) {
                     matchedVideos.append(video)
                 }
             }

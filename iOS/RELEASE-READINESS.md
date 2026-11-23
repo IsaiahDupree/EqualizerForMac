@@ -22,6 +22,11 @@ is reviewed and accepted and the apps are rebuilt.
   project generation passed;
   Xcode compilation remains blocked by its unaccepted first-use license, and
   listening behavior has not been validated on a device.
+- Screenshot Scout search now checks OCR, scene descriptions, and labels in
+  their stored fields. Video matching walks sampled frames directly, avoiding
+  per-query joined copies of all frame text and sorted labels while retaining
+  multi-term case-insensitive matching. Source review, `git diff --check`, and
+  XcodeGen generation passed; native compilation remains license-gated.
 - Sonance EQ now includes everyday Workout, Focus, and Late Night starting
   curves in the standalone profile screen and AUv3 preset menu. Built-in preset
   application calculates peak-response headroom and disables bypass. Late

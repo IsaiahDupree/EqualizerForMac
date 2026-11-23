@@ -8,6 +8,14 @@ struct IndexedImage: Identifiable, Codable, Hashable, Sendable {
     var labels: [String]
     var sha256: String
     var sceneDescription: String? = nil
+
+    func matches(searchTerms: [String]) -> Bool {
+        searchTerms.allSatisfy { term in
+            recognizedText.localizedCaseInsensitiveContains(term)
+                || sceneDescription?.localizedCaseInsensitiveContains(term) == true
+                || labels.contains { $0.localizedCaseInsensitiveContains(term) }
+        }
+    }
 }
 
 struct IndexedVideo: Identifiable, Codable, Hashable, Sendable {
@@ -31,6 +39,16 @@ struct IndexedVideo: Identifiable, Codable, Hashable, Sendable {
         frames.compactMap(\.sceneDescription)
             .filter { !$0.isEmpty }
             .joined(separator: "\n")
+    }
+
+    func matches(searchTerms: [String]) -> Bool {
+        searchTerms.allSatisfy { term in
+            frames.contains { frame in
+                frame.recognizedText.localizedCaseInsensitiveContains(term)
+                    || frame.sceneDescription?.localizedCaseInsensitiveContains(term) == true
+                    || frame.labels.contains { $0.localizedCaseInsensitiveContains(term) }
+            }
+        }
     }
 }
 
