@@ -196,20 +196,107 @@ struct TrackStudyView: View {
                 Text("\(analysis.sectionSpans.count) sections · \(analysis.paceSpans.count) pace ranges · \(analysis.instrumentSpans?.count ?? 0) instrument ranges")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.59))
+                if !analysis.paceSpans.isEmpty {
+                    Text("PACE WINDOWS · perceived events/min, separate from BPM")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+                    ForEach(analysis.paceSpans.prefix(8)) { span in
+                        Button {
+                            store.seek(to: span.startSeconds)
+                        } label: {
+                            HStack {
+                                Text(String(format: "%.0f events/min", span.pace))
+                                    .foregroundStyle(.white.opacity(0.85))
+                                Spacer()
+                                Text("\(timeString(span.startSeconds)) – \(timeString(span.startSeconds + span.durationSeconds))")
+                                    .foregroundStyle(.white.opacity(0.55))
+                                Image(systemName: "arrow.uturn.forward").foregroundStyle(.mint)
+                            }
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Jump to pace range at \(timeString(span.startSeconds)), \(Int(span.pace.rounded())) perceived events per minute")
+                    }
+                }
                 if let instrumentSpans = analysis.instrumentSpans, !instrumentSpans.isEmpty {
                     let instruments = Array(Set(instrumentSpans.map(\.instrument))).sorted()
                     Text("Detected groups: \(instruments.joined(separator: ", ").capitalized)")
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(.white.opacity(0.72))
-                }
-                ForEach(Array(analysis.sectionSpans.prefix(12).enumerated()), id: \.offset) { index, span in
-                    HStack {
-                        Text("Section \(index + 1)").foregroundStyle(.white.opacity(0.8))
-                        Spacer()
-                        Text("\(timeString(span.startSeconds)) – \(timeString(span.startSeconds + span.durationSeconds))")
-                            .foregroundStyle(.white.opacity(0.55))
+                    Text("Instrument entrances · tap to jump")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+                    ForEach(instruments.prefix(8), id: \.self) { instrument in
+                        if let firstSpan = instrumentSpans
+                            .filter({ $0.instrument == instrument })
+                            .min(by: { $0.startSeconds < $1.startSeconds }) {
+                            Button {
+                                store.seek(to: firstSpan.startSeconds)
+                            } label: {
+                                HStack {
+                                    Text(instrument.replacingOccurrences(of: "_", with: " ").capitalized)
+                                        .foregroundStyle(.white.opacity(0.85))
+                                    Spacer()
+                                    Text(timeString(firstSpan.startSeconds))
+                                        .foregroundStyle(.white.opacity(0.55))
+                                    Image(systemName: "arrow.uturn.forward").foregroundStyle(.mint)
+                                }
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Jump to first detected \(instrument) at \(timeString(firstSpan.startSeconds))")
+                        }
                     }
-                    .font(.system(size: 11, design: .monospaced))
+                }
+                if !analysis.sectionSpans.isEmpty {
+                    Text("Sections · tap to jump")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+                    ForEach(Array(analysis.sectionSpans.prefix(12).enumerated()), id: \.offset) { index, span in
+                        Button {
+                            store.seek(to: span.startSeconds)
+                        } label: {
+                            HStack {
+                                Text("Section \(index + 1)").foregroundStyle(.white.opacity(0.85))
+                                Spacer()
+                                Text("\(timeString(span.startSeconds)) – \(timeString(span.startSeconds + span.durationSeconds))")
+                                    .foregroundStyle(.white.opacity(0.55))
+                                Image(systemName: "arrow.uturn.forward").foregroundStyle(.mint)
+                            }
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Jump to section \(index + 1) at \(timeString(span.startSeconds))")
+                    }
+                }
+                if analysis.keySpans.count > 1 {
+                    Text("Key changes · tap to jump")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
+                    ForEach(analysis.keySpans.prefix(12)) { span in
+                        Button {
+                            store.seek(to: span.startSeconds)
+                        } label: {
+                            HStack {
+                                Text(span.key).foregroundStyle(.white.opacity(0.85))
+                                Spacer()
+                                Text("\(timeString(span.startSeconds)) · \(timeString(span.durationSeconds))")
+                                    .foregroundStyle(.white.opacity(0.55))
+                                Image(systemName: "arrow.uturn.forward").foregroundStyle(.mint)
+                            }
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Jump to \(span.key) at \(timeString(span.startSeconds))")
+                    }
                 }
             } else {
                 Text(MusicUnderstandingAnalyzer.isAvailable

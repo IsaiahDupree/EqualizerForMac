@@ -3,6 +3,11 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
+Xcode 27.2 was installed on this Mac on 2026-11-22. Its first-use license has
+not been accepted, so SDK discovery and new builds are currently blocked. Build
+results below are historical Xcode 26.0.1 Simulator evidence until the license
+is reviewed and accepted and the apps are rebuilt.
+
 ## Utility portfolio progress — 2026-11-22
 
 - Sonance EQ now exposes App Shortcuts to enable or disable bypass for the
@@ -16,6 +21,13 @@ iOS 27 cross-app product and has not been submitted or published.
 - Sonance's Files player now offers 15, 30, 45, 60, and 90 minute stop timers.
   The Sonance iOS app and AUv3 target compiled for the iOS Simulator with
   Xcode 26.0.1. The timer has not been exercised at runtime.
+- Sonance's listening screen now includes a preference-guided headphone
+  profile assistant. Three listening choices create a moderate editable EQ
+  curve and estimate preamp headroom from the calculated filter response;
+  users can save it as a preset or apply it for A/B comparison with the current
+  curve. It does not measure headphones or identify a model. The
+  updated Sonance app and AUv3 target built with Xcode 26.0.1 for the generic
+  iOS Simulator destination. No runtime or listening check has been performed.
 - Screenshot Scout is a separate iOS 17 app target in
   `Utilities/ScreenshotScout/`. It imports only images selected through
   PhotosUI, runs Vision OCR and image classification on-device, searches the
@@ -80,34 +92,41 @@ iOS 27 cross-app product and has not been submitted or published.
 - Track Study is a new iOS 17+ music practice app. Its file import, local audio
   playback/seeking, and persistent practice marker flow compiled for a generic
   iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. The Music
-  Understanding adapter is guarded by SDK/OS availability and is not compiled
-  by this Mac's iOS 26 SDK. App UI and audio behavior have not been exercised
+  Understanding adapter is guarded by SDK/OS availability. It has not been
+  compiled with the installed Xcode 27.2 SDK because first-use setup is pending.
+  App UI and audio behavior have not been exercised
   in a simulator or on a phone.
 - Track Study now saves named A/B practice loops with tracks, supports marking
   start and end from the current playhead, and repeats the passage during
   playback. Existing track records decode without a loops field. The updated
   target compiled with Xcode 26.0.1 for arm64 and x86_64; playback and loop
   boundary behavior remain unexercised at runtime. Its iOS 27 Music
-  Understanding adapter is gated to Swift 6.4 / Xcode 27 and is not compiled
-  by the installed SDK.
+  Understanding adapter is gated to Swift 6.4 / Xcode 27 and remains uncompiled
+  against the installed SDK pending first-use setup.
 - Track Study now provides a Siri/Shortcuts action to mark the current
   playhead on an imported track. The action adds a named marker without
   starting recording or playback. The Xcode 26.0.1 Simulator build succeeded
   for arm64 and x86_64 with bundle ID `com.isaiahdupree.trackstudy`; generated
   App Intents metadata contains the marker action and Siri phrases. Runtime
   behavior has not been exercised.
-- Track Study's iOS 27 Music Understanding adapter now requests all six
-  documented analysis types: rhythm, key, structure, pace, instrument activity,
-  and loudness. It saves instrument ranges and integrated/peak loudness with
-  existing practice analysis, and the view presents those results. This path is
-  compile-gated to Swift 6.4 / Xcode 27; the current Xcode 26 build can only
-  verify the stable playback and practice fallback. The iOS 27 API and outputs
-  remain uncompiled and unreviewed on a supported runtime.
+- Track Study's iOS 27 Music Understanding adapter requests all six documented
+  analysis types: rhythm, key, structure, pace, instrument activity, and
+  loudness. It saves instrument ranges and integrated/peak loudness with the
+  practice analysis. Pace windows show Apple's perceived events-per-minute
+  measure separately from BPM, and section, key, pace, and first instrument
+  detections can jump to their start time. This path is compile-gated to Swift
+  6.4 / Xcode 27; the last verified Xcode 26 build covers only stable playback
+  and practice features. The iOS 27 API and outputs remain uncompiled and
+  unreviewed on a supported runtime.
 - After that adapter change, the full Track Study app target rebuilt with
   Xcode 26.0.1 for the generic iOS Simulator destination. The arm64 and x86_64
   app slices and bundle ID `com.isaiahdupree.trackstudy` were confirmed. This
   verifies the stable app and fallback path only; no tests or device installs
   were run, and the Xcode 27 analyzer branch remains uncompiled.
+- Track Study's music map makes detected section, key, pace, and first instrument
+  detections actionable: selecting a span seeks the local player to its start.
+  The iOS 27 analyzer branch still needs compilation and supported-runtime
+  review.
 - Screenshot Scout now offers the same optional, review-before-save iOS 27
   scene description for one selected video frame at a time. The frame is the
   model input; full video analysis is not claimed. Saved descriptions are
@@ -180,3 +199,12 @@ iOS 27 cross-app product and has not been submitted or published.
    the product and its compatibility claims have been verified.
 
 Additional concepts are listed in [APP-IDEAS.md](APP-IDEAS.md).
+
+## Local utility builds
+
+Run `./build-utilities.sh` from the `iOS/` directory to build Sonance EQ,
+Screenshot Scout, Track Study, and Clear Record sequentially for the generic
+iOS Simulator destination with code signing disabled. The script uses bounded
+local build concurrency and writes DerivedData under `/tmp` by default. It
+does not run tests, launch a simulator, install to a device, or publish an app.
+EverReach remains in its separate repository and is built there independently.

@@ -62,7 +62,7 @@ private struct EqualizerView: View {
                         Button {
                             showingListeningModes = true
                         } label: {
-                            Label("Speech Listening Modes", systemImage: "waveform.and.mic")
+                            Label("Listening & Sound Profiles", systemImage: "waveform.and.mic")
                                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                         }
                         .buttonStyle(.plain)
@@ -158,7 +158,7 @@ private struct ListeningGuideView: View {
                     Label("Use Bypass EQ to compare the original and adjusted sound.", systemImage: "3.circle")
                 }
                 Section("Listen to speech") {
-                    Text("Choose Speech Listening Modes for starting curves for podcasts, audiobooks, interviews and dialogue. You can edit and save any of them.")
+                    Text("Choose Listening & Sound Profiles for starting curves for speech or a preference-guided headphone sound. You can edit and save any suggestion.")
                 }
                 Section("Use another audio app") {
                     Text("Add Sonance EQ as an effect in a compatible AUv3 host. Choose a speech curve from the host's Sonance Presets menu. The host controls its own effect settings.")
