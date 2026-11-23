@@ -158,7 +158,7 @@ struct MeetingLibraryView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.white.opacity(0.48))
-                    TextField("Title, transcript, or summary", text: $sessionSearch)
+                    TextField("Search words in title, transcript, or summary", text: $sessionSearch)
                         .font(.system(size: 14, design: .rounded))
                         .foregroundStyle(.white)
                         .textInputAutocapitalization(.never)
@@ -184,7 +184,7 @@ struct MeetingLibraryView: View {
                     .foregroundStyle(.white.opacity(0.65))
                     .padding(.top, 8)
             } else if matchingSessions.isEmpty {
-                ContentUnavailableView("No matching sessions", systemImage: "magnifyingglass", description: Text("Try a different title, transcript phrase, or summary term."))
+                ContentUnavailableView("No matching sessions", systemImage: "magnifyingglass", description: Text("Try different words from the title, transcript, or summary."))
                     .foregroundStyle(.white.opacity(0.65))
                     .padding(.top, 8)
             } else {
@@ -205,12 +205,16 @@ struct MeetingLibraryView: View {
     }
 
     private var matchingSessions: [MeetingSession] {
-        let query = sessionSearch.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return store.sessions }
+        let terms = sessionSearch
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        guard !terms.isEmpty else { return store.sessions }
         return store.sessions.filter { session in
-            session.title.localizedStandardContains(query)
-                || session.transcript.localizedStandardContains(query)
-                || (session.aiSummary?.localizedStandardContains(query) ?? false)
+            let searchableFields = [session.title, session.transcript, session.aiSummary ?? ""]
+            return terms.allSatisfy { term in
+                searchableFields.contains { $0.localizedStandardContains(term) }
+            }
         }
     }
 
@@ -242,18 +246,21 @@ private struct SessionRow: View {
     let searchQuery: String
     let isTranscribing: Bool
 
-    private var matchingExcerpt: (source: String, text: String)? {
-        guard !searchQuery.isEmpty,
-              !session.title.localizedStandardContains(searchQuery) else { return nil }
+    private var matchingExcerpts: [(source: String, text: String)] {
+        let terms = searchQuery
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        guard !terms.isEmpty else { return [] }
 
-        if let excerpt = excerpt(in: session.transcript, for: searchQuery) {
-            return ("TRANSCRIPT", excerpt)
+        var excerpts: [(source: String, text: String)] = []
+        if let excerpt = terms.lazy.compactMap({ excerpt(in: session.transcript, for: $0) }).first {
+            excerpts.append(("TRANSCRIPT", excerpt))
         }
         if let summary = session.aiSummary,
-           let excerpt = excerpt(in: summary, for: searchQuery) {
-            return ("SUMMARY", excerpt)
+           let excerpt = terms.lazy.compactMap({ excerpt(in: summary, for: $0) }).first {
+            excerpts.append(("SUMMARY", excerpt))
         }
-        return nil
+        return excerpts
     }
 
     private func excerpt(in text: String, for query: String) -> String? {
@@ -281,13 +288,13 @@ private struct SessionRow: View {
                 Text(session.title).font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(.white).lineLimit(1)
                 Text("\(session.createdAt.formatted(date: .abbreviated, time: .shortened)) · \(Int(session.duration / 60)) min")
                     .font(.system(size: 11, design: .rounded)).foregroundStyle(.white.opacity(0.48))
-                if let matchingExcerpt {
+                ForEach(Array(matchingExcerpts.enumerated()), id: \.offset) { entry in
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(matchingExcerpt.source)
+                        Text(entry.element.source)
                             .font(.system(size: 9, weight: .bold, design: .rounded))
                             .tracking(0.6)
                             .foregroundStyle(.cyan.opacity(0.85))
-                        Text(matchingExcerpt.text)
+                        Text(entry.element.text)
                             .font(.system(size: 11, design: .rounded))
                             .foregroundStyle(.white.opacity(0.65))
                             .lineLimit(2)
