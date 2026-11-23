@@ -21,6 +21,10 @@ is reviewed and accepted and the apps are rebuilt.
   JSON indexes and updates them during import, rollback, and removal. This
   avoids a full saved-record scan for every duplicate check. Source review and
   `git diff --check` passed; Xcode compilation remains license-gated.
+- Screenshot Scout now invalidates pending image and frame descriptions
+  after user edits, save/clear actions, source removal, or leaving the detail
+  screen. Late model results and errors no longer overwrite the active review.
+  Xcode compilation remains license-gated.
 - Track Study reapplies backup-exclusion hints to the local directories, audio
   file, and track index. If a replacement import fails, it preserves the
   previously saved track and removes the partial copy.

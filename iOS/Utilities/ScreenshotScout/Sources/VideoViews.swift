@@ -239,6 +239,8 @@ private struct VideoFrameDescriptionEditor: View {
     @EnvironmentObject private var library: ScreenshotLibrary
     @Environment(\.dismiss) private var dismiss
     @State private var draft: String
+    @State private var draftRevision = 0
+    @State private var draftRequestID = UUID()
     @State private var isGenerating = false
     @State private var errorMessage: String?
 
@@ -289,7 +291,7 @@ private struct VideoFrameDescriptionEditor: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    TextEditor(text: $draft)
+                    TextEditor(text: draftBinding)
                         .frame(minHeight: 130)
                         .padding(8)
                         .scrollContentBackground(.hidden)
@@ -319,28 +321,65 @@ private struct VideoFrameDescriptionEditor: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .onDisappear { invalidateDraftRequest() }
         }
     }
 
     @MainActor
     private func generateDraft() async {
+        let requestID = UUID()
+        draftRequestID = requestID
+        let startingRevision = draftRevision
         isGenerating = true
         errorMessage = nil
-        defer { isGenerating = false }
+        defer {
+            if draftRequestID == requestID { isGenerating = false }
+        }
 
         do {
-            draft = try await FoundationModelsImageDescriber.describe(imageURL: imageURL)
+            let suggestion = try await FoundationModelsImageDescriber.describe(imageURL: imageURL)
+            let currentVideo = library.videos.first(where: { $0.id == videoID })
+            let frameIsStillIndexed = currentVideo?.frames.contains(where: { $0.index == frame.index }) ?? false
+            guard draftRequestID == requestID,
+                  draftRevision == startingRevision,
+                  !Task.isCancelled,
+                  frameIsStillIndexed else { return }
+            draft = suggestion
+            draftRevision &+= 1
         } catch {
+            let currentVideo = library.videos.first(where: { $0.id == videoID })
+            let frameIsStillIndexed = currentVideo?.frames.contains(where: { $0.index == frame.index }) ?? false
+            guard draftRequestID == requestID,
+                  draftRevision == startingRevision,
+                  !Task.isCancelled,
+                  frameIsStillIndexed else { return }
             errorMessage = error.localizedDescription
         }
     }
 
     private func saveDraft() {
+        invalidateDraftRequest()
         do {
             try library.updateSceneDescription(for: videoID, frameIndex: frame.index, description: draft)
             dismiss()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private var draftBinding: Binding<String> {
+        Binding(
+            get: { draft },
+            set: { value in
+                draftRevision &+= 1
+                draft = value
+            }
+        )
+    }
+
+    private func invalidateDraftRequest() {
+        draftRevision &+= 1
+        draftRequestID = UUID()
+        isGenerating = false
     }
 }

@@ -8,6 +8,8 @@ struct ImageDetailView: View {
     @State private var canDescribeOnDevice = false
     @State private var isDescribingOnDevice = false
     @State private var sceneDescriptionDraft = ""
+    @State private var sceneDescriptionRevision = 0
+    @State private var sceneDescriptionRequestID = UUID()
     @State private var savedSceneDescription: String?
     @State private var sceneDescriptionError: String?
 
@@ -108,6 +110,9 @@ struct ImageDetailView: View {
                 savedSceneDescription = item.sceneDescription
                 sceneDescriptionDraft = item.sceneDescription ?? ""
             }
+            .onDisappear {
+                invalidateSceneDescriptionRequest()
+            }
             .alert("Could not create scene description", isPresented: sceneDescriptionErrorPresented) {
                 Button("OK", role: .cancel) { sceneDescriptionError = nil }
             } message: {
@@ -146,7 +151,7 @@ struct ImageDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
-            TextEditor(text: $sceneDescriptionDraft)
+            TextEditor(text: sceneDescriptionBinding)
                 .font(.system(size: 14, design: .rounded))
                 .frame(minHeight: 88)
                 .scrollContentBackground(.hidden)
@@ -178,19 +183,33 @@ struct ImageDetailView: View {
     @MainActor
     private func describeSceneOnDevice() async {
         guard canDescribeOnDevice, !isDescribingOnDevice else { return }
+        let requestID = UUID()
+        sceneDescriptionRequestID = requestID
+        let startingRevision = sceneDescriptionRevision
         isDescribingOnDevice = true
-        defer { isDescribingOnDevice = false }
+        defer {
+            if sceneDescriptionRequestID == requestID { isDescribingOnDevice = false }
+        }
         do {
-            sceneDescriptionDraft = try await FoundationModelsImageDescriber.describe(
+            let suggestion = try await FoundationModelsImageDescriber.describe(
                 imageURL: library.imageURL(for: item)
             )
+            guard sceneDescriptionRequestID == requestID,
+                  sceneDescriptionRevision == startingRevision,
+                  library.images.contains(where: { $0.id == item.id }) else { return }
+            sceneDescriptionDraft = suggestion
+            sceneDescriptionRevision &+= 1
         } catch {
+            guard sceneDescriptionRequestID == requestID,
+                  sceneDescriptionRevision == startingRevision,
+                  library.images.contains(where: { $0.id == item.id }) else { return }
             canDescribeOnDevice = FoundationModelsImageDescriber.isAvailable
             sceneDescriptionError = error.localizedDescription
         }
     }
 
     private func saveSceneDescription() {
+        invalidateSceneDescriptionRequest()
         do {
             try library.updateSceneDescription(for: item.id, description: sceneDescriptionDraft)
             let value = sceneDescriptionDraft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -202,6 +221,7 @@ struct ImageDetailView: View {
     }
 
     private func clearSceneDescription() {
+        invalidateSceneDescriptionRequest()
         do {
             try library.updateSceneDescription(for: item.id, description: nil)
             sceneDescriptionDraft = ""
@@ -213,6 +233,22 @@ struct ImageDetailView: View {
 
     private var sceneDescriptionErrorPresented: Binding<Bool> {
         Binding(get: { sceneDescriptionError != nil }, set: { if !$0 { sceneDescriptionError = nil } })
+    }
+
+    private var sceneDescriptionBinding: Binding<String> {
+        Binding(
+            get: { sceneDescriptionDraft },
+            set: { value in
+                sceneDescriptionRevision &+= 1
+                sceneDescriptionDraft = value
+            }
+        )
+    }
+
+    private func invalidateSceneDescriptionRequest() {
+        sceneDescriptionRevision &+= 1
+        sceneDescriptionRequestID = UUID()
+        isDescribingOnDevice = false
     }
 
     @ViewBuilder
