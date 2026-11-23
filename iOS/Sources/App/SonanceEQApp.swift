@@ -5,7 +5,11 @@ import UniformTypeIdentifiers
 @main
 struct SonanceEQApp: App {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var session = EqualizerSession()
+    @State private var session = EqualizerSession.shared
+
+    init() {
+        SonanceAppShortcuts.updateAppShortcutParameters()
+    }
 
     var body: some Scene {
         WindowGroup { EqualizerView(session: session) }
@@ -163,6 +167,11 @@ private struct ListeningGuideView: View {
                 }
                 Section("Keep your sound") {
                     Text("Use Presets → Preset Library to save or export a curve. Output Correction can apply a saved preset to a recognized output during Sonance file playback.")
+                }
+                Section("Use Siri or Shortcuts") {
+                    Text("Say “Enable EQ bypass in Sonance EQ” to hear the selected file without EQ, or “Disable EQ bypass in Sonance EQ” to restore your saved curve.")
+                    Text("These actions change the standalone Sonance player. They do not control audio in another app.")
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Getting Started")

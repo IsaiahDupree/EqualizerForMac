@@ -14,7 +14,7 @@ Updated 2026-11-22. This is a build roadmap for locally built apps and prototype
 
 | Order | App / product | Form | Build boundary and next milestone |
 |---|---|---|---|
-| 1 | Sonance EQ for iPhone | Standalone app plus AUv3 | Existing prototype plays user-selected files with parametric EQ, presets, A/B, live meters, output correction, and speech modes. Keep improving this on stable APIs. Treat cross-app route support as an isolated iOS 27 experiment until Apple requirements and a working entitlement are resolved. |
+| 1 | Sonance EQ for iPhone | Standalone app plus AUv3 | Existing prototype plays user-selected files with parametric EQ, presets, A/B, live meters, output correction, speech modes, and Siri/Shortcuts actions to enable or disable bypass. Keep improving this on stable APIs. Treat cross-app route support as an isolated iOS 27 experiment until Apple requirements and a working entitlement are resolved. |
 | 2 | Screenshot Scout / Creator Library | Standalone utility | Index user-selected images and videos with local OCR, Vision labels, exact duplicate detection, cancellable visual-similarity ranking for images, search across five sampled video frames, user-controlled JSON inventory export, a persistent review queue, and an optional iOS 27 Foundation Models image-description path. The iOS 26 build compiles its fallback only; the new model path awaits an Xcode 27 build and runtime review. Next: library-scale performance and richer frame-based video search. |
 | 3 | EverReach Capture | Feature in EverReach | Share-in screenshot flow runs local Vision OCR, suggests a unique visible contact, previews an editable note, saves only after review, optionally attaches the image, and drafts a follow-up as a separate action. An optional Foundation Models note drafting path now consumes OCR text only and remains editable; source is gated by SDK, iOS 27, and model availability. The Xcode 26.0.1 / iOS 26 simulator build compiles the fallback only. Runtime behavior and the iOS 27 path remain unverified. |
 | 4 | Sonance Voice and Headphone Profiles | Sonance EQ modes | Keep dialogue, podcast, audiobook, headphone, sleep, focus, speaker, and A/B profiles within the EQ product while they use the same playback and DSP engine. A 15–90 minute sleep timer is now part of the player prototype. Split only if customer evidence supports a distinct app. |
@@ -43,6 +43,8 @@ The named products above are intentionally fewer than the idea list: Voice, head
 - [Foundation Models image attachments](https://developer.apple.com/documentation/foundationmodels/analyzing-images-with-multimodal-prompting)
 - [Foundation Models image capability](https://developer.apple.com/documentation/foundationmodels/languagemodelcapabilities/capability/vision)
 - [Foundation Models text generation](https://developer.apple.com/documentation/foundationmodels/generating-content-and-performing-tasks-with-foundation-models)
+- [App Intents and App Shortcuts](https://developer.apple.com/documentation/appintents/getting-started-with-the-app-intents-framework)
+- [App Intent supported modes](https://developer.apple.com/documentation/appintents/appintent/supportedmodes)
 - [Vision](https://developer.apple.com/documentation/vision)
 - [Music Understanding](https://developer.apple.com/documentation/musicunderstanding)
 - [Music Understanding WWDC26 overview](https://developer.apple.com/videos/play/wwdc2026/253/)

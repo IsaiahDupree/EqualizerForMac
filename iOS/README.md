@@ -69,6 +69,12 @@ The standalone player's settings apply to its Files playback. In a compatible
 AUv3 host, choose **Presets → Speech Listening** in the Sonance effect to use
 the same curves. Host settings are separate from the standalone player.
 
+Sonance also provides Siri and Shortcuts actions to enable or disable EQ
+bypass for the standalone Files player. Those actions preserve the current
+curve and do not control audio in another app. Apple App Shortcuts make the
+actions available through Siri, Spotlight, and the Shortcuts app; no external
+service or account is involved.
+
 ## Closing and reopening
 
 Sonance saves frequency, gain, Q, preamp, bypass, and the selected band on the

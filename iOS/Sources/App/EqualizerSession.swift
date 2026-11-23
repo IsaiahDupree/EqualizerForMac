@@ -46,6 +46,8 @@ struct EqualizerStore {
 
 @MainActor @Observable
 final class EqualizerSession {
+    static let shared = EqualizerSession()
+
     let player = PreviewPlayer()
     @ObservationIgnored lazy var presets = PresetLibrary()
     private(set) var snapshot: EqualizerSnapshot
@@ -97,6 +99,13 @@ final class EqualizerSession {
         editingChanged(true)
         updateEQ { $0 = profile.settings }
         selectBand(snapshot.settings.bands.firstIndex(where: \.enabled))
+        editingChanged(false)
+    }
+
+    func setEQBypass(_ bypassed: Bool) {
+        auditionReference(false)
+        editingChanged(true)
+        updateEQ { $0.bypassed = bypassed }
         editingChanged(false)
     }
 

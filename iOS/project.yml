@@ -48,6 +48,7 @@ targets:
         UIBackgroundModes: [audio]
     dependencies:
       - target: SonanceEQAudioUnit
+      - sdk: AppIntents.framework
       - sdk: Accelerate.framework
 
   SonanceEQAudioUnit:

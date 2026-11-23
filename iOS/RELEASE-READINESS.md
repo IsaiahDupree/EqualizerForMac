@@ -5,6 +5,14 @@ iOS 27 cross-app product and has not been submitted or published.
 
 ## Utility portfolio progress — 2026-11-22
 
+- Sonance EQ now exposes App Shortcuts to enable or disable bypass for the
+  standalone file player. Both actions operate on the app's shared EQ session,
+  preserve its current curve, and do not claim to control audio in other apps.
+  Xcode 26.0.1 compiled the iOS Simulator app and AUv3 extension for arm64 and
+  x86_64; the built App Intents metadata contains both shortcuts and their Siri
+  phrases. Bundle IDs are `com.isaiahdupree.SonanceEQ.iOSPrototype` and
+  `com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit`. Siri and lifecycle
+  behavior have not been exercised at runtime.
 - Sonance's Files player now offers 15, 30, 45, 60, and 90 minute stop timers.
   The Sonance iOS app and AUv3 target compiled for the iOS Simulator with
   Xcode 26.0.1. The timer has not been exercised at runtime.
