@@ -127,6 +127,12 @@ is reviewed and accepted and the apps are rebuilt.
   detections actionable: selecting a span seeks the local player to its start.
   The iOS 27 analyzer branch still needs compilation and supported-runtime
   review.
+- On 2026-11-23, Track Study gained a user-initiated text export of its title,
+  practice markers, A/B ranges, and available analysis. The export never
+  includes the audio file. XcodeGen added the formatter to the app target and
+  `git diff --check` passed. A generic Simulator build stopped before
+  compilation because Xcode 27.2 requires its license to be reviewed and
+  accepted; no tests or device installs were run.
 - Screenshot Scout now offers the same optional, review-before-save iOS 27
   scene description for one selected video frame at a time. The frame is the
   model input; full video analysis is not claimed. Saved descriptions are

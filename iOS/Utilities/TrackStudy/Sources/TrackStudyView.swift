@@ -21,6 +21,7 @@ struct TrackStudyView: View {
                         analysisCard(track)
                         markersCard(track)
                         loopsCard(track)
+                        exportCard(track)
                         Button("Remove imported track", systemImage: "trash", role: .destructive) {
                             showingRemoveConfirmation = true
                         }
@@ -482,6 +483,28 @@ struct TrackStudyView: View {
                     .overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.06)).frame(height: 1) }
                 }
             }
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private func exportCard(_ track: PracticeTrack) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            sectionHeading("SHARE A PRACTICE PLAN", symbol: "square.and.arrow.up")
+            Text("Share your markers, A/B repeat ranges, and available music summary as text. The audio file is never attached.")
+                .font(.system(size: 12, design: .rounded))
+                .foregroundStyle(.white.opacity(0.61))
+                .fixedSize(horizontal: false, vertical: true)
+            ShareLink(item: PracticePlanFormatter.text(for: track)) {
+                Label("Share practice plan", systemImage: "square.and.arrow.up")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .foregroundStyle(Color(red: 0.03, green: 0.11, blue: 0.08))
+                    .background(.mint, in: RoundedRectangle(cornerRadius: 14))
+            }
+            .disabled(track.markers.isEmpty && track.loops.isEmpty && track.analysis == nil)
+            .accessibilityLabel("Share practice markers and repeat ranges as text without the audio file")
         }
         .padding(17)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))

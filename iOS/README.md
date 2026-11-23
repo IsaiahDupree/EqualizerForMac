@@ -13,7 +13,8 @@ extension path for one locally staged image at a time; its build and App Group
 signing still need validation.
 Track Study is a third standalone utility in `iOS/Utilities/TrackStudy/`; it
 imports a chosen audio file, supports local playback and practice markers, and
-gates Apple Music Understanding analysis behind iOS 27 SDK availability.
+gates Apple Music Understanding analysis behind iOS 27 SDK availability. It can
+share a text practice plan with markers and loops without attaching audio.
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app
