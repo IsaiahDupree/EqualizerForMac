@@ -12,6 +12,7 @@ struct LibraryView: View {
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedVideoItems: [PhotosPickerItem] = []
     @State private var searchText = ""
+    @State private var isDebouncingSearch = false
     @State private var mediaKind: MediaKind = .images
     @State private var presentedSheet: LibraryPresentation?
     @State private var inventoryDocument: InventoryExportDocument?
@@ -26,6 +27,10 @@ struct LibraryView: View {
 
     private var searchTaskID: String {
         "\(normalizedSearchQuery)|\(library.searchRevision)"
+    }
+
+    private var isSearchPending: Bool {
+        isDebouncingSearch || library.isSearching
     }
 
     private var filteredImages: [IndexedImage] {
@@ -117,12 +122,20 @@ struct LibraryView: View {
                 }
             }
             .task(id: searchTaskID) {
-                if !normalizedSearchQuery.isEmpty {
-                    do { try await Task.sleep(for: .milliseconds(180)) }
-                    catch { return }
-                    guard !Task.isCancelled else { return }
+                let query = normalizedSearchQuery
+                guard !query.isEmpty else {
+                    isDebouncingSearch = false
+                    await library.search(query: "")
+                    return
                 }
-                await library.search(query: normalizedSearchQuery)
+                isDebouncingSearch = true
+                library.cancelSearch()
+                do {
+                    try await Task.sleep(for: .milliseconds(180))
+                } catch { return }
+                guard !Task.isCancelled else { return }
+                isDebouncingSearch = false
+                await library.search(query: query)
             }
             .onDisappear { library.cancelSearch() }
             .alert("Could not process selected media", isPresented: errorPresented) {
@@ -267,7 +280,7 @@ struct LibraryView: View {
 
     private var searchField: some View {
         HStack(spacing: 11) {
-            if library.isSearching {
+            if isSearchPending {
                 ProgressView().tint(.cyan)
             } else {
                 Image(systemName: "magnifyingglass").foregroundStyle(.cyan)
@@ -303,7 +316,7 @@ struct LibraryView: View {
             }
 
             if filteredImages.isEmpty {
-                if library.isSearching {
+                if isSearchPending {
                     ProgressView("Searching your image index…")
                         .tint(.cyan)
                         .foregroundStyle(.white.opacity(0.7))
@@ -362,7 +375,7 @@ struct LibraryView: View {
             }
 
             if filteredVideos.isEmpty {
-                if library.isSearching {
+                if isSearchPending {
                     ProgressView("Searching your video index…")
                         .tint(.cyan)
                         .foregroundStyle(.white.opacity(0.7))

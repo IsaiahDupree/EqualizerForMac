@@ -39,6 +39,9 @@ is reviewed and accepted and the apps are rebuilt.
   query term on each result card, so a video hit points to its relevant indexed
   moments. Source review and `git diff --check` passed; Xcode compilation
   remains license-gated.
+- Screenshot Scout now keeps a pending state during search debounce and local
+  index lookup, preventing a stale empty-results message from flashing between
+  successive queries. Xcode compilation remains license-gated.
 - Clear Record now writes its session index before deleting a recording and
   restores the session if that save fails. Transcript and rename edits also
   revert in memory when index persistence fails.
