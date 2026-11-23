@@ -1,29 +1,41 @@
 # iOS 27 routing experiment
 
-Status: **not tested**. The existing Sonance iOS prototype plays files and
-provides an AUv3 effect; it does not itself register a Media Device route. A
-separate [debug-only Route Lab](RouteExperiment/README.md) now contains an
-unverified source implementation with a low-pass filter. It is not integrated
-into Sonance EQ and has unresolved transport and privacy issues.
-Speech listening modes are available independently in the player and AUv3 host.
+Status: **not tested; not productized**. The existing Sonance iOS prototype
+plays files and provides an AUv3 effect; it does not register a Media Device
+route. A separate [debug-only Route Lab](RouteExperiment/README.md) contains
+unverified source with a low-pass filter, unauthenticated transport, and
+unresolved privacy concerns. It is not integrated into Sonance EQ. Speech
+listening modes are available independently in the player and AUv3 host.
 
-Apple documents Media Device as a way to stream to playback hardware, and
-requires the media-device-extension entitlement for the extension and container
-app. The developer agreement defines the extension in terms of sending media
-to another device; section 3.3.7(L) also describes the container app's
-purpose as delivering and installing the extension. An existing third-party app demonstrates same-phone audio
-processing, but that is not proof that this implementation is permissible,
-that a future submission will be accepted, or that each source app will work.
-Confirm the applicable agreement and Apple review position before release.
+Apple requires the media-device-extension entitlement for both the extension
+and its container app. Apple's current Media Device and AVSystemRouting guides
+describe sending media from an iPhone to remote playback hardware. For real-time
+audio, Apple's guide describes the system delivering samples to the extension
+so it can stream them to that device; it does not document a same-iPhone return
+path for effects or unrestricted capture from all source apps. The Apple
+Developer Program Agreement defines a Media Device Extension as sending content
+from the iPhone or iPad to another device. Section 3.3.7(L) says the app bundling
+that extension should have the sole purpose of delivering and installing it.
+This appears materially at odds with using the extension as a same-phone Sonance
+EQ feature. Keep the experiment isolated and do not productize the route unless
+Apple provides written guidance covering same-device processing and the
+container app's purpose. A third-party demo does not establish approval or
+App Store acceptance.
 
 - [Apple Media Device documentation](https://developer.apple.com/documentation/MediaDevice)
+- [Routing and streaming media to remote devices](https://developer.apple.com/documentation/AVSystemRouting/routing-and-streaming-media-to-remote-devices)
 - [Apple developer agreement](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/)
 - [EffectDeck source and implementation notes](https://github.com/satomasahiro2005/EffectDeck)
 
 ## Prerequisites
 
-1. Xcode with the iOS 27 device SDK and a signed development build. The
-   installed Xcode 26.0.1 provides only the iOS 26 SDK.
+Same-device route validation is not part of the current app-build goal. Before
+any product integration, obtain written Apple guidance on same-device effects
+and the container app's permitted purpose. If that gate is resolved in the
+future, the separate device prerequisites are:
+
+1. Xcode 27.2 with the iOS 27 SDK. It is installed on this Mac, but its
+   first-use license has not been accepted, so builds cannot run yet.
 2. Sarah's iPhone 11, UDID `00008030-000359A13688802E`, connected, trusted,
    and running iOS 27. Verify its actual OS before testing; do not upgrade it
    or change its data as an assumed prerequisite.
@@ -35,8 +47,9 @@ Confirm the applicable agreement and Apple review position before release.
    result for each row. Compare audible filtered and bypassed playback, and
    measure latency and battery with a stated method. Never infer a pass from
    discovery alone.
-5. After all testing, uninstall the exact tested bundle ID from Sarah's phone
-   and verify it is absent. Do not remove other apps or reset the phone.
+5. After any future authorized device testing, uninstall the exact tested
+   bundle ID from Sarah's phone and verify it is absent. Do not remove other
+   apps or reset the phone.
 
 ## Compatibility matrix
 

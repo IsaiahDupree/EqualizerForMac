@@ -172,6 +172,32 @@ struct TrackStudyView: View {
             }
             .font(.system(size: 14, weight: .semibold, design: .rounded))
             .tint(.mint)
+
+            Menu {
+                ForEach(PracticePlaybackRate.allCases, id: \.rawValue) { choice in
+                    Button {
+                        store.setPlaybackRate(choice.rawValue)
+                    } label: {
+                        if abs(store.playbackRate - choice.rawValue) < 0.001 {
+                            Label(choice.title, systemImage: "checkmark")
+                        } else {
+                            Text(choice.title)
+                        }
+                    }
+                }
+            } label: {
+                Label("Speed · \(selectedPlaybackRateTitle)", systemImage: "speedometer")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.mint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 11)
+                    .background(.mint.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+            }
+            .accessibilityHint("Choose a pitch-preserving playback speed for practice")
+
+            Text("Slower playback uses pitch-preserving audio processing; very slow playback may add artifacts.")
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(.white.opacity(0.5))
         }
         .padding(17)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
@@ -574,5 +600,11 @@ struct TrackStudyView: View {
         return hours > 0
             ? String(format: "%d:%02d:%02d", hours, minutes, remaining)
             : String(format: "%02d:%02d", minutes, remaining)
+    }
+
+    private var selectedPlaybackRateTitle: String {
+        PracticePlaybackRate.allCases
+            .first(where: { abs($0.rawValue - store.playbackRate) < 0.001 })?.title
+            ?? PracticePlaybackRate.normal.title
     }
 }

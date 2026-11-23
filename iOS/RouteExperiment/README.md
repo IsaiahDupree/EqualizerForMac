@@ -9,11 +9,15 @@ This is a source implementation, not a claim that the route works on any device.
 
 ## Current restrictions
 
-- Do not distribute this target. Release builds intentionally fail. Apple
-  documents a hardware-oriented extension and entitlement for both app and
-  extension; its developer agreement also contains applicable purpose limits.
-  The reference uses an empty container entitlement for local playback. Its
-  relationship to Apple's current requirements and review has not been resolved.
+- Do not distribute or integrate this target into Sonance EQ. Release builds
+  intentionally fail. Apple's current documentation describes Media Device as
+  streaming from iPhone to remote playback hardware. Its Developer Program
+  Agreement defines the extension as sending content to another device and
+  says the app that bundles it should exist solely to deliver and install the
+  extension. A same-phone effect path through a general-purpose EQ app is not
+  established by these sources; do not productize it without written Apple
+  guidance. The reference uses an empty container entitlement for local
+  playback, and its relationship to Apple's current requirements is unresolved.
 - The loopback TCP link does **not authenticate either peer**. Another
   local app may be able to impersonate a peer or receive audio. End-to-end
   thread-safety, extension isolation and privacy require an independent audit
@@ -24,6 +28,11 @@ This is a source implementation, not a claim that the route works on any device.
   that check is best-effort and has not been validated on an iPhone.
 - No real-device testing has been done. App compatibility, Bluetooth, AirPlay,
   background behavior, interruptions, latency and battery use remain unknown.
+
+Apple platform and terms references:
+[Media Device](https://developer.apple.com/documentation/MediaDevice) ·
+[AVSystemRouting remote-device guide](https://developer.apple.com/documentation/AVSystemRouting/routing-and-streaming-media-to-remote-devices) ·
+[Developer Program Agreement, section 3.3.7(L)](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/).
 
 ## Origin and changes
 
@@ -80,14 +89,16 @@ real-time performance and the applicable Apple terms all remain to be tested.
 On 2026-11-21, the filter, link and audio-ring checks passed on the Mac.
 XcodeGen generated the project, Swift sources passed syntax parsing,
 property lists validated, and the localhost and atomic C sources passed an
-iOS 26 SDK syntax check. The iOS 27 target could not be built: this Mac has
-Xcode 26.0.1 and no iOS 27 SDK. None of these checks validates device routing.
+iOS 26 SDK syntax check. Xcode 27.2 was installed on 2026-11-22, but its
+first-use license has not been accepted, so the iOS 27 target has not been
+built. None of these checks validates device routing.
 
-With Xcode 27 and the iOS 27 SDK installed side-by-side, generate the project:
+After Xcode 27.2 first-use setup is complete and the route's purpose gate is
+resolved, generate the debug project and run a bounded local build:
 
 ```sh
 xcodegen generate --spec iOS/RouteExperiment/project.yml --project iOS/RouteExperiment
-DEVELOPER_DIR=/path/to/Xcode27.app/Contents/Developer xcodebuild \
+xcodebuild \
   -project iOS/RouteExperiment/SonanceRouteLab.xcodeproj \
   -scheme SonanceRouteLab -configuration Debug -destination 'generic/platform=iOS' \
   -jobs 1 CODE_SIGNING_ALLOWED=NO build

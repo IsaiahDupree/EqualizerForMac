@@ -12,9 +12,10 @@ Clear Record is a second separate utility prototype in
 extension path for one locally staged image at a time; its build and App Group
 signing still need validation.
 Track Study is a third standalone utility in `iOS/Utilities/TrackStudy/`; it
-imports a chosen audio file, supports local playback and practice markers, and
-gates Apple Music Understanding analysis behind iOS 27 SDK availability. It can
-share a text practice plan with markers and loops without attaching audio.
+imports a chosen audio file, supports local playback, pitch-preserving speed
+control and practice markers, and gates Apple Music Understanding analysis
+behind iOS 27 SDK availability. It can share a text practice plan with markers
+and loops without attaching audio.
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app
@@ -150,19 +151,20 @@ active background playback case, put a 30-second mono or stereo WAV named
 
 ## iOS 27 routing
 
-[Apple’s MediaDevice documentation](https://developer.apple.com/documentation/MediaDevice/creating-a-media-device-extension)
-describes an entitlement and audio server driver for playback on external
-devices. The [Apple Developer Program terms](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/)
-also define the extension around sending media to another device. The
-[EffectDeck listing](https://apps.apple.com/us/app/effectdeck/id6812467517)
-describes same-phone routing and support for AUv3 effects. Loading Sonance in
-that host is the candidate iOS 27 path. Sonance itself exposes playback from
-Files and the AUv3 effect. Direct Control Center routing would need a supported
-same-device design and independent device and distribution validation.
+[Apple’s Media Device documentation](https://developer.apple.com/documentation/MediaDevice)
+and [AVSystemRouting’s remote-device guide](https://developer.apple.com/documentation/AVSystemRouting/routing-and-streaming-media-to-remote-devices)
+describe sending media from an iPhone to remote playback hardware. Real-time
+audio samples are delivered to the extension for streaming to that device; the
+public docs do not describe a same-iPhone return path for an effects app. Both
+the extension and its container app require the media-device-extension
+entitlement. The [Apple Developer Program Agreement](https://developer.apple.com/support/terms/apple-developer-program-license-agreement/)
+defines this extension around sending media to another device and says the
+bundling app should exist solely to deliver and install the extension. That
+appears at odds with using it as a feature in Sonance EQ. A third-party demo or
+listing does not establish Apple's permission or future App Store acceptance.
 
-Hardware acceptance uses Sarah’s designated iPhone 11. Verify that the plug-in
-appears in an AUv3 host, then compare bypass and a clearly audible band change
-on routed music and podcast playback. Check headphones, lock screen playback,
-interruptions, disconnect and reconnect, and recovery. Record the OS, host and
-player versions, route, and outcome for each case. Remove the exact Sonance
-prototype bundle from that phone after testing and verify it is absent.
+Keep the [Route Lab](ROUTING-EXPERIMENT.md) separate and do not add this route
+to Sonance EQ without written Apple guidance addressing same-device processing
+and the app's permitted purpose. Sonance's current cross-app path is a
+compatible AUv3 host; route support remains unimplemented and unverified. This
+portfolio goal builds locally and does not install or deploy to an iPhone.

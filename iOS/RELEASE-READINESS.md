@@ -8,7 +8,7 @@ not been accepted, so SDK discovery and new builds are currently blocked. Build
 results below are historical Xcode 26.0.1 Simulator evidence until the license
 is reviewed and accepted and the apps are rebuilt.
 
-## Utility portfolio progress — 2026-11-22
+## Utility portfolio progress — 2026-11-23
 
 - Sonance EQ now exposes App Shortcuts to enable or disable bypass for the
   standalone file player. Both actions operate on the app's shared EQ session,
@@ -133,6 +133,11 @@ is reviewed and accepted and the apps are rebuilt.
   `git diff --check` passed. A generic Simulator build stopped before
   compilation because Xcode 27.2 requires its license to be reviewed and
   accepted; no tests or device installs were run.
+- Track Study now offers 0.5×, 0.75×, 0.9×, and 1× playback speed with
+  AVPlayer's spectral pitch algorithm for slower practice. The selected rate is
+  saved locally and applied to the active item and future playback. The source
+  and roadmap were updated on 2026-11-23; Xcode 27.2 first-use setup still
+  blocks a new SDK build, and no runtime audio review was performed.
 - On 2026-11-23, Clear Record gained a combined text export for the saved
   transcript and summary. It labels a summary as stale when its source
   transcript changed and never includes the audio file. XcodeGen added the
@@ -202,11 +207,13 @@ is reviewed and accepted and the apps are rebuilt.
 2. Test playback, speech curves, persistence, the AUv3 host, interruptions,
    headphones and background behavior on Sarah's designated iPhone. Preserve
    evidence, then uninstall the exact test bundle and verify its absence.
-3. Implement and validate an iOS 27 Media Device route if appropriate. Confirm
-   the applicable Apple terms, entitlement configuration and review position.
-   The separate debug-only Route Lab contains unverified experimental source
-   but is not integrated. Resolve its peer authentication and privacy issues.
-   Capture the results in [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
+3. Do not integrate the iOS 27 Media Device Route Lab into Sonance EQ without
+   written Apple guidance that covers same-device processing and the purpose of
+   the containing app. Apple's public docs describe remote playback hardware,
+   and the current agreement says the app bundling the extension should exist
+   solely to deliver and install it. The separate debug-only Route Lab also has
+   unauthenticated transport and privacy issues; it is not a product candidate.
+   See [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
 4. Complete distribution signing, icon and release review separately when
    the product and its compatibility claims have been verified.
 

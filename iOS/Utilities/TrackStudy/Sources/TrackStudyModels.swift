@@ -1,5 +1,16 @@
 import Foundation
 
+enum PracticePlaybackRate: Float, CaseIterable {
+    case half = 0.5
+    case threeQuarters = 0.75
+    case nineTenths = 0.9
+    case normal = 1.0
+
+    var title: String {
+        String(format: "%.2g×", Double(rawValue))
+    }
+}
+
 struct PracticeTrack: Identifiable, Codable, Sendable {
     let id: UUID
     var title: String

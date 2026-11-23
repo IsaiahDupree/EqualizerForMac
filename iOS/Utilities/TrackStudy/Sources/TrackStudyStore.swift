@@ -9,12 +9,14 @@ final class TrackStudyStore: ObservableObject {
     @Published private(set) var track: PracticeTrack?
     @Published private(set) var currentTime: TimeInterval = 0
     @Published private(set) var isPlaying = false
+    @Published private(set) var playbackRate: Float
     @Published private(set) var isImporting = false
     @Published private(set) var isAnalyzing = false
     @Published private(set) var activeLoopID: UUID?
     @Published var errorMessage: String?
 
     private let player = AVPlayer()
+    private static let playbackRateKey = "track-study.playback-rate.v1"
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var periodicTimeObserver: Any?
@@ -25,6 +27,10 @@ final class TrackStudyStore: ObservableObject {
 
     init() {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let savedRate = Float(UserDefaults.standard.double(forKey: Self.playbackRateKey))
+        playbackRate = PracticePlaybackRate.allCases
+            .first(where: { abs($0.rawValue - savedRate) < 0.001 })?.rawValue ?? PracticePlaybackRate.normal.rawValue
+        player.defaultRate = playbackRate
         loadSavedTrack()
         periodicTimeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.2, preferredTimescale: 600),
@@ -83,7 +89,7 @@ final class TrackStudyStore: ObservableObject {
             playbackRequested = false
             isPlaying = false
             activeLoopID = nil
-            player.replaceCurrentItem(with: AVPlayerItem(url: destination))
+            player.replaceCurrentItem(with: makePlayerItem(url: destination))
             player.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
             currentTime = 0
             isPlaying = false
@@ -110,6 +116,16 @@ final class TrackStudyStore: ObservableObject {
             player.play()
             isPlaying = true
         }
+    }
+
+    func setPlaybackRate(_ requestedRate: Float) {
+        guard let rate = PracticePlaybackRate.allCases
+            .first(where: { abs($0.rawValue - requestedRate) < 0.001 })?.rawValue else { return }
+        playbackRate = rate
+        player.defaultRate = rate
+        player.currentItem?.audioTimePitchAlgorithm = .spectral
+        UserDefaults.standard.set(Double(rate), forKey: Self.playbackRateKey)
+        if playbackRequested { player.rate = rate }
     }
 
     func seek(to seconds: TimeInterval) {
@@ -270,7 +286,7 @@ final class TrackStudyStore: ObservableObject {
                 return
             }
             track = saved
-            player.replaceCurrentItem(with: AVPlayerItem(url: audioURL))
+            player.replaceCurrentItem(with: makePlayerItem(url: audioURL))
         } catch let error as CocoaError where error.code == .fileNoSuchFile {
             track = nil
         } catch {
@@ -324,6 +340,12 @@ final class TrackStudyStore: ObservableObject {
         }
         let data = try encoder.encode(track)
         try data.write(to: indexURL(), options: .atomic)
+    }
+
+    private func makePlayerItem(url: URL) -> AVPlayerItem {
+        let item = AVPlayerItem(url: url)
+        item.audioTimePitchAlgorithm = .spectral
+        return item
     }
 
     private func baseDirectory() throws -> URL {
