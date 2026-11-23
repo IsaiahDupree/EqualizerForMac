@@ -26,6 +26,12 @@ struct IndexedVideo: Identifiable, Codable, Hashable, Sendable {
     var labels: [String] {
         Array(Set(frames.flatMap(\.labels))).sorted()
     }
+
+    var sceneDescriptions: String {
+        frames.compactMap(\.sceneDescription)
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+    }
 }
 
 struct IndexedVideoFrame: Codable, Hashable, Identifiable, Sendable {
@@ -34,6 +40,7 @@ struct IndexedVideoFrame: Codable, Hashable, Identifiable, Sendable {
     var timeSeconds: Double
     var recognizedText: String
     var labels: [String]
+    var sceneDescription: String? = nil
     var id: Int { index }
 }
 
@@ -120,6 +127,7 @@ struct InventoryVideoFrameRecord: Codable, Sendable {
     var timeSeconds: Double
     var labels: [String]
     var recognizedText: String
+    var sceneDescription: String?
 }
 
 enum LibraryError: LocalizedError, Sendable {
@@ -128,6 +136,7 @@ enum LibraryError: LocalizedError, Sendable {
     case couldNotSave
     case unreadableVideo
     case noVideoFrames
+    case videoNoLongerAvailable
 
     var errorDescription: String? {
         switch self {
@@ -136,6 +145,7 @@ enum LibraryError: LocalizedError, Sendable {
         case .couldNotSave: "Screenshot Scout could not save this image locally."
         case .unreadableVideo: "This video could not be opened. Try selecting a different video."
         case .noVideoFrames: "Screenshot Scout could not read any frames from this video."
+        case .videoNoLongerAvailable: "This video frame is no longer in the Screenshot Scout library."
         }
     }
 }

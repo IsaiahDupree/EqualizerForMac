@@ -108,6 +108,17 @@ iOS 27 cross-app product and has not been submitted or published.
   app slices and bundle ID `com.isaiahdupree.trackstudy` were confirmed. This
   verifies the stable app and fallback path only; no tests or device installs
   were run, and the Xcode 27 analyzer branch remains uncompiled.
+- Screenshot Scout now offers the same optional, review-before-save iOS 27
+  scene description for one selected video frame at a time. The frame is the
+  model input; full video analysis is not claimed. Saved descriptions are
+  searchable and included only in the explicit detailed JSON export option.
+  The Foundation Models path remains compile-gated to Xcode 27 and has not
+  been compiled or exercised on a supported runtime.
+- After this change, Screenshot Scout built with Xcode 26.0.1 for the generic
+  iOS Simulator destination, with arm64 and x86_64 slices and bundle ID
+  `com.isaiahdupree.ScreenshotScout`. This confirms the stable UI, storage,
+  search, and fallback paths. No tests or device installs were run; the iOS 27
+  Foundation Models path remains uncompiled.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 - EverReach now has an optional Foundation Models note-drafting source path

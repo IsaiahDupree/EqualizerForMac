@@ -6,8 +6,13 @@ struct VideoDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var player: AVPlayer?
     @State private var confirmRemoval = false
+    @State private var selectedFrame: IndexedVideoFrame?
 
     let item: IndexedVideo
+
+    private var currentItem: IndexedVideo {
+        library.videos.first(where: { $0.id == item.id }) ?? item
+    }
 
     var body: some View {
         NavigationStack {
@@ -25,29 +30,29 @@ struct VideoDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18))
 
                     HStack(spacing: 14) {
-                        Label(Self.duration(item.durationSeconds), systemImage: "clock")
-                        Label(ByteCountFormatter.string(fromByteCount: item.byteCount, countStyle: .file), systemImage: "internaldrive")
+                        Label(Self.duration(currentItem.durationSeconds), systemImage: "clock")
+                        Label(ByteCountFormatter.string(fromByteCount: currentItem.byteCount, countStyle: .file), systemImage: "internaldrive")
                     }
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
-                    if !item.labels.isEmpty {
+                    if !currentItem.labels.isEmpty {
                         VStack(alignment: .leading, spacing: 9) {
                             Text("SCENE LABELS")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .tracking(1.3)
-                            Text(item.labels.joined(separator: " · "))
+                            Text(currentItem.labels.joined(separator: " · "))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                     }
 
                     Button {
-                        library.toggleReviewQueue(item)
+                        library.toggleReviewQueue(currentItem)
                     } label: {
                         Label(
-                            library.isInReviewQueue(item) ? "Remove from review queue" : "Add to review queue",
-                            systemImage: library.isInReviewQueue(item) ? "checkmark.circle.fill" : "tray.and.arrow.down"
+                            library.isInReviewQueue(currentItem) ? "Remove from review queue" : "Add to review queue",
+                            systemImage: library.isInReviewQueue(currentItem) ? "checkmark.circle.fill" : "tray.and.arrow.down"
                         )
                         .frame(maxWidth: .infinity)
                     }
@@ -63,8 +68,10 @@ struct VideoDetailView: View {
                             .foregroundStyle(.secondary)
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(alignment: .top, spacing: 12) {
-                                ForEach(item.frames) { frame in
-                                    SampledFrameCard(frame: frame, url: library.frameURL(for: frame))
+                                ForEach(currentItem.frames) { frame in
+                                    SampledFrameCard(frame: frame, url: library.frameURL(for: frame)) {
+                                        selectedFrame = frame
+                                    }
                                 }
                             }
                         }
@@ -73,7 +80,7 @@ struct VideoDetailView: View {
                     .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
 
                     HStack(spacing: 12) {
-                        ShareLink(item: library.videoURL(for: item)) {
+                        ShareLink(item: library.videoURL(for: currentItem)) {
                             Label("Share video", systemImage: "square.and.arrow.up")
                                 .frame(maxWidth: .infinity)
                         }
@@ -105,11 +112,20 @@ struct VideoDetailView: View {
             .confirmationDialog("Remove this private copy?", isPresented: $confirmRemoval, titleVisibility: .visible) {
                 Button("Remove from Screenshot Scout", role: .destructive) {
                     player?.pause()
-                    library.remove(item)
+                    library.remove(currentItem)
                     dismiss()
                 }
             } message: {
                 Text("The original video stays in Photos. This removes only the local copy and sampled frame index.")
+            }
+            .sheet(item: $selectedFrame) { frame in
+                VideoFrameDescriptionEditor(
+                    videoID: currentItem.id,
+                    frame: frame,
+                    imageURL: library.frameURL(for: frame)
+                )
+                .environmentObject(library)
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -182,6 +198,7 @@ struct VideoCard: View {
 private struct SampledFrameCard: View {
     let frame: IndexedVideoFrame
     let url: URL
+    let onDescribe: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -203,7 +220,127 @@ private struct SampledFrameCard: View {
                     .lineLimit(3)
                     .foregroundStyle(.secondary)
             }
+            if let description = frame.sceneDescription, !description.isEmpty {
+                Text(description)
+                    .font(.system(size: 10, design: .rounded))
+                    .lineLimit(4)
+                    .foregroundStyle(.secondary)
+            }
+            Button(frame.sceneDescription == nil ? "Describe frame" : "Edit description", systemImage: "sparkles", action: onDescribe)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .buttonStyle(.bordered)
+                .tint(.cyan)
         }
         .frame(width: 156, alignment: .leading)
+    }
+}
+
+private struct VideoFrameDescriptionEditor: View {
+    @EnvironmentObject private var library: ScreenshotLibrary
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: String
+    @State private var isGenerating = false
+    @State private var errorMessage: String?
+
+    let videoID: UUID
+    let frame: IndexedVideoFrame
+    let imageURL: URL
+
+    init(videoID: UUID, frame: IndexedVideoFrame, imageURL: URL) {
+        self.videoID = videoID
+        self.frame = frame
+        self.imageURL = imageURL
+        _draft = State(initialValue: frame.sceneDescription ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let image = UIImage(contentsOfFile: imageURL.path) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    Text("Frame at \(frame.timeSeconds, format: .number.precision(.fractionLength(1))) seconds")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    Text("This describes one sampled frame. It does not analyze the video as a whole.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+
+                    Button {
+                        Task { await generateDraft() }
+                    } label: {
+                        Label(isGenerating ? "Drafting on device…" : "Draft description", systemImage: "sparkles")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.cyan)
+                    .disabled(isGenerating || !FoundationModelsImageDescriber.isAvailable)
+
+                    if !FoundationModelsImageDescriber.isAvailable {
+                        Text("Description drafting needs iOS 27 and an available on-device model with image support. You can still write a description below.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    TextEditor(text: $draft)
+                        .frame(minHeight: 130)
+                        .padding(8)
+                        .scrollContentBackground(.hidden)
+                        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+                        .accessibilityLabel("Frame description draft")
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+
+                    Button("Save description") {
+                        saveDraft()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.cyan)
+                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .padding(18)
+            }
+            .navigationTitle("Frame description")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func generateDraft() async {
+        isGenerating = true
+        errorMessage = nil
+        defer { isGenerating = false }
+
+        do {
+            draft = try await FoundationModelsImageDescriber.describe(imageURL: imageURL)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func saveDraft() {
+        do {
+            try library.updateSceneDescription(for: videoID, frameIndex: frame.index, description: draft)
+            dismiss()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }

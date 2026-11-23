@@ -143,7 +143,7 @@ final class ScreenshotLibrary: ObservableObject {
             matchedVideos.reserveCapacity(min(videoSnapshot.count, 100))
             for video in videoSnapshot {
                 try Task.checkCancellation()
-                let searchable = ([video.recognizedText] + video.labels).joined(separator: " ")
+                let searchable = ([video.recognizedText, video.sceneDescriptions] + video.labels).joined(separator: " ")
                 if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
                     matchedVideos.append(video)
                 }
@@ -219,13 +219,14 @@ final class ScreenshotLibrary: ObservableObject {
                             index: frame.index,
                             timeSeconds: frame.timeSeconds,
                             labels: frame.labels,
-                            recognizedText: frame.recognizedText
+                            recognizedText: frame.recognizedText,
+                            sceneDescription: frame.sceneDescription
                         )
                     } : nil
                 )
             }
             let inventory = LibraryInventoryExport(
-                schemaVersion: 3,
+                schemaVersion: 4,
                 exportedAt: Date(),
                 images: exportedImages,
                 videos: exportedVideos,
@@ -404,6 +405,26 @@ final class ScreenshotLibrary: ObservableObject {
             searchRevision &+= 1
         } catch {
             images[index] = previous
+            throw error
+        }
+    }
+
+    func updateSceneDescription(for videoID: UUID, frameIndex: Int, description: String?) throws {
+        guard let videoPosition = videos.firstIndex(where: { $0.id == videoID }),
+              let framePosition = videos[videoPosition].frames.firstIndex(where: { $0.index == frameIndex }) else {
+            throw LibraryError.videoNoLongerAvailable
+        }
+        let normalized = description?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let value = normalized?.isEmpty == false ? normalized : nil
+        guard videos[videoPosition].frames[framePosition].sceneDescription != value else { return }
+
+        let previous = videos[videoPosition]
+        videos[videoPosition].frames[framePosition].sceneDescription = value
+        do {
+            try saveIndex()
+            searchRevision &+= 1
+        } catch {
+            videos[videoPosition] = previous
             throw error
         }
     }
