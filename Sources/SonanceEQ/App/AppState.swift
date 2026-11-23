@@ -1,3 +1,4 @@
+import SonanceAnalytics
 import AppKit
 import AudioToolbox
 import CoreAudio
@@ -46,6 +47,7 @@ final class AppState {
         }
         recorder.onFailure = { [weak self] message in
             guard let self else { return }
+            ProductAnalytics.shared(for: .eq).capture(.recording, outcome: .failed, reason: .operationFailed)
             self.finishRecordingUI()
             self.errorMessage = EQText.format("Recorder: %@", message)
         }
@@ -141,6 +143,7 @@ final class AppState {
     func start() {
         guard !isRunning else { return }
         guard !permissionRequestInFlight else { return }
+        ProductAnalytics.shared(for: .eq).capture(.equalizer, outcome: .started)
         guard tap?.isFinishingOperation != true else { return }
         errorMessage = nil
         startGeneration &+= 1
@@ -169,9 +172,13 @@ final class AppState {
                 guard self.startGeneration == expectedGeneration, self.isRunning else { return }
                 self.isRunning = false
                 if granted { self.reallyStart() }
-                else { self.errorMessage = EQText.string("Audio Capture permission was denied.") }
+                else {
+                    ProductAnalytics.shared(for: .eq).capture(.audioPermission, outcome: .blocked, reason: .permissionDenied)
+                    self.errorMessage = EQText.string("Audio Capture permission was denied.")
+                }
             }
         case .denied:
+            ProductAnalytics.shared(for: .eq).capture(.audioPermission, outcome: .blocked, reason: .permissionDenied)
             errorMessage = EQText.string("Enable Audio Capture for Sonance EQ in System Settings → Privacy & Security.")
         }
     }
@@ -184,6 +191,7 @@ final class AppState {
         audioFlowing = false
         tap.onAudioFlowChange = { [weak self, weak tap] in
             guard let self, let tap, self.tap === tap else { return }
+            if tap.isAudioFlowing && !self.audioFlowing { ProductAnalytics.shared(for: .eq).capture(.equalizer) }
             self.audioFlowing = tap.isAudioFlowing
             self.journey.observeAudioFlow(tap.isAudioFlowing)
             Task { [weak self] in await self?.journey.flush() }
@@ -199,6 +207,7 @@ final class AppState {
                 self.outputDeviceName = tap.outputDeviceName
             case let .failure(error):
                 guard !tap.isRunning else { return }
+                ProductAnalytics.shared(for: .eq).capture(.equalizer, outcome: .failed, reason: .operationFailed)
                 self.isRunning = false
                 self.errorMessage = error.localizedDescription
             }
@@ -213,6 +222,7 @@ final class AppState {
             self.isRunning = true
         } catch {
             self.errorMessage = error.localizedDescription
+            ProductAnalytics.shared(for: .eq).capture(.equalizer, outcome: .failed, reason: .operationFailed)
             log.error("Start failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -267,6 +277,7 @@ final class AppState {
     }
 
     func apply(_ preset: [EQBand]) {
+        ProductAnalytics.shared(for: .eq).capture(.builtInPresets)
         bands = preset
         pushSettings()
         review.positiveAction()
@@ -275,7 +286,11 @@ final class AppState {
     /// Load an AutoEq headphone correction: its parametric bands + its safety preamp.
     func applyAutoEq(_ preset: AutoEqPreset) {
         let newBands = preset.bands()
-        guard !newBands.isEmpty else { return }
+        guard !newBands.isEmpty else {
+            ProductAnalytics.shared(for: .eq).capture(.headphonePresets, outcome: .failed, reason: .emptyResult)
+            return
+        }
+        ProductAnalytics.shared(for: .eq).capture(.headphonePresets)
         bands = newBands
         preampDb = preset.preampDb
         activePresetName = preset.displayName
@@ -304,7 +319,9 @@ final class AppState {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(file).write(to: url)
+            ProductAnalytics.shared(for: .eq).capture(.presetExport)
         } catch {
+            ProductAnalytics.shared(for: .eq).capture(.presetExport, outcome: .failed, reason: .operationFailed)
             errorMessage = EQText.format("Export failed: %@", error.localizedDescription)
         }
     }
@@ -322,7 +339,9 @@ final class AppState {
             preampDb = file.preampDb
             activePresetName = file.name
             pushSettings()
+            ProductAnalytics.shared(for: .eq).capture(.presetImport)
         } catch {
+            ProductAnalytics.shared(for: .eq).capture(.presetImport, outcome: .failed, reason: .operationFailed)
             errorMessage = EQText.string("Import failed: not a Sonance EQ preset.")
         }
     }
@@ -371,6 +390,7 @@ final class AppState {
     func setMixerEnabled(_ on: Bool) {
         mixerEnabled = on
         if on {
+            ProductAnalytics.shared(for: .eq).capture(.perAppMixing)
             refreshApps(); refreshDevices(); applyMixer()
             installMixerDeviceListener()
         } else {
@@ -454,11 +474,13 @@ final class AppState {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try recorder.start(target: recordTarget, format: recordingFormat, url: url)
+            ProductAnalytics.shared(for: .eq).capture(.recording, outcome: .started)
             isRecording = true
             recordingElapsed = 0
             lastRecordingURL = url
             startRecordingTimer()
         } catch {
+            ProductAnalytics.shared(for: .eq).capture(.recording, outcome: .failed, reason: .operationFailed)
             errorMessage = EQText.format("Recorder: %@", error.localizedDescription)
         }
     }
@@ -466,7 +488,14 @@ final class AppState {
     func stopRecording() {
         let url = recorder.stop()
         finishRecordingUI()
-        if let url { lastRecordingURL = url }
+        if let url {
+            lastRecordingURL = url
+            if ((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0 {
+                ProductAnalytics.shared(for: .eq).capture(.recording)
+            } else {
+                ProductAnalytics.shared(for: .eq).capture(.recording, outcome: .failed, reason: .emptyResult)
+            }
+        }
     }
 
     /// Reveal the most recent recording in Finder.

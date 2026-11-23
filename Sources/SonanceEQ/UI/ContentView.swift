@@ -1,3 +1,4 @@
+import SonanceAnalytics
 import SwiftUI
 
 struct ContentView: View {
@@ -294,6 +295,7 @@ struct ContentView: View {
             }
             SonanceSuiteMenu(current: .eq)
                 .controlSize(.small)
+            AnalyticsFeedbackButton(app: .eq).labelStyle(.iconOnly).help("Feedback & Analytics")
             Button { app.showingAbout = true } label: { Image(systemName: "info.circle") }
                 .buttonStyle(.borderless)
                 .help("About Sonance EQ")

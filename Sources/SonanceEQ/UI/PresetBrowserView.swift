@@ -1,3 +1,4 @@
+import SonanceAnalytics
 import SwiftUI
 
 /// Searchable browser over the bundled headphone library.
@@ -30,6 +31,13 @@ struct PresetBrowserView: View {
         }
         .frame(width: 460, height: 540)
         .onAppear(perform: refresh)
+        .task(id: searchText) {
+            guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, app.license.canUse(.autoEqLibrary) else { return }
+            do { try await Task.sleep(for: .milliseconds(700)) } catch { return }
+            guard !Task.isCancelled else { return }
+            ProductAnalytics.shared(for: .eq).capture(.presetSearch, outcome: results.isEmpty ? .blocked : .succeeded,
+                reason: results.isEmpty ? .noResults : .none)
+        }
         .sheet(isPresented: $showingPaywall) { ProPaywallSheet(app: app) }
     }
 

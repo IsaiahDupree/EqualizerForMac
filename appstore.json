@@ -4,7 +4,11 @@
   "platform": "macos",
   "configuration": "Release-MAS",
   "profile_name": "Sonance EQ MAS",
-  "version": "1.0.8",
-  "build_number": "11",
-  "archive_jobs": 1
+  "version": "1.0.9",
+  "build_number": "12",
+  "archive_jobs": 1,
+  "build_settings_from_env": {
+    "SONANCE_ANALYTICS_PUBLISHABLE_KEY": "SONANCE_ANALYTICS_PUBLISHABLE_KEY"
+  },
+  "sonance_feature_analytics": true
 }

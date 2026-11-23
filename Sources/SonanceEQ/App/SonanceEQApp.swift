@@ -1,3 +1,4 @@
+import SonanceAnalytics
 import SwiftUI
 import StoreKit
 
@@ -13,6 +14,7 @@ struct SonanceEQApp: App {
     var body: some Scene {
         Window("Sonance EQ", id: "main") {
             ContentView(app: app)
+                .task { ProductAnalytics.shared(for: .eq).didOpen() }
                 .task { app.review.present = { requestReview() } }
                 .task {
                     app.journey.observeSession()

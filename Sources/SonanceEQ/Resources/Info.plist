@@ -51,5 +51,7 @@
 	<string>$(POSTHOG_PROJECT_TOKEN)</string>
 	<key>RevenueCatPublicKey</key>
 	<string>$(REVENUECAT_PUBLIC_KEY)</string>
+	<key>SonanceAnalyticsPublishableKey</key>
+	<string>$(SONANCE_ANALYTICS_PUBLISHABLE_KEY)</string>
 </dict>
 </plist>
