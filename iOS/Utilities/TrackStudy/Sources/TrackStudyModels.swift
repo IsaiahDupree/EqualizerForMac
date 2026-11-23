@@ -78,6 +78,9 @@ struct MusicAnalysis: Codable, Sendable {
     var keySpans: [KeySpan]
     var sectionSpans: [TimeSpan]
     var paceSpans: [PaceSpan]
+    var instrumentSpans: [InstrumentSpan]?
+    var integratedLoudnessLUFS: Double?
+    var peakDecibels: Double?
 }
 
 struct KeySpan: Codable, Sendable, Identifiable {
@@ -98,6 +101,13 @@ struct PaceSpan: Codable, Sendable, Identifiable {
     var startSeconds: TimeInterval
     var durationSeconds: TimeInterval
     var pace: Double
+}
+
+struct InstrumentSpan: Codable, Sendable, Identifiable {
+    var id: String { "\(instrument)-\(startSeconds)-\(durationSeconds)" }
+    var instrument: String
+    var startSeconds: TimeInterval
+    var durationSeconds: TimeInterval
 }
 
 enum TrackStudyError: LocalizedError {

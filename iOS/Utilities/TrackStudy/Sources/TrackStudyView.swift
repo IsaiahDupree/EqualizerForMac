@@ -183,9 +183,25 @@ struct TrackStudyView: View {
                     metricCard("TEMPO", value: analysis.tempoBPM.map { "\($0) BPM" } ?? "Not found")
                     metricCard("KEY", value: analysis.keySpans.first?.key ?? "Not found")
                 }
-                Text("\(analysis.sectionSpans.count) song sections · \(analysis.paceSpans.count) pace ranges")
+                HStack(spacing: 10) {
+                    metricCard(
+                        "INTEGRATED LUFS",
+                        value: analysis.integratedLoudnessLUFS.map { String(format: "%.1f", $0) } ?? "Not found"
+                    )
+                    metricCard(
+                        "PEAK dB",
+                        value: analysis.peakDecibels.map { String(format: "%.1f", $0) } ?? "Not found"
+                    )
+                }
+                Text("\(analysis.sectionSpans.count) sections · \(analysis.paceSpans.count) pace ranges · \(analysis.instrumentSpans?.count ?? 0) instrument ranges")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.59))
+                if let instrumentSpans = analysis.instrumentSpans, !instrumentSpans.isEmpty {
+                    let instruments = Array(Set(instrumentSpans.map(\.instrument))).sorted()
+                    Text("Detected groups: \(instruments.joined(separator: ", ").capitalized)")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.72))
+                }
                 ForEach(Array(analysis.sectionSpans.prefix(12).enumerated()), id: \.offset) { index, span in
                     HStack {
                         Text("Section \(index + 1)").foregroundStyle(.white.opacity(0.8))
@@ -197,8 +213,8 @@ struct TrackStudyView: View {
                 }
             } else {
                 Text(MusicUnderstandingAnalyzer.isAvailable
-                     ? "Analyze tempo, key, musical sections, and pace from this imported file on device."
-                     : "Tempo, key, section, and pace analysis requires the iOS 27 SDK. Playback and practice markers work in this build.")
+                     ? "Analyze rhythm, key, structure, pace, instrument activity, and loudness from this imported file on device."
+                     : "Six-dimension music analysis requires the iOS 27 SDK. Playback and practice markers work in this build.")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.61))
                     .fixedSize(horizontal: false, vertical: true)

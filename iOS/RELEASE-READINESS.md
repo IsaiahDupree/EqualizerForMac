@@ -96,6 +96,18 @@ iOS 27 cross-app product and has not been submitted or published.
   for arm64 and x86_64 with bundle ID `com.isaiahdupree.trackstudy`; generated
   App Intents metadata contains the marker action and Siri phrases. Runtime
   behavior has not been exercised.
+- Track Study's iOS 27 Music Understanding adapter now requests all six
+  documented analysis types: rhythm, key, structure, pace, instrument activity,
+  and loudness. It saves instrument ranges and integrated/peak loudness with
+  existing practice analysis, and the view presents those results. This path is
+  compile-gated to Swift 6.4 / Xcode 27; the current Xcode 26 build can only
+  verify the stable playback and practice fallback. The iOS 27 API and outputs
+  remain uncompiled and unreviewed on a supported runtime.
+- After that adapter change, the full Track Study app target rebuilt with
+  Xcode 26.0.1 for the generic iOS Simulator destination. The arm64 and x86_64
+  app slices and bundle ID `com.isaiahdupree.trackstudy` were confirmed. This
+  verifies the stable app and fallback path only; no tests or device installs
+  were run, and the Xcode 27 analyzer branch remains uncompiled.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 - EverReach now has an optional Foundation Models note-drafting source path

@@ -24,7 +24,9 @@ enum MusicUnderstandingAnalyzer {
             options: [AVURLAssetPreferPreciseDurationAndTimingKey: true]
         )
         let session = try await MusicUnderstandingSession(asset: asset)
-        let result = try await session.analyze(for: [.rhythm, .key, .structure, .pace])
+        let result = try await session.analyze(for: [
+            .rhythm, .key, .structure, .pace, .instrumentActivity, .loudness
+        ])
         let keySpans = (result.key?.ranges ?? []).map { value in
             KeySpan(
                 key: "\(value.value.tonic.rawValue) \(value.value.mode.rawValue)",
@@ -42,11 +44,30 @@ enum MusicUnderstandingAnalyzer {
                 pace: value.value
             )
         }
+        let instrumentSpans = (result.instrumentActivity?.ranges ?? [:])
+            .flatMap { instrument, ranges in
+                ranges.map { range in
+                    InstrumentSpan(
+                        instrument: instrument.rawValue,
+                        startSeconds: range.start.seconds,
+                        durationSeconds: range.duration.seconds
+                    )
+                }
+            }
+            .sorted {
+                if $0.startSeconds == $1.startSeconds {
+                    return $0.instrument < $1.instrument
+                }
+                return $0.startSeconds < $1.startSeconds
+            }
         return MusicAnalysis(
             tempoBPM: result.rhythm?.beatsPerMinute.map { Int($0.rounded()) },
             keySpans: keySpans,
             sectionSpans: sectionSpans,
-            paceSpans: paceSpans
+            paceSpans: paceSpans,
+            instrumentSpans: instrumentSpans,
+            integratedLoudnessLUFS: result.loudness.map { Double($0.integrated.value) },
+            peakDecibels: result.loudness.map { Double($0.peak.value) }
         )
         #else
         throw TrackStudyError.musicUnderstandingRequiresCurrentSDK
