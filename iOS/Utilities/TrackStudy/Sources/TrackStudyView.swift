@@ -137,9 +137,11 @@ struct TrackStudyView: View {
 
     private var trackLibraryCard: some View {
         let visibleTracks = sortedLibraryTracks
+        let query = librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let libraryCount = query.isEmpty ? "\(store.tracks.count)" : "\(visibleTracks.count) OF \(store.tracks.count)"
         return VStack(alignment: .leading, spacing: 13) {
             HStack {
-                sectionHeading("LOCAL TRACK LIBRARY · \(store.tracks.count)", symbol: "music.note.list")
+                sectionHeading("TRACKS · \(libraryCount)", symbol: "music.note.list")
                 Spacer(minLength: 8)
                 Button {
                     showingImporter = true
@@ -216,6 +218,12 @@ struct TrackStudyView: View {
                                 }
                                 .font(.system(size: 10, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.54))
+                                if let matchHint = searchMatchHint(for: item) {
+                                    Text(matchHint)
+                                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                                        .foregroundStyle(.mint.opacity(0.82))
+                                        .lineLimit(1)
+                                }
                             }
                             Spacer(minLength: 0)
                             if selected {
@@ -276,6 +284,27 @@ struct TrackStudyView: View {
                 return left.title.localizedStandardCompare(right.title) == .orderedAscending
             }
         }
+    }
+
+    private func searchMatchHint(for track: PracticeTrack) -> String? {
+        let query = librarySearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty, !track.title.localizedStandardContains(query) else { return nil }
+
+        if let marker = track.markers.first(where: { $0.title.localizedStandardContains(query) }) {
+            return "MARKER · \(marker.title)"
+        }
+        if let loop = track.loops.first(where: { $0.title.localizedStandardContains(query) }) {
+            return "LOOP · \(loop.title)"
+        }
+        if let key = track.analysis?.firstKeySpan?.key,
+           key.localizedStandardContains(query) {
+            return "KEY · \(key)"
+        }
+        if let tempo = track.analysis?.tempoBPM,
+           String(tempo).localizedStandardContains(query) {
+            return "TEMPO · \(tempo) BPM"
+        }
+        return nil
     }
 
     private func playbackCard(_ track: PracticeTrack) -> some View {

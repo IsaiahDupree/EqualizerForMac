@@ -50,10 +50,12 @@ is reviewed and accepted and the apps are rebuilt.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, searches title/key/
   tempo/marker/loop metadata, and sorts by title/date plus analyzed first
-  key/tempo. Each track keeps its own practice data. A failed file import removes the
-  partial copy, leaves existing records intact, and reapplies backup-exclusion
-  hints to each stored audio file and the shared index. Xcode verification
-  remains blocked by its first-use license.
+  key/tempo. Search results identify the matching marker, loop, key, or tempo,
+  and the library count reflects the active filter. Each track keeps its own
+  practice data. A failed file import removes the partial copy, leaves existing
+  records intact, and reapplies backup-exclusion hints to each stored audio
+  file and the shared index. Xcode verification remains blocked by its
+  first-use license.
 - Clear Record's iOS 27 summary shortcut now prepares the latest transcript's
   draft in memory, opens an editable review sheet, and saves only after an
   explicit user action. Siri receives only a neutral status dialog.
