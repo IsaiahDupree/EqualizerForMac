@@ -41,6 +41,10 @@ out of scope; report it as a separate open item.
 
 Goal suggestions now use saved contact fields, interests, and interaction history, with a neutral first-contact option. The message composer routes the selected image into screenshot review and carries its contact and image metadata through both the primary and mobile app trees. This flow does not supply sample OCR or an invented goal. The primary app can review locally with Vision in `LOCAL_ONLY`; follow-up drafting and image attachment remain connected-mode actions.
 
+### Screenshot Scout refinement — 2026-11-23
+
+Video detail cards now let the user share an individual sampled frame as a still image, with VoiceOver announcing its source timestamp. The action shares the selected frame file; it does not attach or share the source video.
+
 ## Product boundaries
 
 The named products above are intentionally fewer than the idea list: Voice, headphone tuning, sleep, focus, speaker tuning, and A/B comparison share Sonance's DSP and profiles; screenshot organization and creator media cleanup share one user-selected media index; contact capture belongs in EverReach. This keeps separate apps for distinct jobs and keeps related controls together.

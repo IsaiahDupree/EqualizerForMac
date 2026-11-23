@@ -264,10 +264,23 @@ private struct SampledFrameCard: View {
                     .lineLimit(4)
                     .foregroundStyle(.secondary)
             }
-            Button(frame.sceneDescription == nil ? "Describe frame" : "Edit description", systemImage: "sparkles", action: onDescribe)
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+            HStack(spacing: 6) {
+                ShareLink(item: url) {
+                    Label("Share frame", systemImage: "square.and.arrow.up")
+                        .labelStyle(.iconOnly)
+                        .frame(width: 36, height: 28)
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                }
                 .buttonStyle(.bordered)
                 .tint(.cyan)
+                .accessibilityLabel("Share sampled frame at \(frame.timeSeconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+
+                Button(frame.sceneDescription == nil ? "Describe" : "Edit", systemImage: "sparkles", action: onDescribe)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
+                    .accessibilityLabel(frame.sceneDescription == nil ? "Describe frame at \(frame.timeSeconds.formatted(.number.precision(.fractionLength(1)))) seconds" : "Edit description for frame at \(frame.timeSeconds.formatted(.number.precision(.fractionLength(1)))) seconds")
+            }
         }
         .frame(width: 156, alignment: .leading)
     }
