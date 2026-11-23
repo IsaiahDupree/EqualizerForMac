@@ -34,6 +34,17 @@ struct MeetingDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     if let session {
+                        if !session.transcript.isEmpty || !(session.aiSummary ?? "").isEmpty {
+                            ShareLink(
+                                item: MeetingNotesExport.text(
+                                    for: session,
+                                    summaryIsCurrent: store.summaryIsCurrent(for: session)
+                                )
+                            ) {
+                                Label("Share meeting notes as text", systemImage: "doc.text")
+                            }
+                            .disabled(isEditingTranscript || isEditingSummary || isGeneratingSummary)
+                        }
                         ShareLink(item: store.shareAudioURL(for: session)) {
                             Label("Share audio file", systemImage: "waveform")
                         }

@@ -133,6 +133,12 @@ is reviewed and accepted and the apps are rebuilt.
   `git diff --check` passed. A generic Simulator build stopped before
   compilation because Xcode 27.2 requires its license to be reviewed and
   accepted; no tests or device installs were run.
+- On 2026-11-23, Clear Record gained a combined text export for the saved
+  transcript and summary. It labels a summary as stale when its source
+  transcript changed and never includes the audio file. XcodeGen added the
+  formatter to the app target and `git diff --check` passed. Xcode 27.2
+  compilation remains blocked by its first-use license gate; no tests or
+  device installs were run.
 - Screenshot Scout now offers the same optional, review-before-save iOS 27
   scene description for one selected video frame at a time. The frame is the
   model input; full video analysis is not claimed. Saved descriptions are
