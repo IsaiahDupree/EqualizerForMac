@@ -6,6 +6,8 @@ import Speech
 
 @MainActor @Observable
 final class MeetingNotesStore {
+    static let shared = MeetingNotesStore()
+
     private(set) var sessions: [MeetingSession] = []
     private(set) var isRecording = false
     private(set) var isStartingRecording = false

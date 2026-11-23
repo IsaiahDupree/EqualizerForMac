@@ -70,6 +70,13 @@ iOS 27 cross-app product and has not been submitted or published.
   after transcript corrections. Xcode 26.0.1 compiled the fallback-only app for
   arm64 and x86_64 with bundle ID `com.isaiahdupree.MeetingNotes`; the iOS 27
   model path and permission behavior have not been exercised at runtime.
+- Clear Record now also offers a Siri/Shortcuts action for transcribing the
+  newest saved recording. It refuses to run while recording or transcribing,
+  skips sessions that already have a transcript, and uses the app's selected
+  on-device Speech locale. Xcode 26.0.1 built the arm64 and x86_64 Simulator
+  app with bundle ID `com.isaiahdupree.MeetingNotes`; generated App Intents
+  metadata includes the action and phrases. No runtime permission or Siri flow
+  was exercised.
 - Track Study is a new iOS 17+ music practice app. Its file import, local audio
   playback/seeking, and persistent practice marker flow compiled for a generic
   iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. The Music

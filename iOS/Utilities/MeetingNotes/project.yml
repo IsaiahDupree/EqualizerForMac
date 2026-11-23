@@ -29,6 +29,7 @@ targets:
     dependencies:
       - sdk: AVFAudio.framework
       - sdk: Speech.framework
+      - sdk: AppIntents.framework
 schemes:
   MeetingNotes:
     build:
