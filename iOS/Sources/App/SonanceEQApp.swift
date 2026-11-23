@@ -120,10 +120,15 @@ private struct EqualizerView: View {
             ListeningGuideView()
                 .tint(EqualizerEditor.accent)
         }
-        .onChange(of: workspace) { _, current in floatingCurve.showSignal(current == .live) }
+        .onChange(of: workspace) { _, current in
+            session.resetComparisonAttenuations()
+            floatingCurve.showSignal(current == .live)
+        }
         .fileImporter(isPresented: $pickingFile, allowedContentTypes: [.audio]) { result in
             switch result {
-            case .success(let url): player.select(url)
+            case .success(let url):
+                session.resetComparisonAttenuations()
+                player.select(url)
             case .failure: player.error = "The audio file couldn’t be opened."
             }
         }
