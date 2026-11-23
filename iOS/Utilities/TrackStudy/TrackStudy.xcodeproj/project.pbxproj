@@ -1,0 +1,335 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		084FF66914F44D9EAD58DC2E /* TrackStudyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */; };
+		24CBCD1348FC31361EE4D6D3 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 74A0AF2A52328AC1EE88E6C5 /* AVFoundation.framework */; };
+		2BC1D0A63EDC4465678A6D0B /* MusicUnderstandingAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE256147BEB873D5680E1A1 /* MusicUnderstandingAnalyzer.swift */; };
+		93461F4B4C0DC14EA480EF10 /* TrackStudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */; };
+		CFA507AF60909F2BB8971E70 /* TrackStudyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B91C1AE1D2E9A3A395813F /* TrackStudyModels.swift */; };
+		F7DF14E17ADF1CB33FA53791 /* TrackStudyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		26B91C1AE1D2E9A3A395813F /* TrackStudyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyModels.swift; sourceTree = "<group>"; };
+		6AE256147BEB873D5680E1A1 /* MusicUnderstandingAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicUnderstandingAnalyzer.swift; sourceTree = "<group>"; };
+		74A0AF2A52328AC1EE88E6C5 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyStore.swift; sourceTree = "<group>"; };
+		8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyView.swift; sourceTree = "<group>"; };
+		9A01EC167ACFFA33FA4001B4 /* TrackStudy.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TrackStudy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackStudyApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		345C6F9959BA30DC1E7D7CFA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				24CBCD1348FC31361EE4D6D3 /* AVFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		05423511F9BAFA71ADC621F9 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				6AE256147BEB873D5680E1A1 /* MusicUnderstandingAnalyzer.swift */,
+				E16383FFE5EF466ACE0A812E /* TrackStudyApp.swift */,
+				26B91C1AE1D2E9A3A395813F /* TrackStudyModels.swift */,
+				7DF24A2377F61ADAFA1DABB9 /* TrackStudyStore.swift */,
+				8DB6B8800B5C69934378EDEB /* TrackStudyView.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		9E316AA7E1278A819ABBC321 = {
+			isa = PBXGroup;
+			children = (
+				05423511F9BAFA71ADC621F9 /* Sources */,
+				DDF474E6E526A2315FBB7A81 /* Frameworks */,
+				BD0EE6EA97F75F0E7C158B20 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BD0EE6EA97F75F0E7C158B20 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9A01EC167ACFFA33FA4001B4 /* TrackStudy.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DDF474E6E526A2315FBB7A81 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				74A0AF2A52328AC1EE88E6C5 /* AVFoundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D0E85A5BBA0FFE122911E5F /* TrackStudy */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7EE2BF761FEE84D5AE8BFE88 /* Build configuration list for PBXNativeTarget "TrackStudy" */;
+			buildPhases = (
+				FF07194E403853744F0E1D92 /* Sources */,
+				345C6F9959BA30DC1E7D7CFA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TrackStudy;
+			packageProductDependencies = (
+			);
+			productName = TrackStudy;
+			productReference = 9A01EC167ACFFA33FA4001B4 /* TrackStudy.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		41F56C5F80B3496A9CAE7612 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = AC40410C3FF6D0CA69AF14ED /* Build configuration list for PBXProject "TrackStudy" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 9E316AA7E1278A819ABBC321;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = BD0EE6EA97F75F0E7C158B20 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D0E85A5BBA0FFE122911E5F /* TrackStudy */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FF07194E403853744F0E1D92 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BC1D0A63EDC4465678A6D0B /* MusicUnderstandingAnalyzer.swift in Sources */,
+				F7DF14E17ADF1CB33FA53791 /* TrackStudyApp.swift in Sources */,
+				CFA507AF60909F2BB8971E70 /* TrackStudyModels.swift in Sources */,
+				084FF66914F44D9EAD58DC2E /* TrackStudyStore.swift in Sources */,
+				93461F4B4C0DC14EA480EF10 /* TrackStudyView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2DB94CA8E3D68E2A502DE353 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		38475115554ABB9FB376E4BB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Track Study";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.trackstudy;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6BAF708AE68EB7B8A92C1F6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Track Study";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.isaiahdupree.trackstudy;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C4FA9F00DC9A2C21ADDD5B9E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7EE2BF761FEE84D5AE8BFE88 /* Build configuration list for PBXNativeTarget "TrackStudy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6BAF708AE68EB7B8A92C1F6D /* Debug */,
+				38475115554ABB9FB376E4BB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AC40410C3FF6D0CA69AF14ED /* Build configuration list for PBXProject "TrackStudy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C4FA9F00DC9A2C21ADDD5B9E /* Debug */,
+				2DB94CA8E3D68E2A502DE353 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 41F56C5F80B3496A9CAE7612 /* Project object */;
+}

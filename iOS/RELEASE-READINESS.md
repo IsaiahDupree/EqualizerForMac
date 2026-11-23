@@ -45,6 +45,12 @@ iOS 27 cross-app product and has not been submitted or published.
   iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. Actual locale and
   recognition availability still require runtime verification on supported
   hardware.
+- Track Study is a new iOS 17+ music practice app. Its file import, local audio
+  playback/seeking, and persistent practice marker flow compiled for a generic
+  iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. The Music
+  Understanding adapter is guarded by SDK/OS availability and is not compiled
+  by this Mac's iOS 26 SDK. App UI and audio behavior have not been exercised
+  in a simulator or on a phone.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 

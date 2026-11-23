@@ -9,6 +9,9 @@ Sonance's file player also includes a selectable sleep timer while playback is
 active.
 Clear Record is a second separate utility prototype in
 `iOS/Utilities/MeetingNotes/`.
+Track Study is a third standalone utility in `iOS/Utilities/TrackStudy/`; it
+imports a chosen audio file, supports local playback and practice markers, and
+gates Apple Music Understanding analysis behind iOS 27 SDK availability.
 
 The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
 file from Files, tap Play, and compare your changes with Bypass EQ. The app

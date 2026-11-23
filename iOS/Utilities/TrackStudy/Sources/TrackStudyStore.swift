@@ -1,0 +1,222 @@
+import AVFoundation
+import Combine
+import Foundation
+
+@MainActor
+final class TrackStudyStore: ObservableObject {
+    @Published private(set) var track: PracticeTrack?
+    @Published private(set) var currentTime: TimeInterval = 0
+    @Published private(set) var isPlaying = false
+    @Published private(set) var isImporting = false
+    @Published private(set) var isAnalyzing = false
+    @Published var errorMessage: String?
+
+    private let player = AVPlayer()
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+    private var periodicTimeObserver: Any?
+
+    init() {
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        loadSavedTrack()
+        periodicTimeObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.2, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            guard time.seconds.isFinite else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.currentTime = time.seconds
+                self.isPlaying = self.player.timeControlStatus == .playing
+            }
+        }
+    }
+
+    var duration: TimeInterval { track?.duration ?? 0 }
+
+    func importTrack(from pickedURL: URL) async {
+        guard !isImporting else { return }
+        isImporting = true
+        errorMessage = nil
+        defer { isImporting = false }
+
+        let didStartAccess = pickedURL.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess { pickedURL.stopAccessingSecurityScopedResource() }
+        }
+
+        var copiedURL: URL?
+        do {
+            let identifier = UUID()
+            let fileExtension = pickedURL.pathExtension.isEmpty ? "audio" : pickedURL.pathExtension
+            let destination = try tracksDirectory().appendingPathComponent("\(identifier.uuidString).\(fileExtension)")
+            try FileManager.default.copyItem(at: pickedURL, to: destination)
+            copiedURL = destination
+
+            let asset = AVURLAsset(url: destination)
+            let duration = try await asset.load(.duration).seconds
+            guard duration.isFinite, duration > 0 else { throw TrackStudyError.invalidAudioFile }
+
+            let imported = PracticeTrack(
+                id: identifier,
+                title: pickedURL.deletingPathExtension().lastPathComponent,
+                storedFilename: destination.lastPathComponent,
+                importedAt: .now,
+                duration: duration,
+                markers: [],
+                analysis: nil
+            )
+            track = imported
+            try saveTrack()
+            player.replaceCurrentItem(with: AVPlayerItem(url: destination))
+            player.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+            currentTime = 0
+            isPlaying = false
+        } catch {
+            if let copiedURL { try? FileManager.default.removeItem(at: copiedURL) }
+            track = nil
+            player.replaceCurrentItem(with: nil)
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func togglePlayback() {
+        guard track != nil, player.currentItem != nil else { return }
+        if isPlaying {
+            player.pause()
+            isPlaying = false
+        } else {
+            if duration > 0, currentTime >= duration { seek(to: 0) }
+            player.play()
+            isPlaying = true
+        }
+    }
+
+    func seek(to seconds: TimeInterval) {
+        guard duration > 0 else { return }
+        let clamped = min(max(seconds, 0), duration)
+        player.seek(
+            to: CMTime(seconds: clamped, preferredTimescale: 600),
+            toleranceBefore: .zero,
+            toleranceAfter: .zero
+        ) { _ in }
+        currentTime = clamped
+    }
+
+    func addMarker(title: String) {
+        guard var track else { return }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let marker = PracticeMarker(
+            title: trimmed.isEmpty ? "Practice \(track.markers.count + 1)" : trimmed,
+            seconds: min(max(currentTime, 0), track.duration)
+        )
+        track.markers.append(marker)
+        track.markers.sort { $0.seconds < $1.seconds }
+        self.track = track
+        persistOrReport()
+    }
+
+    func removeMarker(_ marker: PracticeMarker) {
+        guard var track else { return }
+        track.markers.removeAll { $0.id == marker.id }
+        self.track = track
+        persistOrReport()
+    }
+
+    func jumpToMarker(_ marker: PracticeMarker) {
+        seek(to: marker.seconds)
+    }
+
+    func analyzeTrack() async {
+        guard var track, !isAnalyzing else { return }
+        isAnalyzing = true
+        errorMessage = nil
+        defer { isAnalyzing = false }
+
+        do {
+            let result = try await MusicUnderstandingAnalyzer.analyze(fileURL: fileURL(for: track))
+            track.analysis = result
+            self.track = track
+            try saveTrack()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeTrack() {
+        player.pause()
+        player.replaceCurrentItem(with: nil)
+        isPlaying = false
+        currentTime = 0
+        if let track, let audioURL = try? fileURL(for: track) {
+            try? FileManager.default.removeItem(at: audioURL)
+        }
+        track = nil
+        do {
+            try FileManager.default.removeItem(at: indexURL())
+        } catch let error as CocoaError where error.code == .fileNoSuchFile {
+            return
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadSavedTrack() {
+        do {
+            let data = try Data(contentsOf: indexURL())
+            let saved = try decoder.decode(PracticeTrack.self, from: data)
+            let audioURL = try fileURL(for: saved)
+            guard FileManager.default.fileExists(atPath: audioURL.path) else {
+                track = saved
+                errorMessage = TrackStudyError.audioFileMissing.localizedDescription
+                return
+            }
+            track = saved
+            player.replaceCurrentItem(with: AVPlayerItem(url: audioURL))
+        } catch let error as CocoaError where error.code == .fileNoSuchFile {
+            track = nil
+        } catch {
+            errorMessage = "The saved track record could not be read: \(error.localizedDescription)"
+        }
+    }
+
+    private func persistOrReport() {
+        do { try saveTrack() }
+        catch { errorMessage = error.localizedDescription }
+    }
+
+    private func saveTrack() throws {
+        guard let track else {
+            try? FileManager.default.removeItem(at: indexURL())
+            return
+        }
+        let data = try encoder.encode(track)
+        try data.write(to: indexURL(), options: .atomic)
+    }
+
+    private func baseDirectory() throws -> URL {
+        let support = try FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        let directory = support.appendingPathComponent("TrackStudy", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    private func tracksDirectory() throws -> URL {
+        let directory = try baseDirectory().appendingPathComponent("Tracks", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    private func indexURL() throws -> URL {
+        try baseDirectory().appendingPathComponent("track.json")
+    }
+
+    private func fileURL(for track: PracticeTrack) throws -> URL {
+        try tracksDirectory().appendingPathComponent(track.storedFilename)
+    }
+}
