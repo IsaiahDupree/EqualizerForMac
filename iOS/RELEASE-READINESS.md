@@ -72,11 +72,14 @@ is reviewed and accepted and the apps are rebuilt.
   Leaving the screen invalidates the request, and obsolete errors are ignored.
   Attachment paths are unique and capture controls are locked during save.
   OCR now offers up to five explicit full-name contact matches, ordered by
-  first appearance in the screenshot text. Focused ESLint passed and a fresh
-  local Expo iOS export bundled 3,699 modules into a 10.4 MB bundle on
-  2026-11-23. Native extension, App Group, and iOS 27 model compilation remain
-  blocked by Xcode's unaccepted first-use license. No iPhone installation was
-  performed.
+  first appearance in the screenshot text. The local-only iOS Goal Picker now
+  passes its selected image to this review flow; Apple Vision reads it locally,
+  and reviewed contact notes save to local storage without placeholder OCR.
+  Follow-up drafting and image attachment stay unavailable in local-only mode.
+  Focused ESLint passed and a fresh local Expo iOS export bundled 3,699 modules
+  into a 10.4 MB bundle on 2026-11-23. Native extension, App Group, and iOS 27
+  model compilation remain blocked by Xcode's unaccepted first-use license. No
+  iPhone installation was performed.
 - Apple's release page was checked on 2026-11-23: iOS 27.2.1 remains public,
   iOS 27.3 beta 2 v2 remains the newest listed iOS beta, and Xcode 27.2 remains
   stable. Xcode 27.2 simulator builds still stop before compilation because
