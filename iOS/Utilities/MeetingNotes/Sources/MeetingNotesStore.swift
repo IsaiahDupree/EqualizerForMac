@@ -1,4 +1,5 @@
 import AVFAudio
+import CryptoKit
 import Foundation
 import Observation
 import Speech
@@ -164,6 +165,55 @@ final class MeetingNotesStore {
         }
     }
 
+    @discardableResult
+    func updateSummary(_ sessionID: UUID, to summary: String, basedOn transcriptSnapshot: String) -> Bool {
+        guard let index = sessions.firstIndex(where: { $0.id == sessionID }) else { return false }
+        guard sessions[index].transcript == transcriptSnapshot else {
+            errorMessage = "The transcript changed while the summary was being prepared. Generate a fresh draft."
+            return false
+        }
+        let value = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            errorMessage = "A summary must contain text before it can be saved."
+            return false
+        }
+
+        let previous = sessions[index]
+        sessions[index].aiSummary = value
+        sessions[index].summarySourceDigest = Self.digest(transcriptSnapshot)
+        do {
+            try saveIndex()
+            errorMessage = nil
+            return true
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func summaryIsCurrent(for session: MeetingSession) -> Bool {
+        guard let digest = session.summarySourceDigest else { return false }
+        return digest == Self.digest(session.transcript)
+    }
+
+    @discardableResult
+    func clearSummary(_ sessionID: UUID) -> Bool {
+        guard let index = sessions.firstIndex(where: { $0.id == sessionID }) else { return false }
+        let previous = sessions[index]
+        sessions[index].aiSummary = nil
+        sessions[index].summarySourceDigest = nil
+        do {
+            try saveIndex()
+            errorMessage = nil
+            return true
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     func rename(_ session: MeetingSession, to title: String) {
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
         let value = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -201,5 +251,9 @@ final class MeetingNotesStore {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let data = try JSONEncoder().encode(sessions)
         try data.write(to: indexURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    }
+
+    private static func digest(_ value: String) -> String {
+        SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 }

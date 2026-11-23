@@ -7,6 +7,8 @@ struct MeetingSession: Identifiable, Codable, Hashable {
     var duration: TimeInterval
     var audioFileName: String
     var transcript: String
+    var aiSummary: String?
+    var summarySourceDigest: String?
 }
 
 enum MeetingNotesError: LocalizedError {

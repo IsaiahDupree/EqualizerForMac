@@ -5,7 +5,11 @@ struct MeetingDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var transcriptDraft = ""
+    @State private var summaryDraft = ""
+    @State private var summaryTranscriptSnapshot = ""
     @State private var isEditingTranscript = false
+    @State private var isEditingSummary = false
+    @State private var isGeneratingSummary = false
     @State private var onDeviceLocales: [Locale] = []
     @State private var confirmDelete = false
     @AppStorage("clearRecord.transcriptionLocaleIdentifier") private var transcriptionLocaleIdentifier = "en-US"
@@ -35,6 +39,11 @@ struct MeetingDetailView: View {
                         if !session.transcript.isEmpty && !isEditingTranscript {
                             ShareLink(item: session.transcript) {
                                 Label("Share transcript", systemImage: "text.alignleft")
+                            }
+                        }
+                        if let summary = session.aiSummary {
+                            ShareLink(item: summary) {
+                                Label("Share saved summary", systemImage: "text.quote")
                             }
                         }
                     }
@@ -67,6 +76,8 @@ struct MeetingDetailView: View {
         .onAppear {
             title = session?.title ?? ""
             transcriptDraft = session?.transcript ?? ""
+            summaryDraft = session?.aiSummary ?? ""
+            summaryTranscriptSnapshot = session?.transcript ?? ""
         }
         .onChange(of: title) { _, value in
             guard let session else { return }
@@ -74,6 +85,9 @@ struct MeetingDetailView: View {
         }
         .onChange(of: session?.transcript) { _, value in
             if !isEditingTranscript { transcriptDraft = value ?? "" }
+            summaryDraft = session?.aiSummary ?? ""
+            summaryTranscriptSnapshot = value ?? ""
+            isEditingSummary = false
         }
     }
 
@@ -205,11 +219,153 @@ struct MeetingDetailView: View {
                     .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 18))
                 }
 
+                if !session.transcript.isEmpty {
+                    summaryCard(session)
+                }
+
                 Label("Audio file stored in this app's protected local folder.", systemImage: "lock.fill")
                     .font(.system(size: 12, design: .rounded))
                     .foregroundStyle(.white.opacity(0.45))
             }
             .padding(20)
+        }
+    }
+
+    private func summaryCard(_ session: MeetingSession) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                Label("ON-DEVICE MEETING SUMMARY", systemImage: "sparkles")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .tracking(1.2)
+                    .foregroundStyle(.cyan)
+                Spacer()
+                if let savedSummary = session.aiSummary, !isEditingSummary {
+                    ShareLink(item: savedSummary) {
+                        Image(systemName: "square.and.arrow.up").foregroundStyle(.cyan)
+                    }
+                }
+            }
+
+            if let savedSummary = session.aiSummary, !isEditingSummary {
+                Text(savedSummary)
+                    .font(.system(size: 14, design: .rounded))
+                    .lineSpacing(4)
+                    .foregroundStyle(.white.opacity(0.88))
+                    .textSelection(.enabled)
+
+                if !store.summaryIsCurrent(for: session) {
+                    Label("The transcript changed after this summary was saved.", systemImage: "exclamationmark.circle")
+                        .font(.system(size: 11, design: .rounded))
+                        .foregroundStyle(.orange.opacity(0.9))
+                }
+
+                HStack(spacing: 12) {
+                    Button("Edit") {
+                        summaryDraft = savedSummary
+                        summaryTranscriptSnapshot = session.transcript
+                        isEditingSummary = true
+                    }
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.cyan)
+                    Button("Remove summary", role: .destructive) {
+                        if store.clearSummary(session.id) { summaryDraft = "" }
+                    }
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                }
+            } else if isEditingSummary {
+                Text("Review names, decisions, action items, and dates. The model can make mistakes.")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+                TextEditor(text: $summaryDraft)
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 210)
+                    .padding(9)
+                    .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+                HStack {
+                    Button("Cancel") {
+                        summaryDraft = session.aiSummary ?? ""
+                        summaryTranscriptSnapshot = session.transcript
+                        isEditingSummary = false
+                    }
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                    Spacer()
+                    Button {
+                        if store.updateSummary(
+                            session.id,
+                            to: summaryDraft,
+                            basedOn: summaryTranscriptSnapshot
+                        ) {
+                            summaryDraft = summaryDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                            isEditingSummary = false
+                        }
+                    } label: {
+                        Label("Save reviewed summary", systemImage: "checkmark")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background(Color.cyan, in: Capsule())
+                    }
+                }
+            } else {
+                Text("Draft a short summary, decisions, action items, and open questions from the saved transcript.")
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.66))
+            }
+
+            Button {
+                Task { await createSummary(for: session) }
+            } label: {
+                HStack {
+                    if isGeneratingSummary { ProgressView().tint(.black) }
+                    else { Image(systemName: "sparkles") }
+                    Text(isGeneratingSummary
+                         ? "Drafting on this device…"
+                         : (session.aiSummary == nil ? "Create editable draft" : "Refresh draft"))
+                }
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .foregroundStyle(.black)
+                .background(Color.cyan, in: RoundedRectangle(cornerRadius: 13))
+            }
+            .disabled(!FoundationModelsMeetingSummarizer.isAvailable || isGeneratingSummary || store.transcribingID == session.id)
+            .opacity(FoundationModelsMeetingSummarizer.isAvailable ? 1 : 0.48)
+
+            if !FoundationModelsMeetingSummarizer.isAvailable {
+                Text(FoundationModelsMeetingSummarizer.unavailableMessage)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.48))
+            }
+
+            Text("The draft uses only this saved transcript and stays local until you choose to share it.")
+                .font(.system(size: 10, design: .rounded))
+                .foregroundStyle(.white.opacity(0.43))
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    @MainActor
+    private func createSummary(for session: MeetingSession) async {
+        guard !isGeneratingSummary else { return }
+        isGeneratingSummary = true
+        let transcriptSnapshot = session.transcript
+        summaryTranscriptSnapshot = transcriptSnapshot
+        defer { isGeneratingSummary = false }
+        do {
+            let draft = try await FoundationModelsMeetingSummarizer.summarize(transcript: transcriptSnapshot)
+            guard store.sessions.first(where: { $0.id == session.id })?.transcript == transcriptSnapshot else {
+                store.errorMessage = "The transcript changed while the summary was being prepared. Generate a fresh draft."
+                return
+            }
+            summaryDraft = draft
+            isEditingSummary = true
+        } catch {
+            store.errorMessage = error.localizedDescription
         }
     }
 

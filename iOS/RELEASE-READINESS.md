@@ -56,6 +56,12 @@ iOS 27 cross-app product and has not been submitted or published.
   iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. Actual locale and
   recognition availability still require runtime verification on supported
   hardware.
+- Clear Record now has an optional iOS 27 Foundation Models summary action for
+  a saved local transcript. It creates an editable draft, saves only after
+  review, records the source transcript digest, and marks a saved summary stale
+  after transcript corrections. Xcode 26.0.1 compiled the fallback-only app for
+  arm64 and x86_64 with bundle ID `com.isaiahdupree.MeetingNotes`; the iOS 27
+  model path and permission behavior have not been exercised at runtime.
 - Track Study is a new iOS 17+ music practice app. Its file import, local audio
   playback/seeking, and persistent practice marker flow compiled for a generic
   iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. The Music

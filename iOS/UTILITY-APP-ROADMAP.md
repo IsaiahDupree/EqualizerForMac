@@ -19,7 +19,7 @@ Updated 2026-11-22. This is a build roadmap for locally built apps and prototype
 | 3 | EverReach Capture | Feature in EverReach | Share-in screenshot flow runs local Vision OCR, suggests a unique visible contact, previews an editable note, saves only after review, optionally attaches the image, and drafts a follow-up as a separate action. An optional Foundation Models note drafting path now consumes OCR text only and remains editable; source is gated by SDK, iOS 27, and model availability. The Xcode 26.0.1 / iOS 26 simulator build compiles the fallback only. Runtime behavior and the iOS 27 path remain unverified. |
 | 4 | Sonance Voice and Headphone Profiles | Sonance EQ modes | Keep dialogue, podcast, audiobook, headphone, sleep, focus, speaker, and A/B profiles within the EQ product while they use the same playback and DSP engine. A 15–90 minute sleep timer is now part of the player prototype. Split only if customer evidence supports a distinct app. |
 | 5 | Track Study (music practice) | Standalone app | Locally buildable iOS 17+ app imports one user-selected audio file, stores it privately, supports playback/seeking, and saves named practice markers and A/B repeat loops. A Swift 6.4/Xcode 27 and iOS 27-gated Music Understanding path requests rhythm, key, structure, and pace, but cannot be compiled with the Xcode 26 SDK installed here; Apple currently labels the framework beta. |
-| 6 | Clear Record (Meeting Notes) | Standalone local utility | iOS 17 prototype records after explicit consent, stores audio and notes locally, stops on interruption/background, lists system-supported on-device speech locales, and lets the user correct transcripts. Next: simulator/device behavior and locale review on supported hardware; do not promise call capture, arbitrary background recording, summaries, or network transcription. |
+| 6 | Clear Record (Meeting Notes) | Standalone local utility | iOS 17 prototype records after explicit consent, stores audio and notes locally, stops on interruption/background, lists system-supported on-device speech locales, and lets the user correct transcripts. An optional iOS 27 Foundation Models path drafts reviewable meeting notes from the saved transcript; the Xcode 26 build compiles only its fallback. Next: compile with Xcode 27 and review outputs on supported hardware; do not promise call capture, arbitrary background recording, or network transcription. |
 
 ## Product boundaries
 
@@ -29,7 +29,7 @@ The named products above are intentionally fewer than the idea list: Voice, head
 
 1. Keep Sonance EQ as the first product and continue its standalone file-player and AUv3 experience.
 2. Continue Screenshot Scout on stable PhotosUI and Vision APIs; compile its gated iOS 27 image-description path with Xcode 27 when available, then refine search and indexing for larger libraries. The persistent user-reviewed candidate queue is implemented locally.
-3. Continue Clear Record on stable speech/audio APIs; validate dynamic locale support and review behavior on-device when permitted.
+3. Clear Record now has an optional transcript-to-notes Foundation Models path. Compile it with Xcode 27 when available, review its summaries and stale-transcript handling, and validate dynamic locale support and recording behavior on-device when permitted.
 4. Continue EverReach capture with local build checks. Compile and validate its Foundation Models path once an iOS 27 SDK is available; runtime and output review remain pending.
 5. Track Study now has saved A/B loops that repeat a selected passage. Compile the optional Music Understanding analyzer with Xcode 27 when a newer local SDK is available; then review its beta API outputs before adding them to the core workflow.
 6. Revisit Media Device only after official entitlement/terms review and a signed route prototype can be validated. Physical iPhone installation is outside the current goal.
@@ -42,6 +42,7 @@ The named products above are intentionally fewer than the idea list: Voice, head
 - [Foundation Models](https://developer.apple.com/documentation/foundationmodels)
 - [Foundation Models image attachments](https://developer.apple.com/documentation/foundationmodels/analyzing-images-with-multimodal-prompting)
 - [Foundation Models image capability](https://developer.apple.com/documentation/foundationmodels/languagemodelcapabilities/capability/vision)
+- [Foundation Models text generation](https://developer.apple.com/documentation/foundationmodels/generating-content-and-performing-tasks-with-foundation-models)
 - [Vision](https://developer.apple.com/documentation/vision)
 - [Music Understanding](https://developer.apple.com/documentation/musicunderstanding)
 - [Music Understanding WWDC26 overview](https://developer.apple.com/videos/play/wwdc2026/253/)
