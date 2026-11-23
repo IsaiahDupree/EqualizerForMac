@@ -157,12 +157,12 @@ struct TrackStudyView: View {
             HStack(spacing: 9) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.mint.opacity(0.8))
-                TextField("Search title, key, BPM, or marker", text: $librarySearchText)
+                TextField("Search title, key, BPM, instrument, or marker", text: $librarySearchText)
                     .font(.system(size: 13, design: .rounded))
                     .foregroundStyle(.white)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .accessibilityLabel("Search local tracks by title, key, tempo, or marker")
+                    .accessibilityLabel("Search local tracks by title, key, tempo, instrument, pace, marker, or loop")
                 if !librarySearchText.isEmpty {
                     Button {
                         librarySearchText = ""
@@ -258,9 +258,13 @@ struct TrackStudyView: View {
             guard !query.isEmpty else { return true }
             let searchableValues = [
                 track.title,
-                track.analysis?.firstKeySpan?.key ?? "",
-                track.analysis?.tempoBPM.map { String($0) } ?? ""
-            ] + track.markers.map(\.title) + track.loops.map(\.title)
+                track.analysis?.tempoBPM.map { "\($0) BPM" } ?? ""
+            ]
+                + (track.analysis?.keySpans.map(\.key) ?? [])
+                + (track.analysis?.paceSpans.map { "\(Int($0.pace.rounded())) events/min" } ?? [])
+                + (track.analysis?.instrumentSpans?.map { instrumentDisplayName($0.instrument) } ?? [])
+                + track.markers.map(\.title)
+                + track.loops.map(\.title)
             return searchableValues.contains { $0.localizedStandardContains(query) }
         }
 
@@ -296,15 +300,33 @@ struct TrackStudyView: View {
         if let loop = track.loops.first(where: { $0.title.localizedStandardContains(query) }) {
             return "LOOP · \(loop.title)"
         }
-        if let key = track.analysis?.firstKeySpan?.key,
-           key.localizedStandardContains(query) {
+        if let key = track.analysis?.keySpans.first(where: {
+            $0.key.localizedStandardContains(query)
+        })?.key {
             return "KEY · \(key)"
         }
         if let tempo = track.analysis?.tempoBPM,
-           String(tempo).localizedStandardContains(query) {
+           "\(tempo) BPM".localizedStandardContains(query) {
             return "TEMPO · \(tempo) BPM"
         }
+        if let pace = track.analysis?.paceSpans.first(where: {
+            "\(Int($0.pace.rounded())) events/min".localizedStandardContains(query)
+        }) {
+            return "PACE · \(Int(pace.pace.rounded())) events/min"
+        }
+        if let instrument = track.analysis?.instrumentSpans?.first(where: {
+            instrumentDisplayName($0.instrument).localizedStandardContains(query)
+        }) {
+            return "INSTRUMENT · \(instrumentDisplayName(instrument.instrument))"
+        }
         return nil
+    }
+
+    private func instrumentDisplayName(_ rawName: String) -> String {
+        rawName
+            .replacingOccurrences(of: "_", with: " ")
+            .replacingOccurrences(of: "([a-z])([A-Z])", with: "$1 $2", options: .regularExpression)
+            .capitalized
     }
 
     private func playbackCard(_ track: PracticeTrack) -> some View {
@@ -447,7 +469,7 @@ struct TrackStudyView: View {
                 }
                 if let instrumentSpans = analysis.instrumentSpans, !instrumentSpans.isEmpty {
                     let instruments = Array(Set(instrumentSpans.map(\.instrument))).sorted()
-                    Text("Detected groups: \(instruments.joined(separator: ", ").capitalized)")
+                    Text("Detected groups: \(instruments.map(instrumentDisplayName).joined(separator: ", "))")
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(.white.opacity(0.72))
                     Text("Instrument entrances · tap to jump")
@@ -461,7 +483,7 @@ struct TrackStudyView: View {
                                 store.seek(to: firstSpan.startSeconds)
                             } label: {
                                 HStack {
-                                    Text(instrument.replacingOccurrences(of: "_", with: " ").capitalized)
+                                    Text(instrumentDisplayName(instrument))
                                         .foregroundStyle(.white.opacity(0.85))
                                     Spacer()
                                     Text(timeString(firstSpan.startSeconds))

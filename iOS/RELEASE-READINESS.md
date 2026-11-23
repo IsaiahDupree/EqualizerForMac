@@ -52,10 +52,11 @@ is reviewed and accepted and the apps are rebuilt.
   are the available verification while Xcode remains license-gated.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, searches title/key/
-  tempo/marker/loop metadata, and sorts by title/date plus analyzed first
-  key/tempo. Search results identify the matching marker, loop, key, or tempo,
-  and the library count reflects the active filter. Music Understanding key
-  results now display conventional note symbols rather than enum identifiers.
+  tempo/instrument/pace/marker/loop metadata, and sorts by title/date plus
+  analyzed first key/tempo. Search results identify the matching marker, loop,
+  key, tempo, instrument, or pace, and the library count reflects the active
+  filter. Music Understanding key results now display conventional note
+  symbols rather than enum identifiers.
   Each track keeps its own practice data. A failed file import removes the
   partial copy, leaves existing records intact, and reapplies backup-exclusion
   hints to each stored audio
