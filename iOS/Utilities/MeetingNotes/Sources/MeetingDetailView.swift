@@ -6,7 +6,9 @@ struct MeetingDetailView: View {
     @State private var title = ""
     @State private var transcriptDraft = ""
     @State private var isEditingTranscript = false
+    @State private var onDeviceLocales: [Locale] = []
     @State private var confirmDelete = false
+    @AppStorage("clearRecord.transcriptionLocaleIdentifier") private var transcriptionLocaleIdentifier = "en-US"
 
     let sessionID: UUID
 
@@ -56,6 +58,12 @@ struct MeetingDetailView: View {
         } message: {
             Text(store.errorMessage ?? "The requested action could not be completed.")
         }
+        .task {
+            onDeviceLocales = OnDeviceTranscriber.onDeviceLocales
+            if !onDeviceLocales.contains(where: { $0.identifier == transcriptionLocaleIdentifier }) {
+                transcriptionLocaleIdentifier = onDeviceLocales.first?.identifier ?? "en-US"
+            }
+        }
         .onAppear {
             title = session?.title ?? ""
             transcriptDraft = session?.transcript ?? ""
@@ -96,8 +104,28 @@ struct MeetingDetailView: View {
                         Text("Create a transcript from the saved recording. Recognition stays on this device.")
                             .font(.system(size: 14, design: .rounded))
                             .foregroundStyle(.white.opacity(0.68))
+                        if onDeviceLocales.isEmpty {
+                            Text("No on-device transcription language is currently available. You can still keep and share the recording.")
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundStyle(.orange.opacity(0.9))
+                        } else {
+                            Picker("Transcription language", selection: $transcriptionLocaleIdentifier) {
+                                ForEach(onDeviceLocales, id: \.identifier) { locale in
+                                    Text(Locale.current.localizedString(forIdentifier: locale.identifier) ?? locale.identifier)
+                                        .tag(locale.identifier)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .tint(.cyan)
+                            .accessibilityIdentifier("transcriptionLanguagePicker")
+                        }
                         Button {
-                            Task { await store.transcribe(session) }
+                            Task {
+                                await store.transcribe(
+                                    session,
+                                    localeIdentifier: transcriptionLocaleIdentifier
+                                )
+                            }
                         } label: {
                             HStack {
                                 if store.transcribingID == session.id { ProgressView().tint(.black) }
@@ -110,7 +138,7 @@ struct MeetingDetailView: View {
                             .foregroundStyle(.black)
                             .background(Color.cyan, in: RoundedRectangle(cornerRadius: 14))
                         }
-                        .disabled(store.transcribingID != nil)
+                        .disabled(store.transcribingID != nil || onDeviceLocales.isEmpty)
                     }
                     .padding(17)
                     .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 18))

@@ -53,6 +53,12 @@ struct SimilarityMatch: Identifiable, Sendable {
     var id: UUID { assetID }
 }
 
+struct LibrarySearchResults: Sendable {
+    var query: String
+    var images: [IndexedImage]
+    var videos: [IndexedVideo]
+}
+
 struct ProcessedVideo: Sendable {
     var durationSeconds: Double
     var frames: [ProcessedVideoFrame]

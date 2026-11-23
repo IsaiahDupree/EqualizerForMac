@@ -13,12 +13,17 @@ final class ScreenshotLibrary: ObservableObject {
     @Published private(set) var isFindingSimilar = false
     @Published private(set) var similarityTargetID: UUID?
     @Published private(set) var similarMatches: [SimilarityMatch] = []
+    @Published private(set) var searchResults: LibrarySearchResults?
+    @Published private(set) var isSearching = false
+    @Published private(set) var searchRevision = 0
     @Published var errorMessage: String?
     @Published var statusMessage: String?
 
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var similarityTask: Task<[SimilarityMatch], Error>?
+    private var searchTask: Task<LibrarySearchResults, Error>?
+    private var activeSearchID = UUID()
     private var videoHashTask: Task<String, Error>?
     private var videoAnalysisTask: Task<ProcessedVideo, Error>?
     private var videoCancelRequested = false
@@ -82,6 +87,7 @@ final class ScreenshotLibrary: ObservableObject {
                     sha256: digest
                 )
                 images.insert(record, at: 0)
+                searchRevision &+= 1
                 added += 1
                 try saveIndex()
             } catch {
@@ -105,11 +111,75 @@ final class ScreenshotLibrary: ObservableObject {
         videoFramesDirectory.appendingPathComponent(frame.fileName)
     }
 
+    func search(query: String) async {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedQuery.isEmpty else {
+            cancelSearch()
+            searchResults = nil
+            return
+        }
+
+        searchTask?.cancel()
+        let searchID = UUID()
+        activeSearchID = searchID
+        isSearching = true
+        let imageSnapshot = images
+        let videoSnapshot = videos
+        let task = Task.detached(priority: .userInitiated) {
+            var matchedImages: [IndexedImage] = []
+            matchedImages.reserveCapacity(min(imageSnapshot.count, 100))
+            for image in imageSnapshot {
+                try Task.checkCancellation()
+                let searchable = ([image.recognizedText] + image.labels).joined(separator: " ")
+                if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
+                    matchedImages.append(image)
+                }
+            }
+
+            var matchedVideos: [IndexedVideo] = []
+            matchedVideos.reserveCapacity(min(videoSnapshot.count, 100))
+            for video in videoSnapshot {
+                try Task.checkCancellation()
+                let searchable = ([video.recognizedText] + video.labels).joined(separator: " ")
+                if searchable.localizedCaseInsensitiveContains(normalizedQuery) {
+                    matchedVideos.append(video)
+                }
+            }
+            return LibrarySearchResults(
+                query: normalizedQuery,
+                images: matchedImages,
+                videos: matchedVideos
+            )
+        }
+        searchTask = task
+
+        do {
+            let result = try await task.value
+            guard activeSearchID == searchID else { return }
+            searchResults = result
+        } catch is CancellationError {
+            return
+        } catch {
+            guard activeSearchID == searchID else { return }
+            errorMessage = error.localizedDescription
+        }
+        if activeSearchID == searchID {
+            searchTask = nil
+            isSearching = false
+        }
+    }
+
+    func cancelSearch() {
+        activeSearchID = UUID()
+        searchTask?.cancel()
+        searchTask = nil
+        isSearching = false
+    }
+
     func makeInventoryExport(includeRecognizedDetails: Bool) async throws -> Data {
         let imageRecords = images
         let videoRecords = videos
         let libraryDirectory = libraryDirectory
-        let videosDirectory = videosDirectory
 
         return try await Task.detached(priority: .utility) {
             let fileManager = FileManager.default
@@ -250,6 +320,7 @@ final class ScreenshotLibrary: ObservableObject {
                     frames: indexedFrames
                 )
                 videos.insert(record, at: 0)
+                searchRevision &+= 1
                 insertedID = id
                 try saveIndex()
                 added += 1
@@ -320,6 +391,7 @@ final class ScreenshotLibrary: ObservableObject {
                 try FileManager.default.removeItem(at: url)
             }
             images.removeAll { $0.id == item.id }
+            searchRevision &+= 1
             try saveIndex()
         } catch {
             errorMessage = error.localizedDescription
@@ -335,6 +407,7 @@ final class ScreenshotLibrary: ObservableObject {
             let url = videoURL(for: item)
             if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
             videos.removeAll { $0.id == item.id }
+            searchRevision &+= 1
             try saveIndex()
         } catch {
             errorMessage = error.localizedDescription

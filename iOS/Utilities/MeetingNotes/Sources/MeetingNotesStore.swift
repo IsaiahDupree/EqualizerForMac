@@ -124,15 +124,22 @@ final class MeetingNotesStore {
         }
     }
 
-    func transcribe(_ session: MeetingSession) async {
+    func transcribe(_ session: MeetingSession, localeIdentifier: String) async {
         guard transcribingID == nil else { return }
         transcribingID = session.id
         defer { transcribingID = nil }
         errorMessage = nil
         do {
+            let locale = Locale(identifier: localeIdentifier)
+            guard OnDeviceTranscriber.supportsOnDeviceRecognition(for: locale) else {
+                throw MeetingNotesError.onDeviceRecognitionUnavailable
+            }
             let speechStatus = await OnDeviceTranscriber.authorization()
             guard speechStatus == .authorized else { throw MeetingNotesError.speechDenied }
-            let transcript = try await OnDeviceTranscriber.transcribe(fileURL: audioURL(for: session))
+            let transcript = try await OnDeviceTranscriber.transcribe(
+                fileURL: audioURL(for: session),
+                locale: locale
+            )
             guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
             sessions[index].transcript = transcript
             try saveIndex()

@@ -25,19 +25,26 @@ iOS 27 cross-app product and has not been submitted or published.
   exercised at runtime.
 - Screenshot Scout can export a JSON index without including local media files.
   Export offers a metadata-only manifest or an explicit option to include OCR
-  text and Vision labels. The manifest omits app-container file paths. This
-  change has not yet been compiled with Xcode.
+  text and Vision labels. The manifest omits app-container file paths. The
+  updated target compiled for a generic iOS Simulator destination with Xcode
+  26.0.1 on 2026-11-22. Export UI has not been exercised at runtime.
 - Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
   It requires an explicit consent confirmation, records in the foreground,
-  saves on an interruption or background transition, and asks Speech for
-  on-device English transcription only. Its iOS Simulator build succeeded with
-  Xcode 26.0.1; microphone behavior and transcription have not been exercised
-  at runtime.
+  saves on an interruption or background transition, and offers on-device
+  transcription only for locales whose recognizers support it. Its iOS
+  Simulator build succeeded with Xcode 26.0.1; recording, locale availability,
+  and transcription have not been exercised at runtime.
 - Clear Record now requests Speech permission only when the person chooses to
   transcribe a saved recording, so microphone capture is not blocked by optional
   speech access. A transcript can be corrected and saved locally. This update
   compiled for a generic iOS Simulator destination with Xcode 26.0.1 on
   2026-11-22. Recording and transcription were not exercised at runtime.
+- Clear Record now lists only Speech locales whose recognizers report
+  `supportsOnDeviceRecognition`, checks service availability again at use, and
+  stores the user's locale choice. The updated app target compiled for a generic
+  iOS Simulator destination with Xcode 26.0.1 on 2026-11-22. Actual locale and
+  recognition availability still require runtime verification on supported
+  hardware.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 

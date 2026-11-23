@@ -21,20 +21,24 @@ struct LibraryView: View {
 
     private let columns = [GridItem(.adaptive(minimum: 165), spacing: 14)]
 
+    private var normalizedSearchQuery: String {
+        searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var searchTaskID: String {
+        "\(normalizedSearchQuery)|\(library.searchRevision)"
+    }
+
     private var filteredImages: [IndexedImage] {
-        guard !searchText.isEmpty else { return library.images }
-        return library.images.filter {
-            $0.recognizedText.localizedCaseInsensitiveContains(searchText)
-                || $0.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
-        }
+        guard !normalizedSearchQuery.isEmpty else { return library.images }
+        guard library.searchResults?.query == normalizedSearchQuery else { return [] }
+        return library.searchResults?.images ?? []
     }
 
     private var filteredVideos: [IndexedVideo] {
-        guard !searchText.isEmpty else { return library.videos }
-        return library.videos.filter {
-            $0.recognizedText.localizedCaseInsensitiveContains(searchText)
-                || $0.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
-        }
+        guard !normalizedSearchQuery.isEmpty else { return library.videos }
+        guard library.searchResults?.query == normalizedSearchQuery else { return [] }
+        return library.searchResults?.videos ?? []
     }
 
     var body: some View {
@@ -97,6 +101,15 @@ struct LibraryView: View {
                     selectedVideoItems = []
                 }
             }
+            .task(id: searchTaskID) {
+                if !normalizedSearchQuery.isEmpty {
+                    do { try await Task.sleep(for: .milliseconds(180)) }
+                    catch { return }
+                    guard !Task.isCancelled else { return }
+                }
+                await library.search(query: normalizedSearchQuery)
+            }
+            .onDisappear { library.cancelSearch() }
             .alert("Could not process selected media", isPresented: errorPresented) {
                 Button("OK", role: .cancel) { library.errorMessage = nil }
             } message: {
@@ -220,7 +233,11 @@ struct LibraryView: View {
 
     private var searchField: some View {
         HStack(spacing: 11) {
-            Image(systemName: "magnifyingglass").foregroundStyle(.cyan)
+            if library.isSearching {
+                ProgressView().tint(.cyan)
+            } else {
+                Image(systemName: "magnifyingglass").foregroundStyle(.cyan)
+            }
             TextField("Search words, scenes, or labels", text: $searchText)
                 .font(.system(size: 15, design: .rounded))
                 .foregroundStyle(.white)
@@ -252,9 +269,17 @@ struct LibraryView: View {
             }
 
             if filteredImages.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .padding(.top, 20)
+                if library.isSearching {
+                    ProgressView("Searching your image index…")
+                        .tint(.cyan)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 28)
+                } else {
+                    ContentUnavailableView.search(text: searchText)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.top, 20)
+                }
             } else {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(filteredImages) { item in
@@ -303,9 +328,17 @@ struct LibraryView: View {
             }
 
             if filteredVideos.isEmpty {
-                ContentUnavailableView.search(text: searchText)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .padding(.top, 20)
+                if library.isSearching {
+                    ProgressView("Searching your video index…")
+                        .tint(.cyan)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 28)
+                } else {
+                    ContentUnavailableView.search(text: searchText)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.top, 20)
+                }
             } else {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(filteredVideos) { item in

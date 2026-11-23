@@ -2,6 +2,20 @@ import Foundation
 import Speech
 
 enum OnDeviceTranscriber {
+    static let onDeviceLocales: [Locale] = SFSpeechRecognizer.supportedLocales()
+        .filter { locale in
+            SFSpeechRecognizer(locale: locale)?.supportsOnDeviceRecognition == true
+        }
+        .sorted {
+            let left = Locale.current.localizedString(forIdentifier: $0.identifier) ?? $0.identifier
+            let right = Locale.current.localizedString(forIdentifier: $1.identifier) ?? $1.identifier
+            return left.localizedStandardCompare(right) == .orderedAscending
+        }
+
+    static func supportsOnDeviceRecognition(for locale: Locale) -> Bool {
+        SFSpeechRecognizer(locale: locale)?.supportsOnDeviceRecognition == true
+    }
+
     static func authorization() async -> SFSpeechRecognizerAuthorizationStatus {
         await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
@@ -15,6 +29,7 @@ enum OnDeviceTranscriber {
               recognizer.supportsOnDeviceRecognition else {
             throw MeetingNotesError.onDeviceRecognitionUnavailable
         }
+        guard recognizer.isAvailable else { throw MeetingNotesError.speechServiceUnavailable }
 
         let request = SFSpeechURLRecognitionRequest(url: fileURL)
         request.requiresOnDeviceRecognition = true

@@ -14,6 +14,7 @@ enum MeetingNotesError: LocalizedError {
     case microphoneDenied
     case speechDenied
     case onDeviceRecognitionUnavailable
+    case speechServiceUnavailable
     case recordingCouldNotStart
     case recordingNotFound
 
@@ -27,6 +28,8 @@ enum MeetingNotesError: LocalizedError {
             "Speech Recognition access is required to transcribe on this device."
         case .onDeviceRecognitionUnavailable:
             "On-device recognition is unavailable for this language on this device. The recording is saved; no audio was sent for transcription."
+        case .speechServiceUnavailable:
+            "On-device speech recognition is temporarily unavailable. The recording is saved; try transcribing it again later."
         case .recordingCouldNotStart:
             "The recording could not start. Check microphone access and try again."
         case .recordingNotFound:
