@@ -53,6 +53,13 @@ iOS 27 cross-app product and has not been submitted or published.
   in a simulator or on a phone.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
+- EverReach now has an optional Foundation Models note-drafting source path
+  gated on iOS 27 and model availability. It passes only OCR text to the local
+  model and leaves the output editable before saving. The Mac's Xcode 26 / iOS
+  26 SDK compiles only the fallback; the new path has not been compiled or
+  exercised. After CocoaPods regenerated the local module source list, the
+  EverReach Simulator build succeeded again with arm64 and x86_64 slices and
+  bundle ID `com.everreach.app`.
 
 ## Implemented
 
