@@ -557,23 +557,53 @@ final class ScreenshotLibrary: ObservableObject {
 
     func remove(_ item: IndexedImage) {
         if similarityTargetID == item.id { cancelSimilaritySearch() }
+        let previousImages = images
+        let previousReviewQueue = reviewQueue
+        let previousDigests = imageDigests
+        let previousSearchRevision = searchRevision
         let url = imageURL(for: item)
+        images.removeAll { $0.id == item.id }
+        imageDigests.remove(item.sha256)
+        reviewQueue.removeAll { $0.mediaKind == .image && $0.mediaID == item.id }
+        searchRevision &+= 1
+        do { try saveLibraryState() }
+        catch {
+            images = previousImages
+            reviewQueue = previousReviewQueue
+            imageDigests = previousDigests
+            searchRevision = previousSearchRevision
+            errorMessage = error.localizedDescription
+            return
+        }
+
         do {
             if FileManager.default.fileExists(atPath: url.path) {
                 try FileManager.default.removeItem(at: url)
             }
-            images.removeAll { $0.id == item.id }
-            imageDigests.remove(item.sha256)
-            reviewQueue.removeAll { $0.mediaKind == .image && $0.mediaID == item.id }
-            searchRevision &+= 1
-            try saveIndex()
-            try saveReviewQueue()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "The image was removed from the index, but its private copy could not be deleted: \(error.localizedDescription)"
         }
     }
 
     func remove(_ item: IndexedVideo) {
+        let previousVideos = videos
+        let previousReviewQueue = reviewQueue
+        let previousDigests = videoDigests
+        let previousSearchRevision = searchRevision
+        videos.removeAll { $0.id == item.id }
+        videoDigests.remove(item.sha256)
+        reviewQueue.removeAll { $0.mediaKind == .video && $0.mediaID == item.id }
+        searchRevision &+= 1
+        do { try saveLibraryState() }
+        catch {
+            videos = previousVideos
+            reviewQueue = previousReviewQueue
+            videoDigests = previousDigests
+            searchRevision = previousSearchRevision
+            errorMessage = error.localizedDescription
+            return
+        }
+
         do {
             for frame in item.frames {
                 let url = frameURL(for: frame)
@@ -581,14 +611,8 @@ final class ScreenshotLibrary: ObservableObject {
             }
             let url = videoURL(for: item)
             if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
-            videos.removeAll { $0.id == item.id }
-            videoDigests.remove(item.sha256)
-            reviewQueue.removeAll { $0.mediaKind == .video && $0.mediaID == item.id }
-            searchRevision &+= 1
-            try saveIndex()
-            try saveReviewQueue()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "The video was removed from the index, but its private copy or sampled frames could not be deleted: \(error.localizedDescription)"
         }
     }
 
@@ -612,10 +636,9 @@ final class ScreenshotLibrary: ObservableObject {
     private func saveIndex() throws {
         try prepareLocalLibrary()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try encoder.encode(images).write(to: indexURL, options: .atomic)
-        try encoder.encode(videos).write(to: videoIndexURL, options: .atomic)
-        try markExcludedFromBackup(at: indexURL)
-        try markExcludedFromBackup(at: videoIndexURL)
+        let imageData = try encoder.encode(images)
+        let videoData = try encoder.encode(videos)
+        try writeIndexFiles([(indexURL, imageData), (videoIndexURL, videoData)])
     }
 
     private func loadReviewQueue() {
@@ -633,8 +656,63 @@ final class ScreenshotLibrary: ObservableObject {
     private func saveReviewQueue() throws {
         try prepareLocalLibrary()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        try encoder.encode(reviewQueue).write(to: reviewQueueURL, options: .atomic)
-        try markExcludedFromBackup(at: reviewQueueURL)
+        let queueData = try encoder.encode(reviewQueue)
+        try writeIndexFiles([(reviewQueueURL, queueData)])
+    }
+
+    private func saveLibraryState() throws {
+        try prepareLocalLibrary()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let imageData = try encoder.encode(images)
+        let videoData = try encoder.encode(videos)
+        let queueData = try encoder.encode(reviewQueue)
+        try writeIndexFiles([
+            (indexURL, imageData),
+            (videoIndexURL, videoData),
+            (reviewQueueURL, queueData)
+        ])
+    }
+
+    private func writeIndexFiles(_ updates: [(URL, Data)]) throws {
+        let fileManager = FileManager.default
+        let previous = try updates.map { update -> (URL, Data?) in
+            let url = update.0
+            let data: Data?
+            if fileManager.fileExists(atPath: url.path) {
+                data = try Data(contentsOf: url)
+            } else {
+                data = nil
+            }
+            return (url, data)
+        }
+
+        do {
+            for (url, data) in updates {
+                try data.write(to: url, options: .atomic)
+                try markExcludedFromBackup(at: url)
+            }
+        } catch {
+            let saveError = error
+            var rollbackFailures: [String] = []
+            for (url, data) in previous.reversed() {
+                if let data {
+                    do {
+                        try data.write(to: url, options: .atomic)
+                        try markExcludedFromBackup(at: url)
+                    } catch {
+                        rollbackFailures.append("\(url.lastPathComponent): \(error.localizedDescription)")
+                    }
+                } else if fileManager.fileExists(atPath: url.path) {
+                    do { try fileManager.removeItem(at: url) }
+                    catch { rollbackFailures.append("\(url.lastPathComponent): \(error.localizedDescription)") }
+                }
+            }
+            guard !rollbackFailures.isEmpty else { throw saveError }
+            throw LibraryPersistenceError.rollbackFailed(
+                save: saveError.localizedDescription,
+                rollback: rollbackFailures.joined(separator: "; ")
+            )
+        }
     }
 
     private func prepareLocalLibrary() throws {
@@ -668,5 +746,16 @@ final class ScreenshotLibrary: ObservableObject {
         values.isExcludedFromBackup = true
         var localURL = url
         try localURL.setResourceValues(values)
+    }
+}
+
+private enum LibraryPersistenceError: LocalizedError {
+    case rollbackFailed(save: String, rollback: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .rollbackFailed(let save, let rollback):
+            "Screenshot Scout could not save its library (\(save)) or restore the previous index data (\(rollback)). The on-disk index may not match the previous state."
+        }
     }
 }
