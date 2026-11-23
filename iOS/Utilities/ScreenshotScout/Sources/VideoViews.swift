@@ -14,6 +14,26 @@ struct VideoDetailView: View {
         library.videos.first(where: { $0.id == item.id }) ?? item
     }
 
+    private var sampledNotesExport: String? {
+        let sections = currentItem.frames.compactMap { frame -> String? in
+            var details: [String] = []
+            if !frame.recognizedText.isEmpty {
+                details.append("Text: \(frame.recognizedText)")
+            }
+            if !frame.labels.isEmpty {
+                details.append("Labels: \(frame.labels.joined(separator: ", "))")
+            }
+            if let description = frame.sceneDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !description.isEmpty {
+                details.append("Description: \(description)")
+            }
+            guard !details.isEmpty else { return nil }
+            return ([Self.duration(frame.timeSeconds)] + details).joined(separator: "\n")
+        }
+        guard !sections.isEmpty else { return nil }
+        return (["Screenshot Scout · Sampled Video Notes", ""] + sections).joined(separator: "\n\n")
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -78,6 +98,15 @@ struct VideoDetailView: View {
                     }
                     .padding(16)
                     .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
+
+                    if let sampledNotesExport {
+                        ShareLink(item: sampledNotesExport) {
+                            Label("Share timestamped notes", systemImage: "square.and.arrow.up")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.cyan)
+                    }
 
                     HStack(spacing: 12) {
                         ShareLink(item: library.videoURL(for: currentItem)) {
