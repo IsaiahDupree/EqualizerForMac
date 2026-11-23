@@ -49,9 +49,11 @@ is reviewed and accepted and the apps are rebuilt.
   the draft or changes the screenshot/OCR source while generation is running.
   Leaving the screen invalidates the request, and obsolete errors are ignored.
   Attachment paths are unique and capture controls are locked during save.
-  Focused ESLint passed and the Expo iOS JavaScript export bundled 3,699
-  modules on 2026-11-23. Native extension compilation remains blocked by
-  Xcode's unaccepted first-use license. No iPhone installation was performed.
+  OCR now offers up to five explicit full-name contact matches for selection.
+  Focused ESLint passed and a fresh Expo iOS JavaScript export bundled
+  3,699 modules into a 10.4 MB bundle on 2026-11-23. Native extension
+  compilation remains blocked by Xcode's unaccepted first-use license. No
+  iPhone installation was performed.
 - Apple's release page was checked on 2026-11-23: iOS 27.2.1 remains public,
   iOS 27.3 beta 2 v2 remains the newest listed iOS beta, and Xcode 27.2 remains
   stable. Xcode 27.2 simulator builds still stop before compilation because
