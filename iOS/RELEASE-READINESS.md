@@ -306,7 +306,8 @@ is reviewed and accepted and the apps are rebuilt.
   private image/video/frame copies, sorts by size, and requires explicit
   confirmation before removing one. It refreshes when the library changes and
   cancels superseded size scans. It does not delete the Photos original.
-  XcodeGen regenerated the project and the new file appears in the app target;
+  XcodeGen regenerated all four local utility projects from their tracked
+  specs, and the new file appears in the Screenshot Scout target;
   `git diff --check` passed. Native compilation is still stopped by Xcode's
   first-use license gate, so the screen has not been compiled or exercised.
 
