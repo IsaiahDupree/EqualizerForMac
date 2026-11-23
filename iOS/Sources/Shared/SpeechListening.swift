@@ -28,3 +28,37 @@ enum SpeechListening: String, CaseIterable, Identifiable {
     }
 }
 
+enum SoundStarterPreset: String, CaseIterable, Identifiable {
+    case workout, focus, lateNight
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .workout: "Workout"
+        case .focus: "Focus"
+        case .lateNight: "Late Night"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .workout: "Add modest low-end and upper-mid presence."
+        case .focus: "Keep the tone even, with a little more midrange presence."
+        case .lateNight: "A softer, less bright tone; this does not compress or limit volume."
+        }
+    }
+
+    private var gains: [Float] {
+        switch self {
+        case .workout: [2, 3, 2, 1, 0, 1, 2, 2, 1, 0]
+        case .focus: [-2, -1, 0, 1, 2, 2, 1, 0, -1, -2]
+        case .lateNight: [0, -1, -1, 0, 1, 1, 0, -1, -2, -3]
+        }
+    }
+
+    func makeSettings(sampleRate: Double = 48_000) -> MobileEQSettings {
+        MobileEQSettings.startingPoint(bands: Presets.graphic(gains: gains), sampleRate: sampleRate)
+    }
+}
+

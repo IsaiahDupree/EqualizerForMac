@@ -74,6 +74,19 @@ struct MobileEQSettings: Codable, Equatable {
 
     private static let unusedBand = MobileEQ.newBand()
 
+    static func startingPoint(bands: [EQBand], sampleRate: Double) -> Self {
+        let usableSampleRate = sampleRate.isFinite && sampleRate > 42 ? sampleRate : 48_000
+        let maximumFrequency = min(Double(MobileEQ.frequencyRange.upperBound), usableSampleRate / 2 - 1)
+        let peakDb = FrequencyResponse.curve(
+            bands: bands,
+            sampleRate: usableSampleRate,
+            points: 512,
+            fMax: maximumFrequency
+        ).map(\.db).max() ?? 0
+        let preamp = peakDb > 0 ? -Float(ceil(peakDb + 1)) : 0
+        return MobileEQSettings(bands: bands, preamp: preamp, bypassed: false)
+    }
+
     var isValid: Bool {
         MobileEQ.preampRange.contains(preamp) && bands.count <= MobileEQ.maximumBandCount &&
             Set(bands.map(\.id)).count == bands.count && bands.allSatisfy {

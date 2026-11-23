@@ -67,10 +67,14 @@ effect supports planar Float32 mono and stereo from 8 to 192 kHz. Host control
 changes ramp during processing. Sample-accurate automation is outside this
 prototype’s scope.
 
-**Speech Listening Modes** offers starting curves for podcasts, audiobooks,
-interviews and dialogue. Selecting one replaces the current EQ and preamp and
-turns off bypass; save your existing curve first if you want to keep it. These
-are tonal EQ adjustments, not voice isolation, noise removal, or a compressor.
+**Listening & Sound Profiles** offers everyday starting curves for workout,
+focus and late-night listening alongside speech profiles for podcasts,
+audiobooks, interviews and dialogue. Selecting a profile replaces the current
+EQ and preamp and turns off bypass; save your existing curve first if you want
+to keep it. Built-in presets estimate peak response and lower preamp for
+headroom. Late Night changes tone only; it does not compress audio, cap playback
+level, or replace the device volume control. Speech curves are tonal EQ
+adjustments, not voice isolation or noise removal.
 The headphone profile assistant previews its generated response curve and
 preamp headroom before saving or applying the profile. These preferences are
 editable starting points, not measured corrections for a headphone model. The

@@ -13,6 +13,28 @@ struct SpeechListeningView: View {
         NavigationStack {
             List {
                 Section {
+                    Text("Choose a tone starting point, then adjust it for the recording and your headphones. These profiles replace your current EQ; save it first if you want to keep it.")
+                        .foregroundStyle(.secondary)
+                    ForEach(SoundStarterPreset.allCases) { profile in
+                        Button {
+                            session.applySoundStarterPreset(profile)
+                            dismiss()
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(profile.title).font(.headline)
+                                Text(profile.description).font(.subheadline).foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Everyday Listening")
+                } footer: {
+                    Text("Late Night changes tone only. It does not reduce dynamic range, cap playback level, or replace the device volume control.")
+                }
+                Section {
                     Text("Choose a starting sound, then adjust the equalizer to suit the recording and your headphones. This replaces your current EQ; save it first if you want to keep it.")
                         .foregroundStyle(.secondary)
                     ForEach(SpeechListening.allCases) { profile in

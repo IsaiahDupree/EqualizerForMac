@@ -95,10 +95,18 @@ final class EqualizerSession {
     }
 
     func applySpeechListening(_ profile: SpeechListening) {
+        applyStartingSettings(profile.settings)
+    }
+
+    func applySoundStarterPreset(_ profile: SoundStarterPreset) {
+        applyStartingSettings(profile.makeSettings(sampleRate: player.sampleRate))
+    }
+
+    private func applyStartingSettings(_ settings: MobileEQSettings) {
         auditionReference(false)
         editingChanged(true)
-        updateEQ { $0 = profile.settings }
-        selectBand(snapshot.settings.bands.firstIndex(where: \.enabled))
+        updateEQ { $0 = settings }
+        selectBand(settings.bands.firstIndex(where: \.enabled))
         editingChanged(false)
     }
 

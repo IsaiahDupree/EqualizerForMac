@@ -51,9 +51,19 @@ struct EqualizerEditor: View {
                 Button(preset.name) {
                     comparison?.audition(false)
                     changeBands {
-                        $0.bands = preset.bands
-                        $0.preamp = 0
+                        $0 = MobileEQSettings.startingPoint(bands: preset.bands, sampleRate: sampleRate)
                         return $0.selection(selectedBand)
+                    }
+                }
+            }
+            Menu("Listening Presets") {
+                ForEach(SoundStarterPreset.allCases) { profile in
+                    Button(profile.title) {
+                        comparison?.audition(false)
+                        changeBands {
+                            $0 = profile.makeSettings(sampleRate: sampleRate)
+                            return $0.bands.firstIndex(where: \.enabled)
+                        }
                     }
                 }
             }

@@ -35,6 +35,21 @@ struct VerifySpeechListening {
             precondition(low.isFinite && voice.isFinite && low < voice, "Unexpected response: \(profile.title)")
             print(String(format: "%@: 62.5 Hz %.2f dB, 2 kHz %.2f dB", profile.title, low, voice))
         }
-        print("PASS: four real profile curves render with reduced low end")
+        for preset in SoundStarterPreset.allCases {
+            let settings = preset.makeSettings(sampleRate: 48_000)
+            precondition(settings.isValid && !settings.bypassed, "Invalid preset: \(preset.title)")
+            let response = FrequencyResponse.curve(bands: settings.bands, sampleRate: 48_000)
+            let peakWithPreamp = (response.map(\.db).max() ?? 0) + Double(settings.preamp)
+            precondition(peakWithPreamp <= -0.99, "Insufficient headroom: \(preset.title)")
+            print(String(format: "%@: estimated peak with preamp %.2f dB", preset.title, peakWithPreamp))
+        }
+        for preset in Presets.all {
+            let settings = MobileEQSettings.startingPoint(bands: preset.bands, sampleRate: 48_000)
+            precondition(settings.isValid && !settings.bypassed, "Invalid built-in preset: \(preset.name)")
+            let response = FrequencyResponse.curve(bands: settings.bands, sampleRate: 48_000)
+            let peakWithPreamp = (response.map(\.db).max() ?? 0) + Double(settings.preamp)
+            precondition(peakWithPreamp <= -0.99, "Insufficient headroom: \(preset.name)")
+        }
+        print("PASS: speech curves and everyday/built-in presets render with valid settings and peak headroom")
     }
 }

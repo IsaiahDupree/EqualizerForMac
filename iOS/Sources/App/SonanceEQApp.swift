@@ -158,7 +158,7 @@ private struct ListeningGuideView: View {
                     Label("Use Bypass EQ to compare the original and adjusted sound.", systemImage: "3.circle")
                 }
                 Section("Listen to speech") {
-                    Text("Choose Listening & Sound Profiles for starting curves for speech or a preference-guided headphone sound. You can edit and save any suggestion.")
+                    Text("Choose Listening & Sound Profiles for everyday tone presets, speech starting curves, or a preference-guided headphone sound. You can edit and save any suggestion.")
                 }
                 Section("Use another audio app") {
                     Text("Add Sonance EQ as an effect in a compatible AUv3 host. Choose a speech curve from the host's Sonance Presets menu. The host controls its own effect settings.")

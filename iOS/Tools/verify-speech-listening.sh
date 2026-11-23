@@ -7,6 +7,7 @@ cd "$root"
 xcrun swiftc -j 1 \
   Sources/SonanceEQ/Models/EQBand.swift Sources/SonanceEQ/Models/Presets.swift \
   Sources/SonanceEQ/DSP/Biquad.swift Sources/SonanceEQ/DSP/FilterDesigner.swift \
+  Sources/SonanceEQ/DSP/FrequencyResponse.swift \
   iOS/Sources/Shared/MobileEQ.swift iOS/Sources/Shared/SpeechListening.swift \
   iOS/Tools/VerifySpeechListening.swift -o "$output/verify"
 "$output/verify"

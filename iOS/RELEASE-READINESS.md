@@ -14,6 +14,13 @@ is reviewed and accepted and the apps are rebuilt.
   generated frequency response and suggested preamp before saving or applying
   the curve. It remains a preference-based starting point, not a measured
   headphone correction.
+- Sonance EQ now includes everyday Workout, Focus, and Late Night starting
+  curves in the standalone profile screen and AUv3 preset menu. Built-in preset
+  application calculates peak-response headroom and disables bypass. Late
+  Night is documented as a tonal profile; it does not compress audio or limit
+  playback volume. `git diff --check` passed. The focused profile verification
+  and app build both stop before compilation because Xcode's first-use license
+  remains unaccepted.
 - Screenshot Scout reapplies device-backup exclusion hints to its selected
   images, videos, sampled frames, and indexes. A failed image-index save now
   rolls back the in-memory record and removes its private media copy.
