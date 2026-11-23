@@ -23,6 +23,10 @@ iOS 27 cross-app product and has not been submitted or published.
   is excluded from device backups. The expanded target compiled for the iOS
   Simulator with Xcode 26.0.1; media picker and playback behavior have not been
   exercised at runtime.
+- Screenshot Scout can export a JSON index without including local media files.
+  Export offers a metadata-only manifest or an explicit option to include OCR
+  text and Vision labels. The manifest omits app-container file paths. This
+  change has not yet been compiled with Xcode.
 - Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
   It requires an explicit consent confirmation, records in the foreground,
   saves on an interruption or background transition, and asks Speech for

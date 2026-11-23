@@ -105,6 +105,63 @@ final class ScreenshotLibrary: ObservableObject {
         videoFramesDirectory.appendingPathComponent(frame.fileName)
     }
 
+    func makeInventoryExport(includeRecognizedDetails: Bool) async throws -> Data {
+        let imageRecords = images
+        let videoRecords = videos
+        let libraryDirectory = libraryDirectory
+        let videosDirectory = videosDirectory
+
+        return try await Task.detached(priority: .utility) {
+            let fileManager = FileManager.default
+            func byteCount(at url: URL) -> Int64? {
+                guard let attributes = try? fileManager.attributesOfItem(atPath: url.path),
+                      let size = attributes[.size] as? NSNumber else { return nil }
+                return size.int64Value
+            }
+
+            let exportedImages = imageRecords.map { item in
+                InventoryImageRecord(
+                    id: item.id,
+                    importedAt: item.importedAt,
+                    byteCount: byteCount(at: libraryDirectory.appendingPathComponent(item.fileName)),
+                    sha256: item.sha256,
+                    labels: includeRecognizedDetails ? item.labels : nil,
+                    recognizedText: includeRecognizedDetails ? item.recognizedText : nil
+                )
+            }
+            let exportedVideos = videoRecords.map { item in
+                InventoryVideoRecord(
+                    id: item.id,
+                    importedAt: item.importedAt,
+                    durationSeconds: item.durationSeconds,
+                    byteCount: item.byteCount,
+                    sha256: item.sha256,
+                    frameCount: item.frames.count,
+                    labels: includeRecognizedDetails ? item.labels : nil,
+                    recognizedText: includeRecognizedDetails ? item.recognizedText : nil,
+                    frames: includeRecognizedDetails ? item.frames.map { frame in
+                        InventoryVideoFrameRecord(
+                            index: frame.index,
+                            timeSeconds: frame.timeSeconds,
+                            labels: frame.labels,
+                            recognizedText: frame.recognizedText
+                        )
+                    } : nil
+                )
+            }
+            let inventory = LibraryInventoryExport(
+                schemaVersion: 1,
+                exportedAt: Date(),
+                images: exportedImages,
+                videos: exportedVideos
+            )
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            return try encoder.encode(inventory)
+        }.value
+    }
+
     func importVideoItems(_ selections: [PhotosPickerItem]) async {
         guard !selections.isEmpty else { return }
         isImportingVideos = true

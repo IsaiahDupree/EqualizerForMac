@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LibraryView: View {
     private enum MediaKind: String, CaseIterable {
@@ -14,6 +15,9 @@ struct LibraryView: View {
     @State private var mediaKind: MediaKind = .images
     @State private var selectedImage: IndexedImage?
     @State private var selectedVideo: IndexedVideo?
+    @State private var inventoryDocument: InventoryExportDocument?
+    @State private var isExportingInventory = false
+    @State private var isPreparingInventoryExport = false
 
     private let columns = [GridItem(.adaptive(minimum: 165), spacing: 14)]
 
@@ -67,6 +71,17 @@ struct LibraryView: View {
                 VideoDetailView(item: item)
                     .environmentObject(library)
                     .presentationDragIndicator(.visible)
+            }
+            .fileExporter(
+                isPresented: $isExportingInventory,
+                document: inventoryDocument,
+                contentType: .json,
+                defaultFilename: "Screenshot-Scout-Inventory"
+            ) { result in
+                if case .failure(let error) = result {
+                    library.errorMessage = error.localizedDescription
+                }
+                inventoryDocument = nil
             }
             .onChange(of: selectedItems) { _, newItems in
                 guard !newItems.isEmpty else { return }
@@ -137,6 +152,33 @@ struct LibraryView: View {
                     }
                     .disabled(library.isImporting || library.isImportingVideos)
                 }
+            }
+
+            HStack {
+                Menu {
+                    Button("Metadata only") { prepareInventoryExport(includeRecognizedDetails: false) }
+                    Button("Include recognized text and labels") {
+                        prepareInventoryExport(includeRecognizedDetails: true)
+                    }
+                } label: {
+                    Label(isPreparingInventoryExport ? "Preparing…" : "Export inventory", systemImage: "square.and.arrow.up")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.cyan)
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 10)
+                        .background(.white.opacity(0.08), in: Capsule())
+                }
+                .disabled(
+                    isPreparingInventoryExport
+                        || library.isImporting
+                        || library.isImportingVideos
+                        || (library.images.isEmpty && library.videos.isEmpty)
+                )
+
+                Spacer(minLength: 8)
+                Text("JSON index only · no media copies")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.48))
             }
 
             if library.isImporting {
@@ -301,6 +343,41 @@ struct LibraryView: View {
 
     private var errorPresented: Binding<Bool> {
         Binding(get: { library.errorMessage != nil }, set: { if !$0 { library.errorMessage = nil } })
+    }
+
+    private func prepareInventoryExport(includeRecognizedDetails: Bool) {
+        guard !isPreparingInventoryExport else { return }
+        isPreparingInventoryExport = true
+        Task {
+            do {
+                let data = try await library.makeInventoryExport(
+                    includeRecognizedDetails: includeRecognizedDetails
+                )
+                inventoryDocument = InventoryExportDocument(data: data)
+                isExportingInventory = true
+            } catch {
+                library.errorMessage = error.localizedDescription
+            }
+            isPreparingInventoryExport = false
+        }
+    }
+}
+
+private struct InventoryExportDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+
+    let data: Data
+
+    init(data: Data) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
 

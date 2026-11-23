@@ -1,6 +1,6 @@
 import Foundation
 
-struct IndexedImage: Identifiable, Codable, Hashable {
+struct IndexedImage: Identifiable, Codable, Hashable, Sendable {
     var id: UUID
     var fileName: String
     var importedAt: Date
@@ -9,7 +9,7 @@ struct IndexedImage: Identifiable, Codable, Hashable {
     var sha256: String
 }
 
-struct IndexedVideo: Identifiable, Codable, Hashable {
+struct IndexedVideo: Identifiable, Codable, Hashable, Sendable {
     var id: UUID
     var fileName: String
     var importedAt: Date
@@ -27,7 +27,7 @@ struct IndexedVideo: Identifiable, Codable, Hashable {
     }
 }
 
-struct IndexedVideoFrame: Codable, Hashable, Identifiable {
+struct IndexedVideoFrame: Codable, Hashable, Identifiable, Sendable {
     var index: Int
     var fileName: String
     var timeSeconds: Double
@@ -63,6 +63,41 @@ struct ProcessedVideoFrame: Sendable {
     var jpegData: Data
     var recognizedText: String
     var labels: [String]
+}
+
+struct LibraryInventoryExport: Codable, Sendable {
+    var schemaVersion: Int
+    var exportedAt: Date
+    var images: [InventoryImageRecord]
+    var videos: [InventoryVideoRecord]
+}
+
+struct InventoryImageRecord: Codable, Sendable {
+    var id: UUID
+    var importedAt: Date
+    var byteCount: Int64?
+    var sha256: String
+    var labels: [String]?
+    var recognizedText: String?
+}
+
+struct InventoryVideoRecord: Codable, Sendable {
+    var id: UUID
+    var importedAt: Date
+    var durationSeconds: Double
+    var byteCount: Int64
+    var sha256: String
+    var frameCount: Int
+    var labels: [String]?
+    var recognizedText: String?
+    var frames: [InventoryVideoFrameRecord]?
+}
+
+struct InventoryVideoFrameRecord: Codable, Sendable {
+    var index: Int
+    var timeSeconds: Double
+    var labels: [String]
+    var recognizedText: String
 }
 
 enum LibraryError: LocalizedError, Sendable {

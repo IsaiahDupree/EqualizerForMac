@@ -4,6 +4,8 @@ Screenshot Scout makes a searchable local index of images and videos a person ex
 
 For a selected video, the app keeps a private full-resolution copy and samples five frames across its duration. Vision reads visible text and scene labels from those frames. Search results point to the video and sampled moments; the person reviews the original before using any clip. Video indexing can be cancelled, and exact duplicate videos are skipped using a streaming SHA-256 pass.
 
+The library exports a JSON inventory without media copies. The user chooses metadata only or an explicit option to include recognized text and Vision labels.
+
 Image copies, selected video copies, sampled frames, and JSON indexes are stored in the app's Documents folder. The app marks that folder as excluded from device backups, performs analysis locally, and does not scan the photo library, access other apps, upload media, or delete originals from Photos. Removing an item deletes only Screenshot Scout's private copy and index data.
 
 Build the project with XcodeGen and Xcode:
