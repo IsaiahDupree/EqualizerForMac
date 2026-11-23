@@ -119,6 +119,18 @@ iOS 27 cross-app product and has not been submitted or published.
   `com.isaiahdupree.ScreenshotScout`. This confirms the stable UI, storage,
   search, and fallback paths. No tests or device installs were run; the iOS 27
   Foundation Models path remains uncompiled.
+- Clear Record rebuilt with Xcode 26.0.1 for the generic iOS Simulator
+  destination, with arm64 and x86_64 slices and bundle ID
+  `com.isaiahdupree.MeetingNotes`. This verifies the recorder, local Speech
+  path, shortcut, and fallback build only; no tests or device installs were
+  run, and the Foundation Models summary path remains uncompiled.
+- Sonance EQ and its AUv3 extension rebuilt with Xcode 26.0.1 for the generic
+  iOS Simulator destination. The app bundle IDs are
+  `com.isaiahdupree.SonanceEQ.iOSPrototype` and
+  `com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit`; both binaries contain
+  arm64 and x86_64 slices. This confirms the local-player and extension build,
+  not the separate iOS 27 Media Device route. No tests or device installs were
+  run.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 - EverReach now has an optional Foundation Models note-drafting source path
