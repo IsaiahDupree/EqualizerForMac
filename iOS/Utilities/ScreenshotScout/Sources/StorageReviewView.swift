@@ -7,6 +7,8 @@ struct StorageReviewView: View {
     @State private var snapshot = LibraryStorageSnapshot.empty
     @State private var isLoading = true
     @State private var pendingRemoval: LibraryStorageEntry?
+    @State private var activeSnapshotID = UUID()
+    @State private var storageScan: Task<LibraryStorageSnapshot, Never>?
 
     var body: some View {
         NavigationStack {
@@ -41,6 +43,7 @@ struct StorageReviewView: View {
                                     .font(.title3)
                                     .foregroundStyle(.tint)
                                     .frame(width: 28)
+                                    .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(entry.title).font(.body.weight(.medium)).lineLimit(1)
                                     Text(entry.detail).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -79,7 +82,17 @@ struct StorageReviewView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task { await refreshSnapshot() }
+            .task(id: library.searchRevision) {
+                storageScan?.cancel()
+                do {
+                    try await Task.sleep(for: .milliseconds(150))
+                } catch {
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                await refreshSnapshot()
+            }
+            .onDisappear { storageScan?.cancel() }
             .alert("Remove this local copy?", isPresented: removalConfirmationPresented) {
                 Button("Cancel", role: .cancel) { pendingRemoval = nil }
                 Button("Remove from Screenshot Scout", role: .destructive) {
@@ -103,6 +116,8 @@ struct StorageReviewView: View {
     }
 
     private func refreshSnapshot() async {
+        let snapshotID = UUID()
+        activeSnapshotID = snapshotID
         isLoading = true
         let imageFiles = library.images.map { image in
             (record: image, url: library.imageURL(for: image))
@@ -115,13 +130,14 @@ struct StorageReviewView: View {
             )
         }
 
-        snapshot = await Task.detached(priority: .utility) {
+        let scan = Task.detached(priority: .utility) {
             var entries: [LibraryStorageEntry] = []
             var imageBytes: Int64 = 0
             var videoBytes: Int64 = 0
             var frameBytes: Int64 = 0
 
             for item in imageFiles {
+                guard !Task.isCancelled else { return LibraryStorageSnapshot.empty }
                 let bytes = libraryFileByteCount(at: item.url)
                 imageBytes += bytes
                 entries.append(LibraryStorageEntry(
@@ -133,6 +149,7 @@ struct StorageReviewView: View {
             }
 
             for item in videoFiles {
+                guard !Task.isCancelled else { return LibraryStorageSnapshot.empty }
                 let sourceBytes = libraryFileByteCount(at: item.url)
                 let sampledFrameBytes = item.frameURLs.reduce(Int64.zero) { $0 + libraryFileByteCount(at: $1) }
                 videoBytes += sourceBytes
@@ -158,7 +175,12 @@ struct StorageReviewView: View {
                 imageCount: imageFiles.count,
                 videoCount: videoFiles.count
             )
-        }.value
+        }
+        storageScan = scan
+        let updatedSnapshot = await scan.value
+        guard activeSnapshotID == snapshotID, !Task.isCancelled else { return }
+        snapshot = updatedSnapshot
+        storageScan = nil
         isLoading = false
     }
 
@@ -169,7 +191,6 @@ struct StorageReviewView: View {
         case .image(let image): library.remove(image)
         case .video(let video): library.remove(video)
         }
-        Task { await refreshSnapshot() }
     }
 }
 
