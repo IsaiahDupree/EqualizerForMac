@@ -42,6 +42,9 @@ is reviewed and accepted and the apps are rebuilt.
 - Screenshot Scout's video detail now shares timestamped text notes from
   sampled OCR, labels, and reviewed frame descriptions without including the
   video. Xcode compilation remains license-gated.
+- Screenshot Scout's review queue now supports local multi-term search across
+  queued image and video OCR, labels, and saved descriptions, with a visible
+  match count and empty state. Xcode compilation remains license-gated.
 - Screenshot Scout now keeps a pending state during search debounce and local
   index lookup, preventing a stale empty-results message from flashing between
   successive queries. Xcode compilation remains license-gated.

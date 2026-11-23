@@ -5,6 +5,7 @@ struct ReviewQueueView: View {
     @EnvironmentObject private var library: ScreenshotLibrary
     @Environment(\.dismiss) private var dismiss
     @State private var selectedMedia: ReviewQueuePresentation?
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -18,7 +19,35 @@ struct ReviewQueueView: View {
                 } else {
                     List {
                         Section {
-                            ForEach(library.reviewQueue) { entry in
+                            HStack(spacing: 9) {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundStyle(.secondary)
+                                TextField("Search queued images and videos", text: $searchText)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled()
+                                    .accessibilityLabel("Search review queue by text, labels, or descriptions")
+                                if !searchText.isEmpty {
+                                    Button {
+                                        searchText = ""
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Clear review queue search")
+                                }
+                            }
+
+                            if visibleEntries.isEmpty {
+                                ContentUnavailableView(
+                                    "No queued items match",
+                                    systemImage: "magnifyingglass",
+                                    description: Text("Try other words from the image or sampled video details.")
+                                )
+                                .listRowBackground(Color.clear)
+                            }
+
+                            ForEach(visibleEntries) { entry in
                                 if entry.mediaKind == .image,
                                    let item = library.images.first(where: { $0.id == entry.mediaID }) {
                                     imageRow(item, entry: entry)
@@ -28,7 +57,7 @@ struct ReviewQueueView: View {
                                 }
                             }
                         } header: {
-                            Text("Open a photo or video to review it. Removing it here keeps its media in your library.")
+                            Text("\(visibleEntries.count) OF \(library.reviewQueue.count) · Open an item to review it; removing it here keeps its media in your library.")
                         }
                     }
                     .scrollContentBackground(.hidden)
@@ -58,6 +87,31 @@ struct ReviewQueueView: View {
                 Button("OK", role: .cancel) { library.errorMessage = nil }
             } message: {
                 Text(library.errorMessage ?? "Try again.")
+            }
+        }
+    }
+
+    private var visibleEntries: [ReviewQueueEntry] {
+        let terms = searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(whereSeparator: \.isWhitespace)
+            .map(String.init)
+        guard !terms.isEmpty else { return library.reviewQueue }
+
+        return library.reviewQueue.filter { entry in
+            let searchableValues: [String]
+            if entry.mediaKind == .image,
+               let item = library.images.first(where: { $0.id == entry.mediaID }) {
+                searchableValues = [item.recognizedText, item.sceneDescription ?? ""] + item.labels
+            } else if entry.mediaKind == .video,
+                      let item = library.videos.first(where: { $0.id == entry.mediaID }) {
+                searchableValues = [item.recognizedText, item.sceneDescriptions] + item.labels
+            } else {
+                return false
+            }
+
+            return terms.allSatisfy { term in
+                searchableValues.contains { $0.localizedStandardContains(term) }
             }
         }
     }
