@@ -8,7 +8,9 @@ with local OCR, scene labels, and reviewable frame timestamps.
 Sonance's file player also includes a selectable sleep timer while playback is
 active.
 Clear Record is a second separate utility prototype in
-`iOS/Utilities/MeetingNotes/`.
+`iOS/Utilities/MeetingNotes/`. EverReach Capture now includes a native Share
+extension path for one locally staged image at a time; its build and App Group
+signing still need validation.
 Track Study is a third standalone utility in `iOS/Utilities/TrackStudy/`; it
 imports a chosen audio file, supports local playback and practice markers, and
 gates Apple Music Understanding analysis behind iOS 27 SDK availability.
