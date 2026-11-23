@@ -35,6 +35,10 @@ is reviewed and accepted and the apps are rebuilt.
 - Screenshot Scout now writes updated image, video, and review-queue indexes
   before deleting private media. If index persistence fails, it restores the
   in-memory records and keeps the media; failed cleanup is reported separately.
+- Screenshot Scout video search now marks which sampled timestamps contain a
+  query term on each result card, so a video hit points to its relevant indexed
+  moments. Source review and `git diff --check` passed; Xcode compilation
+  remains license-gated.
 - Clear Record now writes its session index before deleting a recording and
   restores the session if that save fails. Transcript and rename edits also
   revert in memory when index persistence fails.

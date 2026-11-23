@@ -139,6 +139,7 @@ struct VideoDetailView: View {
 struct VideoCard: View {
     let item: IndexedVideo
     let thumbnailURL: URL?
+    var matchingFrames: [IndexedVideoFrame] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -173,6 +174,14 @@ struct VideoCard: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                     .foregroundStyle(.white.opacity(0.56))
+                if !matchingFrames.isEmpty {
+                    let times = matchingFrames.map { Self.duration($0.timeSeconds) }.joined(separator: " · ")
+                    Text("Matches: \(times)")
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .lineLimit(2)
+                        .foregroundStyle(.cyan)
+                        .accessibilityLabel("Search matches at sampled moments \(times)")
+                }
                 Text(item.importedAt.formatted(date: .abbreviated, time: .omitted).uppercased())
                     .font(.system(size: 9, weight: .medium, design: .rounded))
                     .tracking(0.8)

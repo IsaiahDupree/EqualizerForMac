@@ -40,6 +40,16 @@ struct LibraryView: View {
         return library.searchResults?.videos ?? []
     }
 
+    private func matchingFrames(for video: IndexedVideo) -> [IndexedVideoFrame] {
+        let terms = normalizedSearchQuery.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !terms.isEmpty else { return [] }
+        return video.frames.filter { frame in
+            let searchable = ([frame.recognizedText, frame.sceneDescription ?? ""] + frame.labels)
+                .joined(separator: " ")
+            return terms.contains { searchable.localizedCaseInsensitiveContains($0) }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -367,7 +377,11 @@ struct LibraryView: View {
                 LazyVGrid(columns: columns, spacing: 14) {
                     ForEach(filteredVideos) { item in
                         Button { presentedSheet = .video(item) } label: {
-                            VideoCard(item: item, thumbnailURL: item.frames.first.map { library.frameURL(for: $0) })
+                            VideoCard(
+                                item: item,
+                                thumbnailURL: item.frames.first.map { library.frameURL(for: $0) },
+                                matchingFrames: matchingFrames(for: item)
+                            )
                         }
                             .buttonStyle(.plain)
                     }
