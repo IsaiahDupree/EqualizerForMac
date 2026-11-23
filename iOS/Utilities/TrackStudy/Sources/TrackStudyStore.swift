@@ -9,12 +9,15 @@ final class TrackStudyStore: ObservableObject {
     @Published private(set) var isPlaying = false
     @Published private(set) var isImporting = false
     @Published private(set) var isAnalyzing = false
+    @Published private(set) var activeLoopID: UUID?
     @Published var errorMessage: String?
 
     private let player = AVPlayer()
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var periodicTimeObserver: Any?
+    private var playbackRequested = false
+    private var isWrappingLoop = false
 
     init() {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -28,6 +31,11 @@ final class TrackStudyStore: ObservableObject {
                 guard let self else { return }
                 self.currentTime = time.seconds
                 self.isPlaying = self.player.timeControlStatus == .playing
+                self.wrapPlaybackLoopIfNeeded(at: time.seconds)
+                if time.seconds >= self.duration, self.activeLoopID == nil {
+                    self.playbackRequested = false
+                    self.isPlaying = false
+                }
             }
         }
     }
@@ -68,6 +76,9 @@ final class TrackStudyStore: ObservableObject {
             )
             track = imported
             try saveTrack()
+            playbackRequested = false
+            isPlaying = false
+            activeLoopID = nil
             player.replaceCurrentItem(with: AVPlayerItem(url: destination))
             player.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
             currentTime = 0
@@ -75,6 +86,9 @@ final class TrackStudyStore: ObservableObject {
         } catch {
             if let copiedURL { try? FileManager.default.removeItem(at: copiedURL) }
             track = nil
+            playbackRequested = false
+            isPlaying = false
+            activeLoopID = nil
             player.replaceCurrentItem(with: nil)
             errorMessage = error.localizedDescription
         }
@@ -82,11 +96,13 @@ final class TrackStudyStore: ObservableObject {
 
     func togglePlayback() {
         guard track != nil, player.currentItem != nil else { return }
-        if isPlaying {
+        if playbackRequested {
+            playbackRequested = false
             player.pause()
             isPlaying = false
         } else {
-            if duration > 0, currentTime >= duration { seek(to: 0) }
+            if duration > 0, currentTime >= duration { seek(to: activeLoopStart ?? 0) }
+            playbackRequested = true
             player.play()
             isPlaying = true
         }
@@ -94,7 +110,11 @@ final class TrackStudyStore: ObservableObject {
 
     func seek(to seconds: TimeInterval) {
         guard duration > 0 else { return }
-        let clamped = min(max(seconds, 0), duration)
+        var clamped = min(max(seconds, 0), duration)
+        if let activeLoop,
+           activeLoop.endSeconds > activeLoop.startSeconds {
+            clamped = min(max(clamped, activeLoop.startSeconds), activeLoop.endSeconds - 0.05)
+        }
         player.seek(
             to: CMTime(seconds: clamped, preferredTimescale: 600),
             toleranceBefore: .zero,
@@ -127,6 +147,45 @@ final class TrackStudyStore: ObservableObject {
         seek(to: marker.seconds)
     }
 
+    func saveLoop(title: String, startSeconds: TimeInterval, endSeconds: TimeInterval) {
+        errorMessage = nil
+        guard var track else { return }
+        guard startSeconds.isFinite, endSeconds.isFinite,
+              startSeconds >= 0, endSeconds <= track.duration,
+              endSeconds - startSeconds >= 0.5 else {
+            errorMessage = "Set A and B at least half a second apart, with B after A."
+            return
+        }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let loop = PracticeLoop(
+            title: trimmed.isEmpty ? "Loop \(track.loops.count + 1)" : trimmed,
+            startSeconds: startSeconds,
+            endSeconds: endSeconds
+        )
+        track.loops.append(loop)
+        track.loops.sort { $0.startSeconds < $1.startSeconds }
+        self.track = track
+        persistOrReport()
+    }
+
+    func toggleLoopPlayback(_ loop: PracticeLoop) {
+        guard track?.loops.contains(where: { $0.id == loop.id }) == true else { return }
+        if activeLoopID == loop.id {
+            activeLoopID = nil
+        } else {
+            activeLoopID = loop.id
+            seek(to: loop.startSeconds)
+        }
+    }
+
+    func removeLoop(_ loop: PracticeLoop) {
+        guard var track else { return }
+        track.loops.removeAll { $0.id == loop.id }
+        if activeLoopID == loop.id { activeLoopID = nil }
+        self.track = track
+        persistOrReport()
+    }
+
     func analyzeTrack() async {
         guard var track, !isAnalyzing else { return }
         isAnalyzing = true
@@ -145,6 +204,7 @@ final class TrackStudyStore: ObservableObject {
 
     func removeTrack() {
         player.pause()
+        playbackRequested = false
         player.replaceCurrentItem(with: nil)
         isPlaying = false
         currentTime = 0
@@ -152,6 +212,7 @@ final class TrackStudyStore: ObservableObject {
             try? FileManager.default.removeItem(at: audioURL)
         }
         track = nil
+        activeLoopID = nil
         do {
             try FileManager.default.removeItem(at: indexURL())
         } catch let error as CocoaError where error.code == .fileNoSuchFile {
@@ -183,6 +244,40 @@ final class TrackStudyStore: ObservableObject {
     private func persistOrReport() {
         do { try saveTrack() }
         catch { errorMessage = error.localizedDescription }
+    }
+
+    private func wrapPlaybackLoopIfNeeded(at seconds: TimeInterval) {
+        guard playbackRequested,
+              !isWrappingLoop,
+              let activeLoopID,
+              let loop = track?.loops.first(where: { $0.id == activeLoopID }),
+              seconds >= loop.endSeconds else { return }
+
+        isWrappingLoop = true
+        player.seek(
+            to: CMTime(seconds: loop.startSeconds, preferredTimescale: 600),
+            toleranceBefore: .zero,
+            toleranceAfter: .zero
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isWrappingLoop = false
+                guard self.playbackRequested, self.activeLoopID == loop.id else { return }
+                self.player.play()
+                self.isPlaying = true
+            }
+        }
+        currentTime = loop.startSeconds
+    }
+
+    private var activeLoop: PracticeLoop? {
+        guard let activeLoopID else { return nil }
+        return track?.loops.first(where: { $0.id == activeLoopID })
+    }
+
+    private var activeLoopStart: TimeInterval? {
+        activeLoop?.startSeconds
     }
 
     private func saveTrack() throws {

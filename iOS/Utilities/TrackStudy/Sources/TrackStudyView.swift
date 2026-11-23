@@ -5,6 +5,9 @@ struct TrackStudyView: View {
     @EnvironmentObject private var store: TrackStudyStore
     @State private var showingImporter = false
     @State private var markerTitle = ""
+    @State private var loopTitle = "Practice loop"
+    @State private var loopStartDraft: TimeInterval?
+    @State private var loopEndDraft: TimeInterval?
     @State private var showingRemoveConfirmation = false
 
     var body: some View {
@@ -17,6 +20,7 @@ struct TrackStudyView: View {
                         playbackCard(track)
                         analysisCard(track)
                         markersCard(track)
+                        loopsCard(track)
                         Button("Remove imported track", systemImage: "trash", role: .destructive) {
                             showingRemoveConfirmation = true
                         }
@@ -275,6 +279,120 @@ struct TrackStudyView: View {
         }
         .padding(17)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private func loopsCard(_ track: PracticeTrack) -> some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack {
+                sectionHeading("PRACTICE LOOPS", symbol: "repeat")
+                Spacer()
+                Text("Set A and B while paused or playing")
+                    .font(.system(size: 10, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.45))
+            }
+
+            HStack(spacing: 9) {
+                pointButton("Set A", value: loopStartDraft) {
+                    loopStartDraft = min(max(store.currentTime, 0), track.duration)
+                }
+                pointButton("Set B", value: loopEndDraft) {
+                    loopEndDraft = min(max(store.currentTime, 0), track.duration)
+                }
+            }
+
+            HStack(spacing: 9) {
+                TextField("Loop name", text: $loopTitle)
+                    .font(.system(size: 13, design: .rounded))
+                    .padding(12)
+                    .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+                Button {
+                    guard let loopStartDraft, let loopEndDraft else { return }
+                    store.saveLoop(title: loopTitle, startSeconds: loopStartDraft, endSeconds: loopEndDraft)
+                    if store.errorMessage == nil {
+                        loopTitle = "Practice loop"
+                        self.loopStartDraft = nil
+                        self.loopEndDraft = nil
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color(red: 0.03, green: 0.11, blue: 0.08))
+                        .frame(width: 42, height: 42)
+                        .background(.mint, in: RoundedRectangle(cornerRadius: 12))
+                }
+                .accessibilityLabel("Save practice loop")
+                .disabled(!hasValidLoopDraft)
+                .opacity(hasValidLoopDraft ? 1 : 0.48)
+            }
+
+            if let loopStartDraft, let loopEndDraft, loopEndDraft <= loopStartDraft {
+                Text("Set B after Set A to create a loop.")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.orange.opacity(0.9))
+            }
+
+            if track.loops.isEmpty {
+                Text("Mark a passage with A and B, then save it for repeat practice.")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.55))
+            } else {
+                ForEach(track.loops.sorted { $0.startSeconds < $1.startSeconds }) { loop in
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(loop.title)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.88))
+                                .lineLimit(1)
+                            Text("\(timeString(loop.startSeconds)) – \(timeString(loop.endSeconds))")
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                        Spacer(minLength: 0)
+                        Button {
+                            store.toggleLoopPlayback(loop)
+                        } label: {
+                            Label(
+                                store.activeLoopID == loop.id ? "Repeat on" : "Repeat",
+                                systemImage: store.activeLoopID == loop.id ? "repeat.circle.fill" : "repeat"
+                            )
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        }
+                        .tint(.mint)
+                        .accessibilityLabel(store.activeLoopID == loop.id ? "Turn off repeat for \(loop.title)" : "Repeat \(loop.title)")
+                        Button(role: .destructive) { store.removeLoop(loop) } label: {
+                            Image(systemName: "trash")
+                                .font(.system(size: 11))
+                        }
+                        .accessibilityLabel("Remove \(loop.title)")
+                    }
+                    .padding(.vertical, 7)
+                    .overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.06)).frame(height: 1) }
+                }
+            }
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private func pointButton(_ title: String, value: TimeInterval?, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text(value.map { timeString($0) } ?? "—")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+            }
+            .font(.system(size: 12, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white.opacity(0.88))
+            .padding(12)
+            .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var hasValidLoopDraft: Bool {
+        guard let loopStartDraft, let loopEndDraft else { return false }
+        return loopEndDraft - loopStartDraft >= 0.5
     }
 
     private var privacyNote: some View {

@@ -62,6 +62,13 @@ iOS 27 cross-app product and has not been submitted or published.
   Understanding adapter is guarded by SDK/OS availability and is not compiled
   by this Mac's iOS 26 SDK. App UI and audio behavior have not been exercised
   in a simulator or on a phone.
+- Track Study now saves named A/B practice loops with tracks, supports marking
+  start and end from the current playhead, and repeats the passage during
+  playback. Existing track records decode without a loops field. The updated
+  target compiled with Xcode 26.0.1 for arm64 and x86_64; playback and loop
+  boundary behavior remain unexercised at runtime. Its iOS 27 Music
+  Understanding adapter is gated to Swift 6.4 / Xcode 27 and is not compiled
+  by the installed SDK.
 - These are local build results. No simulator interaction, phone installation,
   or iPhone deployment was performed in this step.
 - EverReach now has an optional Foundation Models note-drafting source path

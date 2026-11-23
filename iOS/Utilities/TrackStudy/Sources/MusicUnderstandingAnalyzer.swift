@@ -1,20 +1,20 @@
 import AVFoundation
 import Foundation
 
-#if canImport(MusicUnderstanding)
+#if compiler(>=6.4) && canImport(MusicUnderstanding)
 import MusicUnderstanding
 #endif
 
 enum MusicUnderstandingAnalyzer {
     static var isAvailable: Bool {
-        #if canImport(MusicUnderstanding)
+        #if compiler(>=6.4) && canImport(MusicUnderstanding)
         if #available(iOS 27.0, *) { return true }
         #endif
         return false
     }
 
     static func analyze(fileURL: URL) async throws -> MusicAnalysis {
-        #if canImport(MusicUnderstanding)
+        #if compiler(>=6.4) && canImport(MusicUnderstanding)
         guard #available(iOS 27.0, *) else {
             throw TrackStudyError.musicUnderstandingRequiresIOS27
         }

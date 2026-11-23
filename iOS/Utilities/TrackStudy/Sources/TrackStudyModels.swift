@@ -8,6 +8,43 @@ struct PracticeTrack: Identifiable, Codable, Sendable {
     let duration: TimeInterval
     var markers: [PracticeMarker]
     var analysis: MusicAnalysis?
+    var loops: [PracticeLoop] = []
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, storedFilename, importedAt, duration, markers, analysis, loops
+    }
+
+    init(
+        id: UUID,
+        title: String,
+        storedFilename: String,
+        importedAt: Date,
+        duration: TimeInterval,
+        markers: [PracticeMarker],
+        analysis: MusicAnalysis?,
+        loops: [PracticeLoop] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.storedFilename = storedFilename
+        self.importedAt = importedAt
+        self.duration = duration
+        self.markers = markers
+        self.analysis = analysis
+        self.loops = loops
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        id = try values.decode(UUID.self, forKey: .id)
+        title = try values.decode(String.self, forKey: .title)
+        storedFilename = try values.decode(String.self, forKey: .storedFilename)
+        importedAt = try values.decode(Date.self, forKey: .importedAt)
+        duration = try values.decode(TimeInterval.self, forKey: .duration)
+        markers = try values.decodeIfPresent([PracticeMarker].self, forKey: .markers) ?? []
+        analysis = try values.decodeIfPresent(MusicAnalysis.self, forKey: .analysis)
+        loops = try values.decodeIfPresent([PracticeLoop].self, forKey: .loops) ?? []
+    }
 }
 
 struct PracticeMarker: Identifiable, Codable, Sendable {
@@ -19,6 +56,20 @@ struct PracticeMarker: Identifiable, Codable, Sendable {
         id = UUID()
         self.title = title
         self.seconds = seconds
+    }
+}
+
+struct PracticeLoop: Identifiable, Codable, Sendable {
+    let id: UUID
+    var title: String
+    var startSeconds: TimeInterval
+    var endSeconds: TimeInterval
+
+    init(title: String, startSeconds: TimeInterval, endSeconds: TimeInterval) {
+        id = UUID()
+        self.title = title
+        self.startSeconds = startSeconds
+        self.endSeconds = endSeconds
     }
 }
 
