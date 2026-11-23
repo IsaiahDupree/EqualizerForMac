@@ -157,7 +157,12 @@ final class MeetingNotesStore {
                 transcript: ""
             )
             sessions.insert(session, at: 0)
-            try saveIndex()
+            do {
+                try saveIndex()
+            } catch {
+                errorMessage = "The recording was created, but its session could not be saved to the library index: \(error.localizedDescription)"
+                return
+            }
             errorMessage = backupExclusionWarning.map {
                 "Recording saved, but its backup exclusion couldn't be set: \($0)"
             }
@@ -184,8 +189,14 @@ final class MeetingNotesStore {
                 locale: locale
             )
             guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
+            let previous = sessions[index]
             sessions[index].transcript = transcript
-            try saveIndex()
+            do {
+                try saveIndex()
+            } catch {
+                sessions[index] = previous
+                throw error
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -326,19 +337,37 @@ final class MeetingNotesStore {
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
         let value = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !value.isEmpty else { return }
+        let previous = sessions[index]
         sessions[index].title = value
-        do { try saveIndex() } catch { errorMessage = error.localizedDescription }
+        do {
+            try saveIndex()
+            errorMessage = nil
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+        }
     }
 
     func remove(_ session: MeetingSession) {
+        if playbackSessionID == session.id { stopPlayback() }
+        let previousSessions = sessions
+        sessions.removeAll { $0.id == session.id }
         do {
-            if playbackSessionID == session.id { stopPlayback() }
-            let audio = audioURL(for: session)
-            if FileManager.default.fileExists(atPath: audio.path) { try FileManager.default.removeItem(at: audio) }
-            sessions.removeAll { $0.id == session.id }
             try saveIndex()
         } catch {
+            sessions = previousSessions
             errorMessage = error.localizedDescription
+            return
+        }
+
+        do {
+            let audio = audioURL(for: session)
+            if FileManager.default.fileExists(atPath: audio.path) {
+                try FileManager.default.removeItem(at: audio)
+            }
+            errorMessage = nil
+        } catch {
+            errorMessage = "The session was removed from the library, but its private recording could not be deleted: \(error.localizedDescription)"
         }
     }
 
@@ -491,8 +520,36 @@ final class MeetingNotesStore {
     private func saveIndex() throws {
         try prepareLocalDirectory()
         let data = try JSONEncoder().encode(sessions)
-        try data.write(to: indexURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
-        try markExcludedFromBackup(at: indexURL)
+        let existingIndex = FileManager.default.fileExists(atPath: indexURL.path)
+        let previousData: Data?
+        if existingIndex {
+            previousData = try Data(contentsOf: indexURL)
+        } else {
+            previousData = nil
+        }
+        do {
+            try data.write(to: indexURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            try markExcludedFromBackup(at: indexURL)
+        } catch {
+            let saveError = error
+            do {
+                if let previousData {
+                    try previousData.write(
+                        to: indexURL,
+                        options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
+                    )
+                    try markExcludedFromBackup(at: indexURL)
+                } else if FileManager.default.fileExists(atPath: indexURL.path) {
+                    try FileManager.default.removeItem(at: indexURL)
+                }
+            } catch {
+                throw SessionIndexPersistenceError.rollbackFailed(
+                    save: saveError.localizedDescription,
+                    rollback: error.localizedDescription
+                )
+            }
+            throw saveError
+        }
     }
 
     private func prepareLocalDirectory() throws {
@@ -509,5 +566,16 @@ final class MeetingNotesStore {
 
     private static func digest(_ value: String) -> String {
         SHA256.hash(data: Data(value.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+private enum SessionIndexPersistenceError: LocalizedError {
+    case rollbackFailed(save: String, rollback: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .rollbackFailed(let save, let rollback):
+            "Clear Record could not save the session index (\(save)) or restore its previous contents (\(rollback)). The on-disk index may not match the previous state."
+        }
     }
 }
