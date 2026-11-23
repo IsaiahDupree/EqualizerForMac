@@ -54,6 +54,8 @@ final class EqualizerSession {
     private(set) var storageMessage: String?
     private(set) var reference: MobileEQSettings?
     private(set) var playingReference = false
+    private(set) var referenceAttenuationDB: Float = 0
+    private(set) var editedAttenuationDB: Float = 0
 
     @ObservationIgnored private let store: EqualizerStore
     @ObservationIgnored private var savedSnapshot: EqualizerSnapshot
@@ -83,14 +85,19 @@ final class EqualizerSession {
     }
 
     func updateEQ(_ update: (inout MobileEQSettings) -> Void) {
+        editedAttenuationDB = 0
         update(&snapshot.settings)
         snapshot.selectedBand = snapshot.settings.selection(snapshot.selectedBand)
-        if !playingReference { player.apply(snapshot.settings) }
+        if !playingReference {
+            player.apply(snapshot.settings)
+            player.setComparisonOutputAttenuation(editedAttenuationDB)
+        }
         if !isEditing { saveIfChanged() }
     }
 
     func captureReference() {
         reference = snapshot.settings
+        resetComparisonAttenuations()
         auditionReference(false)
     }
 
@@ -136,6 +143,25 @@ final class EqualizerSession {
         guard let reference else { return }
         playingReference = enabled
         player.apply(enabled ? reference : snapshot.settings)
+        player.setComparisonOutputAttenuation(enabled ? referenceAttenuationDB : editedAttenuationDB)
+    }
+
+    func setComparisonAttenuation(_ decibels: Float, forReference: Bool) {
+        let attenuation = min(max(decibels, -12), 0)
+        if forReference {
+            referenceAttenuationDB = attenuation
+        } else {
+            editedAttenuationDB = attenuation
+        }
+        if playingReference == forReference {
+            player.setComparisonOutputAttenuation(attenuation)
+        }
+    }
+
+    func resetComparisonAttenuations() {
+        referenceAttenuationDB = 0
+        editedAttenuationDB = 0
+        player.setComparisonOutputAttenuation(0)
     }
 
     func editingChanged(_ editing: Bool) {

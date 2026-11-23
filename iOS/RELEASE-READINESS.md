@@ -14,6 +14,13 @@ is reviewed and accepted and the apps are rebuilt.
   generated frequency response and suggested preamp before saving or applying
   the curve. It remains a preference-based starting point, not a measured
   headphone correction.
+- Sonance EQ's A/B comparison now has separate temporary output trims for the
+  reference and edited curves. Each can be attenuated by up to 12 dB at the
+  player output stage; changing the edited curve clears its trim, and no trim
+  is written to the settings file or presets. VoiceOver labels and describes
+  each control. `git diff --check` and XcodeGen project generation passed;
+  Xcode compilation remains blocked by its unaccepted first-use license, and
+  listening behavior has not been validated on a device.
 - Sonance EQ now includes everyday Workout, Focus, and Late Night starting
   curves in the standalone profile screen and AUv3 preset menu. Built-in preset
   application calculates peak-response headroom and disables bypass. Late

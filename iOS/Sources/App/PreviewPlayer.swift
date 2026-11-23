@@ -22,6 +22,7 @@ final class PreviewPlayer {
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
     @ObservationIgnored private var analysis: AudioAnalysisMonitor?
     @ObservationIgnored private var outputCorrections: [String: OutputCorrection] = [:]
+    @ObservationIgnored private var comparisonOutputAttenuationDB: Float = 0
     @ObservationIgnored private var sleepTimerTask: Task<Void, Never>?
     private(set) var sleepTimerMinutes: Int?
     private static let bypassedCorrection = MobileEQSettings(bands: [], bypassed: true)
@@ -49,6 +50,11 @@ final class PreviewPlayer {
         let previous = self.settings
         self.settings = settings
         graph?.apply(settings, changedFrom: previous)
+    }
+
+    func setComparisonOutputAttenuation(_ decibels: Float) {
+        comparisonOutputAttenuationDB = min(max(decibels, -12), 0)
+        graph?.setOutputAttenuation(comparisonOutputAttenuationDB)
     }
 
     func applyOutputCorrections(_ corrections: [String: OutputCorrection]) {
@@ -102,6 +108,7 @@ final class PreviewPlayer {
             guard playRequest == request else { return }
             let graph = try PlaybackGraph(effect: effect, correction: correction, format: selected.file.processingFormat)
             graph.apply(settings)
+            graph.setOutputAttenuation(comparisonOutputAttenuationDB)
             self.graph = graph
 
             try session.setCategory(.playback, mode: .default)
@@ -281,6 +288,11 @@ private final class PlaybackGraph {
         guard settings != appliedCorrection else { return }
         settings.apply(to: correctionTree, changedFrom: appliedCorrection)
         appliedCorrection = settings
+    }
+
+    func setOutputAttenuation(_ decibels: Float) {
+        let attenuation = min(max(decibels, -12), 0)
+        engine.mainMixerNode.outputVolume = Float(pow(10, Double(attenuation) / 20))
     }
 }
 

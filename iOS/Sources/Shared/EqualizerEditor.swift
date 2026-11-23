@@ -301,8 +301,12 @@ struct EqualizerEditor: View {
 struct EqualizerComparison: View {
     let hasReference: Bool
     let listeningToReference: Bool
+    let referenceAttenuationDB: Float
+    let editedAttenuationDB: Float
     let capture: () -> Void
     let audition: (Bool) -> Void
+    let setAttenuation: (Float, Bool) -> Void
+    let resetAttenuations: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -319,10 +323,47 @@ struct EqualizerComparison: View {
                 option("A · Reference", reference: true).disabled(!hasReference)
                 option("B · Edited", reference: false)
             }
-            Text("A and B use their saved preamp levels; playback is not loudness-matched.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if hasReference {
+                trimControl("A output trim", value: referenceAttenuationDB, reference: true)
+                trimControl("B output trim", value: editedAttenuationDB, reference: false)
+                HStack(alignment: .top) {
+                    Text("Manual listening aid only. Trims lower output by up to 12 dB; they are temporary and do not change saved EQ or presets.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 4)
+                    if referenceAttenuationDB != 0 || editedAttenuationDB != 0 {
+                        Button("Reset trims", action: resetAttenuations)
+                            .font(.caption.weight(.semibold))
+                            .accessibilityIdentifier("resetComparisonTrims")
+                    }
+                }
                 .accessibilityIdentifier("comparisonLevelDisclosure")
+            } else {
+                Text("Set A to save the current curve for a manual comparison.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func trimControl(_ label: String, value: Float, reference: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(label).font(.subheadline)
+                Spacer()
+                Text("\(value.formatted(.number.precision(.fractionLength(1)))) dB")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+            }
+            Slider(value: Binding(
+                get: { value },
+                set: { setAttenuation($0, reference) }
+            ), in: -12...0, step: 0.5)
+                .accessibilityLabel(label)
+                .accessibilityValue("\(value.formatted(.number.precision(.fractionLength(1)))) dB attenuation")
+                .accessibilityHint("Only lowers output. This temporary trim does not change the saved EQ or presets.")
+                .accessibilityIdentifier(reference ? "comparisonATrim" : "comparisonBTrim")
         }
     }
 

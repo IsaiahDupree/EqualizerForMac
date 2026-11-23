@@ -54,7 +54,12 @@ private struct EqualizerView: View {
                             onPresetLibrary: { showingPresets = true },
                             comparison: EqualizerComparison(hasReference: session.reference != nil,
                                                             listeningToReference: session.playingReference,
-                                                            capture: session.captureReference, audition: session.auditionReference)
+                                                            referenceAttenuationDB: session.referenceAttenuationDB,
+                                                            editedAttenuationDB: session.editedAttenuationDB,
+                                                            capture: session.captureReference,
+                                                            audition: session.auditionReference,
+                                                            setAttenuation: session.setComparisonAttenuation,
+                                                            resetAttenuations: session.resetComparisonAttenuations)
                         )
                         if let message = session.storageMessage {
                             Text(message).font(.footnote).foregroundStyle(.secondary)
