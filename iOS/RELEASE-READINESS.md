@@ -91,6 +91,11 @@ is reviewed and accepted and the apps are rebuilt.
   hints to each stored audio
   file and the shared index. Xcode verification remains blocked by its
   first-use license.
+- Track Study's library now surfaces up to five analyzed local tracks with the
+  same detected first key or exact BPM, labels the matching metadata, and lets
+  the user open a result for practice. It does not claim harmonic compatibility
+  or predict transitions. `git diff --check` passed; native compilation remains
+  blocked by Xcode's unaccepted first-use license.
 - Clear Record's iOS 27 summary shortcut now prepares the latest transcript's
   draft in memory, opens an editable review sheet, and saves only after an
   explicit user action. Siri receives only a neutral status dialog.

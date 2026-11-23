@@ -10,6 +10,13 @@ private enum TrackLibrarySort: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+private struct RelatedTrackSuggestion: Identifiable {
+    let track: PracticeTrack
+    let reasons: [String]
+
+    var id: UUID { track.id }
+}
+
 struct TrackStudyView: View {
     @EnvironmentObject private var store: TrackStudyStore
     @State private var showingImporter = false
@@ -44,6 +51,7 @@ struct TrackStudyView: View {
                     if let track = store.track {
                         playbackCard(track)
                         analysisCard(track)
+                        if store.tracks.count > 1 { relatedTracksCard(track) }
                         markersCard(track)
                         loopsCard(track)
                         exportCard(track)
@@ -607,6 +615,83 @@ struct TrackStudyView: View {
         }
         .padding(17)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private func relatedTracksCard(_ track: PracticeTrack) -> some View {
+        let suggestions = relatedTrackSuggestions(for: track)
+        let hasAnchorMetadata = track.analysis?.firstKeySpan != nil || track.analysis?.tempoBPM != nil
+
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionHeading("RELATED LOCAL TRACKS", symbol: "music.note.list")
+            Text("Matches use the same detected first key or exact BPM. They help browse your library and do not predict how tracks will sound together.")
+                .font(.system(size: 12, design: .rounded))
+                .foregroundStyle(.white.opacity(0.61))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if suggestions.isEmpty {
+                Text(hasAnchorMetadata
+                     ? "No other analyzed track has the same first key or exact BPM."
+                     : "Analyze this track and other local tracks to find exact key or BPM matches.")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.54))
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                ForEach(suggestions.prefix(5)) { suggestion in
+                    Button {
+                        store.selectTrack(suggestion.track.id)
+                    } label: {
+                        HStack(spacing: 10) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(suggestion.track.title)
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                Text(suggestion.reasons.joined(separator: " · "))
+                                    .font(.system(size: 10, design: .rounded))
+                                    .foregroundStyle(.mint.opacity(0.78))
+                                    .lineLimit(2)
+                            }
+                            Spacer(minLength: 6)
+                            Image(systemName: "arrow.right.circle")
+                                .foregroundStyle(.mint)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open \(suggestion.track.title), matches \(suggestion.reasons.joined(separator: ", "))")
+                    .accessibilityHint("Selects this local track for practice.")
+                }
+            }
+        }
+        .padding(17)
+        .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 21))
+    }
+
+    private func relatedTrackSuggestions(for track: PracticeTrack) -> [RelatedTrackSuggestion] {
+        let firstKey = track.analysis?.firstKeySpan?.key
+        let tempo = track.analysis?.tempoBPM
+
+        return store.tracks.compactMap { candidate in
+            guard candidate.id != track.id else { return nil }
+            var reasons: [String] = []
+
+            if let firstKey,
+               let candidateKey = candidate.analysis?.firstKeySpan?.key,
+               firstKey.localizedCaseInsensitiveCompare(candidateKey) == .orderedSame {
+                reasons.append("Same first key · \(firstKey)")
+            }
+            if let tempo, let candidateTempo = candidate.analysis?.tempoBPM, tempo == candidateTempo {
+                reasons.append("Same BPM · \(tempo)")
+            }
+
+            guard !reasons.isEmpty else { return nil }
+            return RelatedTrackSuggestion(track: candidate, reasons: reasons)
+        }
+        .sorted { left, right in
+            if left.reasons.count != right.reasons.count { return left.reasons.count > right.reasons.count }
+            return left.track.title.localizedStandardCompare(right.track.title) == .orderedAscending
+        }
     }
 
     private func markersCard(_ track: PracticeTrack) -> some View {

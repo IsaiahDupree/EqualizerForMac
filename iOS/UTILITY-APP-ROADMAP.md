@@ -45,6 +45,10 @@ Goal suggestions now use saved contact fields, interests, and interaction histor
 
 Video detail cards now let the user share an individual sampled frame as a still image, with VoiceOver announcing its source timestamp. The action shares the selected frame file; it does not attach or share the source video.
 
+### Track Study refinement — 2026-11-23
+
+The local library now surfaces up to five other analyzed tracks that share the selected track's detected first key, exact BPM, or both. Selecting a match opens it for practice. The labels describe exact metadata matches and do not claim harmonic compatibility or a smooth transition.
+
 ## Product boundaries
 
 The named products above are intentionally fewer than the idea list: Voice, headphone tuning, sleep, focus, speaker tuning, and A/B comparison share Sonance's DSP and profiles; screenshot organization and creator media cleanup share one user-selected media index; contact capture belongs in EverReach. This keeps separate apps for distinct jobs and keeps related controls together.
