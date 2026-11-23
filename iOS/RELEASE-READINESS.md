@@ -31,6 +31,10 @@ is reviewed and accepted and the apps are rebuilt.
 - Clear Record now writes its session index before deleting a recording and
   restores the session if that save fails. Transcript and rename edits also
   revert in memory when index persistence fails.
+- Clear Record's session library now filters locally across session titles,
+  transcripts, and saved summaries, with a visible match count and empty state.
+  Search does not call a service; source review and `git diff --check` are the
+  available verification while Xcode remains license-gated.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, searches title/key/
   tempo/marker/loop metadata, and sorts by title/date plus analyzed first

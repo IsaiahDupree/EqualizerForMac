@@ -5,6 +5,7 @@ struct MeetingLibraryView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var consentConfirmed = false
     @State private var summaryReviewDraft: MeetingSummaryDraft?
+    @State private var sessionSearch = ""
 
     var body: some View {
         NavigationStack {
@@ -146,17 +147,48 @@ struct MeetingLibraryView: View {
                     .tracking(1.8)
                     .foregroundStyle(.white.opacity(0.55))
                 Spacer()
-                Text("\(store.sessions.count)")
+                Text(sessionSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                     ? "\(store.sessions.count)"
+                     : "\(matchingSessions.count) OF \(store.sessions.count)")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.cyan)
+            }
+
+            if !store.sessions.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.white.opacity(0.48))
+                    TextField("Title, transcript, or summary", text: $sessionSearch)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(.white)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("sessionLibrarySearch")
+                    if !sessionSearch.isEmpty {
+                        Button {
+                            sessionSearch = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                        .accessibilityLabel("Clear session search")
+                    }
+                }
+                .padding(13)
+                .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 15))
+                .overlay(RoundedRectangle(cornerRadius: 15).stroke(.white.opacity(0.07), lineWidth: 1))
             }
 
             if store.sessions.isEmpty {
                 ContentUnavailableView("No recordings yet", systemImage: "waveform", description: Text("After a session, find its audio and on-device transcript here."))
                     .foregroundStyle(.white.opacity(0.65))
                     .padding(.top, 8)
+            } else if matchingSessions.isEmpty {
+                ContentUnavailableView("No matching sessions", systemImage: "magnifyingglass", description: Text("Try a different title, transcript phrase, or summary term."))
+                    .foregroundStyle(.white.opacity(0.65))
+                    .padding(.top, 8)
             } else {
-                ForEach(store.sessions) { session in
+                ForEach(matchingSessions) { session in
                     NavigationLink {
                         MeetingDetailView(sessionID: session.id)
                     } label: {
@@ -165,6 +197,16 @@ struct MeetingLibraryView: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+
+    private var matchingSessions: [MeetingSession] {
+        let query = sessionSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return store.sessions }
+        return store.sessions.filter { session in
+            session.title.localizedStandardContains(query)
+                || session.transcript.localizedStandardContains(query)
+                || (session.aiSummary?.localizedStandardContains(query) ?? false)
         }
     }
 
