@@ -9,6 +9,33 @@ struct MeetingSession: Identifiable, Codable, Hashable {
     var transcript: String
     var aiSummary: String?
     var summarySourceDigest: String?
+    var bookmarks: [MeetingBookmark]? = nil
+}
+
+struct MeetingBookmark: Identifiable, Codable, Hashable {
+    var id: UUID
+    var title: String
+    var time: TimeInterval
+
+    init(id: UUID = UUID(), title: String, time: TimeInterval) {
+        self.id = id
+        self.title = title
+        self.time = time
+    }
+}
+
+struct MeetingBookmarkDraft: Identifiable {
+    let id: UUID
+    let sessionID: UUID
+    let time: TimeInterval
+    let suggestedTitle: String
+
+    init(sessionID: UUID, time: TimeInterval, suggestedTitle: String) {
+        self.id = UUID()
+        self.sessionID = sessionID
+        self.time = time
+        self.suggestedTitle = suggestedTitle
+    }
 }
 
 struct MeetingSummaryDraft: Identifiable, Equatable {

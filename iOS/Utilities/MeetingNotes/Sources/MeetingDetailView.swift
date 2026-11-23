@@ -8,6 +8,7 @@ struct MeetingDetailView: View {
     @State private var transcriptDraft = ""
     @State private var summaryDraft = ""
     @State private var summaryTranscriptSnapshot = ""
+    @State private var bookmarkDraft: MeetingBookmarkDraft?
     @State private var isEditingTranscript = false
     @State private var isEditingSummary = false
     @State private var isGeneratingSummary = false
@@ -37,7 +38,7 @@ struct MeetingDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     if let session {
-                        if !session.transcript.isEmpty || !(session.aiSummary ?? "").isEmpty {
+                        if !session.transcript.isEmpty || !(session.aiSummary ?? "").isEmpty || !(session.bookmarks ?? []).isEmpty {
                             ShareLink(
                                 item: MeetingNotesExport.text(
                                     for: session,
@@ -76,6 +77,11 @@ struct MeetingDetailView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("This permanently removes only this app's audio file and saved transcript.")
+        }
+        .sheet(item: $bookmarkDraft) { draft in
+            MeetingBookmarkLabelSheet(draft: draft) { label in
+                _ = store.addBookmark(sessionID: draft.sessionID, title: label, time: draft.time)
+            }
         }
         .alert("Clear Record", isPresented: errorPresented) {
             Button("OK", role: .cancel) { store.errorMessage = nil }
@@ -338,6 +344,64 @@ struct MeetingDetailView: View {
             }
             .font(.system(size: 11, weight: .medium, design: .monospaced))
             .foregroundStyle(.white.opacity(0.55))
+
+            Button {
+                let nextNumber = (session.bookmarks ?? []).count + 1
+                bookmarkDraft = MeetingBookmarkDraft(
+                    sessionID: session.id,
+                    time: currentTime,
+                    suggestedTitle: "Moment \(nextNumber)"
+                )
+            } label: {
+                Label("Bookmark this moment", systemImage: "bookmark")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .foregroundStyle(.cyan)
+            }
+            .disabled(!isActiveSession || duration <= 0 || !canStartPlayback)
+            .accessibilityHint("Save the current recording position with a label so you can return to it later.")
+
+            if let bookmarks = session.bookmarks, !bookmarks.isEmpty {
+                VStack(alignment: .leading, spacing: 9) {
+                    Text("BOOKMARKED MOMENTS")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .tracking(1.3)
+                        .foregroundStyle(.white.opacity(0.48))
+
+                    ForEach(bookmarks) { bookmark in
+                        HStack(spacing: 10) {
+                            Button {
+                                store.playBookmark(bookmark, in: session)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "bookmark.fill")
+                                        .foregroundStyle(.cyan)
+                                    Text(bookmark.title)
+                                        .lineLimit(1)
+                                        .foregroundStyle(.white)
+                                    Spacer(minLength: 8)
+                                    Text(playbackTimestamp(bookmark.time))
+                                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                        .foregroundStyle(.white.opacity(0.58))
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Play from \(bookmark.title), \(playbackTimestamp(bookmark.time))")
+
+                            Button(role: .destructive) {
+                                _ = store.removeBookmark(bookmark.id, from: session.id)
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.white.opacity(0.4))
+                            }
+                            .accessibilityLabel("Remove bookmark \(bookmark.title)")
+                        }
+                        .padding(.vertical, 5)
+                    }
+                }
+                .padding(.top, 3)
+            }
         }
         .padding(17)
         .background(Color(red: 0.105, green: 0.12, blue: 0.16), in: RoundedRectangle(cornerRadius: 18))

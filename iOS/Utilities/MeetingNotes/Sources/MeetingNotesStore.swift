@@ -371,6 +371,51 @@ final class MeetingNotesStore {
         }
     }
 
+    @discardableResult
+    func addBookmark(sessionID: UUID, title: String, time: TimeInterval) -> Bool {
+        guard let index = sessions.firstIndex(where: { $0.id == sessionID }) else { return false }
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty, time.isFinite, time >= 0 else {
+            errorMessage = "Enter a name and choose a valid recording position for this moment."
+            return false
+        }
+
+        let previous = sessions[index]
+        let safeTime = min(time, max(previous.duration, 0))
+        var bookmarks = previous.bookmarks ?? []
+        bookmarks.append(MeetingBookmark(title: cleanTitle, time: safeTime))
+        bookmarks.sort {
+            if $0.time == $1.time { return $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+            return $0.time < $1.time
+        }
+        sessions[index].bookmarks = bookmarks
+        do {
+            try saveIndex()
+            errorMessage = nil
+            return true
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    @discardableResult
+    func removeBookmark(_ bookmarkID: UUID, from sessionID: UUID) -> Bool {
+        guard let index = sessions.firstIndex(where: { $0.id == sessionID }) else { return false }
+        let previous = sessions[index]
+        sessions[index].bookmarks = (previous.bookmarks ?? []).filter { $0.id != bookmarkID }
+        do {
+            try saveIndex()
+            errorMessage = nil
+            return true
+        } catch {
+            sessions[index] = previous
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     func shareAudioURL(for session: MeetingSession) -> URL {
         audioURL(for: session)
     }
@@ -394,6 +439,20 @@ final class MeetingNotesStore {
             return
         }
 
+        startPlayback(session, at: 0)
+    }
+
+    func playBookmark(_ bookmark: MeetingBookmark, in session: MeetingSession) {
+        guard !isRecording, !isStartingRecording, transcribingID == nil else { return }
+        if playbackSessionID == session.id {
+            seekPlayback(to: bookmark.time, in: session)
+            if !isPlayingAudio { resumePlayback() }
+        } else {
+            startPlayback(session, at: bookmark.time)
+        }
+    }
+
+    private func startPlayback(_ session: MeetingSession, at time: TimeInterval) {
         stopPlayback()
         do {
             let url = audioURL(for: session)
@@ -404,6 +463,8 @@ final class MeetingNotesStore {
             player.enableRate = true
             player.rate = playbackRate
             guard player.prepareToPlay() else { throw MeetingNotesError.playbackCouldNotStart }
+            let startTime = min(max(time, 0), max(player.duration, 0))
+            player.currentTime = startTime
 
             let audioSession = AVAudioSession.sharedInstance()
             try audioSession.setCategory(.playback, mode: .spokenAudio)
@@ -412,7 +473,7 @@ final class MeetingNotesStore {
 
             audioPlayer = player
             playbackSessionID = session.id
-            playbackCurrentTime = 0
+            playbackCurrentTime = startTime
             playbackDuration = player.duration
             isPlayingAudio = true
             errorMessage = nil

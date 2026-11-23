@@ -158,7 +158,7 @@ struct MeetingLibraryView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.white.opacity(0.48))
-                    TextField("Search words in title, transcript, or summary", text: $sessionSearch)
+                    TextField("Search title, transcript, summary, or bookmark", text: $sessionSearch)
                         .font(.system(size: 14, design: .rounded))
                         .foregroundStyle(.white)
                         .textInputAutocapitalization(.never)
@@ -184,7 +184,7 @@ struct MeetingLibraryView: View {
                     .foregroundStyle(.white.opacity(0.65))
                     .padding(.top, 8)
             } else if matchingSessions.isEmpty {
-                ContentUnavailableView("No matching sessions", systemImage: "magnifyingglass", description: Text("Try different words from the title, transcript, or summary."))
+                ContentUnavailableView("No matching sessions", systemImage: "magnifyingglass", description: Text("Try words from a title, transcript, summary, or bookmark label."))
                     .foregroundStyle(.white.opacity(0.65))
                     .padding(.top, 8)
             } else {
@@ -211,7 +211,7 @@ struct MeetingLibraryView: View {
             .map(String.init)
         guard !terms.isEmpty else { return store.sessions }
         return store.sessions.filter { session in
-            let searchableFields = [session.title, session.transcript, session.aiSummary ?? ""]
+            let searchableFields = [session.title, session.transcript, session.aiSummary ?? ""] + (session.bookmarks ?? []).map(\.title)
             return terms.allSatisfy { term in
                 searchableFields.contains { $0.localizedStandardContains(term) }
             }
@@ -259,6 +259,10 @@ private struct SessionRow: View {
         if let summary = session.aiSummary,
            let excerpt = terms.lazy.compactMap({ excerpt(in: summary, for: $0) }).first {
             excerpts.append(("SUMMARY", excerpt))
+        }
+        let bookmarkTitles = (session.bookmarks ?? []).map(\.title).joined(separator: " · ")
+        if let excerpt = terms.lazy.compactMap({ excerpt(in: bookmarkTitles, for: $0) }).first {
+            excerpts.append(("MOMENT", excerpt))
         }
         return excerpts
     }

@@ -19,6 +19,11 @@ enum MeetingNotesExport {
             lines += ["", "Transcript", session.transcript]
         }
 
+        if let bookmarks = session.bookmarks, !bookmarks.isEmpty {
+            lines += ["", "Bookmarked moments"]
+            lines += bookmarks.map { "\(duration($0.time)) — \(clean($0.title))" }
+        }
+
         lines += ["", "Audio is not included in this text export."]
         return lines.joined(separator: "\n")
     }

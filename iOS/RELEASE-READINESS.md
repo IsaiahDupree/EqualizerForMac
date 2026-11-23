@@ -61,6 +61,12 @@ is reviewed and accepted and the apps are rebuilt.
   result rows show labeled transcript and summary excerpts. Search does not call
   a service. Source review and `git diff --check` are the available verification
   while Xcode remains license-gated.
+- Clear Record now saves labeled bookmarks at the active playback position.
+  Users can jump to a saved moment, remove it, find its label in the local
+  session search, and include labeled timestamps in the text export. Older
+  session index entries omit the optional bookmark field and remain decodable.
+  Source review and `git diff --check` are available; native compilation is
+  still stopped by Xcode's first-use license gate.
 - Track Study now keeps a multi-track local library, migrates the previous
   single-track index, supports stoppable batch imports, searches title/key/
   tempo/instrument/pace/marker/loop metadata, and sorts by title/date plus
