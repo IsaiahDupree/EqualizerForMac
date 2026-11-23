@@ -18,6 +18,12 @@ enum LocalImageAnalyzer {
             throw LibraryError.unreadableImage
         }
 
+        return try process(frame: thumbnail)
+    }
+
+    static func process(frame: CGImage) throws -> ProcessedImage {
+        let thumbnail = frame
+
         let encoded = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(
             encoded,

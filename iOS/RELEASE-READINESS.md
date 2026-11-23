@@ -15,6 +15,14 @@ iOS 27 cross-app product and has not been submitted or published.
   in its app container. It also ranks closest indexed images through Vision
   feature prints for manual review, with a cancel control and no auto deletion.
   Its iOS Simulator build succeeded with Xcode 26.0.1.
+- Screenshot Scout now accepts user-selected videos, copies them into its app
+  library, hashes them incrementally to skip exact reimports, and scans five
+  sampled frames for OCR and scene labels. Search can surface text and labels
+  from those frames; each result retains timestamps and opens the original
+  video copy for review. Video indexing can be cancelled. Its library folder
+  is excluded from device backups. The expanded target compiled for the iOS
+  Simulator with Xcode 26.0.1; media picker and playback behavior have not been
+  exercised at runtime.
 - Clear Record is a second iOS 17 app target in `Utilities/MeetingNotes/`.
   It requires an explicit consent confirmation, records in the foreground,
   saves on an interruption or background transition, and asks Speech for

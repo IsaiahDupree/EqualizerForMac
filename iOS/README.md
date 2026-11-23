@@ -2,7 +2,9 @@
 
 The Sonance prototype and the broader iOS utility portfolio are tracked in
 [the utility app roadmap](UTILITY-APP-ROADMAP.md). The first separate utility
-prototype, Screenshot Scout, is in `iOS/Utilities/ScreenshotScout/`.
+prototype, Screenshot Scout / Creator Library, is in
+`iOS/Utilities/ScreenshotScout/`. It indexes user-selected images and videos
+with local OCR, scene labels, and reviewable frame timestamps.
 Sonance's file player also includes a selectable sleep timer while playback is
 active.
 Clear Record is a second separate utility prototype in

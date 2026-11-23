@@ -2,10 +2,18 @@ import PhotosUI
 import SwiftUI
 
 struct LibraryView: View {
+    private enum MediaKind: String, CaseIterable {
+        case images = "Images"
+        case videos = "Videos"
+    }
+
     @EnvironmentObject private var library: ScreenshotLibrary
     @State private var selectedItems: [PhotosPickerItem] = []
+    @State private var selectedVideoItems: [PhotosPickerItem] = []
     @State private var searchText = ""
+    @State private var mediaKind: MediaKind = .images
     @State private var selectedImage: IndexedImage?
+    @State private var selectedVideo: IndexedVideo?
 
     private let columns = [GridItem(.adaptive(minimum: 165), spacing: 14)]
 
@@ -17,16 +25,31 @@ struct LibraryView: View {
         }
     }
 
+    private var filteredVideos: [IndexedVideo] {
+        guard !searchText.isEmpty else { return library.videos }
+        return library.videos.filter {
+            $0.recognizedText.localizedCaseInsensitiveContains(searchText)
+                || $0.labels.contains { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     hero
                     searchField
-                    if library.images.isEmpty {
-                        emptyState
+                    Picker("Media type", selection: $mediaKind) {
+                        ForEach(MediaKind.allCases, id: \.self) { kind in
+                            Text(kind.rawValue).tag(kind)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if mediaKind == .images {
+                        if library.images.isEmpty { emptyState } else { libraryGrid }
                     } else {
-                        libraryGrid
+                        if library.videos.isEmpty { emptyVideoState } else { videoGrid }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -40,6 +63,11 @@ struct LibraryView: View {
                     .environmentObject(library)
                     .presentationDragIndicator(.visible)
             }
+            .sheet(item: $selectedVideo) { item in
+                VideoDetailView(item: item)
+                    .environmentObject(library)
+                    .presentationDragIndicator(.visible)
+            }
             .onChange(of: selectedItems) { _, newItems in
                 guard !newItems.isEmpty else { return }
                 Task {
@@ -47,7 +75,14 @@ struct LibraryView: View {
                     selectedItems = []
                 }
             }
-            .alert("Could not process image", isPresented: errorPresented) {
+            .onChange(of: selectedVideoItems) { _, newItems in
+                guard !newItems.isEmpty else { return }
+                Task {
+                    await library.importVideoItems(newItems)
+                    selectedVideoItems = []
+                }
+            }
+            .alert("Could not process selected media", isPresented: errorPresented) {
                 Button("OK", role: .cancel) { library.errorMessage = nil }
             } message: {
                 Text(library.errorMessage ?? "Please try selecting the image again.")
@@ -63,7 +98,7 @@ struct LibraryView: View {
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .tracking(2.1)
                         .foregroundStyle(Color.cyan.opacity(0.9))
-                    Text("Your images,\nfindable again.")
+                    Text("Your media,\nfindable again.")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .tracking(-0.8)
                         .foregroundStyle(.white)
@@ -77,19 +112,31 @@ struct LibraryView: View {
             }
 
             HStack(spacing: 10) {
-                stat(value: "\(library.images.count)", title: "INDEXED")
+                stat(value: "\(library.images.count)", title: "IMAGES")
                 Rectangle().fill(.white.opacity(0.13)).frame(width: 1, height: 30)
-                stat(value: library.images.reduce(0) { $0 + ($1.recognizedText.isEmpty ? 0 : 1) }.description, title: "WITH TEXT")
+                stat(value: "\(library.videos.count)", title: "VIDEOS")
                 Spacer()
-                PhotosPicker(selection: $selectedItems, maxSelectionCount: 40, matching: .images) {
-                    Label("Add images", systemImage: "plus")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.cyan, in: Capsule())
+                if mediaKind == .images {
+                    PhotosPicker(selection: $selectedItems, maxSelectionCount: 40, matching: .images) {
+                        Label("Add images", systemImage: "plus")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(Color.cyan, in: Capsule())
+                    }
+                    .disabled(library.isImporting || library.isImportingVideos)
+                } else {
+                    PhotosPicker(selection: $selectedVideoItems, maxSelectionCount: 8, matching: .videos) {
+                        Label("Add videos", systemImage: "plus")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(Color.cyan, in: Capsule())
+                    }
+                    .disabled(library.isImporting || library.isImportingVideos)
                 }
-                .disabled(library.isImporting)
             }
 
             if library.isImporting {
@@ -98,6 +145,17 @@ struct LibraryView: View {
                     Text("Reading text and image details on this device…")
                         .font(.footnote)
                         .foregroundStyle(.white.opacity(0.7))
+                }
+            } else if library.isImportingVideos {
+                HStack(spacing: 10) {
+                    ProgressView().tint(.cyan)
+                    Text("Finding text and scenes in selected videos on this device…")
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.7))
+                    Spacer(minLength: 0)
+                    Button("Cancel") { library.cancelVideoImport() }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.cyan)
                 }
             } else if let message = library.statusMessage {
                 Text(message).font(.footnote).foregroundStyle(.cyan.opacity(0.9))
@@ -121,7 +179,7 @@ struct LibraryView: View {
     private var searchField: some View {
         HStack(spacing: 11) {
             Image(systemName: "magnifyingglass").foregroundStyle(.cyan)
-            TextField("Search words or image labels", text: $searchText)
+            TextField("Search words, scenes, or labels", text: $searchText)
                 .font(.system(size: 15, design: .rounded))
                 .foregroundStyle(.white)
                 .autocorrectionDisabled()
@@ -140,7 +198,7 @@ struct LibraryView: View {
     private var libraryGrid: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text(searchText.isEmpty ? "YOUR LIBRARY" : "SEARCH RESULTS")
+                Text(searchText.isEmpty ? "YOUR IMAGE LIBRARY" : "IMAGE SEARCH RESULTS")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .tracking(1.8)
                     .foregroundStyle(.white.opacity(0.58))
@@ -176,20 +234,64 @@ struct LibraryView: View {
             Text("Start with a few screenshots")
                 .font(.system(size: 20, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white)
-            Text("Choose images to recognize their text, group useful visual labels, and search your own private library.")
+            Text("Choose screenshots or photos to recognize their text, group visual labels, and search your private library.")
                 .font(.system(size: 14, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white.opacity(0.58))
                 .frame(maxWidth: 310)
-            PhotosPicker(selection: $selectedItems, maxSelectionCount: 40, matching: .images) {
-                Label("Choose from Photos", systemImage: "photo.on.rectangle.angled")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color(red: 0.03, green: 0.10, blue: 0.13))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 14)
-                    .background(Color.cyan, in: Capsule())
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 42)
+        .padding(.horizontal, 22)
+        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 24))
+    }
+
+    private var videoGrid: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text(searchText.isEmpty ? "YOUR VIDEO LIBRARY" : "VIDEO SEARCH RESULTS")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .tracking(1.8)
+                    .foregroundStyle(.white.opacity(0.58))
+                Spacer()
+                Text("\(filteredVideos.count) ITEMS")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .tracking(1)
+                    .foregroundStyle(.white.opacity(0.38))
             }
-            .disabled(library.isImporting)
+
+            if filteredVideos.isEmpty {
+                ContentUnavailableView.search(text: searchText)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.top, 20)
+            } else {
+                LazyVGrid(columns: columns, spacing: 14) {
+                    ForEach(filteredVideos) { item in
+                        Button { selectedVideo = item } label: {
+                            VideoCard(item: item, thumbnailURL: item.frames.first.map { library.frameURL(for: $0) })
+                        }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    private var emptyVideoState: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "film.stack")
+                .font(.system(size: 34, weight: .light))
+                .foregroundStyle(.cyan.opacity(0.85))
+                .frame(width: 76, height: 76)
+                .background(.cyan.opacity(0.1), in: Circle())
+            Text("Find a moment inside your videos")
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+            Text("Select videos to scan a few frames for visible text and scene labels. Search results point to the video and sampled moments for your review.")
+                .font(.system(size: 14, design: .rounded))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.58))
+                .frame(maxWidth: 320)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 42)
