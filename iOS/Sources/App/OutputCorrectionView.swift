@@ -11,6 +11,10 @@ struct OutputCorrectionView: View {
                 if let output = session.player.currentOutput {
                     Section {
                         Label(output.name, systemImage: "speaker.wave.2")
+                        Text(session.player.routeFormat.summary ?? "Route format is available after audio activates.")
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("playbackRouteFormat")
                     } header: {
                         Text("Current Output")
                     }

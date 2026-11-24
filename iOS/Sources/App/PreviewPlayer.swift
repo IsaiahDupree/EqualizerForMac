@@ -11,6 +11,8 @@ final class PreviewPlayer {
     private(set) var sampleRate = 48_000.0
     private(set) var outputName: String?
     private(set) var currentOutput: PlaybackOutput?
+    private(set) var routeFormat = PlaybackRouteFormat(sampleRateHz: 0, outputChannels: 0,
+                                                       ioBufferDurationSeconds: 0)
     var error: String?
 
     @ObservationIgnored private var selected: SelectedAudio?
@@ -79,6 +81,9 @@ final class PreviewPlayer {
     }
 
     func refreshOutput() {
+        routeFormat = PlaybackRouteFormat(sampleRateHz: session.sampleRate,
+                                          outputChannels: session.outputNumberOfChannels,
+                                          ioBufferDurationSeconds: session.ioBufferDuration)
         let outputs = session.currentRoute.outputs
         if outputs.count == 1, let port = outputs.first, !port.uid.isEmpty {
             currentOutput = PlaybackOutput(id: port.uid, name: port.portName)

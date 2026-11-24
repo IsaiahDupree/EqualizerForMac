@@ -73,7 +73,10 @@ Correction** and assign a saved preset to the current output. Sonance keeps a
 copy of the preset for that output and restores the assignment and its on/off
 setting after relaunch. Corrections apply after your EQ to files played in
 Sonance. Use **Apply Correction** to compare that stage independently of
-**Bypass EQ**.
+**Bypass EQ**. The Current Output section also displays the active audio
+session's sample rate, output channel count and I/O buffer duration when iOS
+reports valid values; these are refreshed after playback activation and route
+changes, and are not the source file's format.
 
 Use **Set A** to capture a reference before tuning. **A · Reference**
 auditions the captured sound, and **B · Edited** returns to the working curve.
