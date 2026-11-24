@@ -33,9 +33,11 @@ iOS 27 cross-app product and has not been submitted or published.
   Sonance EQ Audio Unit, and share extension. This verifies compilation and
   bundle construction only.
 - The local development profiles lack the Media Device entitlement and the
-  custom App Group required by the route and chain handoff. The new host has not
-  been signed, installed, or exercised on a phone. Bluetooth routing and
-  reconnect behavior remain unverified.
+  custom App Group. Apple's entitlement also requires the container app to
+  exist solely to deliver/install the extension and disallows other managed
+  entitlements; that conflicts with this full AUv3 host. The combined target is
+  a compile spike, not a signable route product. No phone install or Bluetooth
+  route/reconnect test has occurred.
 - The iOS Simulator SDK does not provide the `MediaDevice` module, so this host
   route target cannot be validated in the Simulator. No tests were run in this
   step.
@@ -390,11 +392,12 @@ the current build/install record.
 2. Test playback, speech curves, persistence, the AUv3 host, interruptions,
    headphones and background behavior on Sarah's designated iPhone. Preserve
    evidence, then uninstall the exact test bundle and verify its absence.
-3. Before distributing the Media Device host, resolve the entitlement and
-   app-purpose requirements with Apple. Apple's public docs describe remote
-   playback devices, and the current agreement says the app bundling the
-   extension should exist solely to deliver and install it. The host is only a
-   compile-verified prototype until that review and physical validation pass.
+3. Before distributing the Media Device host, resolve Apple's entitlement
+   and app-purpose requirements. Apple's current documentation says the
+   container app must exist solely to deliver/install the extension and cannot
+   hold other managed entitlements. This conflicts with bundling the full AUv3
+   host and its App Group. The combined target is compile-verified only until
+   the architecture is resolved and physical validation passes.
    The separate debug-only Route Lab still has unauthenticated transport and
    privacy issues; it is not the integrated host implementation. See
    [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).

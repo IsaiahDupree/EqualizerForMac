@@ -81,11 +81,17 @@ The local development profiles were inspected. They do not contain the
 `com.apple.developer.media-device-extension` entitlement or
 `group.com.isaiahdupree.SonanceEQ`. This host build therefore cannot be signed
 and installed for a real route with the current profiles. Registering the
-required Apple capability and App Group, then provisioning all embedded
-identifiers, is the next device-install gate. Until then, the route implementation
-is compile-verified only; routing, chain handoff, and Bluetooth playback have
-not been established. Keep all upstream license notices with the vendored
-source.
+required Apple capability and App Group is not sufficient by itself: Apple's
+current entitlement documentation says the container app must exist solely to
+deliver and install the Media Device extension, and an app holding the
+entitlement cannot hold other managed entitlements. The full Sonance host also
+needs AUv3 access and app-group-backed sharing. This combined target is a
+compile spike, not a signable route product. A separate minimal route installer
+or a host-only product without the Control Center route is required to resolve
+the conflict. Until then, routing, chain handoff, and Bluetooth playback have
+not been established. See Apple's
+[Media Device entitlement requirements](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.media-device-extension).
+Keep all upstream license notices with the vendored source.
 
 ## Platform and distribution constraints
 
