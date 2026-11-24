@@ -50,9 +50,9 @@ The example name is not a requirement. Passing a real-device destination still
 executes offline digital rendering; it does not turn the suite into a Bluetooth
 test. Physical-device signing must already be configured for such a run.
 
-The dedicated `iOS audio quality` workflow runs the same checks on relevant PRs
-and retains the result bundle. It also tests the device-evidence assessor on
-Linux. Its jobs are separate from the repository's existing macOS audio tests.
+Run the suite directly on an owned Mac with Xcode and the iOS Simulator
+available. Do not use hosted CI for this validation; retain the local result
+bundle with the change review.
 
 ### Why these tests are different
 
