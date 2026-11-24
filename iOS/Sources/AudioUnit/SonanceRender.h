@@ -18,6 +18,10 @@ void SonanceRenderStage(SonanceRender *render, const double *midCoefficients,
                         const float *midFIR, const float *sideFIR, bool linearPhaseEnabled);
 bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, uint32_t channels, double sampleRate);
 SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render);
+uint64_t SonanceRenderCompletedBlocks(SonanceRender *render);
+uint64_t SonanceRenderDeadlineMisses(SonanceRender *render);
+uint64_t SonanceRenderMaximumProcessingNanoseconds(SonanceRender *render);
+uint64_t SonanceRenderLastDeadlineNanoseconds(SonanceRender *render);
 void SonanceRenderReleaseResources(SonanceRender *render);
 void SonanceRenderReset(SonanceRender *render);
 AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render);

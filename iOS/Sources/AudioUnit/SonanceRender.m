@@ -1,7 +1,9 @@
 #import "SonanceRender.h"
 #import <Accelerate/Accelerate.h>
+#import <mach/mach_time.h>
 #import <os/lock.h>
 #include <stddef.h>
+#include <stdatomic.h>
 
 enum { maxChannels = 2 };
 
@@ -32,6 +34,11 @@ struct SonanceRender {
     uint32_t channels;
     double sampleRate;
     SonanceAnalysisCapture *analysis;
+    mach_timebase_info_data_t timebase;
+    atomic_uint_fast64_t completedBlocks;
+    atomic_uint_fast64_t deadlineMisses;
+    atomic_uint_fast64_t maximumProcessingNanoseconds;
+    atomic_uint_fast64_t lastDeadlineNanoseconds;
 };
 
 SonanceRender *SonanceRenderCreate(void) {
@@ -43,6 +50,16 @@ SonanceRender *SonanceRenderCreate(void) {
             return NULL;
         }
         render->lock = OS_UNFAIR_LOCK_INIT;
+        mach_timebase_info(&render->timebase);
+        atomic_init(&render->completedBlocks, 0);
+        atomic_init(&render->deadlineMisses, 0);
+        atomic_init(&render->maximumProcessingNanoseconds, 0);
+        atomic_init(&render->lastDeadlineNanoseconds, 0);
+        if (!atomic_is_lock_free(&render->completedBlocks)) {
+            SonanceAnalysisDestroy(render->analysis);
+            free(render);
+            return NULL;
+        }
         for (size_t section = 0; section < SonanceRenderSections; ++section) {
             render->staged[5 * section] = 1;
             render->stagedSide[5 * section] = 1;
@@ -83,6 +100,18 @@ void SonanceRenderDestroy(SonanceRender *render) {
 }
 
 SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render) { return render->analysis; }
+uint64_t SonanceRenderCompletedBlocks(SonanceRender *render) {
+    return atomic_load_explicit(&render->completedBlocks, memory_order_relaxed);
+}
+uint64_t SonanceRenderDeadlineMisses(SonanceRender *render) {
+    return atomic_load_explicit(&render->deadlineMisses, memory_order_relaxed);
+}
+uint64_t SonanceRenderMaximumProcessingNanoseconds(SonanceRender *render) {
+    return atomic_load_explicit(&render->maximumProcessingNanoseconds, memory_order_relaxed);
+}
+uint64_t SonanceRenderLastDeadlineNanoseconds(SonanceRender *render) {
+    return atomic_load_explicit(&render->lastDeadlineNanoseconds, memory_order_relaxed);
+}
 
 void SonanceRenderStage(SonanceRender *render, const double *midCoefficients,
                         const double *sideCoefficients, bool midSideEnabled,
@@ -149,6 +178,10 @@ bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, ui
     render->channels = channels;
     render->maxFrames = maxFrames;
     render->sampleRate = sampleRate;
+    atomic_store_explicit(&render->completedBlocks, 0, memory_order_relaxed);
+    atomic_store_explicit(&render->deadlineMisses, 0, memory_order_relaxed);
+    atomic_store_explicit(&render->maximumProcessingNanoseconds, 0, memory_order_relaxed);
+    atomic_store_explicit(&render->lastDeadlineNanoseconds, 0, memory_order_relaxed);
     return true;
 }
 
@@ -256,6 +289,7 @@ AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render) {
         AUAudioUnitStatus status = pullInput(&inputFlags, timestamp, frames, 0, input);
         if (status != noErr) { return status; }
         if (input->mNumberBuffers != channels) { return kAudioUnitErr_FormatNotSupported; }
+        const uint64_t processingStart = mach_absolute_time();
 
         const float *inputs[maxChannels];
         float *outputs[maxChannels];
@@ -308,6 +342,19 @@ AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render) {
             }
         }
         SonanceAnalysisPush(render->analysis, outputs[0], channels == 2 ? outputs[1] : NULL, frames, render->sampleRate);
+        const uint64_t elapsedTicks = mach_absolute_time() - processingStart;
+        const uint64_t elapsedNanoseconds = elapsedTicks * render->timebase.numer / render->timebase.denom;
+        const uint64_t deadlineNanoseconds = (uint64_t)((double)frames * 1000000000.0 / render->sampleRate);
+        atomic_fetch_add_explicit(&render->completedBlocks, 1, memory_order_relaxed);
+        atomic_store_explicit(&render->lastDeadlineNanoseconds, deadlineNanoseconds, memory_order_relaxed);
+        if (elapsedNanoseconds > deadlineNanoseconds) {
+            atomic_fetch_add_explicit(&render->deadlineMisses, 1, memory_order_relaxed);
+        }
+        uint64_t maximum = atomic_load_explicit(&render->maximumProcessingNanoseconds, memory_order_relaxed);
+        while (elapsedNanoseconds > maximum &&
+               !atomic_compare_exchange_weak_explicit(&render->maximumProcessingNanoseconds, &maximum,
+                                                       elapsedNanoseconds, memory_order_relaxed,
+                                                       memory_order_relaxed)) { }
         // The filter can still have a tail when the input is silent.
         *flags &= ~kAudioUnitRenderAction_OutputIsSilence;
         return noErr;

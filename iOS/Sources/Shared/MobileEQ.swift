@@ -41,6 +41,14 @@ enum MobileEQ {
     static let firstSideBandAddress = midSideEnabledAddress + 1
     static let sideBandCountAddress = firstSideBandAddress + AUParameterAddress(maximumBandCount) * controlsPerBand
     static let linearPhaseEnabledAddress = sideBandCountAddress + 1
+    static let renderBlocksAddress = linearPhaseEnabledAddress + 1
+    static let deadlineMissesAddress = renderBlocksAddress + 1
+    static let maximumProcessingMicrosecondsAddress = deadlineMissesAddress + 1
+    static let lastDeadlineMicrosecondsAddress = maximumProcessingMicrosecondsAddress + 1
+
+    static func isTelemetryAddress(_ address: AUParameterAddress) -> Bool {
+        (renderBlocksAddress...lastDeadlineMicrosecondsAddress).contains(address)
+    }
 
     static func newBand() -> EQBand {
         EQBand(frequency: 1_000, gain: 0, q: 1, type: .peaking)
@@ -257,7 +265,8 @@ struct MobileEQSettings: Codable, Equatable {
         if bands.count < previousCount { count?.setValue(Float(bands.count), originator: originator) }
         if sideBands.count < previousSideCount { sideCount?.setValue(Float(sideBands.count), originator: originator) }
 
-        for parameter in tree.allParameters where parameter.address != MobileEQ.bandCountAddress && parameter.address != MobileEQ.sideBandCountAddress {
+        for parameter in tree.allParameters where parameter.address != MobileEQ.bandCountAddress &&
+            parameter.address != MobileEQ.sideBandCountAddress && !MobileEQ.isTelemetryAddress(parameter.address) {
             let sideIndex = MobileEQ.sideBandControl(at: parameter.address)?.0
             let mainIndex = MobileEQ.bandControl(at: parameter.address)?.0
             if let sideIndex, sideIndex >= sideBands.count { continue }

@@ -245,6 +245,18 @@ final class SonanceAudioUnit: AUAudioUnit {
                                0...Float(MobileEQ.maximumBandCount), .indexed))
         nodes.append(parameter("sideBandCount", "Side Band Count", MobileEQ.sideBandCountAddress,
                                0...Float(MobileEQ.maximumBandCount), .indexed))
+        func telemetry(_ identifier: String, _ name: String, _ address: AUParameterAddress,
+                       _ maximum: Float) -> AUParameter {
+            AUParameterTree.createParameter(withIdentifier: identifier, name: name,
+                address: address, min: 0, max: maximum, unit: .generic, unitName: nil,
+                flags: [.flag_IsReadable, .flag_NonRealTime], valueStrings: nil, dependentParameters: nil)
+        }
+        nodes.append(contentsOf: [
+            telemetry("renderBlocks", "Completed Render Blocks", MobileEQ.renderBlocksAddress, 16_777_216),
+            telemetry("deadlineMisses", "Render Deadline Misses", MobileEQ.deadlineMissesAddress, 16_777_216),
+            telemetry("maximumRenderMicroseconds", "Maximum Render Time (µs)", MobileEQ.maximumProcessingMicrosecondsAddress, 60_000_000),
+            telemetry("lastDeadlineMicroseconds", "Last Buffer Deadline (µs)", MobileEQ.lastDeadlineMicrosecondsAddress, 60_000_000),
+        ])
 
         let tree = AUParameterTree.createTree(withChildren: nodes)
         tree.implementorValueObserver = { [weak self] parameter, value in
@@ -261,6 +273,12 @@ final class SonanceAudioUnit: AUAudioUnit {
                 switch parameter.address {
                 case MobileEQ.bandCountAddress: return Float(state.bandCount)
                 case MobileEQ.sideBandCountAddress: return Float(state.sideBandCount)
+                case MobileEQ.renderBlocksAddress: return Float(SonanceRenderCompletedBlocks(self.storage.pointer))
+                case MobileEQ.deadlineMissesAddress: return Float(SonanceRenderDeadlineMisses(self.storage.pointer))
+                case MobileEQ.maximumProcessingMicrosecondsAddress:
+                    return Float(SonanceRenderMaximumProcessingNanoseconds(self.storage.pointer)) / 1_000
+                case MobileEQ.lastDeadlineMicrosecondsAddress:
+                    return Float(SonanceRenderLastDeadlineNanoseconds(self.storage.pointer)) / 1_000
                 default: return state.settings.value(at: parameter.address)
                 }
             } ?? 0

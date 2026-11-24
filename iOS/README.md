@@ -80,8 +80,11 @@ auditions the captured sound, and **B · Edited** returns to the working curve.
 The app keeps the working curve when auditioning A.
 
 Switch to **Live** to see the spectrum, waveform, and output levels after
-the EQ. Stereo audio shows meters for both channels. The custom AUv3 editor
-has a Live view for the signal provided by its host.
+the EQ. Stereo audio shows meters for both channels. The Live view also reports
+the EQ effect's worst measured render time and buffer deadline overruns. These
+counters cover Sonance's render work after its input is pulled; they do not
+measure other effects or the complete host chain. The custom AUv3 editor has a
+Live view for the signal provided by its host.
 
 The floating player stays on screen as you scroll the equalizer. While a file
 is playing, use the Picture in Picture button on supported devices to see the

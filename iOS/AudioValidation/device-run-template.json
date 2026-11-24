@@ -28,6 +28,14 @@
       "short_fills": {"count": null, "observed": false},
       "render_errors": {"count": null, "observed": false},
       "nonfinite_samples": {"count": null, "observed": false}
+    },
+    "sonance_effect_timing": {
+      "instrumented": false,
+      "completed_blocks": null,
+      "deadline_overruns": null,
+      "maximum_processing_microseconds": null,
+      "last_buffer_deadline_microseconds": null,
+      "scope": "Sonance AU render work after input pull; excludes other host effects"
     }
   },
   "recovery": {

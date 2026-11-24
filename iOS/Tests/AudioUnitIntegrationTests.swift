@@ -10,7 +10,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 6 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
+        XCTAssertEqual(tree.allParameters.count, 10 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         XCTAssertEqual(MobileEQ.address(.type, band: 0), 32)
@@ -19,6 +19,8 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertEqual(MobileEQ.sideAddress(.frequency, band: 0), 196)
         XCTAssertEqual(MobileEQ.sideBandCountAddress, 388)
         XCTAssertEqual(MobileEQ.linearPhaseEnabledAddress, 389)
+        XCTAssertEqual(MobileEQ.renderBlocksAddress, 390)
+        XCTAssertEqual(MobileEQ.lastDeadlineMicrosecondsAddress, 393)
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
         gain.value = 9
         preamp.value = -3
@@ -27,6 +29,9 @@ final class AudioUnitIntegrationTests: XCTestCase {
         let wet = try stream.measure()
         XCTAssertEqual(wet[0], 6, accuracy: 0.25)
         XCTAssertEqual(wet[1], -2.9, accuracy: 0.35)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.renderBlocksAddress)?.value ?? 0, 0)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.maximumProcessingMicrosecondsAddress)?.value ?? 0, 0)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.lastDeadlineMicrosecondsAddress)?.value ?? 0, 0)
 
         effect.auAudioUnit.shouldBypassEffect = true
         let dry = try stream.measure()

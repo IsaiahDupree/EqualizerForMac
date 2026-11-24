@@ -32,6 +32,10 @@ final class PreviewPlayer {
         return analysis?.read(capture.pointer)
     }
 
+    func readRenderMetrics() -> AudioRenderMetrics? {
+        graph?.renderMetrics
+    }
+
     func select(_ url: URL) {
         do {
             let selection = try SelectedAudio(url: url)
@@ -276,6 +280,8 @@ private final class PlaybackGraph {
     func apply(_ settings: MobileEQSettings, changedFrom previous: MobileEQSettings? = nil) {
         settings.apply(to: tree, changedFrom: previous)
     }
+
+    var renderMetrics: AudioRenderMetrics? { AudioRenderMetrics(parameterTree: tree) }
 
     func applyCorrection(_ settings: MobileEQSettings) {
         guard settings != appliedCorrection else { return }

@@ -136,6 +136,12 @@ Sonance's filter math. Do not print logs, allocate or do disk/network work from
 an audio callback to obtain these measurements; export preallocated counters
 outside rendering.
 
+Sonance's **Live → EQ Render Timing** panel exports its own completed block
+count, deadline overrun count, worst processing time and latest buffer deadline.
+Copy those values into `steady_state.sonance_effect_timing` in the run record.
+They cover Sonance's effect callback after its input is pulled; they are not a
+measurement of the complete host chain and do not replace host-level timing.
+
 ### Recovery target
 
 Record ten deliberate route/recovery trials, separate from uninterrupted

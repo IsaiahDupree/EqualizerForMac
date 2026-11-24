@@ -39,7 +39,7 @@ private struct EqualizerView: View {
                     AudioWorkspacePicker(workspace: $workspace)
                     if workspace == .live {
                         LiveAudioView(active: player.state == .playing, waitingMessage: "Play an audio file to see its output.",
-                                      read: player.readAnalysis)
+                                      read: player.readAnalysis, readMetrics: player.readRenderMetrics)
                     } else {
                         EqualizerEditor(
                             settings: Binding(
