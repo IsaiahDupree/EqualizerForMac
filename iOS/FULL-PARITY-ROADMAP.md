@@ -25,17 +25,21 @@ person opens in Sonance EQ and through compatible AUv3 hosts.
 | Independent Mid and Side curves | Implemented in the AUv3 renderer, standalone player, editor and portable presets; mono streams keep the Mid curve | Run center/side isolation, state restore, mono and stereo tests on Apple runtimes; verify real-time cost in the host |
 | Auto headroom and output limiter | Auto Headroom now estimates the peak response of active Mid/Side curves and lowers preamp with a 1 dB margin; no true-peak limiter | Validate estimates against rendered sine sweeps, clipping fixtures and FIR mode; decide separately whether iOS needs a true-peak limiter |
 | Render timing diagnostics | Lock-free counters expose Sonance block count, effect deadline overruns, worst processing time and the latest buffer deadline in Live | Verify values on the phone under IIR/FIR and 44.1/48/96/192 kHz routes; collect separate host-level chain timing where the host exposes it |
-| System-wide capture and per-app routing/mixing/recording | No supported in-app path established | Keep these outside the iOS product unless Apple documents and permits a suitable API and purpose |
+| EffectDeck-style chain host | Integrated in the full-host target: chain editor, effect/plugin/preset browser, import/share, built-in analyzers/effects, routing editor, audio settings, meters, remote panel and About/licensing; Sonance EQ AUv3 is embedded | Code-sign, install and exercise with a route on the assigned phone; validate ordering, channel routing and chain state transfer |
+| System Media Device route | Host extension and Sonance protocol are integrated and compile for the iOS 27 arm64 device SDK | Current local profiles lack Apple's Media Device entitlement and the app's App Group; register/provision those capabilities before device installation and route testing |
+| System-wide capture and per-app routing/mixing/recording | The integrated route follows Apple's Media Device host path; the generated build has not yet been installed or exercised on hardware | Validate only the documented Control Center route and compatible playback sources; do not claim arbitrary app/game capture or mixing |
 | Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
 
 ## Platform boundary
 
 The iOS app can process its own file playback and expose the Sonance Audio Unit
-to compatible hosts. It cannot assume access to arbitrary audio from other
-apps. The Media Device experiment stays isolated: the project research does not
-establish a permitted same-phone processing return path for this app. Any
-future route work needs current Apple guidance covering both the route and the
-app's allowed purpose.
+to compatible hosts. The new full-host target also contains an Apple Media
+Device extension, with a route UI and audio path, but source compilation does
+not prove that Apple's entitlements permit this app's purpose or that the route
+works on an iPhone. Available local development profiles lack the Media Device
+and App Group capabilities, so signed device validation is blocked until
+provisioning is updated. Do not claim arbitrary app/game capture or a working
+Bluetooth return path before that validation.
 
 ## Acceptance evidence
 

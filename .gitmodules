@@ -1,0 +1,3 @@
+[submodule "iOS/Vendor/EffectDeck"]
+	path = iOS/Vendor/EffectDeck
+	url = https://github.com/satomasahiro2005/EffectDeck.git

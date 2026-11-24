@@ -48,6 +48,45 @@ to the chain-host milestone.
    Bluetooth path on the assigned iPhone. Keep system-route, app playback, and
    third-party AUv3 validation as separate evidence.
 
+## Host integration in progress
+
+The `feature/sonance-effectdeck-ios-parity` branch now has a generated full-host
+project spec at `iOS/sonance-host.project.yml`. It reuses the pinned MIT host
+source and adds Sonance EQ's existing AUv3 target as an embedded extension in
+the same app bundle. The host's pipeline, effect/plugin/preset picker, routing
+editor, settings, meters, remote panel, and About screens remain the host UI;
+Sonance EQ is available to add to its chain. The app bundle and Media Device
+protocol use Sonance EQ identifiers, and a small idempotent adaptation script
+updates the upstream protocol and App Group constants to match.
+
+Regenerate the host project with:
+
+```bash
+bash iOS/Tools/generate-sonance-host-project.sh
+```
+
+The script initializes the pinned nested DSP/runtime submodules, runs the
+upstream asset setup, applies the two Sonance identifiers, and regenerates the
+project. The generated Xcode project lives inside the vendored checkout and is
+ignored; the tracked spec and adaptation script are the source of truth.
+
+The complete host, route extension, Sonance EQ Audio Unit, and share extension
+compiled for the arm64 iOS 27 device SDK with code signing disabled. The
+MediaDevice framework is not present in the Simulator SDK, so a simulator build
+cannot validate the routing extension. The output bundle was checked for the
+Sonance EQ bundle display name, matching Media Device protocol, and embedded
+Sonance AUv3.
+
+The local development profiles were inspected. They do not contain the
+`com.apple.developer.media-device-extension` entitlement or
+`group.com.isaiahdupree.SonanceEQ`. This host build therefore cannot be signed
+and installed for a real route with the current profiles. Registering the
+required Apple capability and App Group, then provisioning all embedded
+identifiers, is the next device-install gate. Until then, the route implementation
+is compile-verified only; routing, chain handoff, and Bluetooth playback have
+not been established. Keep all upstream license notices with the vendored
+source.
+
 ## Platform and distribution constraints
 
 The system-output workflow uses Apple's iOS 27 `MediaDevice` and

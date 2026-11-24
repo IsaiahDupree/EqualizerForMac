@@ -18,9 +18,27 @@ iOS 27 cross-app product and has not been submitted or published.
 - Audio-suite execution is still pending: no iOS Simulator runtime is installed,
   and the device test attempt needs signing settings for all test targets.
 - The EffectDeck-style iOS host scope is tracked in
-  [EFFECTDECK-PARITY.md](EFFECTDECK-PARITY.md). The current app still lacks the
-  chain host and system Media Device route. Bluetooth playback and route
-  reconnect have not been physically verified.
+  [EFFECTDECK-PARITY.md](EFFECTDECK-PARITY.md); the host target is now
+  compile-verified as of 2026-11-24 (status below).
+
+## EffectDeck parity host — 2026-11-24
+
+- Added the full host as a separate XcodeGen project spec. It embeds the
+  existing Sonance EQ AUv3 and includes EffectDeck's chain, effects/plugins/
+  presets browser, routing, audio settings, meters, remote panel, About and
+  share/import extensions. The host app is named Sonance EQ, version 0.2.0
+  (build 7).
+- The complete target set compiled for the arm64 iOS 27 device SDK with code
+  signing disabled. The built app bundle contains the route extension,
+  Sonance EQ Audio Unit, and share extension. This verifies compilation and
+  bundle construction only.
+- The local development profiles lack the Media Device entitlement and the
+  custom App Group required by the route and chain handoff. The new host has not
+  been signed, installed, or exercised on a phone. Bluetooth routing and
+  reconnect behavior remain unverified.
+- The iOS Simulator SDK does not provide the `MediaDevice` module, so this host
+  route target cannot be validated in the Simulator. No tests were run in this
+  step.
 
 Older notes below record the state when they were written; the status above is
 the current build/install record.
@@ -372,13 +390,14 @@ the current build/install record.
 2. Test playback, speech curves, persistence, the AUv3 host, interruptions,
    headphones and background behavior on Sarah's designated iPhone. Preserve
    evidence, then uninstall the exact test bundle and verify its absence.
-3. Do not integrate the iOS 27 Media Device Route Lab into Sonance EQ without
-   written Apple guidance that covers same-device processing and the purpose of
-   the containing app. Apple's public docs describe remote playback hardware,
-   and the current agreement says the app bundling the extension should exist
-   solely to deliver and install it. The separate debug-only Route Lab also has
-   unauthenticated transport and privacy issues; it is not a product candidate.
-   See [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
+3. Before distributing the Media Device host, resolve the entitlement and
+   app-purpose requirements with Apple. Apple's public docs describe remote
+   playback devices, and the current agreement says the app bundling the
+   extension should exist solely to deliver and install it. The host is only a
+   compile-verified prototype until that review and physical validation pass.
+   The separate debug-only Route Lab still has unauthenticated transport and
+   privacy issues; it is not the integrated host implementation. See
+   [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
 4. Complete distribution signing, icon and release review separately when
    the product and its compatibility claims have been verified.
 
