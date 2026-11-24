@@ -26,4 +26,15 @@ final class PlaybackResumeSegmentTests: XCTestCase {
         let tooLong = AVAudioFramePosition(AVAudioFrameCount.max) + 1
         XCTAssertNil(PlaybackResumeSegment(totalFrames: tooLong, progress: 0))
     }
+
+    func testBluetoothReconnectResumesOnlyForSameNonemptyOutputID() {
+        XCTAssertTrue(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "device-1",
+                                                             currentOutputID: "device-1"))
+        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "device-1",
+                                                              currentOutputID: "device-2"))
+        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: nil,
+                                                              currentOutputID: "device-1"))
+        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "",
+                                                              currentOutputID: ""))
+    }
 }

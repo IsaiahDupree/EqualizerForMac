@@ -336,7 +336,8 @@ final class PreviewPlayer {
             if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
                let expectedID = reconnectOutputID,
                let output = session.currentRoute.outputs.first(where: Self.isBluetoothOutput),
-               output.uid == expectedID, state == .paused {
+               BluetoothReconnectPolicy.shouldResume(expectedOutputID: expectedID,
+                                                       currentOutputID: output.uid), state == .paused {
                 reconnectOutputID = nil
                 error = nil
                 Task { await play() }

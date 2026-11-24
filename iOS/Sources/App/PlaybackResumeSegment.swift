@@ -20,3 +20,11 @@ struct PlaybackResumeSegment: Equatable {
         return min(max(position / Double(totalFrames), 0), 1)
     }
 }
+
+enum BluetoothReconnectPolicy {
+    static func shouldResume(expectedOutputID: String?, currentOutputID: String?) -> Bool {
+        guard let expectedOutputID, !expectedOutputID.isEmpty,
+              let currentOutputID, !currentOutputID.isEmpty else { return false }
+        return expectedOutputID == currentOutputID
+    }
+}
