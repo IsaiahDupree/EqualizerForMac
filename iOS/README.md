@@ -155,6 +155,12 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 ## Build and verify
 
+To build, install and launch Sonance EQ on the designated iPhone 15 over USB,
+run `bash iOS/Tools/install-on-iphone15.sh`. The script checks Xcode readiness
+and the exact device ID first, verifies the built bundle ID, and records the
+build log under `iOS/build/iphone15-install/`. Complete Xcode's first-use setup
+in Xcode itself before running it; the script never accepts the license.
+
 Build all locally available Swift utility targets from their tracked XcodeGen
 specs with one bounded Simulator build command:
 
