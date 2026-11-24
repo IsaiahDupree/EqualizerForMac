@@ -1,124 +1,89 @@
-# Sonance EQ iOS host parity
+# Sonance EQ iOS — EffectDeck feature parity
 
-This roadmap expands Sonance EQ from a file player and AUv3 effect into an
-iOS audio host with the workflows shown in EffectDeck. Sonance's 32-band EQ,
-AutoEQ catalog, presets, output correction, standalone player, and AUv3 effect
-remain part of the app.
+This branch turns Sonance EQ into an iPhone audio host as well as an EQ. It
+embeds the pinned, MIT-licensed EffectDeck host and DSP, then adds Sonance EQ as
+an Audio Unit and brands the host as Sonance EQ. The goal is to make the
+EffectDeck workflows available inside Sonance EQ while retaining Sonance's
+32-band EQ, AutoEQ catalog, correction profiles, presets and standalone player.
 
-## Reference workflows and current status
+## Current implementation status — 2026-11-24
 
-| Capability | Sonance iOS today | Parity target |
+| EffectDeck workflow | In the Sonance iOS source | Build / device evidence |
 | --- | --- | --- |
-| Select Sonance as an audio output in Control Center | Not implemented in the product; a separate debug Route Lab exists | iOS 27 Media Device route feeding the Sonance processing chain, then the previously selected hardware output |
-| Effect chain | Standalone file player contains Sonance EQ and output correction | Ordered, addable, removable, reorderable, bypassable chain with saved card state |
-| AUv3 hosting | Sonance ships an AUv3 effect; the app does not host other Audio Units | Discover installed AUv3 effects, instantiate them, show their own editors, and keep each in chain order |
-| Built-in effects and analyzers | Sonance EQ, spectrum/level analysis for its own player | EffectDeck-style DSP processors plus level, stereo, spectrum, spectrogram, and oscilloscope stages |
-| Per-stage routing | Not implemented | Input/output bus and channel mapping, stereo/mono and multichannel options, with the real negotiated route format visible |
-| Presets and sharing | Sonance JSON presets and AutoEQ text import | Local folders, factory presets, EffectDeck-compatible chain import/export, clipboard and universal links |
-| Impulse responses and AutoEQ | AutoEQ catalog is bundled; no convolution stage | IR library/import and convolution plus correction profiles in the active chain |
-| Host processing controls | Basic render counters; no host DSP controls | Oversampling, DSP buffer size, CPU and latency reporting, silence power policy, synchronized visuals, floating meters |
-| Remote control and support | No remote DSP control panel | QR-based remote-control workflow, version/about, limitations, license and support information |
-| iPad layout | Responsive single-column app | Two-column chain/editor layout where space allows |
+| Ordered effects chain | Add, remove, reorder, collapse, bypass and persist chain stages; chain enable, I/O and latency indicators | Full host and embedded extensions compile for arm64 iPhone SDK unsigned. Not signed or run on iPhone. |
+| Effects, plug-ins and presets browser | Searchable Effects / Plugins / Presets tabs; categories; built-in effects and analyzers; installed AUv3 discovery and editors; system, user and effect presets | Source is included in generated `EffeTuneLive` target and compiles unsigned. Device behavior remains unverified. |
+| Signal routing | Routing screen shows each stage's input/output buses and channel mode; stage channel maps and multichannel processing are part of the host | Source compiles unsigned. No physical route or multichannel device run yet. |
+| Import, export and sharing | Clipboard chain replacement, share links, chain and preset import/export, share extension and import inbox | Host and share extension compile unsigned. The host/share App Group is not assigned to the development profiles, so signed install and shared-container runtime remain blocked. |
+| Analyzers and meters | Level / analog meters, spectrum, note spectrum, spectrogram, oscilloscope and other built-in analysis stages | Source compiles unsigned. Meter and analyzer readings have not been checked against device fixtures. |
+| Processing and power settings | Oversampling, DSP buffer selection, input format/buffer, CPU and latency display, pause-after-silence, silence threshold, keep-screen-on and visual sync controls | Source compiles unsigned. Real-time deadline and power behavior remain unmeasured on iPhone. |
+| Floating meters and chain controls | Floating meter controls, chain-level effects switch and per-card enable, collapse and menu actions | Source compiles unsigned; UI interaction is not device-verified. |
+| Remote control | Remote settings and QR-code scanning workflow | Source compiles unsigned. No remote peer/session was tested. |
+| About and support | Version, DSP version, limitations, licenses, privacy and feedback links | Source compiles unsigned. Final branded copy is applied by `HostConfig/apply-upstream-adaptation.py`. |
+| Control Center output routing | Separate minimal `Sonance EQ Route` installer and Media Device extension; extension sends captured samples to the full host's DSP chain over the loopback PCM bridge | Both targets compile unsigned. Apple Media Device entitlement/profile is unavailable; route cannot be signed, installed or exercised. |
+| Sonance EQ | Existing Sonance AUv3 embedded in the host, alongside the standalone 32-band EQ, AutoEQ data, corrections and presets | Host target compiles unsigned. AU lifecycle, state transfer and audio quality are not device-verified in this host. |
 
-The screenshots also show the chain-level enable switch, I/O and effect latency,
-clipboard replacement notice, per-card enable/collapse/menu controls, and an
-available-effects browser with Effects, Plugins, and Presets tabs. These belong
-to the chain-host milestone.
+The screenshots' routing screen and the Effects / Plugins / Presets browser are
+implemented in the host source. They are not yet evidence that those controls
+work on the phone. The latest full host is version 0.2.0 (build 7); the phone
+still has the earlier 0.1.0 (build 6) app.
 
-## Implementation sequence
-
-1. **Host foundation:** model a persistent effect chain, add/remove/reorder and
-   enable/bypass stages, enumerate installed AUv3 effects, and host stages in
-   their actual order. First end-to-end chain: Level Meter → Sonance EQ.
-2. **System route:** replace the debug-only pass-through with a product-quality
-   Media Device path connected to the same chain and to the selected speaker or
-   Bluetooth output. Add route state, format negotiation, interruption and
-   reconnect handling, loop protection, and render diagnostics.
-3. **Effect library:** add the built-in processors and analyzer stages from the
-   EffectDeck reference, keeping their upstream license notices and versions.
-   Add per-stage channel routing and multichannel support.
-4. **Preset and asset workflows:** import/export chain JSON and links, preserve
-   unknown stages visibly, add preset folders, IR and EQ-profile libraries, and
-   make clipboard imports reviewable before replacing the active chain.
-5. **Host settings and polish:** oversampling and buffer controls, CPU/latency
-   readings, power behavior, synchronized and floating meters, remote control,
-   accessibility, iPad layout, About, limitations, and licenses.
-6. **Validation:** run the audio continuity suite, AUv3 lifecycle and chain
-   tests, then test the full selected-output → route extension → ordered chain →
-   Bluetooth path on the assigned iPhone. Keep system-route, app playback, and
-   third-party AUv3 validation as separate evidence.
-
-## Host integration in progress
-
-The `feature/sonance-effectdeck-ios-parity` branch has a generated full-host
-project spec at `iOS/sonance-host.project.yml`. It reuses the pinned MIT host
-source and embeds Sonance EQ's existing AUv3 target in the full Sonance EQ app.
-The host includes the chain editor, Effects/Plugins/Presets browser, per-stage
-channel routing, settings, meters, sharing/import, remote controls and About.
+## Apple route architecture and limits
 
 Apple requires the Media Device entitlement on both the route extension and a
-container app whose sole purpose is delivering/installing that extension; that
-app cannot hold other managed entitlements. The project therefore separates a
-minimal `Sonance EQ Route` installer app from the full host. The installer and
-extension carry only the matching Media Device protocol entitlement. The full
-host keeps AUv3, sharing and App Group functionality, runs the DSP chain, and
-receives route samples over EffectDeck's loopback PCM bridge. Both the route
-name and self-route guard say Sonance EQ. The route installer must also be
-installed before Sonance EQ appears in Control Center.
+separate container app whose only purpose is to deliver/install that extension.
+That is why the project contains a small `Sonance EQ Route` installer alongside
+the full Sonance EQ host. The installer must be present before Sonance EQ can
+appear as a Control Center output. The host app itself contains the chain editor,
+Sonance EQ Audio Unit, share extension, import workflow and DSP processing.
 
-Regenerate the host project with:
+The full host and Share extension require the App Group
+`group.com.isaiahdupree.SonanceEQ`. That group is enabled on the existing App IDs
+but has not been assigned to the development profiles. Xcode's authenticated
+App Store Connect API-key provisioning created profiles but did not add this
+App Group. The Apple Developer web session available during the 2026-11-24
+attempt was not signed in, so the profiles still need the group assigned through
+the Apple Developer account before the host can be signed and installed. The
+route installer separately needs Apple's Media Device capability and a matching
+profile. Neither product bundle is currently installed from this branch.
+
+This Media Device workflow is experimental until Apple grants the entitlement
+and the signed route is validated on the phone. It follows Apple's documented
+Control Center media route model; do not claim arbitrary capture of other apps
+or games, per-app routing, or a proven Bluetooth return path. System routing,
+standalone file playback and compatible-host AUv3 use are separate audio paths
+and need separate evidence.
+
+## Build and next validation
+
+Regenerate the host project from its tracked spec:
 
 ```bash
 bash iOS/Tools/generate-sonance-host-project.sh
 ```
 
-The script initializes the pinned DSP/runtime submodules used by the iOS app,
-runs the upstream asset setup, applies the Sonance identity and route labels,
-and regenerates the project. It requires Homebrew Python 3.11 or newer because macOS’s built-in
-Python 3.9 is too old for the asset catalog generator. Nested developer-only
-CLAP and dr_libs submodules
-are not needed by this target. The generated Xcode project lives inside the
-vendored checkout and is ignored; the tracked spec and adaptation script are
-the source of truth.
+The generated project is in the vendored checkout and ignored. The tracked
+source of truth is `iOS/sonance-host.project.yml` plus
+`iOS/HostConfig/apply-upstream-adaptation.py`. Homebrew Python 3.11 or newer is
+required for the upstream asset generator.
 
-Both `EffeTuneLive` (full host) and `SonanceEQRouteInstaller` schemes built
-successfully for the arm64 iOS 27.2 device SDK with code signing disabled. The
-host bundle contains the Sonance Audio Unit and share extension; the route
-bundle contains the Media Device extension. Their app identifiers and protocol
-identifier match the intended two-bundle architecture. The MediaDevice
-framework is absent from the Simulator SDK, so the route target cannot be
-validated in Simulator. These are compile and bundle checks only.
+After Apple provisions both targets, the next steps are to install the full
+host and route installer on the assigned iPhone, verify the chain editor and
+stage routing, run the audio-quality and AUv3 lifecycle suites, and exercise
+Control Center → Sonance EQ → DSP chain → selected Bluetooth output. Capture
+separate evidence for direct Bluetooth playback, the host with an empty chain,
+the host with Sonance EQ flat, and the controlled EQ configuration. Record
+unavailable counters as unknown. Clean up only the tested Sonance app bundle IDs
+after the assigned physical testing is complete.
 
-The installed development profiles do not contain the Media Device entitlement
-or the Sonance App Group. The split bundle architecture now follows Apple's
-entitlement rules, but the route installer still cannot be signed or installed
-until Apple grants the Media Device capability and a matching provisioning
-profile. The iPhone route, chain handoff and Bluetooth path remain unverified.
-See Apple's [Media Device entitlement requirements](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.media-device-extension).
-Keep all upstream license notices with the vendored source.
+## Licensing and references
 
-## Platform and distribution constraints
+EffectDeck host source is MIT-licensed. Keep the upstream license and all
+bundled DSP/runtime notices with the vendored source, and retain the local
+adaptation disclosures. The app is an independent project and is not affiliated
+with or endorsed by EffectDeck or its author.
 
-The system-output workflow uses Apple's iOS 27 `MediaDevice` and
-`AVSystemRouting` frameworks. Apple's public guide describes a media device as
-remote playback hardware and documents delivery of real-time samples to its
-extension. Same-iPhone processing and the containing app's purpose need a
-separate distribution review; a working third-party app is not evidence of
-Apple entitlement approval or App Store acceptance. Keep the route feature
-marked experimental until its entitlement, signing profile, iOS behavior, and
-distribution position are verified. Do not describe it as system-wide support
-for games or apps that do not expose a Now Playing transport.
-
-The existing `iOS/RouteExperiment` is research code only. Its transport is not
-authenticated and it must not be promoted into the product as-is. The
-EffectDeck reference implementation is MIT licensed; any reused code must keep
-the applicable MIT and bundled DSP/runtime notices and identify local changes.
-
-## Sources
-
-- [EffectDeck source](https://github.com/satomasahiro2005/EffectDeck) and its
-  [MIT license](https://github.com/satomasahiro2005/EffectDeck/blob/main/LICENSE)
-- [EffectDeck feature list](https://apps.apple.com/app/effectdeck/id6812467517)
-- [Apple Media Device extension](https://developer.apple.com/documentation/mediadevice/mediadeviceextension)
-- [Apple real-time Media Device sample delivery](https://developer.apple.com/documentation/MediaDevice/creating-a-media-device-extension)
-- [Apple AVSystemRouting](https://developer.apple.com/documentation/AVSystemRouting)
+- [EffectDeck source](https://github.com/satomasahiro2005/EffectDeck)
+- [EffectDeck license](https://github.com/satomasahiro2005/EffectDeck/blob/main/LICENSE)
+- [EffectDeck feature listing](https://apps.apple.com/app/effectdeck/id6812467517)
+- [Apple Media Device entitlement requirements](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.media-device-extension)
+- [Apple App Groups capability setup](https://developer.apple.com/help/account/identifiers/enable-app-capabilities)

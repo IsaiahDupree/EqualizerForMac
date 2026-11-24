@@ -12,12 +12,14 @@ iOS 27 cross-app product and has not been submitted or published.
   `/Volumes/SonanceEQBuildScratch/XcodeDerivedData`.
 - The generated full Sonance EQ host and its embedded AUv3/share extensions
   compile successfully for the connected iPhone 15 on the iOS 27.2 SDK, with
-  code signing disabled. A signed-build attempt using automatic signing and the
-  local team failed: Xcode has no Apple Account configured, and its available
-  wildcard provisioning profile lacks the required App Groups, Associated
-  Domains, Inter-App Audio, and iCloud entitlements and signing certificate.
-  Logs are retained at `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-build.log`
-  and `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-sign-build.log`.
+  code signing disabled. Automatic signing with the existing App Store Connect
+  API key and correct developer team reached provisioning, but the profiles
+  omit `group.com.isaiahdupree.SonanceEQ`. The group is enabled on the host and
+  Share App IDs but is not assigned to their profiles; Apple Developer web
+  account access is needed to assign it. The route installer separately needs
+  Apple's Media Device entitlement and matching profile. Logs are retained at
+  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-build.log` and
+  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-sign-build.log`.
 - The installed app on the iPhone is still `com.isaiahdupree.SonanceEQ.iOSPrototype`
   version 0.1.0, build 6. The new full host is version 0.2.0, build 7 and has not
   been installed. The separate `Sonance EQ Route` installer is also not
