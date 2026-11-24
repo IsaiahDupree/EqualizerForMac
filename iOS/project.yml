@@ -30,6 +30,7 @@ targets:
       - ../Sources/SonanceEQ/DSP/Biquad.swift
       - ../Sources/SonanceEQ/DSP/FilterDesigner.swift
       - ../Sources/SonanceEQ/DSP/FrequencyResponse.swift
+      - ../Sources/SonanceEQ/DSP/FIRDesigner.swift
       - path: ../Sources/SonanceEQ/Resources/autoeq.sqlite
         buildPhase: resources
       - path: ../Sources/SonanceEQ/Resources/OPRA-LICENSE.txt
@@ -73,6 +74,7 @@ targets:
       - ../Sources/SonanceEQ/DSP/Biquad.swift
       - ../Sources/SonanceEQ/DSP/FilterDesigner.swift
       - ../Sources/SonanceEQ/DSP/FrequencyResponse.swift
+      - ../Sources/SonanceEQ/DSP/FIRDesigner.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit

@@ -66,11 +66,12 @@ import Testing
         let mid = [EQBand(frequency: 700, gain: 3, q: 1.1, type: .peaking)]
         let side = [EQBand(frequency: 2_500, gain: -4, q: 0.8, type: .peaking)]
         let file = PresetFile(name: "MidSide", preampDb: -2, bands: mid,
-                              sideBands: side, midSideEnabled: true)
+                              sideBands: side, midSideEnabled: true, linearPhaseEnabled: true)
         let back = try JSONDecoder().decode(PresetFile.self, from: JSONEncoder().encode(file))
         #expect(back.eqBands().map(\.frequency) == [700])
         #expect(back.eqSideBands()?.map(\.frequency) == [2_500])
         #expect(back.midSideEnabled == true)
+        #expect(back.linearPhaseEnabled == true)
     }
 
     @Test func defaultMetadata() {

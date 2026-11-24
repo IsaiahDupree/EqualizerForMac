@@ -8,6 +8,7 @@ final class EqualizerSessionTests: XCTestCase {
         XCTAssertTrue(settings.bands.isEmpty)
         XCTAssertEqual(settings.preamp, -3)
         XCTAssertFalse(settings.midSideEnabled)
+        XCTAssertFalse(settings.linearPhaseEnabled)
         XCTAssertEqual(settings.sideBands, Presets.flat)
         XCTAssertTrue(settings.isValid)
     }

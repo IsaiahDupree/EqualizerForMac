@@ -47,6 +47,12 @@ Mono input uses the Mid curve because it has no Side channel. Mid-Side support
 is implemented in source; its render, restore, and deadline checks still need
 to pass on an Apple runtime.
 
+Turn on **Linear-Phase FIR** to use the Mac app’s 2,048-tap linear-phase
+correction in both the file player and AUv3 effect. This adds about 21.3 ms of
+processing delay at 48 kHz; the matching bypass path keeps the same delay. The
+filter and latency behavior still need Apple-runtime response and deadline
+verification before release.
+
 Open **Presets → Preset Library** to save the entire curve and preamp under a
 name. The library can import multiple Sonance EQ files at once, export a
 single Mac-compatible `.sonanceeq.json` preset, or back up the library in

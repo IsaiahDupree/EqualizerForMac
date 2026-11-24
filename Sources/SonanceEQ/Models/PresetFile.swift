@@ -11,14 +11,16 @@ struct PresetFile: Codable {
     // Optional iOS Mid/Side state. Older presets and the Mac editor omit these keys.
     var sideBands: [PortableBand]?
     var midSideEnabled: Bool?
+    var linearPhaseEnabled: Bool?
 
     init(name: String, preampDb: Float, bands: [EQBand], sideBands: [EQBand]? = nil,
-         midSideEnabled: Bool? = nil) {
+         midSideEnabled: Bool? = nil, linearPhaseEnabled: Bool? = nil) {
         self.name = name
         self.preampDb = preampDb
         self.bands = bands.map(PortableBand.init)
         self.sideBands = sideBands?.map(PortableBand.init)
         self.midSideEnabled = midSideEnabled
+        self.linearPhaseEnabled = linearPhaseEnabled
     }
 
     /// Materialize into live EQ bands.

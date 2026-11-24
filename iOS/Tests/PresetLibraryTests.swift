@@ -6,8 +6,10 @@ final class PresetLibraryTests: XCTestCase {
         var settings = MobileEQSettings(bands: [EQBand(frequency: 800, gain: 3, q: 1.2)])
         settings.sideBands = [EQBand(frequency: 2_400, gain: -5, q: 0.8)]
         settings.midSideEnabled = true
+        settings.linearPhaseEnabled = true
         let file = PresetFile(name: "Independent curves", preampDb: -2, bands: settings.bands,
-                              sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled)
+                              sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled,
+                              linearPhaseEnabled: settings.linearPhaseEnabled)
         let data = try JSONEncoder().encode(file)
         let decoded = try JSONDecoder().decode(PresetFile.self, from: data)
         let restored = try MobileEQSettings(preset: decoded)
@@ -15,6 +17,7 @@ final class PresetLibraryTests: XCTestCase {
         XCTAssertEqual(restored.sideBands.map(\.frequency), [2_400])
         XCTAssertEqual(restored.sideBands.map(\.gain), [-5])
         XCTAssertTrue(restored.midSideEnabled)
+        XCTAssertTrue(restored.linearPhaseEnabled)
     }
 
     @MainActor

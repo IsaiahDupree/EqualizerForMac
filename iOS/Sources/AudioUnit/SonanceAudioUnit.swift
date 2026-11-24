@@ -156,12 +156,33 @@ final class SonanceAudioUnit: AUAudioUnit {
         }
         let mid = coefficients(for: settings.bands, count: state.bandCount)
         let side = coefficients(for: settings.sideBands, count: state.sideBandCount)
+        let firLength = Int(SonanceFIRLength)
+        let midFIR = settings.linearPhaseEnabled
+            ? FIRDesigner.design(bands: settings.bands, preampDb: settings.preamp,
+                                 sampleRate: state.sampleRate, length: firLength, bypassed: settings.bypassed)
+            : Self.firIdentity
+        let sideFIR = settings.linearPhaseEnabled && settings.midSideEnabled
+            ? FIRDesigner.design(bands: settings.sideBands, preampDb: settings.preamp,
+                                 sampleRate: state.sampleRate, length: firLength, bypassed: settings.bypassed)
+            : midFIR
         mid.withUnsafeBufferPointer { midBuffer in
             side.withUnsafeBufferPointer { sideBuffer in
-                SonanceRenderStage(storage.pointer, midBuffer.baseAddress!, sideBuffer.baseAddress!, settings.midSideEnabled)
+                midFIR.withUnsafeBufferPointer { midFIRBuffer in
+                    sideFIR.withUnsafeBufferPointer { sideFIRBuffer in
+                        SonanceRenderStage(storage.pointer, midBuffer.baseAddress!, sideBuffer.baseAddress!,
+                                           settings.midSideEnabled, midFIRBuffer.baseAddress!, sideFIRBuffer.baseAddress!,
+                                           settings.linearPhaseEnabled)
+                    }
+                }
             }
         }
     }
+
+    private static let firIdentity: [Float] = {
+        var result = Array(repeating: Float.zero, count: Int(SonanceFIRLength))
+        result[(Int(SonanceFIRLength) - 1) / 2] = 1
+        return result
+    }()
 
     private func makeParameterTree() -> AUParameterTree {
         let initial = MobileEQSettings()
@@ -182,6 +203,7 @@ final class SonanceAudioUnit: AUAudioUnit {
             parameter("preamp", "Preamp", MobileEQ.preampAddress, MobileEQ.preampRange, .decibels),
             parameter("bypass", "Bypass", MobileEQ.bypassAddress, 0...1, .boolean),
             parameter("midSideEnabled", "Mid-Side Processing", MobileEQ.midSideEnabledAddress, 0...1, .boolean),
+            parameter("linearPhaseEnabled", "Linear-Phase FIR", MobileEQ.linearPhaseEnabledAddress, 0...1, .boolean),
         ]
         for band in 0..<MobileEQ.maximumBandCount {
             let number = band + 1

@@ -300,7 +300,8 @@ final class AppState {
         panel.nameFieldStringValue = "\(activePresetName ?? "My EQ").sonanceeq.json"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let file = PresetFile(name: activePresetName ?? "My EQ", preampDb: preampDb, bands: bands,
-                              sideBands: sideBands, midSideEnabled: midSideEnabled)
+                              sideBands: sideBands, midSideEnabled: midSideEnabled,
+                              linearPhaseEnabled: linearPhase)
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -326,6 +327,8 @@ final class AppState {
             sideBands = importedSide
             preampDb = file.preampDb
             midSideEnabled = file.midSideEnabled ?? false
+            linearPhase = file.linearPhaseEnabled ?? false
+            linearPhase = file.linearPhaseEnabled ?? false
             activePresetName = file.name
             pushSettings()
         } catch {

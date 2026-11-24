@@ -10,11 +10,15 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 5 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
+        XCTAssertEqual(tree.allParameters.count, 6 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         XCTAssertEqual(MobileEQ.address(.type, band: 0), 32)
         XCTAssertEqual(MobileEQ.address(.enabled, band: 9), 61)
+        XCTAssertEqual(MobileEQ.midSideEnabledAddress, 195)
+        XCTAssertEqual(MobileEQ.sideAddress(.frequency, band: 0), 196)
+        XCTAssertEqual(MobileEQ.sideBandCountAddress, 388)
+        XCTAssertEqual(MobileEQ.linearPhaseEnabledAddress, 389)
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
         gain.value = 9
         preamp.value = -3
@@ -44,10 +48,12 @@ final class AudioUnitIntegrationTests: XCTestCase {
         ], preamp: -2)
         settings.sideBands = [EQBand(frequency: 997, gain: -4, q: 1, type: .peaking)]
         settings.midSideEnabled = true
+        settings.linearPhaseEnabled = true
         settings.apply(to: tree)
         XCTAssertEqual(tree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
         XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
         XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.linearPhaseEnabledAddress)?.value, 1)
 
         let restored = try await installedEffect()
         restored.auAudioUnit.fullState = try XCTUnwrap(effect.auAudioUnit.fullState)
@@ -55,6 +61,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
         XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
         XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.linearPhaseEnabledAddress)?.value, 1)
     }
 
     @MainActor

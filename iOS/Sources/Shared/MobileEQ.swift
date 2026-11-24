@@ -40,6 +40,7 @@ enum MobileEQ {
     static let midSideEnabledAddress = firstAdditionalBand + AUParameterAddress(maximumBandCount - initialBandCount) * controlsPerBand
     static let firstSideBandAddress = midSideEnabledAddress + 1
     static let sideBandCountAddress = firstSideBandAddress + AUParameterAddress(maximumBandCount) * controlsPerBand
+    static let linearPhaseEnabledAddress = sideBandCountAddress + 1
 
     static func newBand() -> EQBand {
         EQBand(frequency: 1_000, gain: 0, q: 1, type: .peaking)
@@ -90,16 +91,19 @@ struct MobileEQSettings: Codable, Equatable {
     var preamp: Float = 0
     var bypassed = false
     var midSideEnabled = false
+    var linearPhaseEnabled = false
 
     private static let unusedBand = MobileEQ.newBand()
 
     init(bands: [EQBand] = Presets.flat, sideBands: [EQBand] = Presets.flat,
-         preamp: Float = 0, bypassed: Bool = false, midSideEnabled: Bool = false) {
+         preamp: Float = 0, bypassed: Bool = false, midSideEnabled: Bool = false,
+         linearPhaseEnabled: Bool = false) {
         self.bands = bands
         self.sideBands = sideBands
         self.preamp = preamp
         self.bypassed = bypassed
         self.midSideEnabled = midSideEnabled
+        self.linearPhaseEnabled = linearPhaseEnabled
     }
 
     static func startingPoint(bands: [EQBand], sampleRate: Double) -> Self {
@@ -128,7 +132,7 @@ struct MobileEQSettings: Codable, Equatable {
             (!band.type.supportsSlope || FilterDesigner.slopes.contains(band.slopeDbPerOct))
     }
 
-    private enum CodingKeys: String, CodingKey { case bands, sideBands, preamp, bypassed, midSideEnabled }
+    private enum CodingKeys: String, CodingKey { case bands, sideBands, preamp, bypassed, midSideEnabled, linearPhaseEnabled }
 
     init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
@@ -137,6 +141,7 @@ struct MobileEQSettings: Codable, Equatable {
         preamp = try values.decode(Float.self, forKey: .preamp)
         bypassed = try values.decodeIfPresent(Bool.self, forKey: .bypassed) ?? false
         midSideEnabled = try values.decodeIfPresent(Bool.self, forKey: .midSideEnabled) ?? false
+        linearPhaseEnabled = try values.decodeIfPresent(Bool.self, forKey: .linearPhaseEnabled) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -146,6 +151,7 @@ struct MobileEQSettings: Codable, Equatable {
         try values.encode(preamp, forKey: .preamp)
         try values.encode(bypassed, forKey: .bypassed)
         try values.encode(midSideEnabled, forKey: .midSideEnabled)
+        try values.encode(linearPhaseEnabled, forKey: .linearPhaseEnabled)
     }
 
     func selection(_ index: Int?) -> Int? {
@@ -158,6 +164,7 @@ struct MobileEQSettings: Codable, Equatable {
         case MobileEQ.preampAddress: return preamp
         case MobileEQ.bypassAddress: return bypassed ? 1 : 0
         case MobileEQ.midSideEnabledAddress: return midSideEnabled ? 1 : 0
+        case MobileEQ.linearPhaseEnabledAddress: return linearPhaseEnabled ? 1 : 0
         case MobileEQ.bandCountAddress: return Float(bands.count)
         case MobileEQ.sideBandCountAddress: return Float(sideBands.count)
         default:
@@ -189,6 +196,7 @@ struct MobileEQSettings: Codable, Equatable {
         case MobileEQ.preampAddress: preamp = clamped(MobileEQ.preampRange)
         case MobileEQ.bypassAddress: bypassed = value >= 0.5
         case MobileEQ.midSideEnabledAddress: midSideEnabled = value >= 0.5
+        case MobileEQ.linearPhaseEnabledAddress: linearPhaseEnabled = value >= 0.5
         default:
             if let (band, control) = MobileEQ.sideBandControl(at: address), sideBands.indices.contains(band) {
                 Self.setValue(value, control: control, band: &sideBands[band])

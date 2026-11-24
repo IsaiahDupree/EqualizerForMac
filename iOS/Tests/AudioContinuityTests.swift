@@ -119,6 +119,33 @@ final class AudioContinuityTests: XCTestCase {
     }
 
     @MainActor
+    func testLinearPhaseFIRBypassKeepsItsDocumentedDelayAndZeroesInputTail() async throws {
+        let rate = 48_000.0
+        var impulse = [Float](repeating: 0, count: Int(rate))
+        impulse[0] = 0.5
+        let signal = QualitySignal(sampleRate: rate, channels: [impulse])
+        let settings = MobileEQSettings(bands: [], preamp: 0, bypassed: true, linearPhaseEnabled: true)
+        let capture = try await render(signal, settings: settings, frames: 4_096, pattern: variableBlocks)
+        XCTAssertEqual(capture.nonFiniteSamples, 0)
+        XCTAssertEqual(capture.samples[0][1_023], 0, accuracy: 1e-7)
+        XCTAssertEqual(capture.samples[0][1_024], 0.5, accuracy: 1e-6)
+        XCTAssertEqual(capture.samples[0].dropFirst(1_025).map { abs($0) }.max() ?? 1, 0, accuracy: 1e-7)
+    }
+
+    @MainActor
+    func testLinearPhaseIgnoresBandsAboveTheCurrentNyquistFrequency() async throws {
+        let rate = 8_000.0
+        let signal = QualitySignal.tones(sampleRate: rate, frequencies: [1_000])
+        let settings = MobileEQSettings(bands: [
+            EQBand(frequency: 18_000, gain: 12, q: 1, type: .peaking),
+        ], linearPhaseEnabled: true)
+        let capture = try await render(signal, settings: settings, frames: 8_000, pattern: [127, 256, 511])
+        XCTAssertEqual(capture.nonFiniteSamples, 0)
+        XCTAssertEqual(20 * log10(capture.rms(channel: 0, dropping: 4_000) / (0.125 / sqrt(2.0))),
+                       0, accuracy: 0.2)
+    }
+
+    @MainActor
     func testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)

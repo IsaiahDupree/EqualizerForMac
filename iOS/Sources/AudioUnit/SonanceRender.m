@@ -12,6 +12,12 @@ struct SonanceRender {
     bool hasUpdate;
     bool stagedMidSide;
     bool renderMidSide;
+    bool stagedLinearPhase;
+    bool renderLinearPhase;
+    float stagedMidFIR[SonanceFIRLength];
+    float stagedSideFIR[SonanceFIRLength];
+    float renderMidFIR[SonanceFIRLength];
+    float renderSideFIR[SonanceFIRLength];
     bool activeSections[SonanceRenderSections];
     double renderCoefficients[SonanceRenderCoefficientCount * maxChannels];
 
@@ -19,6 +25,9 @@ struct SonanceRender {
     AudioBufferList *input;
     float *scratch;
     float *midSideScratch;
+    float *firHistory;
+    float *firInput;
+    float *firOutput;
     AUAudioFrameCount maxFrames;
     uint32_t channels;
     double sampleRate;
@@ -38,6 +47,10 @@ SonanceRender *SonanceRenderCreate(void) {
             render->staged[5 * section] = 1;
             render->stagedSide[5 * section] = 1;
         }
+        render->stagedMidFIR[(SonanceFIRLength - 1) / 2] = 1;
+        render->stagedSideFIR[(SonanceFIRLength - 1) / 2] = 1;
+        render->renderMidFIR[(SonanceFIRLength - 1) / 2] = 1;
+        render->renderSideFIR[(SonanceFIRLength - 1) / 2] = 1;
     }
     return render;
 }
@@ -50,9 +63,15 @@ void SonanceRenderReleaseResources(SonanceRender *render) {
     free(render->input);
     free(render->scratch);
     free(render->midSideScratch);
+    free(render->firHistory);
+    free(render->firInput);
+    free(render->firOutput);
     render->input = NULL;
     render->scratch = NULL;
     render->midSideScratch = NULL;
+    render->firHistory = NULL;
+    render->firInput = NULL;
+    render->firOutput = NULL;
     render->maxFrames = 0;
     render->channels = 0;
 }
@@ -66,11 +85,15 @@ void SonanceRenderDestroy(SonanceRender *render) {
 SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render) { return render->analysis; }
 
 void SonanceRenderStage(SonanceRender *render, const double *midCoefficients,
-                        const double *sideCoefficients, bool midSideEnabled) {
+                        const double *sideCoefficients, bool midSideEnabled,
+                        const float *midFIR, const float *sideFIR, bool linearPhaseEnabled) {
     os_unfair_lock_lock(&render->lock);
     memcpy(render->staged, midCoefficients, sizeof(render->staged));
     memcpy(render->stagedSide, sideCoefficients, sizeof(render->stagedSide));
     render->stagedMidSide = midSideEnabled;
+    memcpy(render->stagedMidFIR, midFIR, sizeof(render->stagedMidFIR));
+    memcpy(render->stagedSideFIR, sideFIR, sizeof(render->stagedSideFIR));
+    render->stagedLinearPhase = linearPhaseEnabled;
     render->hasUpdate = true;
     os_unfair_lock_unlock(&render->lock);
 }
@@ -103,6 +126,9 @@ bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, ui
             (render->stagedMidSide && channels > 1 && needsFiltering(&render->stagedSide[5 * section]));
     }
     render->renderMidSide = render->stagedMidSide;
+    memcpy(render->renderMidFIR, render->stagedMidFIR, sizeof(render->renderMidFIR));
+    memcpy(render->renderSideFIR, render->stagedSideFIR, sizeof(render->renderSideFIR));
+    render->renderLinearPhase = render->stagedLinearPhase;
     render->hasUpdate = false;
     os_unfair_lock_unlock(&render->lock);
 
@@ -110,7 +136,12 @@ bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, ui
     render->input = calloc(1, offsetof(AudioBufferList, mBuffers) + channels * sizeof(AudioBuffer));
     render->scratch = calloc((size_t)maxFrames * channels, sizeof(float));
     render->midSideScratch = calloc((size_t)maxFrames * channels, sizeof(float));
-    if (render->setup == NULL || render->input == NULL || render->scratch == NULL || render->midSideScratch == NULL) {
+    const size_t historyLength = SonanceFIRLength - 1;
+    render->firHistory = calloc((size_t)channels * historyLength, sizeof(float));
+    render->firInput = calloc((size_t)maxFrames + historyLength, sizeof(float));
+    render->firOutput = calloc((size_t)maxFrames, sizeof(float));
+    if (render->setup == NULL || render->input == NULL || render->scratch == NULL || render->midSideScratch == NULL ||
+        render->firHistory == NULL || render->firInput == NULL || render->firOutput == NULL) {
         SonanceRenderReleaseResources(render);
         return false;
     }
@@ -125,6 +156,35 @@ void SonanceRenderReset(SonanceRender *render) {
     if (render->setup != NULL) {
         vDSP_biquadm_ResetState(render->setup);
     }
+    if (render->firHistory != NULL) {
+        memset(render->firHistory, 0, (size_t)render->channels * (SonanceFIRLength - 1) * sizeof(float));
+    }
+}
+
+static void processFIR(SonanceRender *render, uint32_t channel, const float *input,
+                       float *output, AUAudioFrameCount frames) {
+    const size_t historyLength = SonanceFIRLength - 1;
+    float *history = render->firHistory + (size_t)channel * historyLength;
+    const float *filter = (channel % 2 == 0) ? render->renderMidFIR : render->renderSideFIR;
+    memcpy(render->firInput, history, historyLength * sizeof(float));
+    memcpy(render->firInput + historyLength, input, (size_t)frames * sizeof(float));
+    // The designed FIR is symmetric, so vDSP_conv's correlation orientation is equivalent to convolution.
+    vDSP_conv(render->firInput, 1, filter, 1, render->firOutput, 1,
+              (vDSP_Length)frames, SonanceFIRLength);
+    memcpy(output, render->firOutput, (size_t)frames * sizeof(float));
+    memcpy(history, render->firInput + frames, historyLength * sizeof(float));
+}
+
+static void rememberFIRHistory(SonanceRender *render, uint32_t channel, const float *input,
+                               AUAudioFrameCount frames) {
+    const size_t historyLength = SonanceFIRLength - 1;
+    float *history = render->firHistory + (size_t)channel * historyLength;
+    if (frames >= historyLength) {
+        memcpy(history, input + frames - historyLength, historyLength * sizeof(float));
+        return;
+    }
+    memmove(history, history + frames, (historyLength - frames) * sizeof(float));
+    memcpy(history + historyLength - frames, input, (size_t)frames * sizeof(float));
 }
 
 static void applyUpdate(SonanceRender *render) {
@@ -134,6 +194,7 @@ static void applyUpdate(SonanceRender *render) {
     bool changed = render->hasUpdate;
     bool activated = false;
     if (changed) {
+        const bool previousMidSide = render->renderMidSide;
         expandChannels(render->renderCoefficients, render->staged, render->stagedSide,
                        render->channels, render->stagedMidSide);
         for (size_t section = 1; section < SonanceRenderSections; ++section) {
@@ -143,7 +204,20 @@ static void applyUpdate(SonanceRender *render) {
                 activated = true;
             }
         }
+        if (previousMidSide != render->stagedMidSide && render->channels == 2 && render->firHistory != NULL) {
+            const size_t historyLength = SonanceFIRLength - 1;
+            float *first = render->firHistory;
+            float *second = first + historyLength;
+            for (size_t i = 0; i < historyLength; ++i) {
+                const float a = first[i], b = second[i];
+                first[i] = render->stagedMidSide ? 0.5f * (a + b) : a + b;
+                second[i] = render->stagedMidSide ? 0.5f * (a - b) : a - b;
+            }
+        }
         render->renderMidSide = render->stagedMidSide;
+        memcpy(render->renderMidFIR, render->stagedMidFIR, sizeof(render->renderMidFIR));
+        memcpy(render->renderSideFIR, render->stagedSideFIR, sizeof(render->renderSideFIR));
+        render->renderLinearPhase = render->stagedLinearPhase;
         render->hasUpdate = false;
     }
     os_unfair_lock_unlock(&render->lock);
@@ -214,7 +288,18 @@ AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render) {
             inputs[0] = left;
             inputs[1] = right;
         }
-        vDSP_biquadm(render->setup, inputs, 1, outputs, 1, frames);
+        if (render->renderLinearPhase) {
+            for (uint32_t channel = 0; channel < channels; ++channel) {
+                processFIR(render, channel, inputs[channel], outputs[channel], frames);
+            }
+        } else {
+            vDSP_biquadm(render->setup, inputs, 1, outputs, 1, frames);
+            // Keep the FIR's input history current while IIR is selected so switching modes
+            // does not start the linear-phase path with an artificial zero-filled window.
+            for (uint32_t channel = 0; channel < channels; ++channel) {
+                rememberFIRHistory(render, channel, inputs[channel], frames);
+            }
+        }
         if (render->renderMidSide && channels == 2) {
             for (AUAudioFrameCount frame = 0; frame < frames; ++frame) {
                 const float mid = outputs[0][frame], side = outputs[1][frame];

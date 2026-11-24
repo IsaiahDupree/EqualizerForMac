@@ -44,6 +44,7 @@ extension MobileEQSettings {
         sideBands = file.eqSideBands() ?? Presets.flat
         preamp = file.preampDb
         midSideEnabled = file.midSideEnabled ?? false
+        linearPhaseEnabled = file.linearPhaseEnabled ?? false
         guard isValid else { throw PresetError.outOfRange }
     }
 }
@@ -122,7 +123,8 @@ final class PresetLibrary {
         let name = try Self.validName(name)
         try ensureUnique(name, except: nil)
         let file = PresetFile(name: name, preampDb: settings.preamp, bands: settings.bands,
-                              sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled)
+                              sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled,
+                              linearPhaseEnabled: settings.linearPhaseEnabled)
         _ = try MobileEQSettings(preset: file)
         try commit(entries + [SavedPreset(file: file)])
     }
@@ -136,7 +138,8 @@ final class PresetLibrary {
     func replace(_ id: UUID, with settings: MobileEQSettings) throws {
         try edit(id) {
             $0.file = PresetFile(name: $0.file.name, preampDb: settings.preamp, bands: settings.bands,
-                                 sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled)
+                                 sideBands: settings.sideBands, midSideEnabled: settings.midSideEnabled,
+                                 linearPhaseEnabled: settings.linearPhaseEnabled)
         }
     }
 

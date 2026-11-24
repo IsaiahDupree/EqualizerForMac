@@ -50,6 +50,17 @@ struct EqualizerEditor: View {
                     .accessibilityIdentifier("midSideCurvePicker")
                 }
             }
+            HStack {
+                Toggle("Linear-Phase FIR", isOn: $settings.linearPhaseEnabled)
+                    .font(.subheadline.weight(.medium))
+                    .accessibilityIdentifier("linearPhaseEQ")
+                Spacer()
+                if settings.linearPhaseEnabled {
+                    Text("About 21 ms latency at 48 kHz")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
             ResponsePlot(bands: editingBands, sampleRate: sampleRate, selection: currentBand?.id,
                          bypassed: settings.bypassed,
                          interaction: listeningToReference ? nil :

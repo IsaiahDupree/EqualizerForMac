@@ -33,7 +33,8 @@ enum FIRDesigner {
         }
 
         // --- 1. Target magnitude on a linear grid (zero-phase, hermitian-even). ---
-        let coeffs = bands.filter(\.enabled).flatMap {
+        let highestFrequency = min(20_000, sampleRate / 2 - 1)
+        let coeffs = bands.filter { $0.enabled && $0.frequency <= highestFrequency }.flatMap {
             FilterDesigner.sections(for: $0, sampleRate: sampleRate)
         }
         let preamp = pow(10.0, Double(preampDb) / 20.0)
