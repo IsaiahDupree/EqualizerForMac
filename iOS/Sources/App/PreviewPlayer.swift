@@ -112,10 +112,8 @@ final class PreviewPlayer {
         state = .starting
         error = nil
 
-        let progress = min(max(startProgress, 0), 1)
-        let startFrame = min(AVAudioFramePosition(Double(selected.file.length) * progress), selected.file.length)
-        let remainingFrames = selected.file.length - startFrame
-        guard remainingFrames > 0, remainingFrames <= AVAudioFramePosition(AVAudioFrameCount.max) else {
+        guard let segment = PlaybackResumeSegment(totalFrames: selected.file.length, progress: startProgress) else {
+            playRequest = nil
             state = .idle
             error = "Playback couldn’t resume from this position. Tap Play to restart the file."
             return
@@ -132,8 +130,8 @@ final class PreviewPlayer {
 
             try session.setCategory(.playback, mode: .default)
             try startEngine(graph)
-            graph.player.scheduleSegment(selected.file, startingFrame: startFrame,
-                                         frameCount: AVAudioFrameCount(remainingFrames), at: nil,
+            graph.player.scheduleSegment(selected.file, startingFrame: segment.startingFrame,
+                                         frameCount: segment.frameCount, at: nil,
                                          completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 Task { @MainActor in
                     guard let self, self.playRequest == request else { return }
