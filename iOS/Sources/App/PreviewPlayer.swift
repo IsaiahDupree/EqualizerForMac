@@ -18,6 +18,7 @@ final class PreviewPlayer {
     @ObservationIgnored private var playRequest: UUID?
     @ObservationIgnored private var sessionActive = false
     @ObservationIgnored private var resumeAfterInterruption = false
+    @ObservationIgnored private var reconnectOutputID: String?
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
@@ -92,14 +93,33 @@ final class PreviewPlayer {
     func play() async {
         if state == .paused {
             resumeAfterInterruption = false
-            resume()
+            reconnectOutputID = nil
+            if graph != nil {
+                resume()
+            } else {
+                await startPlayback(fromProgress: pausedProgress)
+            }
             return
         }
-        guard let selected, state == .idle else { return }
+        guard selected != nil, state == .idle else { return }
+        await startPlayback(fromProgress: 0)
+    }
+
+    private func startPlayback(fromProgress startProgress: Double) async {
+        guard let selected else { return }
         let request = UUID()
         playRequest = request
         state = .starting
         error = nil
+
+        let progress = min(max(startProgress, 0), 1)
+        let startFrame = min(AVAudioFramePosition(Double(selected.file.length) * progress), selected.file.length)
+        let remainingFrames = selected.file.length - startFrame
+        guard remainingFrames > 0, remainingFrames <= AVAudioFramePosition(AVAudioFrameCount.max) else {
+            state = .idle
+            error = "Playback couldn’t resume from this position. Tap Play to restart the file."
+            return
+        }
 
         do {
             let effect = try await AVAudioUnit.instantiate(with: MobileEQ.component, options: .loadOutOfProcess)
@@ -112,7 +132,9 @@ final class PreviewPlayer {
 
             try session.setCategory(.playback, mode: .default)
             try startEngine(graph)
-            graph.player.scheduleFile(selected.file, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            graph.player.scheduleSegment(selected.file, startingFrame: startFrame,
+                                         frameCount: AVAudioFrameCount(remainingFrames), at: nil,
+                                         completionCallbackType: .dataPlayedBack) { [weak self] _ in
                 Task { @MainActor in
                     guard let self, self.playRequest == request else { return }
                     self.stop()
@@ -183,6 +205,8 @@ final class PreviewPlayer {
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
         sleepTimerMinutes = nil
+        reconnectOutputID = nil
+        pausedProgress = 0
         graph?.player.stop()
         graph?.removeAnalysisTap()
         graph?.engine.stop()
@@ -266,19 +290,61 @@ final class PreviewPlayer {
 
     func handleRouteChange(_ notification: Notification) {
         let reason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
-        if state == .playing && reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
-            stop()
-            error = "The audio output disconnected. Tap Play to use the current output."
+        if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue &&
+            (state == .playing || state == .starting || (state == .paused && resumeAfterInterruption)) {
+            let previous = notification.userInfo?[AVAudioSessionRouteChangePreviousRouteKey]
+                as? AVAudioSessionRouteDescription
+            let bluetoothOutput = previous?.outputs.first(where: Self.isBluetoothOutput)
+            resumeAfterInterruption = false
+            parkForRouteChange(reconnectID: bluetoothOutput?.uid)
+            error = bluetoothOutput == nil
+                ? "The audio output changed. Playback is paused; tap Play to continue on the current output."
+                : "Bluetooth disconnected. Playback is paused while Sonance waits for the same device to reconnect."
         } else {
             refreshOutput()
+            if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
+               let expectedID = reconnectOutputID,
+               let output = session.currentRoute.outputs.first(where: Self.isBluetoothOutput),
+               output.uid == expectedID, state == .paused {
+                reconnectOutputID = nil
+                error = nil
+                Task { await play() }
+            }
         }
     }
 
     func handleConfigurationChange(_ notification: Notification) {
         guard state == .playing || state == .paused,
               let engine = notification.object as? AVAudioEngine, engine === graph?.engine else { return }
-        stop()
-        error = "The audio output changed. Tap Play to restart playback."
+        parkForRouteChange(reconnectID: nil)
+        error = "The audio output changed. Playback is paused; tap Play to continue from here."
+    }
+
+    private func parkForRouteChange(reconnectID: String?) {
+        if state == .starting {
+            playRequest = nil
+            state = .idle
+            return
+        }
+        if state == .playing { pausedProgress = progress }
+        reconnectOutputID = reconnectID
+        graph?.player.stop()
+        graph?.removeAnalysisTap()
+        graph?.engine.stop()
+        graph = nil
+        analysis?.reset()
+        deactivateSession()
+        outputName = nil
+        state = .paused
+    }
+
+    private static func isBluetoothOutput(_ output: AVAudioSessionPortDescription) -> Bool {
+        switch output.portType {
+        case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE:
+            return true
+        default:
+            return false
+        }
     }
 }
 

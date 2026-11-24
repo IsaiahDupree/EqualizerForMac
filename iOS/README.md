@@ -137,6 +137,12 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 - Switching apps or locking the screen during Files playback uses iOS background
   audio. Stop playback in Sonance when you’re done.
+- A system interruption pauses at the current position. Sonance follows the
+  system's resume recommendation on iOS 27 and the interruption-end option on
+  earlier iOS versions. Removing the active Bluetooth output also pauses at the
+  current position; playback resumes automatically only if that same Bluetooth
+  output ID returns. Otherwise tap Play to continue from the saved position on
+  the current route. A user pause or Stop is never automatically resumed.
 - Force-quitting Sonance stops its own player. Reopening restores your EQ and
   opens the local player with an empty file selection. Choose a file and press
   Play to start a new playback session.

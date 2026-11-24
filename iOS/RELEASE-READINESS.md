@@ -17,6 +17,12 @@ is reviewed and accepted and the apps are rebuilt.
   notification and `shouldResume` option. A user Stop clears the pending
   resume. This is source-level behavior until Xcode can compile it and a
   physical interruption/reconnect run can verify it.
+- A removed audio route now parks the standalone player at its current
+  position. Reconnection automatically resumes only when the route identifies
+  as Bluetooth and returns with the same output ID; a different route requires
+  an explicit Play action. If the route's ID changes, Play rebuilds the graph
+  from the saved position. This avoids silently sending interrupted Bluetooth
+  audio to the phone speaker. Compile and route verification remain pending.
 
 - Sonance's headphone profile assistant now displays a read-only preview of the
   generated frequency response and suggested preamp before saving or applying
