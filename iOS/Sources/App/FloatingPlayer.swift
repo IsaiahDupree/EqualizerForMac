@@ -56,6 +56,7 @@ struct FloatingPlayer: View {
                             }
                         })
                         .accessibilityLabel("Playback position")
+                        .accessibilityIdentifier("playbackPosition")
                         Text(timeLabel(player.duration))
                             .font(.caption2.monospacedDigit())
                             .foregroundStyle(.secondary)
