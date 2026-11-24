@@ -12,6 +12,7 @@ struct EqualizerEditor: View {
     let sampleRate: Double
     var onEditingChanged: (Bool) -> Void = { _ in }
     var onPresetLibrary: (() -> Void)?
+    var onHeadphoneCatalog: (() -> Void)?
     var comparison: EqualizerComparison?
 
     private var listeningToReference: Bool { comparison?.listeningToReference == true }
@@ -45,6 +46,10 @@ struct EqualizerEditor: View {
         Menu {
             if let onPresetLibrary {
                 Button("Preset Library", systemImage: "folder", action: onPresetLibrary)
+                Divider()
+            }
+            if let onHeadphoneCatalog {
+                Button("Headphone Correction Library", systemImage: "headphones", action: onHeadphoneCatalog)
                 Divider()
             }
             ForEach(Presets.all, id: \.name) { preset in

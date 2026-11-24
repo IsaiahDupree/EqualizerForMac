@@ -102,6 +102,10 @@ final class EqualizerSession {
         applyStartingSettings(profile.makeSettings(sampleRate: player.sampleRate))
     }
 
+    func applyHeadphoneCorrection(_ preset: MobileAutoEqPreset) throws {
+        applyStartingSettings(try preset.settings())
+    }
+
     private func applyStartingSettings(_ settings: MobileEQSettings) {
         auditionReference(false)
         editingChanged(true)

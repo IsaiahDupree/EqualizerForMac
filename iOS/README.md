@@ -5,7 +5,10 @@ acceptance run, see [Audio validation](AudioValidation/README.md). Run the digit
 suite on a Mac with `bash iOS/Tools/test-audio-quality.sh`; a simulator pass does
 not certify Bluetooth playback.
 
-The Sonance prototype and the broader iOS utility portfolio are tracked in
+The full-feature parity work and iOS platform boundary are tracked in the
+[iPhone parity roadmap](FULL-PARITY-ROADMAP.md).
+
+Sonance EQ and the broader iOS utility portfolio are tracked in
 [the utility app roadmap](UTILITY-APP-ROADMAP.md). The first separate utility
 prototype, Screenshot Scout / Creator Library, is in
 `iOS/Utilities/ScreenshotScout/`. It indexes user-selected images and videos
@@ -24,9 +27,10 @@ gates Apple Music Understanding analysis behind iOS 27 SDK availability. It
 can share a text practice plan without attaching audio. Batch import can be
 stopped after the current file.
 
-The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
-file from Files, tap Play, and compare your changes with Bypass EQ. The app
-includes the Mac app’s ten starting bands and five presets. Choose a band
+The iPhone and iPad app runs on iOS 17 or later. Open a mono or stereo file
+from Files, tap Play, and compare your changes with Bypass EQ. The app includes
+the Mac app’s ten starting bands, five built-in presets, and the bundled 8,862
+entry headphone correction catalog. Choose a band
 from the **Filter Bands** dropdown or tap its point on the curve. Drag the
 point left or right to change frequency and up or down to change gain.
 Press **+** to create and select a flat 1 kHz bell, or **−** to remove the
@@ -89,6 +93,14 @@ standalone player's settings apply to its Files playback. In a compatible
 AUv3 host, choose **Presets → Speech Listening** in the Sonance effect to use
 the same curves. Host settings are separate from the standalone player.
 
+Open **Presets → Headphone Correction Library** to search the offline AutoEq
+and attributed supplemental database shared with the Mac app. Tapping a model
+loads its measured parametric curve and safety preamp into the main EQ. Use a
+result's actions menu to assign it directly to the current playback output. The
+correction remains a separate stage after the main EQ and is saved per output
+route. These profiles are measurement-based starting points; fit and listening
+conditions vary.
+
 Sonance also provides Siri and Shortcuts actions to enable or disable EQ
 bypass for the standalone Files player. Those actions preserve the current
 curve and do not control audio in another app. Apple App Shortcuts make the
@@ -108,6 +120,9 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
   Play to start a new playback session.
 - An AUv3 host controls playback and stores its own effect settings. Opening or
   closing the Sonance screen leaves control of a hosted effect with the host.
+- iOS does not let Sonance apply its player processing to every other app's
+  audio. For other audio sources, use Sonance's AUv3 effect in a compatible host;
+  support and routing depend on that host and the active output.
 
 ## Build and verify
 

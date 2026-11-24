@@ -23,6 +23,7 @@ private struct EqualizerView: View {
     let session: EqualizerSession
     @State private var pickingFile = false
     @State private var showingPresets = false
+    @State private var showingHeadphoneCatalog = false
     @State private var showingCorrection = false
     @State private var showingListeningModes = false
     @State private var showingGuide = false
@@ -52,6 +53,7 @@ private struct EqualizerView: View {
                             sampleRate: player.sampleRate,
                             onEditingChanged: session.editingChanged,
                             onPresetLibrary: { showingPresets = true },
+                            onHeadphoneCatalog: { showingHeadphoneCatalog = true },
                             comparison: EqualizerComparison(hasReference: session.reference != nil,
                                                             listeningToReference: session.playingReference,
                                                             capture: session.captureReference, audition: session.auditionReference)
@@ -101,6 +103,10 @@ private struct EqualizerView: View {
         .tint(EqualizerEditor.accent)
         .sheet(isPresented: $showingPresets) {
             PresetLibraryView(library: session.presets, session: session)
+                .tint(EqualizerEditor.accent)
+        }
+        .sheet(isPresented: $showingHeadphoneCatalog) {
+            AutoEqCatalogView(session: session)
                 .tint(EqualizerEditor.accent)
         }
         .sheet(isPresented: $showingCorrection) {

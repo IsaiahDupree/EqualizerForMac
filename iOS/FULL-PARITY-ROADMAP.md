@@ -1,0 +1,49 @@
+# Sonance EQ for iPhone — parity roadmap
+
+This roadmap tracks the goal of making the iPhone app the full Sonance EQ
+experience where iOS allows it. The Mac app remains the reference for DSP,
+presets and editing workflows. iPhone playback is delivered through files the
+person opens in Sonance EQ and through compatible AUv3 hosts.
+
+## Current feature map
+
+| Mac capability | iPhone status | Work remaining |
+| --- | --- | --- |
+| 32-band parametric EQ, eight filter shapes and cut slopes | Implemented in the file player and AUv3 effect | Run the installed AUv3 quality suite on the selected Xcode toolchain and designated iPhone |
+| Bundled AutoEq and attributed headphone corrections | Implemented from the shared 8,862-row offline database; search, model/category filters, main-EQ loading and per-output assignment | Verify the database bundle and search on simulator/device; confirm database count after build |
+| Saved presets and portable Sonance JSON | Implemented | Keep import/export compatibility under regression coverage |
+| AutoEq ParametricEQ text import | Implemented | Add other useful EQ formats after compatibility fixtures are available |
+| Live spectrum, waveform and level analysis | Implemented for Sonance playback and the AUv3 host signal | Compare readings to known fixtures on a device |
+| A/B reference audition | Implemented for Sonance file playback | Add smooth level-matched switching if listening checks show a need |
+| File playback, background audio, sleep timer and Picture in Picture | Implemented in the prototype | Verify screen lock, route changes, interruptions and PiP on the designated phone |
+| Hosted AUv3 effect | Implemented for compatible hosts, with persistent host parameters | Validate EffectDeck and another host with a physical Bluetooth route |
+| Linear-phase FIR mode | Not implemented on iOS | Port the Mac FIR design and processing to the standalone player and AUv3 with measured latency and deadline coverage |
+| Independent Mid and Side curves | Not implemented on iOS | Add stereo matrix processing with mono-safe behavior and independent persisted curves |
+| Auto headroom and output limiter | Preset loading calculates headroom; no general iOS output limiter | Match the Mac behavior and verify peaks with deterministic fixtures |
+| System-wide capture and per-app routing/mixing/recording | No supported in-app path established | Keep these outside the iOS product unless Apple documents and permits a suitable API and purpose |
+| Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
+
+## Platform boundary
+
+The iOS app can process its own file playback and expose the Sonance Audio Unit
+to compatible hosts. It cannot assume access to arbitrary audio from other
+apps. The Media Device experiment stays isolated: the project research does not
+establish a permitted same-phone processing return path for this app. Any
+future route work needs current Apple guidance covering both the route and the
+app's allowed purpose.
+
+## Acceptance evidence
+
+1. Build the app and Audio Unit for iPhone and Simulator from `iOS/project.yml`.
+2. Run unit and UI suites, including all-sample audio continuity and injected
+   dropout cases; preserve `.xcresult` output.
+3. On the iPhone the owner assigned to this goal, verify Files playback, background and lock
+   behavior, route recovery, output corrections and the exact AUv3 host path.
+4. Through a connected Bluetooth endpoint, complete the separately documented
+   steady-state and reconnect runs. Record unavailable host counters as unknown.
+5. Verify update migration, saved presets, AutoEq catalog availability and
+   accessibility labels before treating the iPhone build as release-ready.
+
+The Xcode first-use license currently blocks Apple compilation and tests on the
+Mac. Keep build and device status explicitly unverified until that prerequisite
+is completed and fresh evidence is retained.
