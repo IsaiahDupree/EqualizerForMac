@@ -57,7 +57,11 @@ the same app bundle. The host's pipeline, effect/plugin/preset picker, routing
 editor, settings, meters, remote panel, and About screens remain the host UI;
 Sonance EQ is available to add to its chain. The app bundle and Media Device
 protocol use Sonance EQ identifiers, and a small idempotent adaptation script
-updates the upstream protocol and App Group constants to match.
+updates the upstream protocol and App Group constants to match. The adaptation
+also changes the Control Center route, audio-driver route, self-route loop guard,
+Now Playing title, and route setup messages to say Sonance EQ. Routing therefore
+appears as a first-class Sonance EQ destination while preserving the upstream
+host behavior and license notices.
 
 Regenerate the host project with:
 
@@ -65,10 +69,14 @@ Regenerate the host project with:
 bash iOS/Tools/generate-sonance-host-project.sh
 ```
 
-The script initializes the pinned nested DSP/runtime submodules, runs the
-upstream asset setup, applies the two Sonance identifiers, and regenerates the
-project. The generated Xcode project lives inside the vendored checkout and is
-ignored; the tracked spec and adaptation script are the source of truth.
+The script initializes the pinned DSP/runtime submodules used by the iOS app,
+runs the upstream asset setup, applies the Sonance identity and route labels,
+and regenerates the project. It requires Homebrew Python 3.11 or newer because macOS’s built-in
+Python 3.9 is too old for the asset catalog generator. Nested developer-only
+CLAP and dr_libs submodules
+are not needed by this target. The generated Xcode project lives inside the
+vendored checkout and is ignored; the tracked spec and adaptation script are
+the source of truth.
 
 The complete host, route extension, Sonance EQ Audio Unit, and share extension
 compiled for the arm64 iOS 27 device SDK with code signing disabled. The
@@ -76,6 +84,12 @@ MediaDevice framework is not present in the Simulator SDK, so a simulator build
 cannot validate the routing extension. The output bundle was checked for the
 Sonance EQ bundle display name, matching Media Device protocol, and embedded
 Sonance AUv3.
+
+After the Sonance route-name adaptation, the complete host rebuilt successfully
+for arm64 iOS 27.2. The bundle reports `Sonance EQ` as its display name, and the
+embedded route extension reports the matching Sonance EQ Media Device protocol.
+This remains a compile and bundle check; it is not a signed installation or a
+physical route/playback result.
 
 The local development profiles were inspected. They do not contain the
 `com.apple.developer.media-device-extension` entitlement or

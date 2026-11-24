@@ -32,6 +32,10 @@ iOS 27 cross-app product and has not been submitted or published.
   signing disabled. The built app bundle contains the route extension,
   Sonance EQ Audio Unit, and share extension. This verifies compilation and
   bundle construction only.
+- Updated the host presentation and Control Center/audio-driver route identity
+  to Sonance EQ, including the self-route loop guard, Now Playing title, and
+  route setup instructions. The arm64 device-SDK build succeeded again with
+  the updated identity.
 - The local development profiles lack the Media Device entitlement and the
   custom App Group. Apple's entitlement also requires the container app to
   exist solely to deliver/install the extension and disallows other managed
