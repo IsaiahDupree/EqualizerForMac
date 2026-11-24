@@ -17,7 +17,7 @@ SPEC.loader.exec_module(ASSESSOR)
 
 def valid_steady():
     return {
-        "schema_version": 1, "status": "recorded", "scope": "steady_state",
+        "schema_version": 2, "status": "recorded", "scope": "steady_state",
         "identifiers": {
             "iphone_model": "synthetic-test-device", "ios_version": "test-os",
             "bluetooth_device_model": "synthetic-headphones", "host_app": "test-host",
@@ -32,6 +32,11 @@ def valid_steady():
         "steady_state": {
             "continuous_input": True, "duration_seconds": 1800,
             "counters": {name: {"count": 0, "observed": True} for name in ASSESSOR.COUNTERS},
+            "sonance_effect_timing": {
+                "instrumented": True, "completed_blocks": 1000, "deadline_overruns": 0,
+                "maximum_processing_microseconds": 1200,
+                "last_buffer_deadline_microseconds": 5333,
+            },
         },
     }
 
@@ -65,6 +70,30 @@ class EvidenceAssessmentTests(unittest.TestCase):
 
     def test_complete_steady_evidence_passes_its_scope_only(self):
         self.assertEqual(self.status(valid_steady()), "pass")
+
+    def test_legacy_schema_one_remains_supported_without_effect_timing(self):
+        run = valid_steady()
+        run["schema_version"] = 1
+        del run["steady_state"]["sonance_effect_timing"]
+        self.assertEqual(self.status(run), "pass")
+
+    def test_effect_timing_is_required_and_overruns_fail(self):
+        run = valid_steady()
+        run["steady_state"]["sonance_effect_timing"]["instrumented"] = False
+        self.assertEqual(self.status(run), "incomplete")
+        run = valid_steady()
+        run["steady_state"]["sonance_effect_timing"]["deadline_overruns"] = 1
+        self.assertEqual(self.status(run), "fail")
+
+    def test_invalid_effect_timing_cannot_pass(self):
+        for field, value in (("completed_blocks", True), ("completed_blocks", 0),
+                             ("deadline_overruns", -1),
+                             ("maximum_processing_microseconds", float("inf")),
+                             ("last_buffer_deadline_microseconds", 0)):
+            with self.subTest(field=field, value=value):
+                run = valid_steady()
+                run["steady_state"]["sonance_effect_timing"][field] = value
+                self.assertEqual(self.status(run), "incomplete")
 
     def test_null_and_uninstrumented_counters_are_incomplete(self):
         for observed, count in ((True, None), (False, None), (False, 0)):

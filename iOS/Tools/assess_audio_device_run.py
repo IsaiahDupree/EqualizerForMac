@@ -18,6 +18,7 @@ import sys
 
 TARGETS = {"steady_state_seconds": 1800, "recovery_seconds": 2.0,
            "allowed_recovery_trials": 10, "negative_observation_seconds": 2.0}
+SUPPORTED_SCHEMA_VERSIONS = (1, 2)
 COUNTERS = ("unexplained_audible_dropouts", "short_fills", "render_errors",
             "nonfinite_samples")
 IDENTIFIERS = ("iphone_model", "ios_version", "bluetooth_device_model",
@@ -49,15 +50,16 @@ def assess(run):
               "targets": dict(TARGETS), "failures": [], "missing": [],
               "notes": ["Evidence assessment only; no hardware test was executed.",
                         "A pass covers only this configuration and selected scope.",
-                        "Tonal response, clipping/true peak, and real-time render deadlines "
-                        "require separate measurements; this assesses continuity/recovery only."]}
+                        "Tonal response, clipping/true peak, and complete host-chain timing "
+                        "require separate measurements; effect timing covers Sonance only."]}
     fail, missing = report["failures"], report["missing"]
     if run.get("status") == "not_run":
         report["status"] = "not_run"
         report["notes"].append("Run is explicitly marked not_run; measurements were not assessed.")
         return report
-    if run.get("schema_version") != 1 or isinstance(run.get("schema_version"), bool):
-        missing.append("schema_version must be 1")
+    schema_version = run.get("schema_version")
+    if schema_version not in SUPPORTED_SCHEMA_VERSIONS or isinstance(schema_version, bool):
+        missing.append("schema_version must be 1 or 2")
     if run.get("status") != "recorded":
         missing.append("status must be recorded after a physical-device run")
     scope = run.get("scope")
@@ -96,10 +98,31 @@ def assess(run):
                 missing.append("steady_state.counters." + key + " needs an observed integer count")
             if valid and count > 0:
                 fail.append(key + "=" + str(count) + " (target: zero)")
+        if schema_version == 2:
+            assess_effect_timing(mapping(steady.get("sonance_effect_timing")), fail, missing)
     if scope in ("recovery", "combined"):
         assess_recovery(mapping(run.get("recovery")), fail, missing)
     report["status"] = "fail" if fail else ("incomplete" if missing else "pass")
     return report
+
+
+def assess_effect_timing(timing, fail, missing):
+    """Validate Sonance-only telemetry without treating it as whole-chain timing."""
+    if timing.get("instrumented") is not True:
+        missing.append("steady_state.sonance_effect_timing.instrumented must be verified true")
+        return
+    for key in ("completed_blocks", "deadline_overruns"):
+        value = timing.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            missing.append("steady_state.sonance_effect_timing." + key + " must be an observed nonnegative integer")
+    for key in ("maximum_processing_microseconds", "last_buffer_deadline_microseconds"):
+        value = timing.get(key)
+        if not number(value) or value <= 0:
+            missing.append("steady_state.sonance_effect_timing." + key + " must be a measured positive value")
+    if isinstance(timing.get("completed_blocks"), int) and timing["completed_blocks"] <= 0:
+        missing.append("steady_state.sonance_effect_timing.completed_blocks must be positive")
+    if isinstance(timing.get("deadline_overruns"), int) and timing["deadline_overruns"] > 0:
+        fail.append("sonance_effect_timing.deadline_overruns=" + str(timing["deadline_overruns"]) + " (target: zero)")
 
 
 def assess_recovery(recovery, fail, missing):
