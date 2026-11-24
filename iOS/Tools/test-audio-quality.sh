@@ -21,6 +21,7 @@ done
 SONANCE_RESULTS_DIR="${SONANCE_AUDIO_RESULTS_DIR:-${SONANCE_REPO_DIR}/build/audio-quality/$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "${SONANCE_RESULTS_DIR}"
 SONANCE_RESULTS_DIR="$(cd -- "${SONANCE_RESULTS_DIR}" && pwd)"
+SONANCE_DERIVED_DATA="${SONANCE_AUDIO_DERIVED_DATA:-${SONANCE_RESULTS_DIR}/DerivedData}"
 SONANCE_RESULT_BUNDLE="${SONANCE_RESULTS_DIR}/AudioQuality.xcresult"
 if [[ -e "${SONANCE_RESULT_BUNDLE}" ]]; then
   echo "Result bundle already exists; choose a new SONANCE_AUDIO_RESULTS_DIR." >&2
@@ -102,6 +103,7 @@ xcodebuild test \
   -scheme SonanceEQiOS \
   -destination "${SONANCE_DESTINATION}" \
   -destination-timeout 120 \
+  -derivedDataPath "${SONANCE_DERIVED_DATA}" \
   -jobs 1 -parallel-testing-enabled NO \
   -only-testing:SonanceEQiOSTests/AudioContinuityTests \
   -resultBundlePath "${SONANCE_RESULT_BUNDLE}" \

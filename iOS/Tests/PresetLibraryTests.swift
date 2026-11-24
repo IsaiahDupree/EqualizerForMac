@@ -3,8 +3,8 @@ import XCTest
 
 final class PresetLibraryTests: XCTestCase {
     func testPresetRoundTripPreservesIndependentMidSideCurves() throws {
-        var settings = MobileEQSettings(bands: [EQBand(frequency: 800, gain: 3, q: 1.2)])
-        settings.sideBands = [EQBand(frequency: 2_400, gain: -5, q: 0.8)]
+        var settings = MobileEQSettings(bands: [EQBand(frequency: 800, gain: 3, q: 1.2, type: .peaking)])
+        settings.sideBands = [EQBand(frequency: 2_400, gain: -5, q: 0.8, type: .peaking)]
         settings.midSideEnabled = true
         settings.linearPhaseEnabled = true
         let file = PresetFile(name: "Independent curves", preampDb: -2, bands: settings.bands,

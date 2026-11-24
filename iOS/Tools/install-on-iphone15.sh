@@ -5,8 +5,22 @@ DEVICE_ID="${SONANCE_IPHONE_UDID:-00008120-000465A20C52201E}"
 BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-${PROJECT_ROOT}/build/iphone15-derived}"
-LOG_DIR="${PROJECT_ROOT}/build/iphone15-install"
+LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-${PROJECT_ROOT}/build/iphone15-install}"
 APP_PATH="${DERIVED_DATA}/Build/Products/Debug-iphoneos/SonanceEQiOS.app"
+SIGNING_SETTINGS=()
+
+if [[ -n "${SONANCE_DEVELOPMENT_TEAM:-}" ]]; then
+    SIGNING_SETTINGS+=("DEVELOPMENT_TEAM=${SONANCE_DEVELOPMENT_TEAM}")
+fi
+if [[ -n "${SONANCE_CODE_SIGN_STYLE:-}" ]]; then
+    SIGNING_SETTINGS+=("CODE_SIGN_STYLE=${SONANCE_CODE_SIGN_STYLE}")
+fi
+if [[ -n "${SONANCE_PROVISIONING_PROFILE_SPECIFIER:-}" ]]; then
+    SIGNING_SETTINGS+=("PROVISIONING_PROFILE_SPECIFIER=${SONANCE_PROVISIONING_PROFILE_SPECIFIER}")
+fi
+if [[ -n "${SONANCE_CODE_SIGN_IDENTITY:-}" ]]; then
+    SIGNING_SETTINGS+=("CODE_SIGN_IDENTITY=${SONANCE_CODE_SIGN_IDENTITY}")
+fi
 
 if ! xcodebuild -license check >/dev/null 2>&1; then
     cat >&2 <<'EOF'
@@ -16,8 +30,20 @@ EOF
     exit 2
 fi
 
-if ! idevice_id -l 2>/dev/null | /usr/bin/grep -Fxq "${DEVICE_ID}"; then
-    echo "Target iPhone ${DEVICE_ID} is not connected over USB." >&2
+if ! xcrun xcdevice list 2>/dev/null | /usr/bin/python3 -c '
+import json
+import sys
+
+device_id = sys.argv[1]
+devices = json.load(sys.stdin)
+sys.exit(0 if any(
+    device.get("identifier") == device_id
+    and device.get("available") is True
+    and device.get("simulator") is False
+    for device in devices
+) else 1)
+' "${DEVICE_ID}"; then
+    echo "Target iPhone ${DEVICE_ID} is not available to Xcode." >&2
     exit 2
 fi
 
@@ -30,7 +56,7 @@ xcodebuild \
     -scheme SonanceEQiOS \
     -destination "platform=iOS,id=${DEVICE_ID}" \
     -derivedDataPath "${DERIVED_DATA}" \
-    build 2>&1 | tee "${BUILD_LOG}"
+    build "${SIGNING_SETTINGS[@]}" 2>&1 | tee "${BUILD_LOG}"
 
 if [[ ! -d "${APP_PATH}" ]]; then
     echo "Build succeeded but app bundle was not found at ${APP_PATH}." >&2

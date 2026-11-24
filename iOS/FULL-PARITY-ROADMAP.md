@@ -1,5 +1,9 @@
 # Sonance EQ for iPhone — parity roadmap
 
+See [EFFECTDECK-PARITY.md](EFFECTDECK-PARITY.md) for the expanded iOS host
+scope: system routing, ordered effect chains, AUv3 hosting, analyzers, channel
+routing, presets/import links, and host processing controls.
+
 This roadmap tracks the goal of making the iPhone app the full Sonance EQ
 experience where iOS allows it. The Mac app remains the reference for DSP,
 presets and editing workflows. iPhone playback is delivered through files the
@@ -45,8 +49,8 @@ app's allowed purpose.
 5. Verify update migration, saved presets, AutoEq catalog availability and
    accessibility labels before treating the iPhone build as release-ready.
 
-The Xcode first-use license currently blocks Apple compilation, tests and
-device installation on the Mac. Mid/Side and FIR implementation status is
-source review only until Apple tests pass. Keep build, processor deadline and
-physical playback status explicitly unverified until fresh evidence is
-retained.
+Xcode 27.2 first-use setup and the iPhone app build/install now succeed. The
+audio suite still needs a signed test-runner build; no Simulator runtime is
+installed. Mid/Side and FIR implementation status remains source review until
+Apple tests pass. Keep processor-deadline and physical Bluetooth playback
+status explicitly unverified until fresh evidence is retained.

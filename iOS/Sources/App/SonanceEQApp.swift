@@ -160,10 +160,10 @@ private struct AudioSessionLifecycleObserver: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 27.0, *) {
             content
-                .onReceive(AVAudioSession.didBecomeInactiveNotification) { notification in
+                .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.didBecomeInactiveNotification)) { notification in
                     Task { @MainActor in player.handleSystemDeactivation(notification) }
                 }
-                .onReceive(AVAudioSession.resumptionRecommendationNotification) { notification in
+                .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.resumptionRecommendationNotification)) { notification in
                     Task { @MainActor in player.handleResumptionRecommendation(notification) }
                 }
         } else {

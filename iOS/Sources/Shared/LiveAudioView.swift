@@ -94,7 +94,7 @@ struct LiveAudioView: View {
             }
             Text("\(metrics.deadlineMisses) deadline overruns in \(metrics.completedBlocks) measured blocks")
                 .font(.caption)
-                .foregroundStyle(metrics.deadlineMisses == 0 ? .secondary : .red)
+                .foregroundStyle(metrics.deadlineMisses == 0 ? Color.secondary : Color.red)
                 .accessibilityIdentifier("renderDeadlineStats")
         }
         .font(.subheadline)

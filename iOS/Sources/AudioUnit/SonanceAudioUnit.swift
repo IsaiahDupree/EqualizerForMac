@@ -269,7 +269,8 @@ final class SonanceAudioUnit: AUAudioUnit {
             }
         }
         tree.implementorValueProvider = { [weak self] parameter in
-            self?.control.withLock { state in
+            guard let self else { return 0 }
+            return self.control.withLock { state in
                 switch parameter.address {
                 case MobileEQ.bandCountAddress: return Float(state.bandCount)
                 case MobileEQ.sideBandCountAddress: return Float(state.sideBandCount)
@@ -281,7 +282,7 @@ final class SonanceAudioUnit: AUAudioUnit {
                     return Float(SonanceRenderLastDeadlineNanoseconds(self.storage.pointer)) / 1_000
                 default: return state.settings.value(at: parameter.address)
                 }
-            } ?? 0
+            }
         }
         return tree
     }

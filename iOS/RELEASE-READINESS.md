@@ -3,10 +3,27 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
-Xcode 27.2 was installed on this Mac on 2026-11-22. Its first-use license has
-not been accepted, so SDK discovery and new builds are currently blocked. Build
-results below are historical Xcode 26.0.1 Simulator evidence until the license
-is reviewed and accepted and the apps are rebuilt.
+## Current iOS build and install — 2026-11-23
+
+- Xcode 27.2 first-use setup is complete. `xcodebuild -runFirstLaunch` repaired
+  the plugin initialization issue; Xcode now sees Isaiah's paired iPhone 15
+  (`00008120-000465A20C52201E`) over its network transport.
+- Fixed three iOS compile errors in notification publishers, the AU parameter
+  provider, and the live render-metric style. The app and AUv3 extension build
+  successfully for the connected iPhone.
+- Signed with the local `Riff Engine local device tests 20261109` provisioning
+  profile and the matching installed Apple Development identity. The app
+  `com.isaiahdupree.SonanceEQ.iOSPrototype` installed and launched successfully.
+- The phone is Xcode-paired over network; it was not detected as a USB device.
+- Audio-suite execution is still pending: no iOS Simulator runtime is installed,
+  and the device test attempt needs signing settings for all test targets.
+- The EffectDeck-style iOS host scope is tracked in
+  [EFFECTDECK-PARITY.md](EFFECTDECK-PARITY.md). The current app still lacks the
+  chain host and system Media Device route. Bluetooth playback and route
+  reconnect have not been physically verified.
+
+Older notes below record the state when they were written; the status above is
+the current build/install record.
 
 ## Utility portfolio progress — 2026-11-23
 
