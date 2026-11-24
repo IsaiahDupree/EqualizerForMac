@@ -8,16 +8,29 @@ struct PresetFile: Codable {
     var name: String
     var preampDb: Float
     var bands: [PortableBand]
+    // Optional iOS Mid/Side state. Older presets and the Mac editor omit these keys.
+    var sideBands: [PortableBand]?
+    var midSideEnabled: Bool?
 
-    init(name: String, preampDb: Float, bands: [EQBand]) {
+    init(name: String, preampDb: Float, bands: [EQBand], sideBands: [EQBand]? = nil,
+         midSideEnabled: Bool? = nil) {
         self.name = name
         self.preampDb = preampDb
         self.bands = bands.map(PortableBand.init)
+        self.sideBands = sideBands?.map(PortableBand.init)
+        self.midSideEnabled = midSideEnabled
     }
 
     /// Materialize into live EQ bands.
     func eqBands() -> [EQBand] {
         bands.map {
+            EQBand(frequency: $0.frequency, gain: $0.gain, q: $0.q, type: $0.type,
+                   enabled: $0.enabled, slopeDbPerOct: $0.slopeDbPerOct)
+        }
+    }
+
+    func eqSideBands() -> [EQBand]? {
+        sideBands?.map {
             EQBand(frequency: $0.frequency, gain: $0.gain, q: $0.q, type: $0.type,
                    enabled: $0.enabled, slopeDbPerOct: $0.slopeDbPerOct)
         }

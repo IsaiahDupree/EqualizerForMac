@@ -12,7 +12,8 @@ typedef struct SonanceRender SonanceRender;
 
 SonanceRender *_Nullable SonanceRenderCreate(void);
 void SonanceRenderDestroy(SonanceRender *render);
-void SonanceRenderStage(SonanceRender *render, const double *coefficients);
+void SonanceRenderStage(SonanceRender *render, const double *midCoefficients,
+                        const double *sideCoefficients, bool midSideEnabled);
 bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, uint32_t channels, double sampleRate);
 SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render);
 void SonanceRenderReleaseResources(SonanceRender *render);

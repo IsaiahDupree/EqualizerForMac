@@ -18,7 +18,7 @@ person opens in Sonance EQ and through compatible AUv3 hosts.
 | File playback, background audio, sleep timer and Picture in Picture | Implemented in the prototype | Verify screen lock, route changes, interruptions and PiP on the designated phone |
 | Hosted AUv3 effect | Implemented for compatible hosts, with persistent host parameters | Validate EffectDeck and another host with a physical Bluetooth route |
 | Linear-phase FIR mode | Not implemented on iOS | Port the Mac FIR design and processing to the standalone player and AUv3 with measured latency and deadline coverage |
-| Independent Mid and Side curves | Not implemented on iOS | Add stereo matrix processing with mono-safe behavior and independent persisted curves |
+| Independent Mid and Side curves | Implemented in the AUv3 renderer, standalone player, editor and portable presets; mono streams keep the Mid curve | Run center/side isolation, state restore, mono and stereo tests on Apple runtimes; verify real-time cost in the host |
 | Auto headroom and output limiter | Preset loading calculates headroom; no general iOS output limiter | Match the Mac behavior and verify peaks with deterministic fixtures |
 | System-wide capture and per-app routing/mixing/recording | No supported in-app path established | Keep these outside the iOS product unless Apple documents and permits a suitable API and purpose |
 | Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
@@ -44,6 +44,7 @@ app's allowed purpose.
 5. Verify update migration, saved presets, AutoEq catalog availability and
    accessibility labels before treating the iPhone build as release-ready.
 
-The Xcode first-use license currently blocks Apple compilation and tests on the
-Mac. Keep build and device status explicitly unverified until that prerequisite
-is completed and fresh evidence is retained.
+The Xcode first-use license currently blocks Apple compilation, tests and
+device installation on the Mac. Mid/Side implementation status is source
+review only until the Apple tests pass. Keep build and physical playback status
+explicitly unverified until fresh evidence is retained.

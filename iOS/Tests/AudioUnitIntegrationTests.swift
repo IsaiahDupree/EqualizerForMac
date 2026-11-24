@@ -10,7 +10,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 3 + MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
+        XCTAssertEqual(tree.allParameters.count, 5 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         XCTAssertEqual(MobileEQ.address(.type, band: 0), 32)
@@ -33,6 +33,28 @@ final class AudioUnitIntegrationTests: XCTestCase {
         gain.value = -6
         let cut = try stream.measure()
         XCTAssertEqual(cut[0], -9, accuracy: 0.25)
+    }
+
+    @MainActor
+    func testMidSideCurvesRestoreThroughHostParameterState() async throws {
+        let effect = try await installedEffect()
+        let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
+        var settings = MobileEQSettings(bands: [
+            EQBand(frequency: 997, gain: 6, q: 1, type: .peaking),
+        ], preamp: -2)
+        settings.sideBands = [EQBand(frequency: 997, gain: -4, q: 1, type: .peaking)]
+        settings.midSideEnabled = true
+        settings.apply(to: tree)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
+
+        let restored = try await installedEffect()
+        restored.auAudioUnit.fullState = try XCTUnwrap(effect.auAudioUnit.fullState)
+        let restoredTree = try XCTUnwrap(restored.auAudioUnit.parameterTree)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
     }
 
     @MainActor

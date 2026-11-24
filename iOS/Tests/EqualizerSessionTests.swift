@@ -2,6 +2,16 @@ import XCTest
 @testable import SonanceEQiOS
 
 final class EqualizerSessionTests: XCTestCase {
+    func testLegacySettingsDecodeWithFlatSideCurveAndStereoModeOff() throws {
+        let legacy = #"{"bands":[],"preamp":-3,"bypassed":false}"#
+        let settings = try JSONDecoder().decode(MobileEQSettings.self, from: Data(legacy.utf8))
+        XCTAssertTrue(settings.bands.isEmpty)
+        XCTAssertEqual(settings.preamp, -3)
+        XCTAssertFalse(settings.midSideEnabled)
+        XCTAssertEqual(settings.sideBands, Presets.flat)
+        XCTAssertTrue(settings.isValid)
+    }
+
     @MainActor
     func testSpeechProfileIsAudibleEditableAndSurvivesRelaunch() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)

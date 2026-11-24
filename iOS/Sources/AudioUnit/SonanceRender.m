@@ -8,13 +8,17 @@ enum { maxChannels = 2 };
 struct SonanceRender {
     os_unfair_lock lock;
     double staged[SonanceRenderCoefficientCount];
+    double stagedSide[SonanceRenderCoefficientCount];
     bool hasUpdate;
+    bool stagedMidSide;
+    bool renderMidSide;
     bool activeSections[SonanceRenderSections];
     double renderCoefficients[SonanceRenderCoefficientCount * maxChannels];
 
     vDSP_biquadm_Setup setup;
     AudioBufferList *input;
     float *scratch;
+    float *midSideScratch;
     AUAudioFrameCount maxFrames;
     uint32_t channels;
     double sampleRate;
@@ -32,6 +36,7 @@ SonanceRender *SonanceRenderCreate(void) {
         render->lock = OS_UNFAIR_LOCK_INIT;
         for (size_t section = 0; section < SonanceRenderSections; ++section) {
             render->staged[5 * section] = 1;
+            render->stagedSide[5 * section] = 1;
         }
     }
     return render;
@@ -44,8 +49,10 @@ void SonanceRenderReleaseResources(SonanceRender *render) {
     }
     free(render->input);
     free(render->scratch);
+    free(render->midSideScratch);
     render->input = NULL;
     render->scratch = NULL;
+    render->midSideScratch = NULL;
     render->maxFrames = 0;
     render->channels = 0;
 }
@@ -58,17 +65,22 @@ void SonanceRenderDestroy(SonanceRender *render) {
 
 SonanceAnalysisCapture *SonanceRenderAnalysis(SonanceRender *render) { return render->analysis; }
 
-void SonanceRenderStage(SonanceRender *render, const double *coefficients) {
+void SonanceRenderStage(SonanceRender *render, const double *midCoefficients,
+                        const double *sideCoefficients, bool midSideEnabled) {
     os_unfair_lock_lock(&render->lock);
-    memcpy(render->staged, coefficients, sizeof(render->staged));
+    memcpy(render->staged, midCoefficients, sizeof(render->staged));
+    memcpy(render->stagedSide, sideCoefficients, sizeof(render->stagedSide));
+    render->stagedMidSide = midSideEnabled;
     render->hasUpdate = true;
     os_unfair_lock_unlock(&render->lock);
 }
 
 // vDSP expects section-major coefficients, with one row per channel within each section.
-static void expandChannels(double *destination, const double *source, uint32_t channels) {
+static void expandChannels(double *destination, const double *mid, const double *side,
+                           uint32_t channels, bool midSideEnabled) {
     for (size_t section = 0; section < SonanceRenderSections; ++section) {
         for (size_t channel = 0; channel < channels; ++channel) {
+            const double *source = midSideEnabled && channel == 1 ? side : mid;
             memcpy(destination + 5 * (section * channels + channel), source + 5 * section, 5 * sizeof(double));
         }
     }
@@ -85,17 +97,20 @@ bool SonanceRenderPrepare(SonanceRender *render, AUAudioFrameCount maxFrames, ui
     }
 
     os_unfair_lock_lock(&render->lock);
-    expandChannels(render->renderCoefficients, render->staged, channels);
+    expandChannels(render->renderCoefficients, render->staged, render->stagedSide, channels, render->stagedMidSide);
     for (size_t section = 0; section < SonanceRenderSections; ++section) {
-        render->activeSections[section] = section == 0 || needsFiltering(&render->staged[5 * section]);
+        render->activeSections[section] = section == 0 || needsFiltering(&render->staged[5 * section]) ||
+            (render->stagedMidSide && channels > 1 && needsFiltering(&render->stagedSide[5 * section]));
     }
+    render->renderMidSide = render->stagedMidSide;
     render->hasUpdate = false;
     os_unfair_lock_unlock(&render->lock);
 
     render->setup = vDSP_biquadm_CreateSetup(render->renderCoefficients, SonanceRenderSections, channels);
     render->input = calloc(1, offsetof(AudioBufferList, mBuffers) + channels * sizeof(AudioBuffer));
     render->scratch = calloc((size_t)maxFrames * channels, sizeof(float));
-    if (render->setup == NULL || render->input == NULL || render->scratch == NULL) {
+    render->midSideScratch = calloc((size_t)maxFrames * channels, sizeof(float));
+    if (render->setup == NULL || render->input == NULL || render->scratch == NULL || render->midSideScratch == NULL) {
         SonanceRenderReleaseResources(render);
         return false;
     }
@@ -119,13 +134,16 @@ static void applyUpdate(SonanceRender *render) {
     bool changed = render->hasUpdate;
     bool activated = false;
     if (changed) {
-        expandChannels(render->renderCoefficients, render->staged, render->channels);
+        expandChannels(render->renderCoefficients, render->staged, render->stagedSide,
+                       render->channels, render->stagedMidSide);
         for (size_t section = 1; section < SonanceRenderSections; ++section) {
-            if (!render->activeSections[section] && needsFiltering(&render->staged[5 * section])) {
+            if (!render->activeSections[section] && (needsFiltering(&render->staged[5 * section]) ||
+                (render->stagedMidSide && render->channels > 1 && needsFiltering(&render->stagedSide[5 * section])))) {
                 render->activeSections[section] = true;
                 activated = true;
             }
         }
+        render->renderMidSide = render->stagedMidSide;
         render->hasUpdate = false;
     }
     os_unfair_lock_unlock(&render->lock);
@@ -185,7 +203,25 @@ AUInternalRenderBlock SonanceRenderMakeBlock(SonanceRender *render) {
         }
 
         applyUpdate(render);
+        if (render->renderMidSide && channels == 2) {
+            float *left = render->midSideScratch;
+            float *right = render->midSideScratch + render->maxFrames;
+            for (AUAudioFrameCount frame = 0; frame < frames; ++frame) {
+                const float l = inputs[0][frame], r = inputs[1][frame];
+                left[frame] = 0.5f * (l + r);
+                right[frame] = 0.5f * (l - r);
+            }
+            inputs[0] = left;
+            inputs[1] = right;
+        }
         vDSP_biquadm(render->setup, inputs, 1, outputs, 1, frames);
+        if (render->renderMidSide && channels == 2) {
+            for (AUAudioFrameCount frame = 0; frame < frames; ++frame) {
+                const float mid = outputs[0][frame], side = outputs[1][frame];
+                outputs[0][frame] = mid + side;
+                outputs[1][frame] = mid - side;
+            }
+        }
         SonanceAnalysisPush(render->analysis, outputs[0], channels == 2 ? outputs[1] : NULL, frames, render->sampleRate);
         // The filter can still have a tail when the input is silent.
         *flags &= ~kAudioUnitRenderAction_OutputIsSilence;

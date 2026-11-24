@@ -40,6 +40,13 @@ graph uses the selected file’s sample rate. VoiceOver reports the enabled-band
 count and the selected filter’s type, frequency, and gain when that setting
 applies, then points to the controls below for editing.
 
+Turn on **Mid-Side** to edit independent center (Mid) and stereo-width (Side)
+curves. Both curves support the same filter shapes and up to 32 bands. The mode
+is stored with the session or AUv3 host state and in exported Sonance presets.
+Mono input uses the Mid curve because it has no Side channel. Mid-Side support
+is implemented in source; its render, restore, and deadline checks still need
+to pass on an Apple runtime.
+
 Open **Presets → Preset Library** to save the entire curve and preamp under a
 name. The library can import multiple Sonance EQ files at once, export a
 single Mac-compatible `.sonanceeq.json` preset, or back up the library in

@@ -22,17 +22,20 @@ final class SonanceAudioUnit: AUAudioUnit {
         // Hosts can restore the extra bands' parameters before restoring the count.
         var settings = MobileEQSettings()
         var bandCount = MobileEQ.initialBandCount
+        var sideBandCount = MobileEQ.initialBandCount
         var sampleRate = 48_000.0
 
         init() {
             for _ in MobileEQ.initialBandCount..<MobileEQ.maximumBandCount {
                 settings.bands.append(MobileEQ.newBand())
+                settings.sideBands.append(MobileEQ.newBand())
             }
         }
 
         var visibleSettings: MobileEQSettings {
             var visible = settings
             visible.bands = Array(settings.bands.prefix(bandCount))
+            visible.sideBands = Array(settings.sideBands.prefix(sideBandCount))
             return visible
         }
 
@@ -40,6 +43,9 @@ final class SonanceAudioUnit: AUAudioUnit {
             if address == MobileEQ.bandCountAddress {
                 guard value.isFinite else { return }
                 bandCount = Int(min(max(value, 0), Float(MobileEQ.maximumBandCount)).rounded())
+            } else if address == MobileEQ.sideBandCountAddress {
+                guard value.isFinite else { return }
+                sideBandCount = Int(min(max(value, 0), Float(MobileEQ.maximumBandCount)).rounded())
             } else {
                 settings.setValue(value, at: address)
             }
@@ -127,25 +133,34 @@ final class SonanceAudioUnit: AUAudioUnit {
     private func stage(_ state: ControlState) {
         let settings = state.settings
         let highestFrequency = MobileEQ.highestFrequency(at: state.sampleRate)
-        var coefficients = Array(repeating: 0.0, count: Int(SonanceRenderCoefficientCount))
-        for section in 0..<Int(SonanceRenderSections) { coefficients[section * 5] = 1 }
-        if !settings.bypassed {
-            for (index, band) in settings.bands.prefix(state.bandCount).enumerated()
-                where band.enabled && band.frequency <= highestFrequency && (!band.type.usesGain || band.gain != 0) {
-                let sections = FilterDesigner.sections(for: band, sampleRate: state.sampleRate)
-                for (slot, section) in sections.enumerated() {
-                    let offset = (index * Int(SonanceSectionsPerBand) + slot) * 5
-                    coefficients[offset] = Double(section.b0)
-                    coefficients[offset + 1] = Double(section.b1)
-                    coefficients[offset + 2] = Double(section.b2)
-                    coefficients[offset + 3] = Double(section.a1)
-                    coefficients[offset + 4] = Double(section.a2)
+        func coefficients(for bands: [EQBand], count: Int) -> [Double] {
+            var result = Array(repeating: 0.0, count: Int(SonanceRenderCoefficientCount))
+            for section in 0..<Int(SonanceRenderSections) { result[section * 5] = 1 }
+            guard !settings.bypassed else { return result }
+            var nextSection = 0
+            for band in bands.prefix(count) where band.enabled && band.frequency <= highestFrequency && (!band.type.usesGain || band.gain != 0) {
+                for section in FilterDesigner.sections(for: band, sampleRate: state.sampleRate) {
+                    guard nextSection < Int(SonanceRenderSections) else { break }
+                    let offset = nextSection * 5
+                    result[offset] = Double(section.b0)
+                    result[offset + 1] = Double(section.b1)
+                    result[offset + 2] = Double(section.b2)
+                    result[offset + 3] = Double(section.a1)
+                    result[offset + 4] = Double(section.a2)
+                    nextSection += 1
                 }
             }
             let scale = pow(10, Double(settings.preamp) / 20)
-            for index in 0..<3 { coefficients[index] *= scale }
+            for index in 0..<3 { result[index] *= scale }
+            return result
         }
-        coefficients.withUnsafeBufferPointer { SonanceRenderStage(storage.pointer, $0.baseAddress!) }
+        let mid = coefficients(for: settings.bands, count: state.bandCount)
+        let side = coefficients(for: settings.sideBands, count: state.sideBandCount)
+        mid.withUnsafeBufferPointer { midBuffer in
+            side.withUnsafeBufferPointer { sideBuffer in
+                SonanceRenderStage(storage.pointer, midBuffer.baseAddress!, sideBuffer.baseAddress!, settings.midSideEnabled)
+            }
+        }
     }
 
     private func makeParameterTree() -> AUParameterTree {
@@ -166,6 +181,7 @@ final class SonanceAudioUnit: AUAudioUnit {
         var nodes: [AUParameterNode] = [
             parameter("preamp", "Preamp", MobileEQ.preampAddress, MobileEQ.preampRange, .decibels),
             parameter("bypass", "Bypass", MobileEQ.bypassAddress, 0...1, .boolean),
+            parameter("midSideEnabled", "Mid-Side Processing", MobileEQ.midSideEnabledAddress, 0...1, .boolean),
         ]
         for band in 0..<MobileEQ.maximumBandCount {
             let number = band + 1
@@ -185,8 +201,27 @@ final class SonanceAudioUnit: AUAudioUnit {
             ]
             nodes.append(AUParameterTree.createGroup(withIdentifier: "band\(number)",
                                                      name: "Band \(number)", children: controls))
+
+            let sideControls = [
+                parameter("sideFrequency", "Side Band \(number) Frequency", MobileEQ.sideAddress(.frequency, band: band),
+                          MobileEQ.frequencyRange, .hertz, logarithmic: true),
+                parameter("sideGain", "Side Band \(number) Gain", MobileEQ.sideAddress(.gain, band: band),
+                          MobileEQ.gainRange, .decibels),
+                parameter("sideQuality", "Side Band \(number) Q", MobileEQ.sideAddress(.quality, band: band),
+                          MobileEQ.qualityRange, .generic, logarithmic: true),
+                parameter("sideType", "Side Band \(number) Filter", MobileEQ.sideAddress(.type, band: band),
+                          0...Float(MobileEQ.filterTypes.count - 1), .indexed, labels: MobileEQ.filterTypes.map(\.mobileName)),
+                parameter("sideSlope", "Side Band \(number) Slope", MobileEQ.sideAddress(.slope, band: band),
+                          0...Float(FilterDesigner.slopes.count - 1), .indexed,
+                          labels: FilterDesigner.slopes.map { "\(Int($0)) dB/oct" }),
+                parameter("sideEnabled", "Side Band \(number) Enabled", MobileEQ.sideAddress(.enabled, band: band), 0...1, .boolean),
+            ]
+            nodes.append(AUParameterTree.createGroup(withIdentifier: "sideBand\(number)",
+                                                     name: "Side Band \(number)", children: sideControls))
         }
         nodes.append(parameter("bandCount", "Band Count", MobileEQ.bandCountAddress,
+                               0...Float(MobileEQ.maximumBandCount), .indexed))
+        nodes.append(parameter("sideBandCount", "Side Band Count", MobileEQ.sideBandCountAddress,
                                0...Float(MobileEQ.maximumBandCount), .indexed))
 
         let tree = AUParameterTree.createTree(withChildren: nodes)
@@ -195,13 +230,17 @@ final class SonanceAudioUnit: AUAudioUnit {
             self.control.withLock { state in
                 state.setValue(value, at: parameter.address)
                 if let (band, _) = MobileEQ.bandControl(at: parameter.address), band >= state.bandCount { return }
+                if let (band, _) = MobileEQ.sideBandControl(at: parameter.address), band >= state.sideBandCount { return }
                 self.stage(state)
             }
         }
         tree.implementorValueProvider = { [weak self] parameter in
             self?.control.withLock { state in
-                parameter.address == MobileEQ.bandCountAddress ? Float(state.bandCount) :
-                    state.settings.value(at: parameter.address)
+                switch parameter.address {
+                case MobileEQ.bandCountAddress: return Float(state.bandCount)
+                case MobileEQ.sideBandCountAddress: return Float(state.sideBandCount)
+                default: return state.settings.value(at: parameter.address)
+                }
             } ?? 0
         }
         return tree

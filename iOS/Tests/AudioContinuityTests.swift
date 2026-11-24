@@ -81,6 +81,44 @@ final class AudioContinuityTests: XCTestCase {
     }
 
     @MainActor
+    func testMidSideCurvesProcessCenterAndSideIndependently() async throws {
+        var settings = MobileEQSettings(bands: [
+            EQBand(frequency: 997, gain: 6, q: 1, type: .peaking),
+        ])
+        settings.sideBands = []
+        settings.midSideEnabled = true
+
+        let inPhase = QualitySignal.tones(sampleRate: 48_000, frequencies: [997, 997])
+        let centerOutput = try await render(inPhase, settings: settings, frames: 48_000, pattern: variableBlocks)
+        XCTAssertEqual(centerOutput.nonFiniteSamples, 0)
+        for channel in 0..<2 {
+            XCTAssertEqual(20 * log10(centerOutput.rms(channel: channel, dropping: 24_000) / (0.125 / sqrt(2.0))),
+                           6, accuracy: 0.2)
+        }
+
+        var antiPhaseChannels = inPhase.channels
+        antiPhaseChannels[1] = antiPhaseChannels[1].map { -$0 }
+        let antiPhase = QualitySignal(sampleRate: 48_000, channels: antiPhaseChannels)
+        let sideOutput = try await render(antiPhase, settings: settings, frames: 48_000, pattern: variableBlocks)
+        XCTAssertEqual(sideOutput.nonFiniteSamples, 0)
+        XCTAssertEqual(20 * log10(sideOutput.rms(channel: 0, dropping: 24_000) / (0.125 / sqrt(2.0))),
+                       0, accuracy: 0.2)
+        XCTAssertEqual(20 * log10(sideOutput.rms(channel: 1, dropping: 24_000) / (0.125 / sqrt(2.0))),
+                       0, accuracy: 0.2)
+        let phaseResidual = zip(sideOutput.samples[0], sideOutput.samples[1]).map { abs($0 + $1) }.max() ?? 1
+        XCTAssertEqual(phaseResidual, 0, accuracy: 1e-6, "An anti-phase Side signal must remain anti-phase")
+
+        var sideOnly = settings
+        sideOnly.bands = []
+        sideOnly.sideBands = [EQBand(frequency: 997, gain: 6, q: 1, type: .peaking)]
+        let sideBoost = try await render(antiPhase, settings: sideOnly, frames: 48_000, pattern: variableBlocks)
+        XCTAssertEqual(20 * log10(sideBoost.rms(channel: 0, dropping: 24_000) / (0.125 / sqrt(2.0))),
+                       6, accuracy: 0.2)
+        XCTAssertEqual(20 * log10(sideBoost.rms(channel: 1, dropping: 24_000) / (0.125 / sqrt(2.0))),
+                       6, accuracy: 0.2)
+    }
+
+    @MainActor
     func testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
