@@ -13,4 +13,10 @@ struct PlaybackResumeSegment: Equatable {
         startingFrame = start
         frameCount = AVAudioFrameCount(remaining)
     }
+
+    func progress(renderedFrames: AVAudioFramePosition, totalFrames: AVAudioFramePosition) -> Double {
+        guard totalFrames > 0 else { return 0 }
+        let position = Double(startingFrame) + Double(max(0, renderedFrames))
+        return min(max(position / Double(totalFrames), 0), 1)
+    }
 }

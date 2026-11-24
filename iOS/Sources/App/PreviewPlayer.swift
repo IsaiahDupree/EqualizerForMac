@@ -19,6 +19,7 @@ final class PreviewPlayer {
     @ObservationIgnored private var sessionActive = false
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var reconnectOutputID: String?
+    @ObservationIgnored private var activeSegment: PlaybackResumeSegment?
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
@@ -118,6 +119,7 @@ final class PreviewPlayer {
             error = "Playback couldn’t resume from this position. Tap Play to restart the file."
             return
         }
+        activeSegment = segment
 
         do {
             let effect = try await AVAudioUnit.instantiate(with: MobileEQ.component, options: .loadOutOfProcess)
@@ -166,9 +168,7 @@ final class PreviewPlayer {
               let nodeTime = node.lastRenderTime, let playhead = node.playerTime(forNodeTime: nodeTime) else {
             return 0
         }
-        let duration = Double(file.length) / file.processingFormat.sampleRate
-        let elapsed = Double(playhead.sampleTime) / playhead.sampleRate
-        return min(max(elapsed / duration, 0), 1)
+        return activeSegment?.progress(renderedFrames: playhead.sampleTime, totalFrames: file.length) ?? 0
     }
 
     private func resume() {
@@ -205,6 +205,7 @@ final class PreviewPlayer {
         sleepTimerMinutes = nil
         reconnectOutputID = nil
         pausedProgress = 0
+        activeSegment = nil
         graph?.player.stop()
         graph?.removeAnalysisTap()
         graph?.engine.stop()

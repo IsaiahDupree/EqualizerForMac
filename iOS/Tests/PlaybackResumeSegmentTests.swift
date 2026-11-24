@@ -9,8 +9,10 @@ final class PlaybackResumeSegmentTests: XCTestCase {
     }
 
     func testUsesSavedFractionOfFileForResume() {
-        XCTAssertEqual(PlaybackResumeSegment(totalFrames: 96_000, progress: 0.375),
-                       PlaybackResumeSegment(startingFrame: 36_000, frameCount: 60_000))
+        let segment = PlaybackResumeSegment(totalFrames: 96_000, progress: 0.375)
+        XCTAssertEqual(segment, PlaybackResumeSegment(startingFrame: 36_000, frameCount: 60_000))
+        XCTAssertEqual(segment?.progress(renderedFrames: 12_000, totalFrames: 96_000) ?? 0,
+                       0.5, accuracy: 0.000_001)
     }
 
     func testClampsProgressToValidFileRange() {
