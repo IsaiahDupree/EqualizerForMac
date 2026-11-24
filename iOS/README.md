@@ -87,8 +87,9 @@ measure other effects or the complete host chain. The custom AUv3 editor has a
 Live view for the signal provided by its host.
 
 The floating player stays on screen as you scroll the equalizer. While a file
-is playing, use the Picture in Picture button on supported devices to see the
-EQ curve and playback progress in a resizable window. Switch to Live to
+is playing or paused, scrub the position slider to seek within the file. While
+playing, use the Picture in Picture button on supported devices to see the EQ
+curve and playback progress in a resizable window. Switch to Live to
 float the spectrum and waveform. Its play and pause controls operate the
 file in Sonance. Tap the return-to-app button to edit the curve.
 

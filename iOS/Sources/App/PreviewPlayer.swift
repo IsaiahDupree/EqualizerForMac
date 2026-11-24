@@ -16,6 +16,7 @@ final class PreviewPlayer {
     @ObservationIgnored private var selected: SelectedAudio?
     @ObservationIgnored private var graph: PlaybackGraph?
     @ObservationIgnored private var playRequest: UUID?
+    @ObservationIgnored private var segmentRequest: UUID?
     @ObservationIgnored private var sessionActive = false
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var reconnectOutputID: String?
@@ -132,14 +133,7 @@ final class PreviewPlayer {
 
             try session.setCategory(.playback, mode: .default)
             try startEngine(graph)
-            graph.player.scheduleSegment(selected.file, startingFrame: segment.startingFrame,
-                                         frameCount: segment.frameCount, at: nil,
-                                         completionCallbackType: .dataPlayedBack) { [weak self] _ in
-                Task { @MainActor in
-                    guard let self, self.playRequest == request else { return }
-                    self.stop()
-                }
-            }
+            schedule(segment, in: graph, request: request)
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
@@ -171,6 +165,43 @@ final class PreviewPlayer {
         return activeSegment?.progress(renderedFrames: playhead.sampleTime, totalFrames: file.length) ?? 0
     }
 
+    var duration: TimeInterval {
+        guard let file = selected?.file else { return 0 }
+        return Double(file.length) / file.processingFormat.sampleRate
+    }
+
+    func seek(to requestedProgress: Double) {
+        guard requestedProgress.isFinite, (state == .playing || state == .paused),
+              let selected else { return }
+        let target = min(max(requestedProgress, 0), 1)
+        guard target < 1,
+              let segment = PlaybackResumeSegment(totalFrames: selected.file.length, progress: target) else {
+            stop()
+            return
+        }
+        pausedProgress = target
+        activeSegment = segment
+        guard let graph, let request = playRequest else { return }
+        graph.player.stop()
+        schedule(segment, in: graph, request: request)
+        if state == .playing { graph.player.play() }
+    }
+
+    private func schedule(_ segment: PlaybackResumeSegment, in graph: PlaybackGraph, request: UUID) {
+        let segmentRequest = UUID()
+        self.segmentRequest = segmentRequest
+        guard let file = selected?.file else { return }
+        graph.player.scheduleSegment(file, startingFrame: segment.startingFrame,
+                                    frameCount: segment.frameCount, at: nil,
+                                    completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.playRequest == request,
+                      self.segmentRequest == segmentRequest else { return }
+                self.stop()
+            }
+        }
+    }
+
     private func resume() {
         resume(activateSession: true)
     }
@@ -199,6 +230,7 @@ final class PreviewPlayer {
 
     func stop() {
         playRequest = nil
+        segmentRequest = nil
         resumeAfterInterruption = false
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
