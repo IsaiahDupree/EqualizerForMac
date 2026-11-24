@@ -36,13 +36,35 @@ changes = {
         'static let group = "group.ai.nemut.effetune"':
         'static let group = "group.com.isaiahdupree.SonanceEQ"',
     },
+    root / "Sources/ShareExtension/ShareViewController.swift": {
+        '.navigationTitle("EffectDeck")': '.navigationTitle("Sonance EQ")',
+    },
+    root / "Sources/EffeTuneLive/Views/ConnectionTipsView.swift": {
+        '"Restart EffectDeck."': '"Restart Sonance EQ."',
+        '"EffectDeckを再起動する"': '"Sonance EQを再起動する"',
+        'cannot connect to EffectDeck': 'cannot connect to Sonance EQ',
+        'connection to EffectDeck.': 'connection to Sonance EQ.',
+        'EffectDeckに接続できない': 'Sonance EQに接続できない',
+        'EffectDeckへの接続が拒否': 'Sonance EQへの接続が拒否',
+        'Spotify, then connect to EffectDeck again.':
+            'Spotify, then connect to Sonance EQ again.',
+        'Spotifyを再起動してから、もう一度EffectDeckに接続してください。':
+            'Spotifyを再起動してから、もう一度Sonance EQに接続してください。',
+        'may disconnect EffectDeck': 'may disconnect Sonance EQ',
+        'YouTube, then connect to EffectDeck again.':
+            'YouTube, then connect to Sonance EQ again.',
+        'to EffectDeck.': 'to Sonance EQ.',
+        'EffectDeckとの接続が切れる': 'Sonance EQとの接続が切れる',
+        'EffectDeckとの接続を解除': 'Sonance EQとの接続を解除',
+        'もう一度EffectDeckに接続してください。':
+            'もう一度Sonance EQに接続してください。',
+    },
 }
 for path, replacements in changes.items():
     source = path.read_text()
     for old, new in replacements.items():
-        if new in source or old not in source:
-            continue
-        source = source.replace(old, new, 1)
+        if old in source:
+            source = source.replace(old, new)
     for expected in replacements.values():
         if expected not in source:
             raise SystemExit(f"Expected upstream adaptation missing: {path}: {expected}")

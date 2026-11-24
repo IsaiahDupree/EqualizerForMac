@@ -46,14 +46,17 @@ iOS 27 cross-app product and has not been submitted or published.
   Its loopback sample bridge feeds the full host's processing chain.
 - Updated the host and Control Center/audio-driver route identity to Sonance EQ,
   including the self-route loop guard, Now Playing title, and install guidance.
+- Updated the Share sheet and route troubleshooting copy to call the product
+  Sonance EQ. The upstream EffectDeck issue links remain intact.
 - The full host and route installer/extension compile for the arm64 iOS SDK
-  with signing disabled. The 101 installed profiles contain neither the Media
-  Device entitlement nor `group.com.isaiahdupree.SonanceEQ`. The iPhone 15 is
-  visible over its network interface, not USB. No signed install of this build,
-  route run, or Bluetooth playback test has occurred.
+  with signing disabled. A fresh host build after the copy changes succeeded
+  on 2026-11-24. The 154 installed profiles contain neither the Media Device
+  entitlement nor `group.com.isaiahdupree.SonanceEQ`. The iPhone 15 is visible
+  over its network interface, not USB. No signed install of this build, route
+  run, or Bluetooth playback test has occurred.
 - The iOS Simulator SDK does not provide the `MediaDevice` module, so this host
-  route target cannot be validated in the Simulator. No tests were run in this
-  step.
+  route target cannot be validated in the Simulator. No automated tests were
+  run.
 
 Older notes below record the state when they were written; the status above is
 the current build/install record.
