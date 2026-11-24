@@ -3,20 +3,31 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
-## Current iOS build and install — 2026-11-23
+## Current iOS build and install — 2026-11-24
 
-- Xcode 27.2 first-use setup is complete. `xcodebuild -runFirstLaunch` repaired
-  the plugin initialization issue; Xcode now sees Isaiah's paired iPhone 15
-  (`00008120-000465A20C52201E`) over its network transport.
-- Fixed three iOS compile errors in notification publishers, the AU parameter
-  provider, and the live render-metric style. The app and AUv3 extension build
-  successfully for the connected iPhone.
-- Signed with the local `Riff Engine local device tests 20261109` provisioning
-  profile and the matching installed Apple Development identity. The app
-  `com.isaiahdupree.SonanceEQ.iOSPrototype` installed and launched successfully.
-- The phone is Xcode-paired over network; it was not detected as a USB device.
-- Audio-suite execution is still pending: no iOS Simulator runtime is installed,
-  and the device test attempt needs signing settings for all test targets.
+- Xcode 27.2 is available and first-run setup is complete. Its global
+  `DerivedData` symlink pointed at the absent
+  `/Volumes/WatchBuilds20261103/StorageOffload/DerivedData` mount, preventing
+  Xcode from creating build log stores. It now points to the writable APFS path
+  `/Volumes/SonanceEQBuildScratch/XcodeDerivedData`.
+- The generated full Sonance EQ host and its embedded AUv3/share extensions
+  compile successfully for the connected iPhone 15 on the iOS 27.2 SDK, with
+  code signing disabled. A signed-build attempt using automatic signing and the
+  local team failed: Xcode has no Apple Account configured, and its available
+  wildcard provisioning profile lacks the required App Groups, Associated
+  Domains, Inter-App Audio, and iCloud entitlements and signing certificate.
+  Logs are retained at `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-build.log`
+  and `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceLatest-sign-build.log`.
+- The installed app on the iPhone is still `com.isaiahdupree.SonanceEQ.iOSPrototype`
+  version 0.1.0, build 6. The new full host is version 0.2.0, build 7 and has not
+  been installed. The separate `Sonance EQ Route` installer is also not
+  installed. The iPhone is visible over its network interface, not USB.
+- An iOS 26 simulator runtime is installed, but the full host uses an iOS 27
+  API (`ReorderDifference`) and cannot be compiled for that runtime by lowering
+  its deployment target. No simulator launch or UI validation was performed.
+- No tests were run. The automated audio suite and physical Bluetooth route
+  session remain pending. The Media Device entitlement/profile is unavailable;
+  the route and Bluetooth return path have not been verified on device.
 - The EffectDeck-style iOS host scope is tracked in
   [EFFECTDECK-PARITY.md](EFFECTDECK-PARITY.md); the host target is now
   compile-verified as of 2026-11-24 (status below).

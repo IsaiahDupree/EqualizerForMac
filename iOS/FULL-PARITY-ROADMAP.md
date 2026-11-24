@@ -6,8 +6,9 @@ routing, presets/import links, and host processing controls.
 
 This roadmap tracks the goal of making the iPhone app the full Sonance EQ
 experience where iOS allows it. The Mac app remains the reference for DSP,
-presets and editing workflows. iPhone playback is delivered through files the
-person opens in Sonance EQ and through compatible AUv3 hosts.
+presets and editing workflows. iPhone playback works through files opened in
+Sonance EQ and compatible AUv3 hosts; the new Control Center route is still
+awaiting entitlement and device validation.
 
 ## Current feature map
 
@@ -33,13 +34,14 @@ person opens in Sonance EQ and through compatible AUv3 hosts.
 ## Platform boundary
 
 The iOS app can process its own file playback and expose the Sonance Audio Unit
-to compatible hosts. The new full-host target also contains an Apple Media
-Device extension, with a route UI and audio path, but source compilation does
-not prove that Apple's entitlements permit this app's purpose or that the route
-works on an iPhone. Available local development profiles lack the Media Device
-and App Group capabilities, so signed device validation is blocked until
-provisioning is updated. Do not claim arbitrary app/game capture or a working
-Bluetooth return path before that validation.
+to compatible hosts. The full EffectDeck-style host and the minimal Apple Media
+Device route installer are separate apps. The host and its embedded extensions
+compile for iPhone with signing disabled, but Xcode has no Apple Account
+configured and the available wildcard profile lacks the host's App Groups,
+Associated Domains, Inter-App Audio and iCloud capabilities. The route also
+lacks its required Media Device entitlement/profile. Neither the new host nor
+route installer is installed on the iPhone. Do not claim a working system route
+or Bluetooth return path before signed device validation.
 
 ## Acceptance evidence
 
@@ -53,8 +55,9 @@ Bluetooth return path before that validation.
 5. Verify update migration, saved presets, AutoEq catalog availability and
    accessibility labels before treating the iPhone build as release-ready.
 
-Xcode 27.2 first-use setup and the iPhone app build/install now succeed. The
-audio suite still needs a signed test-runner build; no Simulator runtime is
-installed. Mid/Side and FIR implementation status remains source review until
-Apple tests pass. Keep processor-deadline and physical Bluetooth playback
-status explicitly unverified until fresh evidence is retained.
+Xcode 27.2 first-use setup and the full iPhone host's unsigned arm64 build now
+succeed. Xcode's broken DerivedData symlink was repaired. The iOS 26 simulator
+cannot compile the host because it uses an iOS 27 API; no iOS 27 simulator
+runtime is installed. The signed install, Apple audio tests, Mid/Side and FIR
+execution, processor-deadline measurements, and physical Bluetooth route stay
+unverified until fresh evidence is retained.
