@@ -137,6 +137,7 @@ private struct EqualizerView: View {
         .onReceive(NotificationCenter.default.publisher(for: .AVAudioEngineConfigurationChange)) { notification in
             Task { @MainActor in player.handleConfigurationChange(notification) }
         }
+        .modifier(AudioSessionLifecycleObserver(player: player))
     }
 
     private var pluginHelp: some View {
@@ -149,6 +150,25 @@ private struct EqualizerView: View {
         }
         .padding(14)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct AudioSessionLifecycleObserver: ViewModifier {
+    let player: PreviewPlayer
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 27.0, *) {
+            content
+                .onReceive(AVAudioSession.didBecomeInactiveNotification) { notification in
+                    Task { @MainActor in player.handleSystemDeactivation(notification) }
+                }
+                .onReceive(AVAudioSession.resumptionRecommendationNotification) { notification in
+                    Task { @MainActor in player.handleResumptionRecommendation(notification) }
+                }
+        } else {
+            content
+        }
     }
 }
 

@@ -17,6 +17,7 @@ final class PreviewPlayer {
     @ObservationIgnored private var graph: PlaybackGraph?
     @ObservationIgnored private var playRequest: UUID?
     @ObservationIgnored private var sessionActive = false
+    @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
@@ -90,6 +91,7 @@ final class PreviewPlayer {
 
     func play() async {
         if state == .paused {
+            resumeAfterInterruption = false
             resume()
             return
         }
@@ -150,9 +152,13 @@ final class PreviewPlayer {
     }
 
     private func resume() {
+        resume(activateSession: true)
+    }
+
+    private func resume(activateSession: Bool) {
         guard let graph else { return }
         do {
-            try startEngine(graph)
+            try startEngine(graph, activateSession: activateSession)
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
@@ -162,15 +168,18 @@ final class PreviewPlayer {
         }
     }
 
-    private func startEngine(_ graph: PlaybackGraph) throws {
-        try session.setActive(true)
-        sessionActive = true
+    private func startEngine(_ graph: PlaybackGraph, activateSession: Bool = true) throws {
+        if activateSession {
+            try session.setActive(true)
+            sessionActive = true
+        }
         refreshOutput()
         try graph.engine.start()
     }
 
     func stop() {
         playRequest = nil
+        resumeAfterInterruption = false
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
         sleepTimerMinutes = nil
@@ -192,10 +201,67 @@ final class PreviewPlayer {
     }
 
     func handleInterruption(_ notification: Notification) {
-        guard state == .playing || state == .starting,
-              notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt == AVAudioSession.InterruptionType.began.rawValue
-        else { return }
-        stop()
+        guard let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt else { return }
+        if rawType == AVAudioSession.InterruptionType.began.rawValue {
+            pauseForSystemInterruption()
+        } else if rawType == AVAudioSession.InterruptionType.ended.rawValue {
+            guard resumeAfterInterruption else { return }
+            resumeAfterInterruption = false
+            let rawOptions = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            guard AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume) else { return }
+            resume()
+        }
+    }
+
+    @available(iOS 27.0, *)
+    func handleSystemDeactivation(_ notification: Notification) {
+        guard let context = notification.userInfo?[AVAudioSession.deactivationContextKey]
+                as? AVAudioSession.DeactivationContext,
+              context.source == .system else { return }
+        pauseForSystemInterruption()
+    }
+
+    @available(iOS 27.0, *)
+    func handleResumptionRecommendation(_ notification: Notification) {
+        guard resumeAfterInterruption,
+              let context = notification.userInfo?[AVAudioSession.resumptionContextKey]
+                as? AVAudioSession.ResumptionContext else { return }
+        switch context.recommendation {
+        case .shouldResume:
+            Task { [weak self] in
+                guard let self else { return }
+                do {
+                    _ = try await self.session.activate()
+                    guard self.resumeAfterInterruption else { return }
+                    self.resumeAfterInterruption = false
+                    self.resume(activateSession: false)
+                } catch {
+                    self.resumeAfterInterruption = false
+                    self.error = "Playback remains paused because iOS couldn’t reactivate audio. Tap Play to resume."
+                }
+            }
+        case .shouldNotResume:
+            resumeAfterInterruption = false
+        @unknown default:
+            resumeAfterInterruption = false
+        }
+    }
+
+    private func pauseForSystemInterruption() {
+        if state == .starting {
+            playRequest = nil
+            state = .idle
+            error = "Playback start was interrupted. Tap Play to try again."
+            return
+        }
+        guard state == .playing, let graph else { return }
+        pausedProgress = progress
+        graph.player.pause()
+        graph.engine.pause()
+        state = .paused
+        outputName = nil
+        analysis?.reset()
+        resumeAfterInterruption = true
     }
 
     func handleRouteChange(_ notification: Notification) {

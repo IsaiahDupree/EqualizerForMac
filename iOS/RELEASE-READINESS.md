@@ -10,6 +10,14 @@ is reviewed and accepted and the apps are rebuilt.
 
 ## Utility portfolio progress — 2026-11-23
 
+- Sonance now pauses its active player and preserves the playhead when an
+  audio-session interruption begins. On iOS 27 it handles the new lifecycle
+  and resumption-recommendation notifications and activates the session
+  asynchronously before resuming; older systems use the legacy interruption
+  notification and `shouldResume` option. A user Stop clears the pending
+  resume. This is source-level behavior until Xcode can compile it and a
+  physical interruption/reconnect run can verify it.
+
 - Sonance's headphone profile assistant now displays a read-only preview of the
   generated frequency response and suggested preamp before saving or applying
   the curve. It remains a preference-based starting point, not a measured
