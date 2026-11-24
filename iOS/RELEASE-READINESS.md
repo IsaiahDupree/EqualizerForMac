@@ -28,20 +28,18 @@ iOS 27 cross-app product and has not been submitted or published.
   presets browser, routing, audio settings, meters, remote panel, About and
   share/import extensions. The host app is named Sonance EQ, version 0.2.0
   (build 7).
-- The complete target set compiled for the arm64 iOS 27 device SDK with code
-  signing disabled. The built app bundle contains the route extension,
-  Sonance EQ Audio Unit, and share extension. This verifies compilation and
-  bundle construction only.
-- Updated the host presentation and Control Center/audio-driver route identity
-  to Sonance EQ, including the self-route loop guard, Now Playing title, and
-  route setup instructions. The arm64 device-SDK build succeeded again with
-  the updated identity.
-- The local development profiles lack the Media Device entitlement and the
-  custom App Group. Apple's entitlement also requires the container app to
-  exist solely to deliver/install the extension and disallows other managed
-  entitlements; that conflicts with this full AUv3 host. The combined target is
-  a compile spike, not a signable route product. No phone install or Bluetooth
-  route/reconnect test has occurred.
+- The full host embeds the Sonance EQ AUv3 and share extension and provides
+  EffectDeck's chain/effect/preset/routing/settings/remote/About workflows.
+  The Media Device route is now a separate minimal `Sonance EQ Route` installer
+  app, with only the matching protocol entitlement on its app and extension.
+  Its loopback sample bridge feeds the full host's processing chain.
+- Updated the host and Control Center/audio-driver route identity to Sonance EQ,
+  including the self-route loop guard, Now Playing title, and install guidance.
+- The full host and route installer/extension compile for the arm64 iOS SDK
+  with signing disabled. The 101 installed profiles contain neither the Media
+  Device entitlement nor `group.com.isaiahdupree.SonanceEQ`. The iPhone 15 is
+  visible over its network interface, not USB. No signed install of this build,
+  route run, or Bluetooth playback test has occurred.
 - The iOS Simulator SDK does not provide the `MediaDevice` module, so this host
   route target cannot be validated in the Simulator. No tests were run in this
   step.
@@ -396,15 +394,13 @@ the current build/install record.
 2. Test playback, speech curves, persistence, the AUv3 host, interruptions,
    headphones and background behavior on Sarah's designated iPhone. Preserve
    evidence, then uninstall the exact test bundle and verify its absence.
-3. Before distributing the Media Device host, resolve Apple's entitlement
-   and app-purpose requirements. Apple's current documentation says the
-   container app must exist solely to deliver/install the extension and cannot
-   hold other managed entitlements. This conflicts with bundling the full AUv3
-   host and its App Group. The combined target is compile-verified only until
-   the architecture is resolved and physical validation passes.
-   The separate debug-only Route Lab still has unauthenticated transport and
-   privacy issues; it is not the integrated host implementation. See
-   [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
+3. Before distributing the Media Device route, obtain Apple's entitlement and
+   a matching profile for the minimal `Sonance EQ Route` installer and its
+   extension. This installer-only bundle is separate from the full AUv3 host
+   and carries no App Group entitlement. Physical route and Bluetooth tests
+   remain required. The debug-only Route Lab still has unauthenticated
+   transport and privacy issues; it is not the product route implementation.
+   See [ROUTING-EXPERIMENT.md](ROUTING-EXPERIMENT.md).
 4. Complete distribution signing, icon and release review separately when
    the product and its compatibility claims have been verified.
 

@@ -18,11 +18,15 @@ changes = {
     },
     root / "Sources/EffeTuneLive/Views/StatusReadings.swift": {
         'return "Pick EffectDeck as the output in Control Center."':
-        'return "Pick Sonance EQ as the output in Control Center."',
+        'return "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'return "Pick Sonance EQ as the output in Control Center."':
+        'return "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
     },
     root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
         'restartNeeded\n            ? "Restart once after this update, then pick EffectDeck in Control Center."\n            : "Pick EffectDeck as the output in Control Center."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center."',
+        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center."':
+        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
     },
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
@@ -36,9 +40,10 @@ changes = {
 for path, replacements in changes.items():
     source = path.read_text()
     for old, new in replacements.items():
-        if new in source:
+        if new in source or old not in source:
             continue
-        if old not in source:
-            raise SystemExit(f"Expected upstream anchor missing: {path}: {old}")
         source = source.replace(old, new, 1)
+    for expected in replacements.values():
+        if expected not in source:
+            raise SystemExit(f"Expected upstream adaptation missing: {path}: {expected}")
     path.write_text(source)

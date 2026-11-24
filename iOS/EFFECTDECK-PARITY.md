@@ -50,18 +50,21 @@ to the chain-host milestone.
 
 ## Host integration in progress
 
-The `feature/sonance-effectdeck-ios-parity` branch now has a generated full-host
+The `feature/sonance-effectdeck-ios-parity` branch has a generated full-host
 project spec at `iOS/sonance-host.project.yml`. It reuses the pinned MIT host
-source and adds Sonance EQ's existing AUv3 target as an embedded extension in
-the same app bundle. The host's pipeline, effect/plugin/preset picker, routing
-editor, settings, meters, remote panel, and About screens remain the host UI;
-Sonance EQ is available to add to its chain. The app bundle and Media Device
-protocol use Sonance EQ identifiers, and a small idempotent adaptation script
-updates the upstream protocol and App Group constants to match. The adaptation
-also changes the Control Center route, audio-driver route, self-route loop guard,
-Now Playing title, and route setup messages to say Sonance EQ. Routing therefore
-appears as a first-class Sonance EQ destination while preserving the upstream
-host behavior and license notices.
+source and embeds Sonance EQ's existing AUv3 target in the full Sonance EQ app.
+The host includes the chain editor, Effects/Plugins/Presets browser, per-stage
+channel routing, settings, meters, sharing/import, remote controls and About.
+
+Apple requires the Media Device entitlement on both the route extension and a
+container app whose sole purpose is delivering/installing that extension; that
+app cannot hold other managed entitlements. The project therefore separates a
+minimal `Sonance EQ Route` installer app from the full host. The installer and
+extension carry only the matching Media Device protocol entitlement. The full
+host keeps AUv3, sharing and App Group functionality, runs the DSP chain, and
+receives route samples over EffectDeck's loopback PCM bridge. Both the route
+name and self-route guard say Sonance EQ. The route installer must also be
+installed before Sonance EQ appears in Control Center.
 
 Regenerate the host project with:
 
@@ -78,33 +81,20 @@ are not needed by this target. The generated Xcode project lives inside the
 vendored checkout and is ignored; the tracked spec and adaptation script are
 the source of truth.
 
-The complete host, route extension, Sonance EQ Audio Unit, and share extension
-compiled for the arm64 iOS 27 device SDK with code signing disabled. The
-MediaDevice framework is not present in the Simulator SDK, so a simulator build
-cannot validate the routing extension. The output bundle was checked for the
-Sonance EQ bundle display name, matching Media Device protocol, and embedded
-Sonance AUv3.
+Both `EffeTuneLive` (full host) and `SonanceEQRouteInstaller` schemes built
+successfully for the arm64 iOS 27.2 device SDK with code signing disabled. The
+host bundle contains the Sonance Audio Unit and share extension; the route
+bundle contains the Media Device extension. Their app identifiers and protocol
+identifier match the intended two-bundle architecture. The MediaDevice
+framework is absent from the Simulator SDK, so the route target cannot be
+validated in Simulator. These are compile and bundle checks only.
 
-After the Sonance route-name adaptation, the complete host rebuilt successfully
-for arm64 iOS 27.2. The bundle reports `Sonance EQ` as its display name, and the
-embedded route extension reports the matching Sonance EQ Media Device protocol.
-This remains a compile and bundle check; it is not a signed installation or a
-physical route/playback result.
-
-The local development profiles were inspected. They do not contain the
-`com.apple.developer.media-device-extension` entitlement or
-`group.com.isaiahdupree.SonanceEQ`. This host build therefore cannot be signed
-and installed for a real route with the current profiles. Registering the
-required Apple capability and App Group is not sufficient by itself: Apple's
-current entitlement documentation says the container app must exist solely to
-deliver and install the Media Device extension, and an app holding the
-entitlement cannot hold other managed entitlements. The full Sonance host also
-needs AUv3 access and app-group-backed sharing. This combined target is a
-compile spike, not a signable route product. A separate minimal route installer
-or a host-only product without the Control Center route is required to resolve
-the conflict. Until then, routing, chain handoff, and Bluetooth playback have
-not been established. See Apple's
-[Media Device entitlement requirements](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.media-device-extension).
+The installed development profiles do not contain the Media Device entitlement
+or the Sonance App Group. The split bundle architecture now follows Apple's
+entitlement rules, but the route installer still cannot be signed or installed
+until Apple grants the Media Device capability and a matching provisioning
+profile. The iPhone route, chain handoff and Bluetooth path remain unverified.
+See Apple's [Media Device entitlement requirements](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.media-device-extension).
 Keep all upstream license notices with the vendored source.
 
 ## Platform and distribution constraints

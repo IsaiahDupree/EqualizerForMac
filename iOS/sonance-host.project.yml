@@ -55,9 +55,8 @@ dspSettings: &dspSettings
 targets:
 
   # ------------------------------------------------------------------
-  # 本体。UI・DSP・スピーカー出力。ユーザーが開くのはこれ。
-  # Media Device Extensionと共有の拡張もここに同梱する。同梱していても
-  # 音を出せる訳は下のdependenciesに書いてある。
+  # Full Sonance EQ host: EffectDeck UI/DSP, Sonance AUv3, and share extension.
+  # Apple requires the Media Device installer container to be a separate app.
   # ------------------------------------------------------------------
   EffeTuneLive:
     type: application
@@ -117,21 +116,9 @@ targets:
       - sdk: AudioToolbox.framework
       - sdk: CoreAudioKit.framework
       - sdk: CoreText.framework
-      # **拡張をここに同梱する。**
-      # 以前は別のアプリ（Bridge）に入れていた。
-      # 拡張を同梱したアプリは AVAudioSession が '!pla' で拒否される、
-      # と思っていたから。
-      #
-      # 実際の判定は MediaExperience の
-      #   -[MXCoreSession hasMediaDeviceEntitlement]
-      # だけで、その入力は**アプリプロセスの署名 entitlement
-      # com.apple.developer.media-device-extension ただ一つ**。
-      # 同梱している .appex の有無でも Info.plist でもない。
-      # だから**本体の entitlement から落とし、.appex 側にだけ残す**と通る。
-      # 2026-09-16 に実機で確かめた。
-      - target: EffeTuneLiveExtension
-        embed: true
-        codeSign: true
+      # Apple requires the Media Device entitlement's container app to exist
+      # solely to deliver/install that extension. Keep this full host separate;
+      # the minimal SonanceEQRouteInstaller target owns the route extension.
       - target: SonanceEQAudioUnit
         embed: true
         codeSign: true
@@ -241,8 +228,29 @@ targets:
           - $(SRCROOT)/Vendor/ysfx/thirdparty/dr_libs
 
   # ------------------------------------------------------------------
-  # Media Device Extension。本体（EffeTuneLive）に同梱して運ぶ。
-  # 同梱していても本体が音を出せる訳は本体のdependenciesに書いてある。
+  # Minimal container app. Apple requires its sole purpose to be installing
+  # the Media Device extension; the full Sonance EQ host is a separate app.
+  # ------------------------------------------------------------------
+  SonanceEQRouteInstaller:
+    type: application
+    platform: iOS
+    sources:
+      - path: ../../HostConfig/RouteInstallerApp.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller
+        PRODUCT_NAME: SonanceEQRoute
+        INFOPLIST_FILE: ../../HostConfig/RouteInstaller-Info.plist
+        CODE_SIGN_ENTITLEMENTS: ../../HostConfig/RouteInstaller.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: EffeTuneLiveExtension
+        embed: true
+        codeSign: true
+
+  # ------------------------------------------------------------------
+  # Media Device Extension. It sends the captured samples to the full host
+  # over the loopback bridge in LocalLink; it has no App Group dependency.
   # ------------------------------------------------------------------
   EffeTuneLiveExtension:
     type: extensionkit-extension
@@ -264,7 +272,7 @@ targets:
           - "ETLICEFont.*"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.MediaDevice
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller.MediaDevice
         PRODUCT_NAME: EffeTuneLiveExtension
         INFOPLIST_FILE: ../../HostConfig/MediaDevice-Info.plist
         CODE_SIGN_ENTITLEMENTS: ../../HostConfig/MediaDevice.entitlements
@@ -639,6 +647,11 @@ schemes:
       config: Debug
       targets:
         - EffeTuneLiveSnapshotTests
+
+  SonanceEQRouteInstaller:
+    build:
+      targets:
+        SonanceEQRouteInstaller: all
 
   EffeTuneLive:
     build:
