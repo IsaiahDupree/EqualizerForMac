@@ -13,6 +13,24 @@ final class EqualizerSessionTests: XCTestCase {
         XCTAssertTrue(settings.isValid)
     }
 
+    func testEstimatedHeadroomUsesTheLouderMidOrSideCurveAndNeverRaisesPreamp() {
+        var settings = MobileEQSettings(bands: [
+            EQBand(frequency: 1_000, gain: 8, q: 1, type: .peaking),
+        ])
+        settings.sideBands = [EQBand(frequency: 2_000, gain: 14, q: 1, type: .peaking)]
+        settings.midSideEnabled = true
+        let adjusted = settings.applyingEstimatedHeadroom(sampleRate: 48_000)
+        XCTAssertEqual(adjusted.preamp, -15, accuracy: 0.1)
+
+        var alreadyAttenuated = settings
+        alreadyAttenuated.preamp = -20
+        XCTAssertEqual(alreadyAttenuated.applyingEstimatedHeadroom(sampleRate: 48_000).preamp, -20)
+
+        var bypassed = settings
+        bypassed.bypassed = true
+        XCTAssertEqual(bypassed.applyingEstimatedHeadroom(sampleRate: 48_000), bypassed)
+    }
+
     @MainActor
     func testSpeechProfileIsAudibleEditableAndSurvivesRelaunch() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)

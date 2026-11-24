@@ -19,7 +19,7 @@ person opens in Sonance EQ and through compatible AUv3 hosts.
 | Hosted AUv3 effect | Implemented for compatible hosts, with persistent host parameters | Validate EffectDeck and another host with a physical Bluetooth route |
 | Linear-phase FIR mode | Implemented in source for standalone and AUv3 paths, including the Mac FIR designer and 2,048-tap streaming convolution; latency is about 21.3 ms at 48 kHz | Verify delay and frequency response, then measure worst-case render deadline use across sample rates, buffer sizes, stereo and Mid-Side on the iPhone |
 | Independent Mid and Side curves | Implemented in the AUv3 renderer, standalone player, editor and portable presets; mono streams keep the Mid curve | Run center/side isolation, state restore, mono and stereo tests on Apple runtimes; verify real-time cost in the host |
-| Auto headroom and output limiter | Preset loading calculates headroom; no general iOS output limiter | Match the Mac behavior and verify peaks with deterministic fixtures |
+| Auto headroom and output limiter | Auto Headroom now estimates the peak response of active Mid/Side curves and lowers preamp with a 1 dB margin; no true-peak limiter | Validate estimates against rendered sine sweeps, clipping fixtures and FIR mode; decide separately whether iOS needs a true-peak limiter |
 | System-wide capture and per-app routing/mixing/recording | No supported in-app path established | Keep these outside the iOS product unless Apple documents and permits a suitable API and purpose |
 | Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
 

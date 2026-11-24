@@ -146,6 +146,29 @@ final class AudioContinuityTests: XCTestCase {
     }
 
     @MainActor
+    func testEstimatedHeadroomControlsKnownMidAndSideBoosts() async throws {
+        var settings = MobileEQSettings(bands: [
+            EQBand(frequency: 1_000, gain: 8, q: 1, type: .peaking),
+        ])
+        settings.sideBands = [EQBand(frequency: 2_000, gain: 14, q: 1, type: .peaking)]
+        settings.midSideEnabled = true
+        settings = settings.applyingEstimatedHeadroom(sampleRate: 48_000)
+        XCTAssertEqual(settings.preamp, -15, accuracy: 0.1)
+
+        let center = QualitySignal.tones(sampleRate: 48_000, frequencies: [1_000, 1_000], amplitude: 0.9)
+        let centerCapture = try await render(center, settings: settings, frames: 48_000, pattern: variableBlocks)
+        XCTAssertEqual(centerCapture.nonFiniteSamples, 0)
+        XCTAssertLessThan(centerCapture.peak, 1)
+
+        var sideInput = QualitySignal.tones(sampleRate: 48_000, frequencies: [2_000, 2_000], amplitude: 0.9)
+        sideInput = QualitySignal(sampleRate: sideInput.sampleRate,
+                                  channels: [sideInput.channels[0], sideInput.channels[1].map { -$0 }])
+        let sideCapture = try await render(sideInput, settings: settings, frames: 48_000, pattern: variableBlocks)
+        XCTAssertEqual(sideCapture.nonFiniteSamples, 0)
+        XCTAssertLessThan(sideCapture.peak, 1)
+    }
+
+    @MainActor
     func testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)

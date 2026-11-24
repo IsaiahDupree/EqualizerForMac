@@ -119,6 +119,36 @@ struct MobileEQSettings: Codable, Equatable {
         return MobileEQSettings(bands: bands, preamp: preamp, bypassed: false)
     }
 
+    /// Lowers preamp to leave a frequency-response margin for both active curves.
+    /// This is an estimate from the filter response, not a true-peak limiter or a guarantee for music.
+    func applyingEstimatedHeadroom(sampleRate: Double, marginDb: Float = 1) -> Self {
+        guard !bypassed else { return self }
+        let rate = sampleRate.isFinite && sampleRate > 42 ? sampleRate : 48_000
+        let highestFrequency = min(Double(MobileEQ.frequencyRange.upperBound), rate / 2 - 1)
+
+        func peakBoost(_ bands: [EQBand]) -> Double {
+            let sections = bands.filter { $0.enabled && $0.frequency <= highestFrequency }
+                .flatMap { FilterDesigner.sections(for: $0, sampleRate: rate) }
+            guard !sections.isEmpty else { return 0 }
+            var peak = -Double.infinity
+            for index in 0...8_192 {
+                let frequency = rate * 0.5 * Double(index) / 8_192
+                let omega = 2 * Double.pi * frequency / rate
+                let gain = sections.reduce(0.0) { $0 + FrequencyResponse.magnitudeDb($1, omega) }
+                peak = max(peak, gain)
+            }
+            return peak.isFinite ? peak : 0
+        }
+
+        var result = self
+        let mainPeak = peakBoost(bands)
+        let sidePeak = midSideEnabled ? peakBoost(sideBands) : mainPeak
+        let estimatedMaximum = max(mainPeak, sidePeak)
+        let target = Float(-estimatedMaximum) - max(marginDb, 0)
+        result.preamp = min(preamp, max(MobileEQ.preampRange.lowerBound, target))
+        return result
+    }
+
     var isValid: Bool {
         MobileEQ.preampRange.contains(preamp) && bands.count <= MobileEQ.maximumBandCount &&
             sideBands.count <= MobileEQ.maximumBandCount &&

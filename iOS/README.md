@@ -40,6 +40,12 @@ graph uses the selected file’s sample rate. VoiceOver reports the enabled-band
 count and the selected filter’s type, frequency, and gain when that setting
 applies, then points to the controls below for editing.
 
+**Auto Headroom** estimates the largest filter-response boost in the active
+curve, or in both Mid and Side when Mid-Side is enabled, then lowers preamp to
+try to leave a 1 dB margin within the available preamp range. This frequency-
+response estimate does not measure music, intersample peaks, or Bluetooth
+output, and it is not a limiter.
+
 Turn on **Mid-Side** to edit independent center (Mid) and stereo-width (Side)
 curves. Both curves support the same filter shapes and up to 32 bands. The mode
 is stored with the session or AUv3 host state and in exported Sonance presets.

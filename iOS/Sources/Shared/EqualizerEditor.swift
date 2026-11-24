@@ -163,6 +163,21 @@ struct EqualizerEditor: View {
             sliderRow("Preamp", id: "eqPreamp", value: "\(settings.preamp.formatted(.number.precision(.fractionLength(1)))) dB") {
                 Slider(value: $settings.preamp, in: MobileEQ.preampRange, step: 0.5, onEditingChanged: onEditingChanged)
             }
+            HStack(alignment: .center) {
+                Button {
+                    onEditingChanged(true)
+                    settings = settings.applyingEstimatedHeadroom(sampleRate: sampleRate)
+                    onEditingChanged(false)
+                } label: {
+                    Label("Auto Headroom", systemImage: "waveform.path")
+                        .font(.subheadline.weight(.medium))
+                }
+                .accessibilityIdentifier("autoHeadroom")
+                Spacer()
+                Text("Response estimate; not a limiter")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(14)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
