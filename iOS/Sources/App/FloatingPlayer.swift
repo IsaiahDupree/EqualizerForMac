@@ -4,6 +4,7 @@ struct FloatingPlayer: View {
     let player: PreviewPlayer
     let curve: FloatingCurve
     let openAudio: () -> Void
+    @State private var scrubPosition: Double?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -38,6 +39,32 @@ struct FloatingPlayer: View {
                 }
                 transport
             }
+            if player.state == .playing || player.state == .paused {
+                TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+                    HStack(spacing: 8) {
+                        Text(timeLabel((scrubPosition ?? player.progress) * player.duration))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 34, alignment: .trailing)
+                        Slider(value: Binding(
+                            get: { scrubPosition ?? player.progress },
+                            set: { scrubPosition = $0 }
+                        ), in: 0...1, onEditingChanged: { editing in
+                            if !editing {
+                                if let scrubPosition { player.seek(to: scrubPosition) }
+                                scrubPosition = nil
+                            }
+                        })
+                        .accessibilityLabel("Playback position")
+                        .accessibilityIdentifier("playbackPosition")
+                        Text(timeLabel(player.duration))
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 34, alignment: .leading)
+                    }
+                    .padding(.horizontal, 4)
+                }
+            }
             if let error = player.error ?? curve.message {
                 Text(error)
                     .font(.footnote)
@@ -53,6 +80,9 @@ struct FloatingPlayer: View {
                 .allowsHitTesting(false)
         }
         .shadow(color: .black.opacity(0.14), radius: 12, y: 4)
+        .onChange(of: player.state) { _, state in
+            if state == .idle { scrubPosition = nil }
+        }
     }
 
     private var fileButton: some View {
@@ -102,6 +132,11 @@ struct FloatingPlayer: View {
         case .playing: return player.outputName.map { "Playing on \($0)" } ?? "Playing"
         case .paused: return "Paused"
         }
+    }
+
+    private func timeLabel(_ time: TimeInterval) -> String {
+        let seconds = max(0, Int(time.rounded(.down)))
+        return "\(seconds / 60):\(String(format: "%02d", seconds % 60))"
     }
 
     private var transport: some View {

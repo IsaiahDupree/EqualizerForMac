@@ -10,11 +10,17 @@ final class AudioUnitIntegrationTests: XCTestCase {
     func testInstalledEffectProcessesStereoAndBypassesDuringPlayback() async throws {
         let effect = try await installedEffect()
         let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
-        XCTAssertEqual(tree.allParameters.count, 3 + MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
+        XCTAssertEqual(tree.allParameters.count, 10 + 2 * MobileEQ.maximumBandCount * MobileEQ.Control.allCases.count)
         let gain = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.address(.gain, band: 5)))
         XCTAssertEqual(gain.address, 18, "Existing host sessions use the original parameter addresses")
         XCTAssertEqual(MobileEQ.address(.type, band: 0), 32)
         XCTAssertEqual(MobileEQ.address(.enabled, band: 9), 61)
+        XCTAssertEqual(MobileEQ.midSideEnabledAddress, 195)
+        XCTAssertEqual(MobileEQ.sideAddress(.frequency, band: 0), 196)
+        XCTAssertEqual(MobileEQ.sideBandCountAddress, 388)
+        XCTAssertEqual(MobileEQ.linearPhaseEnabledAddress, 389)
+        XCTAssertEqual(MobileEQ.renderBlocksAddress, 390)
+        XCTAssertEqual(MobileEQ.lastDeadlineMicrosecondsAddress, 393)
         let preamp = try XCTUnwrap(tree.parameter(withAddress: MobileEQ.preampAddress))
         gain.value = 9
         preamp.value = -3
@@ -23,6 +29,9 @@ final class AudioUnitIntegrationTests: XCTestCase {
         let wet = try stream.measure()
         XCTAssertEqual(wet[0], 6, accuracy: 0.25)
         XCTAssertEqual(wet[1], -2.9, accuracy: 0.35)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.renderBlocksAddress)?.value ?? 0, 0)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.maximumProcessingMicrosecondsAddress)?.value ?? 0, 0)
+        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.lastDeadlineMicrosecondsAddress)?.value ?? 0, 0)
 
         effect.auAudioUnit.shouldBypassEffect = true
         let dry = try stream.measure()
@@ -33,6 +42,31 @@ final class AudioUnitIntegrationTests: XCTestCase {
         gain.value = -6
         let cut = try stream.measure()
         XCTAssertEqual(cut[0], -9, accuracy: 0.25)
+    }
+
+    @MainActor
+    func testMidSideCurvesRestoreThroughHostParameterState() async throws {
+        let effect = try await installedEffect()
+        let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
+        var settings = MobileEQSettings(bands: [
+            EQBand(frequency: 997, gain: 6, q: 1, type: .peaking),
+        ], preamp: -2)
+        settings.sideBands = [EQBand(frequency: 997, gain: -4, q: 1, type: .peaking)]
+        settings.midSideEnabled = true
+        settings.linearPhaseEnabled = true
+        settings.apply(to: tree)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.linearPhaseEnabledAddress)?.value, 1)
+
+        let restored = try await installedEffect()
+        restored.auAudioUnit.fullState = try XCTUnwrap(effect.auAudioUnit.fullState)
+        let restoredTree = try XCTUnwrap(restored.auAudioUnit.parameterTree)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.midSideEnabledAddress)?.value, 1)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideBandCountAddress)?.value, 1)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.sideAddress(.gain, band: 0))?.value, -4)
+        XCTAssertEqual(restoredTree.parameter(withAddress: MobileEQ.linearPhaseEnabledAddress)?.value, 1)
     }
 
     @MainActor

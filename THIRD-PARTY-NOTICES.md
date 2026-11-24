@@ -15,10 +15,17 @@ It is not integrated with the production app or approved for distribution.
 
 ---
 
-## AutoEq — headphone correction data
+## Headphone correction catalog
 
-The bundled headphone presets (`Resources/autoeq.sqlite`, ~8,850 corrections) are derived from the
-**AutoEq** project by Jaakko Pasanen, used under the **MIT License**.
+The bundled headphone catalog (`Resources/autoeq.sqlite`, 8,862 entries in the
+November 2026 catalog) includes 8,850 AutoEq corrections, 11 supplemental OPRA
+presets and one Songbird / openEq preset. Each source retains its own attribution
+and license.
+
+### AutoEq — headphone correction data
+
+The AutoEq corrections were derived from the **AutoEq** project by Jaakko
+Pasanen, used under the **MIT License**.
 
 > MIT License
 >
@@ -40,6 +47,25 @@ The bundled headphone presets (`Resources/autoeq.sqlite`, ~8,850 corrections) ar
 > SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Source: https://github.com/jaakkopasanen/AutoEq
+
+### OPRA — supplemental headphone correction data
+
+Eleven Beats corrections use source data from **OPRA**, pinned at commit
+`0b88ecd4e2bef7cf69fd5d50f1d06fb586c10865`. The curated filter values are
+adapted for Sonance EQ and distributed under **Creative Commons
+Attribution-ShareAlike 4.0 International**. The full license is bundled as
+`Sources/SonanceEQ/Resources/OPRA-LICENSE.txt`.
+
+Source: https://github.com/opra-project/OPRA
+License: https://creativecommons.org/licenses/by-sa/4.0/
+
+### Songbird / openEq — AirPods Pro 3 correction
+
+The six-band AirPods Pro 3 correction by Songbird is adapted from openEq under
+the **MIT License**. The full license is bundled as
+`Sources/SonanceEQ/Resources/openEq-LICENSE.txt`.
+
+Source: https://github.com/sean-o-sullivan/open-mac-eq/blob/929aa9145b6734fba0ea39a223d5bb636948d4cc/AirPodsEQSpike/Presets/airpods-pro-3-songbird-jm1-6band.txt
 
 ---
 

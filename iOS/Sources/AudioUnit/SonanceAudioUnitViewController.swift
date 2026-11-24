@@ -75,6 +75,11 @@ private final class HostedEqualizer {
         return analysis.read(unit.analysisCapture)
     }
 
+    func readRenderMetrics() -> AudioRenderMetrics? {
+        guard let tree else { return nil }
+        return AudioRenderMetrics(parameterTree: tree)
+    }
+
     private func refresh() {
         guard let unit else { return }
         settings = unit.settings
@@ -99,7 +104,7 @@ private struct HostedEditorView: View {
                         AudioWorkspacePicker(workspace: $workspace)
                         if workspace == .live {
                             LiveAudioView(active: true, waitingMessage: "Start playback in the host to see its output.",
-                                          read: editor.readAnalysis)
+                                          read: editor.readAnalysis, readMetrics: editor.readRenderMetrics)
                         } else {
                             EqualizerEditor(settings: Binding(get: { editor.settings }, set: editor.apply),
                                             selectedBand: $editor.selectedBand, sampleRate: editor.sampleRate)

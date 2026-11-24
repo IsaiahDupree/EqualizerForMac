@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "status": "not_run",
+  "scope": "combined",
+  "identifiers": {
+    "iphone_model": null,
+    "ios_version": null,
+    "bluetooth_device_model": null,
+    "bluetooth_firmware": null,
+    "host_app": null,
+    "host_version": null,
+    "sonance_version": null,
+    "sonance_commit": null
+  },
+  "configuration": {
+    "source_fixture": null,
+    "output_route": null,
+    "actual_sample_rate_hz": null,
+    "actual_channels": null,
+    "actual_io_buffer_frames": null,
+    "processing_chain": null
+  },
+  "steady_state": {
+    "continuous_input": null,
+    "duration_seconds": null,
+    "counters": {
+      "unexplained_audible_dropouts": {"count": null, "observed": false},
+      "short_fills": {"count": null, "observed": false},
+      "render_errors": {"count": null, "observed": false},
+      "nonfinite_samples": {"count": null, "observed": false}
+    },
+    "sonance_effect_timing": {
+      "instrumented": false,
+      "completed_blocks": null,
+      "deadline_overruns": null,
+      "maximum_processing_microseconds": null,
+      "last_buffer_deadline_microseconds": null,
+      "scope": "Sonance AU render work after input pull; excludes other host effects"
+    }
+  },
+  "recovery": {
+    "trials": []
+  },
+  "notes": [
+    "This is an unrun template, not evidence of a pass. Set status to recorded only after a physical-device run.",
+    "Scopes: steady_state, recovery, combined. A pass applies only to the recorded configuration and selected scope.",
+    "Targets are project targets: 1800 continuous steady-state seconds, zero observed error counters, 10 allowed-resumption trials within 2 seconds, plus one user-paused and one resume-disallowed trial.",
+    "observed=true means the named counter was measured throughout the steady-state interval; null/unknown or uninstrumented host counters remain incomplete.",
+    "Do not subtract interruptions or natural silence from unexplained dropout counts. Record planned interruptions explicitly as separate recovery trials.",
+    "Each recovery trial needs event, expected_interruption, user_paused, resume_allowed and audio_resumed_at_s. Allowed-resumption trials also need route_usable_at_s, resume_allowed_at_s and observation_finished_at_s. Negative trials need observation_duration_seconds and stayed_paused.",
+    "Use monotonic seconds on the same clock within a trial. Allowed-resumption latency starts at max(route_usable_at_s, resume_allowed_at_s).",
+    "audio_resumed_at_s=null explicitly records that no resumption was observed; omit no required field. Missing observations remain incomplete.",
+    "For negative trials observe at least 2 seconds, set stayed_paused=true only if playback stayed paused, and audio_resumed_at_s=null. Include separate trials for user_paused=true with resume_allowed=true, and user_paused=false with resume_allowed=false. Allowed-resumption timestamps may be null in these negative trials.",
+    "Firmware is optional. No bit-identity claim is made for Bluetooth output. The assessor evaluates supplied evidence; it does not run or instrument hardware."
+  ]
+}

@@ -11,12 +11,18 @@ final class PreviewPlayer {
     private(set) var sampleRate = 48_000.0
     private(set) var outputName: String?
     private(set) var currentOutput: PlaybackOutput?
+    private(set) var routeFormat = PlaybackRouteFormat(sampleRateHz: 0, outputChannels: 0,
+                                                       ioBufferDurationSeconds: 0)
     var error: String?
 
     @ObservationIgnored private var selected: SelectedAudio?
     @ObservationIgnored private var graph: PlaybackGraph?
     @ObservationIgnored private var playRequest: UUID?
+    @ObservationIgnored private var segmentRequest: UUID?
     @ObservationIgnored private var sessionActive = false
+    @ObservationIgnored private var resumeAfterInterruption = false
+    @ObservationIgnored private var reconnectOutputID: String?
+    @ObservationIgnored private var activeSegment: PlaybackResumeSegment?
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
     @ObservationIgnored private let session = AVAudioSession.sharedInstance()
@@ -31,6 +37,10 @@ final class PreviewPlayer {
         guard state == .playing, let capture = graph?.capture else { return nil }
         if analysis == nil { analysis = AudioAnalysisMonitor() }
         return analysis?.read(capture.pointer)
+    }
+
+    func readRenderMetrics() -> AudioRenderMetrics? {
+        graph?.renderMetrics
     }
 
     func select(_ url: URL) {
@@ -77,6 +87,9 @@ final class PreviewPlayer {
     }
 
     func refreshOutput() {
+        routeFormat = PlaybackRouteFormat(sampleRateHz: session.sampleRate,
+                                          outputChannels: session.outputNumberOfChannels,
+                                          ioBufferDurationSeconds: session.ioBufferDuration)
         let outputs = session.currentRoute.outputs
         if outputs.count == 1, let port = outputs.first, !port.uid.isEmpty {
             currentOutput = PlaybackOutput(id: port.uid, name: port.portName)
@@ -92,14 +105,33 @@ final class PreviewPlayer {
 
     func play() async {
         if state == .paused {
-            resume()
+            resumeAfterInterruption = false
+            reconnectOutputID = nil
+            if graph != nil {
+                resume()
+            } else {
+                await startPlayback(fromProgress: pausedProgress)
+            }
             return
         }
-        guard let selected, state == .idle else { return }
+        guard selected != nil, state == .idle else { return }
+        await startPlayback(fromProgress: 0)
+    }
+
+    private func startPlayback(fromProgress startProgress: Double) async {
+        guard let selected else { return }
         let request = UUID()
         playRequest = request
         state = .starting
         error = nil
+
+        guard let segment = PlaybackResumeSegment(totalFrames: selected.file.length, progress: startProgress) else {
+            playRequest = nil
+            state = .idle
+            error = "Playback couldn’t resume from this position. Tap Play to restart the file."
+            return
+        }
+        activeSegment = segment
 
         do {
             let effect = try await AVAudioUnit.instantiate(with: MobileEQ.component, options: .loadOutOfProcess)
@@ -113,12 +145,7 @@ final class PreviewPlayer {
 
             try session.setCategory(.playback, mode: .default)
             try startEngine(graph)
-            graph.player.scheduleFile(selected.file, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
-                Task { @MainActor in
-                    guard let self, self.playRequest == request else { return }
-                    self.stop()
-                }
-            }
+            schedule(segment, in: graph, request: request)
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
@@ -147,15 +174,54 @@ final class PreviewPlayer {
               let nodeTime = node.lastRenderTime, let playhead = node.playerTime(forNodeTime: nodeTime) else {
             return 0
         }
-        let duration = Double(file.length) / file.processingFormat.sampleRate
-        let elapsed = Double(playhead.sampleTime) / playhead.sampleRate
-        return min(max(elapsed / duration, 0), 1)
+        return activeSegment?.progress(renderedFrames: playhead.sampleTime, totalFrames: file.length) ?? 0
+    }
+
+    var duration: TimeInterval {
+        guard let file = selected?.file else { return 0 }
+        return Double(file.length) / file.processingFormat.sampleRate
+    }
+
+    func seek(to requestedProgress: Double) {
+        guard requestedProgress.isFinite, (state == .playing || state == .paused),
+              let selected else { return }
+        let target = min(max(requestedProgress, 0), 1)
+        guard target < 1,
+              let segment = PlaybackResumeSegment(totalFrames: selected.file.length, progress: target) else {
+            stop()
+            return
+        }
+        pausedProgress = target
+        activeSegment = segment
+        guard let graph, let request = playRequest else { return }
+        graph.player.stop()
+        schedule(segment, in: graph, request: request)
+        if state == .playing { graph.player.play() }
+    }
+
+    private func schedule(_ segment: PlaybackResumeSegment, in graph: PlaybackGraph, request: UUID) {
+        let segmentRequest = UUID()
+        self.segmentRequest = segmentRequest
+        guard let file = selected?.file else { return }
+        graph.player.scheduleSegment(file, startingFrame: segment.startingFrame,
+                                    frameCount: segment.frameCount, at: nil,
+                                    completionCallbackType: .dataPlayedBack) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.playRequest == request,
+                      self.segmentRequest == segmentRequest else { return }
+                self.stop()
+            }
+        }
     }
 
     private func resume() {
+        resume(activateSession: true)
+    }
+
+    private func resume(activateSession: Bool) {
         guard let graph else { return }
         do {
-            try startEngine(graph)
+            try startEngine(graph, activateSession: activateSession)
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
@@ -165,18 +231,25 @@ final class PreviewPlayer {
         }
     }
 
-    private func startEngine(_ graph: PlaybackGraph) throws {
-        try session.setActive(true)
-        sessionActive = true
+    private func startEngine(_ graph: PlaybackGraph, activateSession: Bool = true) throws {
+        if activateSession {
+            try session.setActive(true)
+            sessionActive = true
+        }
         refreshOutput()
         try graph.engine.start()
     }
 
     func stop() {
         playRequest = nil
+        segmentRequest = nil
+        resumeAfterInterruption = false
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
         sleepTimerMinutes = nil
+        reconnectOutputID = nil
+        pausedProgress = 0
+        activeSegment = nil
         graph?.player.stop()
         graph?.removeAnalysisTap()
         graph?.engine.stop()
@@ -195,27 +268,127 @@ final class PreviewPlayer {
     }
 
     func handleInterruption(_ notification: Notification) {
-        guard state == .playing || state == .starting,
-              notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt == AVAudioSession.InterruptionType.began.rawValue
-        else { return }
-        stop()
+        guard let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt else { return }
+        if rawType == AVAudioSession.InterruptionType.began.rawValue {
+            pauseForSystemInterruption()
+        } else if rawType == AVAudioSession.InterruptionType.ended.rawValue {
+            guard resumeAfterInterruption else { return }
+            resumeAfterInterruption = false
+            let rawOptions = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            guard AVAudioSession.InterruptionOptions(rawValue: rawOptions).contains(.shouldResume) else { return }
+            resume()
+        }
+    }
+
+    @available(iOS 27.0, *)
+    func handleSystemDeactivation(_ notification: Notification) {
+        guard let context = notification.userInfo?[AVAudioSession.deactivationContextKey]
+                as? AVAudioSession.DeactivationContext,
+              context.source == .system else { return }
+        pauseForSystemInterruption()
+    }
+
+    @available(iOS 27.0, *)
+    func handleResumptionRecommendation(_ notification: Notification) {
+        guard resumeAfterInterruption,
+              let context = notification.userInfo?[AVAudioSession.resumptionContextKey]
+                as? AVAudioSession.ResumptionContext else { return }
+        switch context.recommendation {
+        case .shouldResume:
+            Task { [weak self] in
+                guard let self else { return }
+                do {
+                    _ = try await self.session.activate()
+                    guard self.resumeAfterInterruption else { return }
+                    self.resumeAfterInterruption = false
+                    self.resume(activateSession: false)
+                } catch {
+                    self.resumeAfterInterruption = false
+                    self.error = "Playback remains paused because iOS couldn’t reactivate audio. Tap Play to resume."
+                }
+            }
+        case .shouldNotResume:
+            resumeAfterInterruption = false
+        @unknown default:
+            resumeAfterInterruption = false
+        }
+    }
+
+    private func pauseForSystemInterruption() {
+        if state == .starting {
+            playRequest = nil
+            state = .idle
+            error = "Playback start was interrupted. Tap Play to try again."
+            return
+        }
+        guard state == .playing, let graph else { return }
+        pausedProgress = progress
+        graph.player.pause()
+        graph.engine.pause()
+        state = .paused
+        outputName = nil
+        analysis?.reset()
+        resumeAfterInterruption = true
     }
 
     func handleRouteChange(_ notification: Notification) {
         let reason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt
-        if state == .playing && reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue {
-            stop()
-            error = "The audio output disconnected. Tap Play to use the current output."
+        if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue &&
+            (state == .playing || state == .starting || (state == .paused && resumeAfterInterruption)) {
+            let previous = notification.userInfo?[AVAudioSessionRouteChangePreviousRouteKey]
+                as? AVAudioSessionRouteDescription
+            let bluetoothOutput = previous?.outputs.first(where: Self.isBluetoothOutput)
+            resumeAfterInterruption = false
+            parkForRouteChange(reconnectID: bluetoothOutput?.uid)
+            error = bluetoothOutput == nil
+                ? "The audio output changed. Playback is paused; tap Play to continue on the current output."
+                : "Bluetooth disconnected. Playback is paused while Sonance waits for the same device to reconnect."
         } else {
             refreshOutput()
+            if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
+               let expectedID = reconnectOutputID,
+               let output = session.currentRoute.outputs.first(where: Self.isBluetoothOutput),
+               BluetoothReconnectPolicy.shouldResume(expectedOutputID: expectedID,
+                                                       currentOutputID: output.uid), state == .paused {
+                reconnectOutputID = nil
+                error = nil
+                Task { await play() }
+            }
         }
     }
 
     func handleConfigurationChange(_ notification: Notification) {
         guard state == .playing || state == .paused,
               let engine = notification.object as? AVAudioEngine, engine === graph?.engine else { return }
-        stop()
-        error = "The audio output changed. Tap Play to restart playback."
+        parkForRouteChange(reconnectID: nil)
+        error = "The audio output changed. Playback is paused; tap Play to continue from here."
+    }
+
+    private func parkForRouteChange(reconnectID: String?) {
+        if state == .starting {
+            playRequest = nil
+            state = .idle
+            return
+        }
+        if state == .playing { pausedProgress = progress }
+        reconnectOutputID = reconnectID
+        graph?.player.stop()
+        graph?.removeAnalysisTap()
+        graph?.engine.stop()
+        graph = nil
+        analysis?.reset()
+        deactivateSession()
+        outputName = nil
+        state = .paused
+    }
+
+    private static func isBluetoothOutput(_ output: AVAudioSessionPortDescription) -> Bool {
+        switch output.portType {
+        case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE:
+            return true
+        default:
+            return false
+        }
     }
 }
 
@@ -283,6 +456,8 @@ private final class PlaybackGraph {
     func apply(_ settings: MobileEQSettings, changedFrom previous: MobileEQSettings? = nil) {
         settings.apply(to: tree, changedFrom: previous)
     }
+
+    var renderMetrics: AudioRenderMetrics? { AudioRenderMetrics(parameterTree: tree) }
 
     func applyCorrection(_ settings: MobileEQSettings) {
         guard settings != appliedCorrection else { return }

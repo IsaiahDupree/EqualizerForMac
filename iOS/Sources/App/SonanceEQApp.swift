@@ -23,6 +23,7 @@ private struct EqualizerView: View {
     let session: EqualizerSession
     @State private var pickingFile = false
     @State private var showingPresets = false
+    @State private var showingHeadphoneCatalog = false
     @State private var showingCorrection = false
     @State private var showingListeningModes = false
     @State private var showingGuide = false
@@ -38,7 +39,7 @@ private struct EqualizerView: View {
                     AudioWorkspacePicker(workspace: $workspace)
                     if workspace == .live {
                         LiveAudioView(active: player.state == .playing, waitingMessage: "Play an audio file to see its output.",
-                                      read: player.readAnalysis)
+                                      read: player.readAnalysis, readMetrics: player.readRenderMetrics)
                     } else {
                         EqualizerEditor(
                             settings: Binding(
@@ -52,6 +53,7 @@ private struct EqualizerView: View {
                             sampleRate: player.sampleRate,
                             onEditingChanged: session.editingChanged,
                             onPresetLibrary: { showingPresets = true },
+                            onHeadphoneCatalog: { showingHeadphoneCatalog = true },
                             comparison: EqualizerComparison(hasReference: session.reference != nil,
                                                             listeningToReference: session.playingReference,
                                                             referenceAttenuationDB: session.referenceAttenuationDB,
@@ -108,6 +110,10 @@ private struct EqualizerView: View {
             PresetLibraryView(library: session.presets, session: session)
                 .tint(EqualizerEditor.accent)
         }
+        .sheet(isPresented: $showingHeadphoneCatalog) {
+            AutoEqCatalogView(session: session)
+                .tint(EqualizerEditor.accent)
+        }
         .sheet(isPresented: $showingCorrection) {
             OutputCorrectionView(session: session)
                 .tint(EqualizerEditor.accent)
@@ -141,6 +147,7 @@ private struct EqualizerView: View {
         .onReceive(NotificationCenter.default.publisher(for: .AVAudioEngineConfigurationChange)) { notification in
             Task { @MainActor in player.handleConfigurationChange(notification) }
         }
+        .modifier(AudioSessionLifecycleObserver(player: player))
     }
 
     private var pluginHelp: some View {
@@ -153,6 +160,25 @@ private struct EqualizerView: View {
         }
         .padding(14)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+private struct AudioSessionLifecycleObserver: ViewModifier {
+    let player: PreviewPlayer
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 27.0, *) {
+            content
+                .onReceive(AVAudioSession.didBecomeInactiveNotification) { notification in
+                    Task { @MainActor in player.handleSystemDeactivation(notification) }
+                }
+                .onReceive(AVAudioSession.resumptionRecommendationNotification) { notification in
+                    Task { @MainActor in player.handleResumptionRecommendation(notification) }
+                }
+        } else {
+            content
+        }
     }
 }
 

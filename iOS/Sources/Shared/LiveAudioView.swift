@@ -21,8 +21,10 @@ struct LiveAudioView: View {
     let active: Bool
     let waitingMessage: String
     let read: () -> AudioAnalysisFrame?
+    var readMetrics: () -> AudioRenderMetrics? = { nil }
 
     @State private var frame: AudioAnalysisFrame?
+    @State private var renderMetrics: AudioRenderMetrics?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -41,6 +43,9 @@ struct LiveAudioView: View {
                     .foregroundStyle(.secondary)
             }
             levels
+            if let renderMetrics, renderMetrics.completedBlocks > 0 {
+                renderTiming(renderMetrics)
+            }
             VStack(alignment: .leading, spacing: 7) {
                 HStack {
                     Text("Spectrum").font(.headline).accessibilityAddTraits(.isHeader)
@@ -60,12 +65,41 @@ struct LiveAudioView: View {
         }
         .task(id: active) {
             frame = nil
+            renderMetrics = nil
             guard active else { return }
             while !Task.isCancelled {
                 frame = read()
+                renderMetrics = readMetrics()
                 try? await Task.sleep(for: .milliseconds(70))
             }
         }
+    }
+
+    private func renderTiming(_ metrics: AudioRenderMetrics) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("EQ Render Timing")
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+            HStack {
+                Text("Worst block")
+                Spacer()
+                Text("\(metrics.maximumProcessingMicroseconds.formatted(.number.precision(.fractionLength(1)))) µs")
+                    .monospacedDigit()
+            }
+            HStack {
+                Text("Last buffer deadline")
+                Spacer()
+                Text("\(metrics.lastDeadlineMicroseconds.formatted(.number.precision(.fractionLength(1)))) µs")
+                    .monospacedDigit()
+            }
+            Text("\(metrics.deadlineMisses) deadline overruns in \(metrics.completedBlocks) measured blocks")
+                .font(.caption)
+                .foregroundStyle(metrics.deadlineMisses == 0 ? .secondary : .red)
+                .accessibilityIdentifier("renderDeadlineStats")
+        }
+        .font(.subheadline)
+        .padding(14)
+        .background(.background, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var levels: some View {

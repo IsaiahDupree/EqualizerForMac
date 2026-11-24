@@ -10,6 +10,20 @@ is reviewed and accepted and the apps are rebuilt.
 
 ## Utility portfolio progress — 2026-11-23
 
+- Sonance now pauses its active player and preserves the playhead when an
+  audio-session interruption begins. On iOS 27 it handles the new lifecycle
+  and resumption-recommendation notifications and activates the session
+  asynchronously before resuming; older systems use the legacy interruption
+  notification and `shouldResume` option. A user Stop clears the pending
+  resume. This is source-level behavior until Xcode can compile it and a
+  physical interruption/reconnect run can verify it.
+- A removed audio route now parks the standalone player at its current
+  position. Reconnection automatically resumes only when the route identifies
+  as Bluetooth and returns with the same output ID; a different route requires
+  an explicit Play action. If the route's ID changes, Play rebuilds the graph
+  from the saved position. This avoids silently sending interrupted Bluetooth
+  audio to the phone speaker. Compile and route verification remain pending.
+
 - Sonance's headphone profile assistant now displays a read-only preview of the
   generated frequency response and suggested preamp before saving or applying
   the curve. It remains a preference-based starting point, not a measured

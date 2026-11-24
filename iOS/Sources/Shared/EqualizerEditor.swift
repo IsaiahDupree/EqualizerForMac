@@ -9,14 +9,22 @@ struct EqualizerEditor: View {
 
     @Binding var settings: MobileEQSettings
     @Binding var selectedBand: Int?
+    @State private var editingSide = false
     let sampleRate: Double
     var onEditingChanged: (Bool) -> Void = { _ in }
     var onPresetLibrary: (() -> Void)?
+    var onHeadphoneCatalog: (() -> Void)?
     var comparison: EqualizerComparison?
 
     private var listeningToReference: Bool { comparison?.listeningToReference == true }
-    private var selection: Int? { settings.selection(selectedBand) }
-    private var currentBand: EQBand? { selection.map { settings.bands[$0] } }
+    private var editingBands: [EQBand] {
+        get { editingSide && settings.midSideEnabled ? settings.sideBands : settings.bands }
+        nonmutating set {
+            if editingSide && settings.midSideEnabled { settings.sideBands = newValue } else { settings.bands = newValue }
+        }
+    }
+    private var selection: Int? { editingBands.isEmpty ? nil : min(max(selectedBand ?? 0, 0), editingBands.count - 1) }
+    private var currentBand: EQBand? { selection.map { editingBands[$0] } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -27,7 +35,33 @@ struct EqualizerEditor: View {
                 Spacer(minLength: 8)
                 presets
             }
-            ResponsePlot(bands: settings.bands, sampleRate: sampleRate, selection: currentBand?.id,
+            HStack {
+                Toggle("Mid-Side", isOn: $settings.midSideEnabled)
+                    .font(.subheadline.weight(.medium))
+                    .accessibilityIdentifier("midSideEQ")
+                Spacer()
+                if settings.midSideEnabled {
+                    Picker("EQ curve", selection: $editingSide) {
+                        Text("Mid").tag(false)
+                        Text("Side").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 150)
+                    .accessibilityIdentifier("midSideCurvePicker")
+                }
+            }
+            HStack {
+                Toggle("Linear-Phase FIR", isOn: $settings.linearPhaseEnabled)
+                    .font(.subheadline.weight(.medium))
+                    .accessibilityIdentifier("linearPhaseEQ")
+                Spacer()
+                if settings.linearPhaseEnabled {
+                    Text("About 21 ms latency at 48 kHz")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            ResponsePlot(bands: editingBands, sampleRate: sampleRate, selection: currentBand?.id,
                          bypassed: settings.bypassed,
                          interaction: listeningToReference ? nil :
                             .init(select: selectBand, move: moveBand, editingChanged: onEditingChanged))
@@ -39,6 +73,9 @@ struct EqualizerEditor: View {
             bandControls
                 .disabled(listeningToReference)
         }
+        .onChange(of: settings.midSideEnabled) { _, enabled in
+            if !enabled { editingSide = false }
+        }
     }
 
     private var presets: some View {
@@ -47,23 +84,21 @@ struct EqualizerEditor: View {
                 Button("Preset Library", systemImage: "folder", action: onPresetLibrary)
                 Divider()
             }
+            if let onHeadphoneCatalog {
+                Button("Headphone Correction Library", systemImage: "headphones", action: onHeadphoneCatalog)
+                Divider()
+            }
             ForEach(Presets.all, id: \.name) { preset in
                 Button(preset.name) {
                     comparison?.audition(false)
-                    changeBands {
-                        $0 = MobileEQSettings.startingPoint(bands: preset.bands, sampleRate: sampleRate)
-                        return $0.selection(selectedBand)
-                    }
+                    applyPreset(MobileEQSettings.startingPoint(bands: preset.bands, sampleRate: sampleRate))
                 }
             }
             Menu("Listening Presets") {
                 ForEach(SoundStarterPreset.allCases) { profile in
                     Button(profile.title) {
                         comparison?.audition(false)
-                        changeBands {
-                            $0 = profile.makeSettings(sampleRate: sampleRate)
-                            return $0.bands.firstIndex(where: \.enabled)
-                        }
+                        applyPreset(profile.makeSettings(sampleRate: sampleRate))
                     }
                 }
             }
@@ -71,10 +106,7 @@ struct EqualizerEditor: View {
                 ForEach(SpeechListening.allCases) { profile in
                     Button(profile.title) {
                         comparison?.audition(false)
-                        changeBands {
-                            $0 = profile.settings
-                            return $0.bands.firstIndex(where: \.enabled)
-                        }
+                        applyPreset(profile.settings)
                     }
                 }
             }
@@ -121,7 +153,7 @@ struct EqualizerEditor: View {
                 .foregroundStyle(Self.accent)
                 .accessibilityLabel("Add band")
                 .accessibilityIdentifier("addBand")
-                .disabled(settings.bands.count >= MobileEQ.maximumBandCount)
+                .disabled(editingBands.count >= MobileEQ.maximumBandCount)
             }
             if let currentBand {
                 bandSliders(currentBand)
@@ -131,15 +163,30 @@ struct EqualizerEditor: View {
             sliderRow("Preamp", id: "eqPreamp", value: "\(settings.preamp.formatted(.number.precision(.fractionLength(1)))) dB") {
                 Slider(value: $settings.preamp, in: MobileEQ.preampRange, step: 0.5, onEditingChanged: onEditingChanged)
             }
+            HStack(alignment: .center) {
+                Button {
+                    onEditingChanged(true)
+                    settings = settings.applyingEstimatedHeadroom(sampleRate: sampleRate)
+                    onEditingChanged(false)
+                } label: {
+                    Label("Auto Headroom", systemImage: "waveform.path")
+                        .font(.subheadline.weight(.medium))
+                }
+                .accessibilityIdentifier("autoHeadroom")
+                Spacer()
+                Text("Response estimate; not a limiter")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(14)
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private var bandPicker: some View {
-        let title = selection.map { bandTitle(settings.bands[$0], index: $0) } ?? "No bands"
+        let title = selection.map { bandTitle(editingBands[$0], index: $0) } ?? "No bands"
         return Menu {
-            ForEach(Array(settings.bands.enumerated()), id: \.element.id) { index, band in
+            ForEach(Array(editingBands.enumerated()), id: \.element.id) { index, band in
                 Button {
                     selectBand(band.id)
                 } label: {
@@ -174,7 +221,7 @@ struct EqualizerEditor: View {
         .accessibilityLabel("Filter band")
         .accessibilityValue(title)
         .accessibilityIdentifier("eqBandSelector")
-        .disabled(settings.bands.isEmpty)
+        .disabled(editingBands.isEmpty)
     }
 
     private func bandTitle(_ band: EQBand, index: Int) -> String {
@@ -182,33 +229,41 @@ struct EqualizerEditor: View {
     }
 
     private func selectBand(_ id: UUID) {
-        if let index = settings.bands.firstIndex(where: { $0.id == id }) {
+        if let index = editingBands.firstIndex(where: { $0.id == id }) {
             selectedBand = index
         }
     }
 
     private func addBand() {
-        guard settings.bands.count < MobileEQ.maximumBandCount else { return }
+        guard editingBands.count < MobileEQ.maximumBandCount else { return }
         changeBands {
-            $0.bands.append(MobileEQ.newBand())
-            return $0.bands.count - 1
+            $0.append(MobileEQ.newBand())
+            return $0.count - 1
         }
     }
 
     private func removeBand() {
         guard let index = selection else { return }
         changeBands {
-            $0.bands.remove(at: index)
-            return $0.selection(index)
+            $0.remove(at: index)
+            return $0.isEmpty ? nil : min(index, $0.count - 1)
         }
     }
 
-    private func changeBands(_ edit: (inout MobileEQSettings) -> Int?) {
-        var updated = settings
+    private func changeBands(_ edit: (inout [EQBand]) -> Int?) {
+        var updated = editingBands
         let next = edit(&updated)
         onEditingChanged(true)
-        settings = updated
+        editingBands = updated
         selectedBand = next
+        onEditingChanged(false)
+    }
+
+    private func applyPreset(_ preset: MobileEQSettings) {
+        onEditingChanged(true)
+        settings = preset
+        editingSide = false
+        selectedBand = preset.bands.firstIndex(where: \.enabled)
         onEditingChanged(false)
     }
 
@@ -257,10 +312,12 @@ struct EqualizerEditor: View {
     }
 
     private func binding<Value>(_ key: WritableKeyPath<EQBand, Value>, for band: EQBand) -> Binding<Value> {
-        Binding(get: { settings.bands.first(where: { $0.id == band.id })?[keyPath: key] ?? band[keyPath: key] },
+        Binding(get: { editingBands.first(where: { $0.id == band.id })?[keyPath: key] ?? band[keyPath: key] },
                 set: { value in
-                    guard let index = settings.bands.firstIndex(where: { $0.id == band.id }) else { return }
-                    settings.bands[index][keyPath: key] = value
+                    guard let index = editingBands.firstIndex(where: { $0.id == band.id }) else { return }
+                    var updated = editingBands
+                    updated[index][keyPath: key] = value
+                    editingBands = updated
                 })
     }
 
@@ -273,12 +330,14 @@ struct EqualizerEditor: View {
     }
 
     private func moveBand(_ id: UUID, _ frequency: Double, _ gain: Float) {
-        guard let index = settings.bands.firstIndex(where: { $0.id == id }) else { return }
-        var band = settings.bands[index]
+        guard let index = editingBands.firstIndex(where: { $0.id == id }) else { return }
+        var band = editingBands[index]
         guard band.enabled, band.frequency != frequency || band.gain != gain else { return }
         band.frequency = frequency
         if band.type.usesGain { band.gain = gain }
-        settings.bands[index] = band
+        var updated = editingBands
+        updated[index] = band
+        editingBands = updated
     }
 
     private func frequencyLabel(_ band: EQBand) -> String {

@@ -223,6 +223,10 @@ final class EqualizerRelaunchTests: XCTestCase {
         transport.tap()
         let playing = NSPredicate(format: "label == %@", "Pause")
         await fulfillment(of: [XCTNSPredicateExpectation(predicate: playing, object: transport)], timeout: 8)
+        let playbackPosition = app.sliders["playbackPosition"]
+        XCTAssertTrue(playbackPosition.waitForExistence(timeout: 4))
+        playbackPosition.adjust(toNormalizedSliderPosition: 0.4)
+        XCTAssertTrue(playbackPosition.exists, "The playback scrubber should remain available after a seek.")
         let workspace = app.segmentedControls["audioWorkspace"]
         workspace.buttons["Live"].tap()
         XCTAssertTrue(app.staticTexts["spectrumPeak"].waitForExistence(timeout: 4))

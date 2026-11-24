@@ -299,7 +299,9 @@ final class AppState {
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "\(activePresetName ?? "My EQ").sonanceeq.json"
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        let file = PresetFile(name: activePresetName ?? "My EQ", preampDb: preampDb, bands: bands)
+        let file = PresetFile(name: activePresetName ?? "My EQ", preampDb: preampDb, bands: bands,
+                              sideBands: sideBands, midSideEnabled: midSideEnabled,
+                              linearPhaseEnabled: linearPhase)
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -317,9 +319,16 @@ final class AppState {
         do {
             let file = try JSONDecoder().decode(PresetFile.self, from: Data(contentsOf: url))
             let imported = file.eqBands()
-            guard !imported.isEmpty else { errorMessage = EQText.string("That file has no EQ bands."); return }
+            let importedSide = file.eqSideBands() ?? Presets.flat
+            guard !imported.isEmpty || (file.midSideEnabled == true && !importedSide.isEmpty) else {
+                errorMessage = EQText.string("That file has no EQ bands."); return
+            }
             bands = imported
+            sideBands = importedSide
             preampDb = file.preampDb
+            midSideEnabled = file.midSideEnabled ?? false
+            linearPhase = file.linearPhaseEnabled ?? false
+            linearPhase = file.linearPhaseEnabled ?? false
             activePresetName = file.name
             pushSettings()
         } catch {

@@ -1,6 +1,14 @@
 # Sonance EQ for iOS
 
-The Sonance prototype and the broader iOS utility portfolio are tracked in
+For automated AUv3 quality/continuity checks and a separate physical Bluetooth
+acceptance run, see [Audio validation](AudioValidation/README.md). Run the digital
+suite on a Mac with `bash iOS/Tools/test-audio-quality.sh`; a simulator pass does
+not certify Bluetooth playback.
+
+The full-feature parity work and iOS platform boundary are tracked in the
+[iPhone parity roadmap](FULL-PARITY-ROADMAP.md).
+
+Sonance EQ and the broader iOS utility portfolio are tracked in
 [the utility app roadmap](UTILITY-APP-ROADMAP.md). The first separate utility
 prototype, Screenshot Scout / Creator Library, is in
 `iOS/Utilities/ScreenshotScout/`. It indexes user-selected images and videos
@@ -19,9 +27,10 @@ gates Apple Music Understanding analysis behind iOS 27 SDK availability. It
 can share a text practice plan without attaching audio. Batch import can be
 stopped after the current file.
 
-The first iPhone and iPad build runs on iOS 17 or later. Open a mono or stereo
-file from Files, tap Play, and compare your changes with Bypass EQ. The app
-includes the Mac app’s ten starting bands and five presets. Choose a band
+The iPhone and iPad app runs on iOS 17 or later. Open a mono or stereo file
+from Files, tap Play, and compare your changes with Bypass EQ. The app includes
+the Mac app’s ten starting bands, five built-in presets, and the bundled 8,862
+entry headphone correction catalog. Choose a band
 from the **Filter Bands** dropdown or tap its point on the curve. Drag the
 point left or right to change frequency and up or down to change gain.
 Press **+** to create and select a flat 1 kHz bell, or **−** to remove the
@@ -30,6 +39,25 @@ available for fine adjustments and Q. Preamp controls the overall level. The
 graph uses the selected file’s sample rate. VoiceOver reports the enabled-band
 count and the selected filter’s type, frequency, and gain when that setting
 applies, then points to the controls below for editing.
+
+**Auto Headroom** estimates the largest filter-response boost in the active
+curve, or in both Mid and Side when Mid-Side is enabled, then lowers preamp to
+try to leave a 1 dB margin within the available preamp range. This frequency-
+response estimate does not measure music, intersample peaks, or Bluetooth
+output, and it is not a limiter.
+
+Turn on **Mid-Side** to edit independent center (Mid) and stereo-width (Side)
+curves. Both curves support the same filter shapes and up to 32 bands. The mode
+is stored with the session or AUv3 host state and in exported Sonance presets.
+Mono input uses the Mid curve because it has no Side channel. Mid-Side support
+is implemented in source; its render, restore, and deadline checks still need
+to pass on an Apple runtime.
+
+Turn on **Linear-Phase FIR** to use the Mac app’s 2,048-tap linear-phase
+correction in both the file player and AUv3 effect. This adds about 21.3 ms of
+processing delay at 48 kHz; the matching bypass path keeps the same delay. The
+filter and latency behavior still need Apple-runtime response and deadline
+verification before release.
 
 Open **Presets → Preset Library** to save the entire curve and preamp under a
 name. The library can import multiple Sonance EQ files at once, export a
@@ -45,7 +73,10 @@ Correction** and assign a saved preset to the current output. Sonance keeps a
 copy of the preset for that output and restores the assignment and its on/off
 setting after relaunch. Corrections apply after your EQ to files played in
 Sonance. Use **Apply Correction** to compare that stage independently of
-**Bypass EQ**.
+**Bypass EQ**. The Current Output section also displays the active audio
+session's sample rate, output channel count and I/O buffer duration when iOS
+reports valid values; these are refreshed after playback activation and route
+changes, and are not the source file's format.
 
 Use **Set A** to capture a reference before tuning. **A · Reference**
 auditions the captured sound, and **B · Edited** returns to the working curve.
@@ -57,12 +88,16 @@ they do not change saved EQ settings or presets. This is a listening aid, not
 measured or automatic loudness matching.
 
 Switch to **Live** to see the spectrum, waveform, and output levels after
-the EQ. Stereo audio shows meters for both channels. The custom AUv3 editor
-has a Live view for the signal provided by its host.
+the EQ. Stereo audio shows meters for both channels. The Live view also reports
+the EQ effect's worst measured render time and buffer deadline overruns. These
+counters cover Sonance's render work after its input is pulled; they do not
+measure other effects or the complete host chain. The custom AUv3 editor has a
+Live view for the signal provided by its host.
 
 The floating player stays on screen as you scroll the equalizer. While a file
-is playing, use the Picture in Picture button on supported devices to see the
-EQ curve and playback progress in a resizable window. Switch to Live to
+is playing or paused, scrub the position slider to seek within the file. While
+playing, use the Picture in Picture button on supported devices to see the EQ
+curve and playback progress in a resizable window. Switch to Live to
 float the spectrum and waveform. Its play and pause controls operate the
 file in Sonance. Tap the return-to-app button to edit the curve.
 
@@ -89,6 +124,14 @@ standalone player's settings apply to its Files playback. In a compatible
 AUv3 host, choose **Presets → Speech Listening** in the Sonance effect to use
 the same curves. Host settings are separate from the standalone player.
 
+Open **Presets → Headphone Correction Library** to search the offline AutoEq
+and attributed supplemental database shared with the Mac app. Tapping a model
+loads its measured parametric curve and safety preamp into the main EQ. Use a
+result's actions menu to assign it directly to the current playback output. The
+correction remains a separate stage after the main EQ and is saved per output
+route. These profiles are measurement-based starting points; fit and listening
+conditions vary.
+
 Sonance also provides Siri and Shortcuts actions to enable or disable EQ
 bypass for the standalone Files player. Those actions preserve the current
 curve and do not control audio in another app. Apple App Shortcuts make the
@@ -103,13 +146,28 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 - Switching apps or locking the screen during Files playback uses iOS background
   audio. Stop playback in Sonance when you’re done.
+- A system interruption pauses at the current position. Sonance follows the
+  system's resume recommendation on iOS 27 and the interruption-end option on
+  earlier iOS versions. Removing the active Bluetooth output also pauses at the
+  current position; playback resumes automatically only if that same Bluetooth
+  output ID returns. Otherwise tap Play to continue from the saved position on
+  the current route. A user pause or Stop is never automatically resumed.
 - Force-quitting Sonance stops its own player. Reopening restores your EQ and
   opens the local player with an empty file selection. Choose a file and press
   Play to start a new playback session.
 - An AUv3 host controls playback and stores its own effect settings. Opening or
   closing the Sonance screen leaves control of a hosted effect with the host.
+- iOS does not let Sonance apply its player processing to every other app's
+  audio. For other audio sources, use Sonance's AUv3 effect in a compatible host;
+  support and routing depend on that host and the active output.
 
 ## Build and verify
+
+To build, install and launch Sonance EQ on the designated iPhone 15 over USB,
+run `bash iOS/Tools/install-on-iphone15.sh`. The script checks Xcode readiness
+and the exact device ID first, verifies the built bundle ID, and records the
+build log under `iOS/build/iphone15-install/`. Complete Xcode's first-use setup
+in Xcode itself before running it; the script never accepts the license.
 
 Build all locally available Swift utility targets from their tracked XcodeGen
 specs with one bounded Simulator build command:
