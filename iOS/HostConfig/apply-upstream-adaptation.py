@@ -58,6 +58,8 @@ changes = {
         'EffectDeckとの接続を解除': 'Sonance EQとの接続を解除',
         'もう一度EffectDeckに接続してください。':
             'もう一度Sonance EQに接続してください。',
+        'static let linkLabel = (en: "Details (GitHub)", ja: "詳細（GitHub・英語）")':
+            'static let linkLabel = (en: "Reference", ja: "参考情報")',
         '                        why: "YouTubeの再生状態によっては、iOSがSonance EQとの接続を解除することがあります。")),\n    ]\n}':
             '                        why: "YouTubeの再生状態によっては、iOSがSonance EQとの接続を解除することがあります。")),\n'
             '        ETTip(issue: 5,\n'
