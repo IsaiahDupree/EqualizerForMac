@@ -68,16 +68,17 @@ AVSystemRouting API before iOS can send its audio to this route. The supplied
 SoundCloud screenshot shows the player rejecting “EffectDeck Audio” and leaving
 the output on iPhone Speaker while CarPlay is available. That source-app refusal
 is outside Sonance EQ's control; the extension cannot identify or override an
-app that never starts a route session. The host UI source now explains this
-when no audio is arriving. It also shows the current output route reported by
-Sonance EQ. If AVAudioSession reports the built-in speaker or car audio while
-no source is connected, the banner marks “Audio route fallback detected” and
-names the current output. Re-select Sonance EQ in Control Center and resume
-playback. If the player explicitly rejects the route, use CarPlay directly or
-a source player that supports the Sonance EQ route. iOS does not expose a way
-for Sonance EQ to force-select the route or make an incompatible source stream.
-This diagnosis is source-level until the changed host is built and observed on
-the iPhone; it does not mean the route is installed or SoundCloud is supported.
+app that never starts a route session. The host UI source now shows its current
+output and the last observed AVAudioSession output transition while no source
+audio is reaching the host. This records the route change and its system reason
+for diagnosis; it does not claim the source app's private rejection message is
+observable inside Sonance EQ. When the output is the built-in speaker or car
+audio, the banner names that route and explains how to reselect Sonance EQ. If
+SoundCloud explicitly rejects the route, use CarPlay directly or play a local
+file in Sonance EQ. iOS does not expose a way for Sonance EQ to force-select the
+route or make an incompatible source stream. This diagnosis is source-level
+until the changed host is built and observed on the iPhone; it does not mean the
+route is installed or SoundCloud is supported.
 
 Apple documents that source apps use `AVSystemRoute` to start playback and that
 the system delivers real-time samples only after a source app starts a route

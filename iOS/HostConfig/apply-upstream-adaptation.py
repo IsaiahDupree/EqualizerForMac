@@ -91,25 +91,26 @@ pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
 source = pipeline.read_text()
 insertions = {
     '    @State private var restartNeeded = false\n':
-    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n',
+    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n    @State private var lastRouteChange = ""\n',
     '            restartNeeded = io.restartNeeded\n':
-    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n',
+    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n            lastRouteChange = io.lastRouteChange\n',
     '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n':
     '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n'
     '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n'
-    '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
+    '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n'
+    '        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n',
     '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)':
-    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
+    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }\n                    if !lastRouteChange.isEmpty {\n                        Text("Last route change: \\(lastRouteChange)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
 }
 route_wiring = {
     'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })',
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })',
     'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })':
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })',
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })',
     '    let restartNeeded: Bool\n    let openTips: () -> Void':
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let openTips: () -> Void',
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
     '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void':
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let openTips: () -> Void',
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
 }
 for old, new in route_wiring.items():
     if new not in source and old in source:
@@ -117,6 +118,15 @@ for old, new in route_wiring.items():
 for new in set(route_wiring.values()):
     if new not in source:
         raise SystemExit(f"Expected route wiring missing: {pipeline}: {new}")
+
+source = source.replace(
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips:',
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips:',
+    1)
+source = source.replace(
+    '    let routeFallback: Bool\n    let openTips: () -> Void',
+    '    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
+    1)
 
 for old, new in insertions.items():
     if new not in source and old in source:
@@ -127,11 +137,11 @@ for old, new in insertions.items():
 # Make an observed return to the built-in speaker or car audio explicit. The
 # route picker itself remains owned by iOS Control Center; this is diagnosis,
 # not a private or silent route-selection attempt.
-if 'return routeFallback ? "Audio route fallback detected"' not in source:
+if 'return routeFallback ? "Output is on \\(currentRoute)"' not in source:
     source = source.replace(
         '        restartNeeded ? "\\(UIDevice.current.model) Restart Required" : "No audio yet"',
         '        if restartNeeded { return "\\(UIDevice.current.model) Restart Required" }\n'
-        '        return routeFallback ? "Audio route fallback detected" : "No audio yet"', 1)
+        '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
     old_instructions = (
         '        restartNeeded\n'
         '            ? "Restart once after this update, then pick EffectDeck in Control Center."\n'
@@ -150,7 +160,7 @@ if 'return routeFallback ? "Audio route fallback detected"' not in source:
         '            return "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n'
         '        }\n'
         '        if routeFallback {\n'
-        '            return "Sonance EQ detected audio routed to \\(currentRoute). Open Control Center, select Sonance EQ, then resume playback. If the player says this route is unsupported, use CarPlay directly or a compatible player."\n'
+        '            return "No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."\n'
         '        }\n'
         '        return "Pick Sonance EQ in Control Center. If the player says this route is unsupported, use CarPlay directly or a compatible player."')
     for old_instruction in old_instructions:
@@ -177,6 +187,21 @@ if "let nowRouteIsFallback" not in source:
         '            $0.portType == .builtInSpeaker || $0.portType == .carAudio\n'
         '        }\n'
         '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n', 1)
+if "@Published var lastRouteChange = \"\"" not in source:
+    source = source.replace(
+        '    @Published var routeFallback = false\n',
+        '    @Published var routeFallback = false\n'
+        '    /// Last AVAudioSession output transition observed while the source link is missing.\n'
+        '    @Published var lastRouteChange = ""\n', 1)
+if 'lastRouteChange = "\\(route) → \\(nowRoute) (reason \\(reason))"' not in source:
+    source = source.replace(
+        '        if route != nowRoute {\n',
+        '        if route != nowRoute {\n'
+        '            if reason != 99 && route != "—" {\n'
+        '                lastRouteChange = "\\(route) → \\(nowRoute) (reason \\(reason))"\n'
+        '            }\n', 1)
 if "@Published var routeFallback = false" not in source or "let nowRouteIsFallback" not in source:
     raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
+if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "\\(route)' not in source:
+    raise SystemExit(f"Expected route transition diagnostic missing: {audio_io}")
 audio_io.write_text(source)

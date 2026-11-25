@@ -5,11 +5,12 @@ iOS 27 cross-app product and has not been submitted or published.
 
 ## Route fallback diagnostic — 2026-11-25
 
-- The host source now classifies its current built-in speaker or car-audio route
-  as a fallback while the Media Device source link is disconnected. The “No
-  audio yet” card becomes “Audio route fallback detected,” names the route, and
-  directs the user to reselect Sonance EQ in Control Center. This is source
-  behavior only; the installed iPhone 15 remains on version 0.2.0 (7).
+- The host source now shows its current built-in speaker or car-audio output and
+  the last AVAudioSession output transition, including the system reason, while
+  no source audio is reaching the host. It names the current output and directs
+  the user to reselect Sonance EQ. It cannot read SoundCloud's in-app rejection
+  dialog or force an unsupported player onto the route. This is source behavior
+  only; the installed iPhone 15 remains on version 0.2.0 (7).
 - The latest phone build was stopped at Xcode's package-prebuild dependency
   graph before compilation. At that time the shared Mac showed an active storage
   cleanup with other builds paused. Retry after that cleanup frees the requested
