@@ -5,12 +5,11 @@ iOS 27 cross-app product and has not been submitted or published.
 
 ## Route diagnostic status — 2026-11-24
 
-- The host source now shows its current built-in speaker or car-audio output and
-  the last AVAudioSession output transition, including the system reason, while
-  no source audio is reaching the host. It names the current output and directs
-  the user to reselect Sonance EQ. It cannot read SoundCloud's in-app rejection
-  dialog or force an unsupported player onto the route. This is host behavior;
-  SoundCloud must support the route itself for its audio to reach the extension.
+- The host tracks route transitions, translates common system reasons, and
+  raises an “Audio route keeps changing” warning after three or more changes
+  within 30 seconds. The warning expires as the window rolls forward. It cannot
+  read SoundCloud's rejection dialog or force an unsupported player onto the
+  route.
 
 ## Route diagnostics build and iPhone install — 2026-11-24
 
@@ -31,6 +30,32 @@ iOS 27 cross-app product and has not been submitted or published.
   volume. The system volume remains low on free space. The separate Media Device
   route companion was not built or installed; its entitlement/profile remains
   unavailable.
+
+## Latest route-flap build and install — 2026-11-24
+
+- Version 0.2.0 (build 8) compiled, signed, installed and launched on the exact
+  iPhone 15 UDID `00008120-000465A20C52201E`. `devicectl` reports the installed
+  host as `com.isaiahdupree.SonanceEQ.iOSPrototype`, version 0.2.0, build 8.
+- Build log:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+  A device screenshot was captured at
+  `/Volumes/SonanceEQBuildScratch/SonanceEQ-iPhone15-route-flap-build8.png`, but
+  TikTok was in the foreground, so it does not verify the Sonance EQ warning UI.
+- The route-flap code compiled, but the real car/CarPlay switching sequence has
+  not been reproduced on device. SoundCloud's explicit unsupported-route alert
+  remains a source-app limitation.
+
+## Route-flap detection revision — 2026-11-24
+
+- The route observer keeps a rolling 30-second window, shows plain-language
+  transition reasons, and raises a warning after three or more output changes.
+  The warning clears as those transitions age out. It never forces a route.
+- The SoundCloud screenshot explicitly says it does not support “EffectDeck
+  Audio.” Apple documents that source apps use AVSystemRouting to start playback
+  on Media Device routes; Sonance EQ cannot make a nonparticipating source
+  stream or read its private rejection dialog.
+- This revision is included in installed version 0.2.0 (build 8). Physical
+  CarPlay/Bluetooth route-bounce verification remains pending.
 
 ## Current iOS build and install — 2026-11-24
 

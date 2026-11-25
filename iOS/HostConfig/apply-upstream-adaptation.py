@@ -24,11 +24,11 @@ changes = {
     },
     root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
         'Image(systemName: restartNeeded ? "exclamationmark.triangle.fill" : "airplayaudio")':
-        'Image(systemName: (restartNeeded || routeFallback) ? "exclamationmark.triangle.fill" : "airplayaudio")',
+        'Image(systemName: (restartNeeded || routeFallback || routeChangeBurst) ? "exclamationmark.triangle.fill" : "airplayaudio")',
         '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : AnyShapeStyle(.tint))':
-        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : routeFallback ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint))',
+        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : (routeFallback || routeChangeBurst) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint))',
         '.foregroundStyle(restartNeeded ? Color.red : Color.primary)':
-        '.foregroundStyle(restartNeeded ? Color.red : routeFallback ? Color.orange : Color.primary)',
+        '.foregroundStyle(restartNeeded ? Color.red : (routeFallback || routeChangeBurst) ? Color.orange : Color.primary)',
     },
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
@@ -101,6 +101,10 @@ if '@State private var lastRouteChange = ""' not in source:
     source = source.replace(
         '    @State private var routeFallback = false\n',
         '    @State private var routeFallback = false\n    @State private var lastRouteChange = ""\n', 1)
+if '@State private var routeChangeBurst = false' not in source:
+    source = source.replace(
+        '    @State private var lastRouteChange = ""\n',
+        '    @State private var lastRouteChange = ""\n    @State private var routeChangeBurst = false\n', 1)
 
 if 'outputRoute = io.outputRoute' not in source:
     source = source.replace('            restartNeeded = io.restartNeeded\n',
@@ -111,6 +115,9 @@ if 'routeFallback = io.routeFallback' not in source:
 if 'lastRouteChange = io.lastRouteChange' not in source:
     source = source.replace('            routeFallback = io.routeFallback\n',
                             '            routeFallback = io.routeFallback\n            lastRouteChange = io.lastRouteChange\n', 1)
+if 'routeChangeBurst = io.routeChangeBurst' not in source:
+    source = source.replace('            lastRouteChange = io.lastRouteChange\n',
+                            '            lastRouteChange = io.lastRouteChange\n            routeChangeBurst = io.routeChangeBurst\n', 1)
 
 if '.onReceive(io.$outputRoute)' not in source:
     source = source.replace('        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n',
@@ -121,11 +128,15 @@ if '.onReceive(io.$routeFallback)' not in source:
 if '.onReceive(io.$lastRouteChange)' not in source:
     source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
                             '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n', 1)
+if '.onReceive(io.$routeChangeBurst)' not in source:
+    source = source.replace('        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n',
+                            '        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n        .onReceive(io.$routeChangeBurst) { routeChangeBurst = $0 }\n', 1)
 
-banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
+banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })', banner_call)
+source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })', banner_call)
 if banner_call not in source:
     raise SystemExit(f"Expected route-aware banner call missing: {pipeline}")
 
@@ -138,6 +149,9 @@ if '    let routeFallback: Bool' not in source:
 if '    let lastRouteChange: String' not in source:
     source = source.replace('    let routeFallback: Bool\n',
                             '    let routeFallback: Bool\n    let lastRouteChange: String\n', 1)
+if '    let routeChangeBurst: Bool' not in source:
+    source = source.replace('    let routeFallback: Bool\n',
+                            '    let routeFallback: Bool\n    let routeChangeBurst: Bool\n', 1)
 if 'Text("Current output seen by Sonance EQ:' not in source:
     needle = ('                    Text(instruction)\n'
               '                        .etFont(size: 12)\n'
@@ -178,6 +192,15 @@ if 'return routeFallback ? "Output is on \\(currentRoute)"' not in source:
         '        restartNeeded ? "\\(UIDevice.current.model) Restart Required" : "No audio yet"',
         '        if restartNeeded { return "\\(UIDevice.current.model) Restart Required" }\n'
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
+if 'if routeChangeBurst { return "Audio route keeps changing" }' not in source:
+    source = source.replace(
+        '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"',
+        '        if routeChangeBurst { return "Audio route keeps changing" }\n'
+        '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
+if 'else if !hasPeer || routeChangeBurst {' not in source:
+    source = source.replace(
+        '            } else if !hasPeer {\n                ConnectBanner(',
+        '            } else if !hasPeer || routeChangeBurst {\n                ConnectBanner(', 1)
     old_instructions = (
         '        restartNeeded\n'
         '            ? "Restart once after this update, then pick EffectDeck in Control Center."\n'
@@ -205,6 +228,15 @@ if 'return routeFallback ? "Output is on \\(currentRoute)"' not in source:
             break
     if 'if routeFallback {' not in source:
         raise SystemExit(f"Could not install route fallback diagnosis in {pipeline}")
+if 'if routeChangeBurst {' not in source:
+    source = source.replace(
+        '        if routeFallback {\n',
+        '        if routeChangeBurst {\n'
+        '            return "iOS changed the audio route several times in 30 seconds. The last change was: \\(lastRouteChange). Select Sonance EQ once in Control Center. If the player says this route is unsupported, it cannot send audio to Sonance EQ; use CarPlay directly or play a local file in Sonance EQ."\n'
+        '        }\n'
+        '        if routeFallback {\n', 1)
+    if 'return "iOS changed the audio route several times in 30 seconds.' not in source:
+        raise SystemExit(f"Could not install route burst explanation in {pipeline}")
 pipeline.write_text(source)
 
 audio_io = root / "Sources/EffeTuneLive/Audio/AudioIO.swift"
@@ -229,15 +261,54 @@ if "@Published var lastRouteChange = \"\"" not in source:
         '    @Published var routeFallback = false\n'
         '    /// Last AVAudioSession output transition observed while the source link is missing.\n'
         '    @Published var lastRouteChange = ""\n', 1)
-if 'lastRouteChange = "\\(route) → \\(nowRoute) (reason \\(reason))"' not in source:
+if "@Published var routeChangeBurst = false" not in source:
+    source = source.replace(
+        '    @Published var lastRouteChange = ""\n',
+        '    @Published var lastRouteChange = ""\n'
+        '    /// True after at least three route transitions arrive within 30 seconds.\n'
+        '    @Published var routeChangeBurst = false\n'
+        '    private var routeChangeTimes: [TimeInterval] = []\n', 1)
+if 'static func routeChangeReasonName' not in source:
+    source = source.replace(
+        '    /// 出力先の見直し。route / outputRoute / loopback は同じ 1 回の問い合わせから作る。\n',
+        '    private static func routeChangeReasonName(_ reason: UInt) -> String {\n'
+        '        switch reason {\n'
+        '        case 0: return "unknown reason"\n'
+        '        case 1: return "new device available"\n'
+        '        case 2: return "old device unavailable"\n'
+        '        case 3: return "audio category changed"\n'
+        '        case 4: return "output override"\n'
+        '        case 6: return "wake from sleep"\n'
+        '        case 7: return "no suitable route"\n'
+        '        case 8: return "route configuration changed"\n'
+        '        default: return "system reason \\(reason)"\n'
+        '        }\n'
+        '    }\n\n'
+        '    /// 出力先の見直し。route / outputRoute / loopback は同じ 1 回の問い合わせから作る。\n', 1)
+if 'routeChangeTimes = routeChangeTimes.filter' not in source:
     source = source.replace(
         '        if route != nowRoute {\n',
         '        if route != nowRoute {\n'
         '            if reason != 99 && route != "—" {\n'
-        '                lastRouteChange = "\\(route) → \\(nowRoute) (reason \\(reason))"\n'
+        '                let now = ProcessInfo.processInfo.systemUptime\n'
+        '                routeChangeTimes = routeChangeTimes.filter { now - $0 <= 30 }\n'
+        '                routeChangeTimes.append(now)\n'
+        '                routeChangeBurst = routeChangeTimes.count >= 3\n'
+        '                let reasonName = Self.routeChangeReasonName(reason)\n'
+        '                lastRouteChange = "\\(route) → \\(nowRoute) (\\(reasonName))"\n'
         '            }\n', 1)
+if 'let currentUptime = ProcessInfo.processInfo.systemUptime' not in source:
+    source = source.replace(
+        '        let nowOutput = names.isEmpty ? "—" : names\n',
+        '        let currentUptime = ProcessInfo.processInfo.systemUptime\n'
+        '        routeChangeTimes = routeChangeTimes.filter { currentUptime - $0 <= 30 }\n'
+        '        let recentRouteChanges = routeChangeTimes.count >= 3\n'
+        '        if routeChangeBurst != recentRouteChanges { routeChangeBurst = recentRouteChanges }\n'
+        '        let nowOutput = names.isEmpty ? "—" : names\n', 1)
 if "@Published var routeFallback = false" not in source or "let nowRouteIsFallback" not in source:
     raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
 if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "\\(route)' not in source:
     raise SystemExit(f"Expected route transition diagnostic missing: {audio_io}")
+if "@Published var routeChangeBurst = false" not in source or 'routeChangeTimes.count >= 3' not in source:
+    raise SystemExit(f"Expected route flap detector missing: {audio_io}")
 audio_io.write_text(source)
