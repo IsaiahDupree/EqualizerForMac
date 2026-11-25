@@ -18,15 +18,15 @@ changes = {
     },
     root / "Sources/EffeTuneLive/Views/StatusReadings.swift": {
         'return "Pick EffectDeck as the output in Control Center."':
-        'return "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'return "No audio is reaching Sonance EQ. If the player says it does not support Sonance EQ Audio, it cannot send audio to this route. Choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
         'return "Pick Sonance EQ as the output in Control Center."':
-        'return "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'return "No audio is reaching Sonance EQ. If the player says it does not support Sonance EQ Audio, it cannot send audio to this route. Choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
     },
     root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
         'restartNeeded\n            ? "Restart once after this update, then pick EffectDeck in Control Center."\n            : "Pick EffectDeck as the output in Control Center."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
         'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed."',
+        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
     },
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
@@ -58,6 +58,16 @@ changes = {
         'EffectDeckとの接続を解除': 'Sonance EQとの接続を解除',
         'もう一度EffectDeckに接続してください。':
             'もう一度Sonance EQに接続してください。',
+        '                        why: "YouTubeの再生状態によっては、iOSがSonance EQとの接続を解除することがあります。")),\n    ]\n}':
+            '                        why: "YouTubeの再生状態によっては、iOSがSonance EQとの接続を解除することがあります。")),\n'
+            '        ETTip(issue: 5,\n'
+            '              en: .init(title: "A player says it does not support Sonance EQ Audio",\n'
+            '                        act: "Choose CarPlay directly to restore car audio, or play a local file in Sonance EQ. For streaming audio, use a player that supports the Sonance EQ route.",\n'
+            '                        why: "The player must opt in to Apple\'s AVSystemRouting API before iOS can send its audio to this route. Sonance EQ cannot make an unsupported player stream, so iOS may return playback to iPhone or CarPlay."),\n'
+            '              ja: .init(title: "プレイヤーに「Sonance EQ Audioはサポートされていません」と表示される",\n'
+            '                        act: "車の音声を戻すにはCarPlayを直接選ぶか、Sonance EQでローカルファイルを再生してください。ストリーミング音声は、Sonance EQルートに対応したプレイヤーをお使いください。",\n'
+            '                        why: "iOSがこのルートへ音声を送るには、プレイヤー側がAppleのAVSystemRouting APIに対応している必要があります。非対応のプレイヤーからSonance EQが音声を取り出すことはできないため、iOSがiPhoneやCarPlayへ戻す場合があります。"),\n'
+            '              referenceURL: URL(string: "https://developer.apple.com/documentation/MediaDevice/creating-a-media-device-extension")),\n    ]\n}',
     },
 }
 for path, replacements in changes.items():

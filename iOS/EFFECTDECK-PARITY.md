@@ -61,6 +61,23 @@ or games, per-app routing, or a proven Bluetooth return path. System routing,
 standalone file playback and compatible-host AUv3 use are separate audio paths
 and need separate evidence.
 
+### Source-player compatibility and CarPlay fallback
+
+The Media Device route is opt-in per source app: a player must use Apple's
+AVSystemRouting API before iOS can send its audio to this route. The supplied
+SoundCloud screenshot shows the player rejecting “EffectDeck Audio” and leaving
+the output on iPhone Speaker while CarPlay is available. That source-app refusal
+is outside Sonance EQ's control; the extension cannot identify or override an
+app that never starts a route session. The host UI source now explains this
+when no audio is arriving and its Help page gives recovery steps: select CarPlay directly, or
+play a local file in Sonance EQ. For streaming audio, use a source player that
+supports the Sonance EQ route. This guidance does not mean the route is already
+installed or that SoundCloud support has been verified.
+
+Apple documents that source apps use `AVSystemRoute` to start playback and that
+the system delivers real-time samples only after a source app starts a route
+session: [Creating a Media Device Extension](https://developer.apple.com/documentation/MediaDevice/creating-a-media-device-extension).
+
 ## Build and next validation
 
 Regenerate the host project from its tracked spec:
