@@ -89,50 +89,86 @@ for path, replacements in changes.items():
 # with a unique new-source marker to make repeated project generation safe.
 pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
 source = pipeline.read_text()
-insertions = {
-    '    @State private var restartNeeded = false\n':
-    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n    @State private var lastRouteChange = ""\n',
-    '            restartNeeded = io.restartNeeded\n':
-    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n            lastRouteChange = io.lastRouteChange\n',
-    '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n':
-    '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n'
-    '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n'
-    '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n'
-    '        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n',
-    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)':
-    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }\n                    if !lastRouteChange.isEmpty {\n                        Text("Last route change: \\(lastRouteChange)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
-}
-route_wiring = {
-    'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })',
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })':
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })',
-    '    let restartNeeded: Bool\n    let openTips: () -> Void':
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void':
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
-}
-for old, new in route_wiring.items():
-    if new not in source and old in source:
-        source = source.replace(old, new, 1)
-for new in set(route_wiring.values()):
-    if new not in source:
-        raise SystemExit(f"Expected route wiring missing: {pipeline}: {new}")
+if '@State private var outputRoute = "—"' not in source:
+    source = source.replace(
+        '    @State private var restartNeeded = false\n',
+        '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n', 1)
+if '@State private var routeFallback = false' not in source:
+    source = source.replace(
+        '    @State private var outputRoute = "—"\n',
+        '    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n', 1)
+if '@State private var lastRouteChange = ""' not in source:
+    source = source.replace(
+        '    @State private var routeFallback = false\n',
+        '    @State private var routeFallback = false\n    @State private var lastRouteChange = ""\n', 1)
 
-source = source.replace(
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips:',
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips:',
-    1)
-source = source.replace(
-    '    let routeFallback: Bool\n    let openTips: () -> Void',
-    '    let routeFallback: Bool\n    let lastRouteChange: String\n    let openTips: () -> Void',
-    1)
+if 'outputRoute = io.outputRoute' not in source:
+    source = source.replace('            restartNeeded = io.restartNeeded\n',
+                            '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n', 1)
+if 'routeFallback = io.routeFallback' not in source:
+    source = source.replace('            outputRoute = io.outputRoute\n',
+                            '            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n', 1)
+if 'lastRouteChange = io.lastRouteChange' not in source:
+    source = source.replace('            routeFallback = io.routeFallback\n',
+                            '            routeFallback = io.routeFallback\n            lastRouteChange = io.lastRouteChange\n', 1)
 
-for old, new in insertions.items():
-    if new not in source and old in source:
-        source = source.replace(old, new, 1)
-    if new not in source:
-        raise SystemExit(f"Expected route status adaptation missing: {pipeline}: {new}")
+if '.onReceive(io.$outputRoute)' not in source:
+    source = source.replace('        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n',
+                            '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n        .onReceive(io.$outputRoute) { outputRoute = $0 }\n', 1)
+if '.onReceive(io.$routeFallback)' not in source:
+    source = source.replace('        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
+                            '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n        .onReceive(io.$routeFallback) { routeFallback = $0 }\n', 1)
+if '.onReceive(io.$lastRouteChange)' not in source:
+    source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
+                            '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n', 1)
+
+banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
+source = source.replace('ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })', banner_call)
+source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })', banner_call)
+source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })', banner_call)
+if banner_call not in source:
+    raise SystemExit(f"Expected route-aware banner call missing: {pipeline}")
+
+if '    let currentRoute: String' not in source:
+    source = source.replace('    let restartNeeded: Bool\n',
+                            '    let restartNeeded: Bool\n    let currentRoute: String\n', 1)
+if '    let routeFallback: Bool' not in source:
+    source = source.replace('    let currentRoute: String\n',
+                            '    let currentRoute: String\n    let routeFallback: Bool\n', 1)
+if '    let lastRouteChange: String' not in source:
+    source = source.replace('    let routeFallback: Bool\n',
+                            '    let routeFallback: Bool\n    let lastRouteChange: String\n', 1)
+if 'Text("Current output seen by Sonance EQ:' not in source:
+    needle = ('                    Text(instruction)\n'
+              '                        .etFont(size: 12)\n'
+              '                        .foregroundStyle(.secondary)\n'
+              '                        .fixedSize(horizontal: false, vertical: true)')
+    addition = (needle + '\n'
+                '                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n'
+                '                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n'
+                '                            .etFont(size: 11)\n'
+                '                            .foregroundStyle(.secondary)\n'
+                '                            .fixedSize(horizontal: false, vertical: true)\n'
+                '                    }')
+    if needle not in source:
+        raise SystemExit(f"Expected route status insertion point missing: {pipeline}")
+    source = source.replace(needle, addition, 1)
+if 'Text("Last route change:' not in source:
+    needle = ('                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n'
+              '                            .etFont(size: 11)\n'
+              '                            .foregroundStyle(.secondary)\n'
+              '                            .fixedSize(horizontal: false, vertical: true)\n'
+              '                    }')
+    addition = (needle + '\n'
+                '                    if !lastRouteChange.isEmpty {\n'
+                '                        Text("Last route change: \\(lastRouteChange)")\n'
+                '                            .etFont(size: 11)\n'
+                '                            .foregroundStyle(.secondary)\n'
+                '                            .fixedSize(horizontal: false, vertical: true)\n'
+                '                    }')
+    if needle not in source:
+        raise SystemExit(f"Expected route transition insertion point missing: {pipeline}")
+    source = source.replace(needle, addition, 1)
 
 # Make an observed return to the built-in speaker or car audio explicit. The
 # route picker itself remains owned by iOS Control Center; this is diagnosis,

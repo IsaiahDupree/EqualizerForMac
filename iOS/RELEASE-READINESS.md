@@ -3,18 +3,34 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
-## Route fallback diagnostic — 2026-11-25
+## Route diagnostic status — 2026-11-24
 
 - The host source now shows its current built-in speaker or car-audio output and
   the last AVAudioSession output transition, including the system reason, while
   no source audio is reaching the host. It names the current output and directs
   the user to reselect Sonance EQ. It cannot read SoundCloud's in-app rejection
-  dialog or force an unsupported player onto the route. This is source behavior
-  only; the installed iPhone 15 remains on version 0.2.0 (7).
-- The latest phone build was stopped at Xcode's package-prebuild dependency
-  graph before compilation. At that time the shared Mac showed an active storage
-  cleanup with other builds paused. Retry after that cleanup frees the requested
-  disk space; the route diagnostic has not been compiled or installed.
+  dialog or force an unsupported player onto the route. This is host behavior;
+  SoundCloud must support the route itself for its audio to reach the extension.
+
+## Route diagnostics build and iPhone install — 2026-11-24
+
+- Fixed the upstream adaptation so route state, observer, and banner fields are
+  each inserted once even after repeated project generation. The first device
+  build exposed duplicate `@State` declarations; the clean regeneration and
+  rebuild succeeded.
+- Xcode 27.2 built and signed the full host and embedded extensions for the
+  exact iPhone 15 UDID `00008120-000465A20C52201E`, then `devicectl` installed
+  and launched `com.isaiahdupree.SonanceEQ.iOSPrototype`. `devicectl` reports
+  version 0.2.0 (7). Build log:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+- A current device screenshot is retained at
+  `/Volumes/SonanceEQBuildScratch/SonanceEQ-iPhone15-latest.png`. It shows the
+  Sonance EQ host running; a YouTube picture-in-picture overlay covers part of
+  the no-audio banner. No playback or Bluetooth continuity pass is claimed.
+- The build used two Xcode jobs and kept DerivedData on the separate scratch
+  volume. The system volume remains low on free space. The separate Media Device
+  route companion was not built or installed; its entitlement/profile remains
+  unavailable.
 
 ## Current iOS build and install — 2026-11-24
 

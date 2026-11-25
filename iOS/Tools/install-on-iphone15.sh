@@ -11,6 +11,7 @@ ROUTE_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 HOST_PROJECT="${PROJECT_ROOT}/iOS/Vendor/EffectDeck/SonanceEQHost.xcodeproj"
 CONFIGURATION="${SONANCE_BUILD_CONFIGURATION:-Debug}"
+BUILD_JOBS="${SONANCE_BUILD_JOBS:-2}"
 DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceDerivedData}"
 LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall}"
 HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQHost.app"
@@ -20,6 +21,11 @@ SIGNING_SETTINGS=("DEVELOPMENT_TEAM=${TEAM_ID}" "CODE_SIGN_STYLE=Automatic")
 
 if [[ "${INSTALL_ROUTE_COMPANION}" != "0" && "${INSTALL_ROUTE_COMPANION}" != "1" ]]; then
     echo "SONANCE_INSTALL_ROUTE_COMPANION must be 0 or 1." >&2
+    exit 2
+fi
+
+if [[ ! "${BUILD_JOBS}" =~ ^[1-4]$ ]]; then
+    echo "SONANCE_BUILD_JOBS must be an integer from 1 to 4." >&2
     exit 2
 fi
 
@@ -88,6 +94,7 @@ build_scheme() {
         -configuration "${CONFIGURATION}"
         -destination "platform=iOS,id=${DEVICE_ID}"
         -derivedDataPath "${DERIVED_DATA}"
+        -jobs "${BUILD_JOBS}"
         -allowProvisioningUpdates
     )
     if [[ "${AUTH_SET:-0}" -eq 3 ]]; then

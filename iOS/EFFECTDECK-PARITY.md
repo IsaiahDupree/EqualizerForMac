@@ -68,7 +68,7 @@ AVSystemRouting API before iOS can send its audio to this route. The supplied
 SoundCloud screenshot shows the player rejecting “EffectDeck Audio” and leaving
 the output on iPhone Speaker while CarPlay is available. That source-app refusal
 is outside Sonance EQ's control; the extension cannot identify or override an
-app that never starts a route session. The host UI source now shows its current
+app that never starts a route session. The host UI shows its current
 output and the last observed AVAudioSession output transition while no source
 audio is reaching the host. This records the route change and its system reason
 for diagnosis; it does not claim the source app's private rejection message is
@@ -76,9 +76,12 @@ observable inside Sonance EQ. When the output is the built-in speaker or car
 audio, the banner names that route and explains how to reselect Sonance EQ. If
 SoundCloud explicitly rejects the route, use CarPlay directly or play a local
 file in Sonance EQ. iOS does not expose a way for Sonance EQ to force-select the
-route or make an incompatible source stream. This diagnosis is source-level
-until the changed host is built and observed on the iPhone; it does not mean the
-route is installed or SoundCloud is supported.
+route or make an incompatible source stream. The updated host has been built
+and installed on iPhone 15 (version 0.2.0, build 7), and a device screenshot
+confirms the host is running. A YouTube picture-in-picture window obscured part
+of the diagnostic banner, so the route-transition text itself has not yet been
+visually verified. This install does not mean the route companion is installed
+or SoundCloud is supported.
 
 Apple documents that source apps use `AVSystemRoute` to start playback and that
 the system delivers real-time samples only after a source app starts a route
