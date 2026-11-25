@@ -22,7 +22,14 @@ changes = {
         'return "Pick Sonance EQ as the output in Control Center."':
         'return "No audio is reaching Sonance EQ. If the player says it does not support Sonance EQ Audio, it cannot send audio to this route. Choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
     },
-    root / "Sources/EffeTuneLive/Views/PipelineView.swift": {},
+    root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
+        'Image(systemName: restartNeeded ? "exclamationmark.triangle.fill" : "airplayaudio")':
+        'Image(systemName: (restartNeeded || routeFallback) ? "exclamationmark.triangle.fill" : "airplayaudio")',
+        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : AnyShapeStyle(.tint))':
+        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : routeFallback ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint))',
+        '.foregroundStyle(restartNeeded ? Color.red : Color.primary)':
+        '.foregroundStyle(restartNeeded ? Color.red : routeFallback ? Color.orange : Color.primary)',
+    },
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
         'let kProtocolID = "media-device-protocol.com.isaiahdupree.SonanceEQ.iOSPrototype"',
