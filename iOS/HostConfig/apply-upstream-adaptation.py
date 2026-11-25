@@ -380,6 +380,63 @@ if 'let currentUptime = ProcessInfo.processInfo.systemUptime' not in source:
         '        let recentRouteChanges = routeChangeTimes.count >= 3\n'
         '        if routeChangeBurst != recentRouteChanges { routeChangeBurst = recentRouteChanges }\n'
         '        let nowOutput = names.isEmpty ? "—" : names\n', 1)
+# Identify route endpoints by port type and UID, not just the localized port
+# name. Also use the previousRoute snapshot from the notification: the regular
+# route refresh can observe a change before the notification handler runs.
+if 'private var lastRouteIdentity = ""' not in source:
+    source = source.replace(
+        '    private var routeChangeTimes: [TimeInterval] = []\n',
+        '    private var routeChangeTimes: [TimeInterval] = []\n'
+        '    /// Names are for display; UIDs and port types identify actual route endpoints.\n'
+        '    private var lastRouteIdentity = ""\n', 1)
+if 'previousIdentity: String?' not in source:
+    source = source.replace(
+        '                let reason = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 99\n'
+        '                Task { @MainActor in self?.refreshRoute(reason: reason) }',
+        '                let reason = note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 99\n'
+        '                let previousRoute = note.userInfo?[AVAudioSessionRouteChangePreviousRouteKey]\n'
+        '                    as? AVAudioSessionRouteDescription\n'
+        '                let previousIdentity = previousRoute?.outputs\n'
+        '                    .map { "\\($0.portType.rawValue):\\($0.uid)" }\n'
+        '                    .joined(separator: "|")\n'
+        '                Task { @MainActor in\n'
+        '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity)\n'
+        '                }', 1)
+source = source.replace(
+    '    private func refreshRoute(reason: UInt = 99) {',
+    '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil) {', 1)
+if 'let identity = outs.map' not in source:
+    source = source.replace(
+        '        let names = outs.map(\\.portName).joined(separator: ", ")\n',
+        '        let names = outs.map(\\.portName).joined(separator: ", ")\n'
+        '        let identity = outs.map { "\\($0.portType.rawValue):\\($0.uid)" }.joined(separator: "|")\n', 1)
+old_route_change_block = (
+    '        if route != nowRoute {\n'
+    '            if reason != 99 && route != "—" {\n'
+    '                let now = ProcessInfo.processInfo.systemUptime\n'
+    '                routeChangeTimes = routeChangeTimes.filter { now - $0 <= 30 }\n'
+    '                routeChangeTimes.append(now)\n'
+    '                routeChangeBurst = routeChangeTimes.count >= 3\n'
+    '                let reasonName = Self.routeChangeReasonName(reason)\n'
+    '                lastRouteChange = "\\(route) → \\(nowRoute) (\\(reasonName))"\n'
+    '            }\n')
+new_route_change_block = (
+    '        let changedByNotification = previousIdentity.map { $0 != identity }\n'
+    '            ?? (!lastRouteIdentity.isEmpty && identity != lastRouteIdentity)\n'
+    '        if reason != 99 && changedByNotification {\n'
+    '            let now = ProcessInfo.processInfo.systemUptime\n'
+    '            routeChangeTimes = routeChangeTimes.filter { now - $0 <= 30 }\n'
+    '            routeChangeTimes.append(now)\n'
+    '            routeChangeBurst = routeChangeTimes.count >= 3\n'
+    '            let reasonName = Self.routeChangeReasonName(reason)\n'
+    '            lastRouteChange = "\\(route) → \\(nowRoute) (\\(reasonName))"\n'
+    '        }\n'
+    '        if identity != lastRouteIdentity || route != nowRoute {\n')
+if old_route_change_block in source:
+    source = source.replace(old_route_change_block, new_route_change_block, 1)
+if 'lastRouteIdentity = identity' not in source:
+    source = source.replace('            route = nowRoute\n',
+                            '            route = nowRoute\n            lastRouteIdentity = identity\n', 1)
 if "@Published var routeFallback = false" not in source or "let nowRouteIsFallback" not in source:
     raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
 if "@Published var carAudioActive = false" not in source or "let nowRouteIsCarAudio" not in source:

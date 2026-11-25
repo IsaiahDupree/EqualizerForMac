@@ -10,7 +10,7 @@ EffectDeck workflows available inside Sonance EQ while retaining Sonance's
 
 | EffectDeck workflow | In the Sonance iOS source | Build / device evidence |
 | --- | --- | --- |
-| Ordered effects chain | Add, remove, reorder, collapse, bypass and persist chain stages; chain enable, I/O and latency indicators | Combined host 0.2.0 build 10 installed and launched on iPhone 15. Interaction and audio processing still need device validation. |
+| Ordered effects chain | Add, remove, reorder, collapse, bypass and persist chain stages; chain enable, I/O and latency indicators | Combined host 0.2.0 build 11 installed and launched on iPhone 15. Interaction and audio processing still need device validation. |
 | Effects, plug-ins and presets browser | Searchable Effects / Plugins / Presets tabs; categories; built-in effects and analyzers; installed AUv3 discovery and editors; system, user and effect presets | Included in generated `EffeTuneLive` target and signed. Device behavior remains unverified. |
 | Signal routing | Routing screen shows each stage's input/output buses and channel mode; stage channel maps and multichannel processing are part of the host | Included and signed. Stage routing has not yet been exercised on device. |
 | Import, export and sharing | Clipboard chain replacement, share links, chain and preset import/export, share extension and import inbox | Host and Share extension are signed with `group.com.isaiahdupree.SonanceEQ`; host launch is verified. Share-container workflows remain unverified. |
@@ -24,13 +24,14 @@ EffectDeck workflows available inside Sonance EQ while retaining Sonance's
 
 The screenshots' routing screen and the Effects / Plugins / Presets browser are
 implemented in the host source. The latest combined host is version 0.2.0
-(build 10). On 2026-11-25, Xcode built and signed the full host and embedded
+(build 11). On 2026-11-25, Xcode built and signed the full host and embedded
 extensions for arm64 iPhoneOS. The host and Share extension contain the
-expected Sonance App Group entitlement. Build 10 is installed and launched on
+expected Sonance App Group entitlement. Build 11 is installed and launched on
 iPhone 15 UDID `00008120-000465A20C52201E`; `devicectl` confirms version 0.2.0,
-build 10. The host now distinguishes a changing route, iPhone Speaker fallback,
-and direct car-audio output in its status banner. In-app routing interaction,
-audio processing and physical CarPlay/Bluetooth behavior remain unverified.
+build 11. The host distinguishes a changing route, iPhone Speaker fallback,
+and direct car-audio output in its status banner. Route changes are compared
+using endpoint UID and port type. In-app routing interaction, audio processing
+and physical CarPlay/Bluetooth behavior remain unverified.
 
 ## Apple route architecture and limits
 
@@ -79,7 +80,7 @@ SoundCloud explicitly rejects the route, use CarPlay directly or play a local
 file in Sonance EQ. iOS does not expose a way for Sonance EQ to force-select the
 route or make an incompatible source stream. The host now detects three or more
 route changes in a rolling 30-second window, reports readable transition
-reasons, and expires the warning as the window ages. Version 0.2.0 (build 10)
+reasons, and expires the warning as the window ages. Version 0.2.0 (build 11)
 contains the route-status correction. The route companion is
 not installed, and physical route-bounce verification remains pending. This
 does not mean SoundCloud is supported.

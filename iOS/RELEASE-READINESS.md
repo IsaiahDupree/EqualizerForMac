@@ -11,6 +11,21 @@ iOS 27 cross-app product and has not been submitted or published.
   read SoundCloud's rejection dialog or force an unsupported player onto the
   route.
 
+## Route endpoint detection — 2026-11-25
+
+- Route changes are now compared by port type and endpoint UID, using the
+  `previousRoute` snapshot delivered with iOS route-change notifications. This
+  catches transitions where two endpoints share a display name or a periodic
+  refresh observes the new route before the notification handler runs.
+- Xcode 27.2 built and signed version 0.2.0 (build 11), then installed and
+  launched it on iPhone 15 UDID `00008120-000465A20C52201E`.
+- Build log: `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+- This confirms compilation and installation. The reported CarPlay/SoundCloud
+  switching sequence has not been reproduced in the car. The app cannot
+  observe SoundCloud's private rejection dialog or force its audio onto an
+  unsupported route; direct CarPlay output or a compatible player is the
+  available fallback.
+
 ## Route diagnostics build and iPhone install — 2026-11-24
 
 - Fixed the upstream adaptation so route state, observer, and banner fields are
