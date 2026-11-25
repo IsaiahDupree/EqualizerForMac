@@ -41,6 +41,19 @@ iOS 27 cross-app product and has not been submitted or published.
   as 0.2.0 (13). Build log: `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
 - The actual CarPlay route notification still needs a physical run in the car.
 
+## Route transition attribution — 2026-11-25
+
+- The route-change banner now labels the transition using the previous route
+  captured in Apple's notification. A periodic status refresh can update the
+  current route before the notification handler runs; using the current cached
+  label in that case produced misleading entries such as “CarPlay → CarPlay.”
+- This improves detection and troubleshooting for EQ-to-CarPlay or EQ-to-speaker
+  fallback. It does not make SoundCloud support the Media Device route or let
+  Sonance EQ override iOS route selection.
+- The combined host builds successfully with the fix. Physical CarPlay behavior
+  and SoundCloud playback remain unverified; they require reproducing the route
+  transition in the car.
+
 ## Route diagnostics build and iPhone install — 2026-11-24
 
 - Fixed the upstream adaptation so route state, observer, and banner fields are

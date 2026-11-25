@@ -122,6 +122,9 @@ if 'previousWasOwnDevice: Bool' not in audio_source:
         '                let previousIdentity = previousRoute?.outputs\n'
         '                    .map { "\\($0.portType.rawValue):\\($0.uid)" }\n'
         '                    .joined(separator: "|")\n'
+        '                let previousRouteName = previousRoute?.outputs\n'
+        '                    .map(\\.portName)\n'
+        '                    .joined(separator: ", ")\n'
         '                let previousWasOwnDevice = previousRoute?.outputs.contains {\n'
         '                    ETAudioSessionRules.isOwnDevice(portName: $0.portName) ||\n'
         '                        $0.portName.localizedCaseInsensitiveContains("EffectDeck")\n'
@@ -129,7 +132,8 @@ if 'previousWasOwnDevice: Bool' not in audio_source:
     audio_source = audio_source.replace(
         '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity)\n',
         '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity,\n'
-        '                                       previousWasOwnDevice: previousWasOwnDevice)\n', 1)
+        '                                       previousWasOwnDevice: previousWasOwnDevice,\n'
+        '                                       previousRouteName: previousRouteName)\n', 1)
 audio_source = audio_source.replace(
     '                let previousWasOwnDevice = previousRoute?.outputs.contains {\n'
     '                    ETAudioSessionRules.isOwnDevice(portName: $0.portName)\n'
@@ -141,7 +145,8 @@ audio_source = audio_source.replace(
 audio_source = audio_source.replace(
     '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil) {',
     '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil,\n'
-    '                              previousWasOwnDevice: Bool = false) {', 1)
+    '                              previousWasOwnDevice: Bool = false,\n'
+    '                              previousRouteName: String? = nil) {', 1)
 if 'routeReturnedFromSonanceEQ = true' not in audio_source:
     audio_source = audio_source.replace(
         '        let nowRoute = outs.isEmpty ? "no output" : names\n',
@@ -520,12 +525,17 @@ if 'previousIdentity: String?' not in source:
         '                let previousIdentity = previousRoute?.outputs\n'
         '                    .map { "\\($0.portType.rawValue):\\($0.uid)" }\n'
         '                    .joined(separator: "|")\n'
+        '                let previousRouteName = previousRoute?.outputs\n'
+        '                    .map(\\.portName)\n'
+        '                    .joined(separator: ", ")\n'
         '                Task { @MainActor in\n'
-        '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity)\n'
+        '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity,\n'
+        '                                       previousRouteName: previousRouteName)\n'
         '                }', 1)
 source = source.replace(
     '    private func refreshRoute(reason: UInt = 99) {',
-    '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil) {', 1)
+    '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil,\n'
+    '                              previousRouteName: String? = nil) {', 1)
 if 'let identity = outs.map' not in source:
     source = source.replace(
         '        let names = outs.map(\\.portName).joined(separator: ", ")\n',
@@ -550,7 +560,10 @@ new_route_change_block = (
     '            routeChangeTimes.append(now)\n'
     '            routeChangeBurst = routeChangeTimes.count >= 3\n'
     '            let reasonName = Self.routeChangeReasonName(reason)\n'
-    '            lastRouteChange = "\\(route) → \\(nowRoute) (\\(reasonName))"\n'
+    '            // Use the route snapshot from the notification. A periodic refresh may\n'
+    '            // already have updated `route` before this handler is scheduled.\n'
+    '            let fromRoute = previousRouteName.flatMap { $0.isEmpty ? nil : $0 } ?? route\n'
+    '            lastRouteChange = "\\(fromRoute) → \\(nowRoute) (\\(reasonName))"\n'
     '        }\n'
     '        if identity != lastRouteIdentity || route != nowRoute {\n')
 if old_route_change_block in source:
@@ -562,7 +575,7 @@ if "@Published var routeFallback = false" not in source or "let nowRouteIsFallba
     raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
 if "@Published var carAudioActive = false" not in source or "let nowRouteIsCarAudio" not in source:
     raise SystemExit(f"Expected car-audio route observer missing: {audio_io}")
-if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "\\(route)' not in source:
+if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "\\(fromRoute)' not in source:
     raise SystemExit(f"Expected route transition diagnostic missing: {audio_io}")
 if "@Published var routeChangeBurst = false" not in source or 'routeChangeTimes.count >= 3' not in source:
     raise SystemExit(f"Expected route flap detector missing: {audio_io}")
