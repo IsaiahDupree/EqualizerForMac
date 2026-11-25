@@ -28,7 +28,7 @@ awaiting entitlement and device validation.
 | Independent Mid and Side curves | Implemented in the AUv3 renderer, standalone player, editor and portable presets; mono streams keep the Mid curve | Run center/side isolation, state restore, mono and stereo tests on Apple runtimes; verify real-time cost in the host |
 | Auto headroom and output limiter | Auto Headroom now estimates the peak response of active Mid/Side curves and lowers preamp with a 1 dB margin; no true-peak limiter | Validate estimates against rendered sine sweeps, clipping fixtures and FIR mode; decide separately whether iOS needs a true-peak limiter |
 | Render timing diagnostics | Lock-free counters expose Sonance block count, effect deadline overruns, worst processing time and the latest buffer deadline in Live | Verify values on the phone under IIR/FIR and 44.1/48/96/192 kHz routes; collect separate host-level chain timing where the host exposes it |
-| EffectDeck-style chain host | Integrated in the full Sonance EQ host: chain editor, Effects/Plugins/Presets browser, import/share, built-in analyzers/effects, per-stage routing, audio settings, meters, remote panel and About/licensing; Sonance EQ AUv3 is embedded | Both host and route targets compile unsigned. The host/share App Group is not assigned in profiles; sign, install and verify device behavior |
+| EffectDeck-style chain host | Integrated in the full Sonance EQ host: chain editor, Effects/Plugins/Presets browser, import/share, built-in analyzers/effects, per-stage routing, audio settings, meters, remote panel and About/licensing; Sonance EQ AUv3 is embedded | Full host and extensions build and sign for iPhoneOS. Host/Share App Group entitlements verified; install and device behavior are pending iPhone availability |
 | System Media Device route | Separate minimal Sonance EQ Route installer and Media Device extension; audio samples bridge to the full host over loopback TCP | Apple entitlement and provisioning profile are not yet available; build is unsigned and route remains unverified on device |
 | System-wide capture and per-app routing/mixing/recording | Route follows the documented Control Center Media Device path; it has not run on hardware | Validate compatible playback sources; do not claim arbitrary app/game capture or mixing |
 | Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
@@ -59,9 +59,11 @@ before signed device validation.
 5. Verify update migration, saved presets, AutoEq catalog availability and
    accessibility labels before treating the iPhone build as release-ready.
 
-Xcode 27.2 first-use setup and the full iPhone host's unsigned arm64 build now
-succeed. Xcode's broken DerivedData symlink was repaired. The iOS 26 simulator
-cannot compile the host because it uses an iOS 27 API; no iOS 27 simulator
-runtime is installed. The signed install, Apple audio tests, Mid/Side and FIR
-execution, processor-deadline measurements, and physical Bluetooth route stay
-unverified until fresh evidence is retained.
+Xcode 27.2 first-use setup and the full iPhone host's arm64 signing now succeed.
+The host and Share extension profiles include the Sonance App Group and the
+signed binaries were verified. On 2026-11-24, CoreDevice reported the exact
+iPhone 15 as unavailable and USB inventory showed no attached iPhone, so build 7
+has not been installed; the last confirmed device install remains build 6.
+Apple audio tests, Mid/Side and FIR execution, processor-deadline measurements,
+and physical Bluetooth route remain unverified. The route companion still
+requires Apple's Media Device entitlement and matching profiles.

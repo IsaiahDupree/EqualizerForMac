@@ -10,22 +10,27 @@ EffectDeck workflows available inside Sonance EQ while retaining Sonance's
 
 | EffectDeck workflow | In the Sonance iOS source | Build / device evidence |
 | --- | --- | --- |
-| Ordered effects chain | Add, remove, reorder, collapse, bypass and persist chain stages; chain enable, I/O and latency indicators | Full host and embedded extensions compile for arm64 iPhone SDK unsigned. Not signed or run on iPhone. |
-| Effects, plug-ins and presets browser | Searchable Effects / Plugins / Presets tabs; categories; built-in effects and analyzers; installed AUv3 discovery and editors; system, user and effect presets | Source is included in generated `EffeTuneLive` target and compiles unsigned. Device behavior remains unverified. |
-| Signal routing | Routing screen shows each stage's input/output buses and channel mode; stage channel maps and multichannel processing are part of the host | Source compiles unsigned. No physical route or multichannel device run yet. |
-| Import, export and sharing | Clipboard chain replacement, share links, chain and preset import/export, share extension and import inbox | Host and share extension compile unsigned. The host/share App Group is not assigned to the development profiles, so signed install and shared-container runtime remain blocked. |
-| Analyzers and meters | Level / analog meters, spectrum, note spectrum, spectrogram, oscilloscope and other built-in analysis stages | Source compiles unsigned. Meter and analyzer readings have not been checked against device fixtures. |
-| Processing and power settings | Oversampling, DSP buffer selection, input format/buffer, CPU and latency display, pause-after-silence, silence threshold, keep-screen-on and visual sync controls | Source compiles unsigned. Real-time deadline and power behavior remain unmeasured on iPhone. |
-| Floating meters and chain controls | Floating meter controls, chain-level effects switch and per-card enable, collapse and menu actions | Source compiles unsigned; UI interaction is not device-verified. |
-| Remote control | Remote settings and QR-code scanning workflow | Source compiles unsigned. No remote peer/session was tested. |
-| About and support | Version, DSP version, limitations, licenses, privacy and feedback links | Source compiles unsigned. Final branded copy is applied by `HostConfig/apply-upstream-adaptation.py`. |
+| Ordered effects chain | Add, remove, reorder, collapse, bypass and persist chain stages; chain enable, I/O and latency indicators | Full host and embedded extensions compile and sign for arm64 iPhone SDK. Phone launch and interaction remain unverified. |
+| Effects, plug-ins and presets browser | Searchable Effects / Plugins / Presets tabs; categories; built-in effects and analyzers; installed AUv3 discovery and editors; system, user and effect presets | Included in generated `EffeTuneLive` target and signed. Device behavior remains unverified. |
+| Signal routing | Routing screen shows each stage's input/output buses and channel mode; stage channel maps and multichannel processing are part of the host | Included and signed. No physical route or multichannel device run yet. |
+| Import, export and sharing | Clipboard chain replacement, share links, chain and preset import/export, share extension and import inbox | Host and Share extension are signed with `group.com.isaiahdupree.SonanceEQ`; shared-container runtime remains unverified until launch on iPhone. |
+| Analyzers and meters | Level / analog meters, spectrum, note spectrum, spectrogram, oscilloscope and other built-in analysis stages | Included and signed. Meter and analyzer readings have not been checked against device fixtures. |
+| Processing and power settings | Oversampling, DSP buffer selection, input format/buffer, CPU and latency display, pause-after-silence, silence threshold, keep-screen-on and visual sync controls | Included and signed. Real-time deadline and power behavior remain unmeasured on iPhone. |
+| Floating meters and chain controls | Floating meter controls, chain-level effects switch and per-card enable, collapse and menu actions | Included and signed; UI interaction is not device-verified. |
+| Remote control | Remote settings and QR-code scanning workflow | Included and signed. No remote peer/session was tested. |
+| About and support | Version, DSP version, limitations, licenses, privacy and feedback links | Included and signed. Final branded copy is applied by `HostConfig/apply-upstream-adaptation.py`. |
 | Control Center output routing | Separate minimal `Sonance EQ Route` installer and Media Device extension; extension sends captured samples to the full host's DSP chain over the loopback PCM bridge | Both targets compile unsigned. Apple Media Device entitlement/profile is unavailable; route cannot be signed, installed or exercised. |
-| Sonance EQ | Existing Sonance AUv3 embedded in the host, alongside the standalone 32-band EQ, AutoEQ data, corrections and presets | Host target compiles unsigned. AU lifecycle, state transfer and audio quality are not device-verified in this host. |
+| Sonance EQ | Existing Sonance AUv3 embedded in the host, alongside the standalone 32-band EQ, AutoEQ data, corrections and presets | Host and AUv3 extension compile and sign. AU lifecycle, state transfer and audio quality are not device-verified in this host. |
 
 The screenshots' routing screen and the Effects / Plugins / Presets browser are
-implemented in the host source. They are not yet evidence that those controls
-work on the phone. The latest full host is version 0.2.0 (build 7); the phone
-still has the earlier 0.1.0 (build 6) app.
+implemented in the host source. The latest full host is version 0.2.0 (build 7).
+On 2026-11-24, the host and both embedded extensions built and signed for
+arm64 iPhoneOS; the signed host and Share extension both contain the expected
+Sonance App Group entitlement. Installation was attempted against the exact
+iPhone 15 UDID `00008120-000465A20C52201E`, but CoreDevice reported that the
+device was unavailable. Xcode lists the phone as unavailable and the Mac USB
+inventory contains no iPhone, so build 7 is not yet installed; the previously
+reported build 6 remains the last confirmed installed version.
 
 ## Apple route architecture and limits
 
@@ -37,14 +42,12 @@ appear as a Control Center output. The host app itself contains the chain editor
 Sonance EQ Audio Unit, share extension, import workflow and DSP processing.
 
 The full host and Share extension require the App Group
-`group.com.isaiahdupree.SonanceEQ`. That group is enabled on the existing App IDs
-but has not been assigned to the development profiles. Xcode's authenticated
-App Store Connect API-key provisioning created profiles but did not add this
-App Group. The Apple Developer web session available during the 2026-11-24
-attempt was not signed in, so the profiles still need the group assigned through
-the Apple Developer account before the host can be signed and installed. The
+`group.com.isaiahdupree.SonanceEQ`. On 2026-11-24 the group was assigned to both
+App IDs in the Apple Developer account; Xcode regenerated the profiles and the
+signed host and Share extension now carry that entitlement. Device install and
+shared-container runtime verification are pending iPhone availability. The
 route installer separately needs Apple's Media Device capability and a matching
-profile. Neither product bundle is currently installed from this branch.
+profile. No route companion was installed from this branch.
 
 This Media Device workflow is experimental until Apple grants the entitlement
 and the signed route is validated on the phone. It follows Apple's documented
