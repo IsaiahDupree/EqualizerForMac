@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the complete EffectDeck-derived Sonance EQ host and its Apple-required
-# Media Device route companion. This script targets the assigned iPhone 15 by
-# exact UDID; a network-paired connection is supported, but never substitutes a
-# different device. Signing must include the Sonance App Group and Media Device
-# entitlement before either app is installed.
+# Install the EffectDeck-derived Sonance EQ host on the assigned iPhone 15 by
+# exact UDID. The optional Media Device route companion is a separate Apple
+# capability and must not prevent installing or testing the full host.
 DEVICE_ID="${SONANCE_IPHONE_UDID:-00008120-000465A20C52201E}"
 TEAM_ID="${SONANCE_DEVELOPMENT_TEAM:-Y4HDXFWXUV}"
 HOST_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype"
@@ -17,8 +15,14 @@ DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/Volumes/SonanceEQBuildScratch/Sona
 LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall}"
 HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQHost.app"
 ROUTE_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQRoute.app"
+INSTALL_ROUTE_COMPANION="${SONANCE_INSTALL_ROUTE_COMPANION:-0}"
 SIGNING_SETTINGS=("DEVELOPMENT_TEAM=${TEAM_ID}" "CODE_SIGN_STYLE=Automatic")
 AUTHENTICATION_ARGS=()
+
+if [[ "${INSTALL_ROUTE_COMPANION}" != "0" && "${INSTALL_ROUTE_COMPANION}" != "1" ]]; then
+    echo "SONANCE_INSTALL_ROUTE_COMPANION must be 0 or 1." >&2
+    exit 2
+fi
 
 for name in SONANCE_ASC_API_KEY_PATH SONANCE_ASC_API_KEY_ID SONANCE_ASC_API_ISSUER_ID; do
     if [[ -n "${!name:-}" ]]; then
@@ -100,15 +104,12 @@ build_scheme() {
         if rg -q 'com.apple.developer.media-device-extension' "${log_path}"; then
             echo "Signing blocked: Apple must enable the Media Device capability for the route installer and extension App IDs, then issue matching profiles." >&2
         fi
-        echo "No apps were installed. See ${log_path}." >&2
+        echo "Build failed. See ${log_path}." >&2
         return 1
     fi
 }
 
-# Build both signed products before installing either one. A failed route
-# entitlement or App Group profile must not leave a misleading partial upgrade.
 build_scheme "EffeTuneLive"
-build_scheme "SonanceEQRouteInstaller"
 
 verify_bundle_id() {
     local app_path="$1"
@@ -127,17 +128,23 @@ verify_bundle_id() {
 }
 
 verify_bundle_id "${HOST_APP_PATH}" "${HOST_BUNDLE_ID}"
-verify_bundle_id "${ROUTE_APP_PATH}" "${ROUTE_BUNDLE_ID}"
 
-echo "Installing ${ROUTE_BUNDLE_ID} on ${DEVICE_ID}..."
-xcrun devicectl device install app --device "${DEVICE_ID}" "${ROUTE_APP_PATH}"
 echo "Installing ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
 xcrun devicectl device install app --device "${DEVICE_ID}" "${HOST_APP_PATH}"
 echo "Launching ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
 xcrun devicectl device process launch --device "${DEVICE_ID}" "${HOST_BUNDLE_ID}"
 
+if [[ "${INSTALL_ROUTE_COMPANION}" == "1" ]]; then
+    build_scheme "SonanceEQRouteInstaller"
+    verify_bundle_id "${ROUTE_APP_PATH}" "${ROUTE_BUNDLE_ID}"
+    echo "Installing ${ROUTE_BUNDLE_ID} on ${DEVICE_ID}..."
+    xcrun devicectl device install app --device "${DEVICE_ID}" "${ROUTE_APP_PATH}"
+fi
+
 cat <<EOF
-Installed and launched the full Sonance EQ host and route companion on ${DEVICE_ID}.
+Installed and launched the full Sonance EQ host on ${DEVICE_ID}.
 Host build log: ${LOG_DIR}/EffeTuneLive-xcodebuild.log
-Route build log: ${LOG_DIR}/SonanceEQRouteInstaller-xcodebuild.log
 EOF
+if [[ "${INSTALL_ROUTE_COMPANION}" == "1" ]]; then
+    echo "Route companion build log: ${LOG_DIR}/SonanceEQRouteInstaller-xcodebuild.log"
+fi

@@ -66,14 +66,29 @@ source of truth is `iOS/sonance-host.project.yml` plus
 `iOS/HostConfig/apply-upstream-adaptation.py`. Homebrew Python 3.11 or newer is
 required for the upstream asset generator.
 
-After Apple provisions both targets, the next steps are to install the full
-host and route installer on the assigned iPhone, verify the chain editor and
-stage routing, run the audio-quality and AUv3 lifecycle suites, and exercise
-Control Center → Sonance EQ → DSP chain → selected Bluetooth output. Capture
-separate evidence for direct Bluetooth playback, the host with an empty chain,
-the host with Sonance EQ flat, and the controlled EQ configuration. Record
-unavailable counters as unknown. Clean up only the tested Sonance app bundle IDs
-after the assigned physical testing is complete.
+The install script builds, installs and launches the full host independently:
+
+```bash
+bash iOS/Tools/install-on-iphone15.sh
+```
+
+The Share extension still needs a matching App Group profile before that host
+build can sign. Once it is provisioned, verify the chain editor and stage
+routing, run the audio-quality and AUv3 lifecycle suites, and capture separate
+evidence for direct Bluetooth playback, the host with an empty chain, the host
+with Sonance EQ flat, and the controlled EQ configuration. Record unavailable
+counters as unknown. Clean up only the tested Sonance app bundle IDs after the
+assigned physical testing is complete.
+
+Control Center output routing is a separate, optional installation step:
+
+```bash
+SONANCE_INSTALL_ROUTE_COMPANION=1 bash iOS/Tools/install-on-iphone15.sh
+```
+
+It requires Apple's Media Device entitlement and matching profiles for the
+route extension and installer. That requirement no longer blocks installing
+the full host or using its in-app chain routing screen.
 
 ## Licensing and references
 
