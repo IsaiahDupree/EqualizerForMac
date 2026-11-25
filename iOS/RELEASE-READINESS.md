@@ -54,6 +54,18 @@ iOS 27 cross-app product and has not been submitted or published.
   and SoundCloud playback remain unverified; they require reproducing the route
   transition in the car.
 
+## Route diagnostics host installed — 2026-11-25
+
+- Device inspection found the connected iPhone still had the standalone 0.1.0
+  (6) app installed. Built the current combined EffectDeck-style host and
+  installed/launched version 0.2.0 (14) on iPhone 15 UDID
+  `00008120-000465A20C52201E`.
+- The installed host includes endpoint-aware route diagnostics, route-flap
+  warning and direct-CarPlay guidance when a source rejects the EQ route.
+- Physical CarPlay route switching remains unverified. The screenshots show
+  SoundCloud rejecting EffectDeck Audio; Sonance EQ cannot override that app's
+  route support or iOS output selection.
+
 ## Route diagnostics build and iPhone install — 2026-11-24
 
 - Fixed the upstream adaptation so route state, observer, and banner fields are
