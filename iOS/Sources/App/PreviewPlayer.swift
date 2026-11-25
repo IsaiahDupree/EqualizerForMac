@@ -330,19 +330,27 @@ final class PreviewPlayer {
             (state == .playing || state == .starting || (state == .paused && resumeAfterInterruption)) {
             let previous = notification.userInfo?[AVAudioSessionRouteChangePreviousRouteKey]
                 as? AVAudioSessionRouteDescription
-            let bluetoothOutput = previous?.outputs.first(where: Self.isBluetoothOutput)
+            let reconnectableOutput = previous?.outputs.first {
+                PlaybackRouteReconnectPolicy.isReconnectable(portType: $0.portType)
+            }
             resumeAfterInterruption = false
-            parkForRouteChange(reconnectID: bluetoothOutput?.uid)
-            error = bluetoothOutput == nil
-                ? "The audio output changed. Playback is paused; tap Play to continue on the current output."
-                : "Bluetooth disconnected. Playback is paused while Sonance waits for the same device to reconnect."
+            parkForRouteChange(reconnectID: reconnectableOutput?.uid)
+            if reconnectableOutput?.portType == .carAudio {
+                error = "CarPlay disconnected. Playback is paused while Sonance waits for the same CarPlay route to return."
+            } else if reconnectableOutput != nil {
+                error = "Bluetooth disconnected. Playback is paused while Sonance waits for the same device to reconnect."
+            } else {
+                error = "The audio output changed. Playback is paused; tap Play to continue on the current output."
+            }
         } else {
             refreshOutput()
             if reason == AVAudioSession.RouteChangeReason.newDeviceAvailable.rawValue,
                let expectedID = reconnectOutputID,
-               let output = session.currentRoute.outputs.first(where: Self.isBluetoothOutput),
-               BluetoothReconnectPolicy.shouldResume(expectedOutputID: expectedID,
-                                                       currentOutputID: output.uid), state == .paused {
+               let output = session.currentRoute.outputs.first(where: {
+                   PlaybackRouteReconnectPolicy.isReconnectable(portType: $0.portType)
+               }),
+               PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: expectedID,
+                                                          currentOutputID: output.uid), state == .paused {
                 reconnectOutputID = nil
                 error = nil
                 Task { await play() }
@@ -373,15 +381,6 @@ final class PreviewPlayer {
         deactivateSession()
         outputName = nil
         state = .paused
-    }
-
-    private static func isBluetoothOutput(_ output: AVAudioSessionPortDescription) -> Bool {
-        switch output.portType {
-        case .bluetoothA2DP, .bluetoothHFP, .bluetoothLE:
-            return true
-        default:
-            return false
-        }
     }
 }
 

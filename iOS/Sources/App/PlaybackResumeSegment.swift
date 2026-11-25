@@ -21,7 +21,16 @@ struct PlaybackResumeSegment: Equatable {
     }
 }
 
-enum BluetoothReconnectPolicy {
+enum PlaybackRouteReconnectPolicy {
+    static func isReconnectable(portType: AVAudioSession.Port) -> Bool {
+        switch portType {
+        case .carAudio, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE:
+            return true
+        default:
+            return false
+        }
+    }
+
     static func shouldResume(expectedOutputID: String?, currentOutputID: String?) -> Bool {
         guard let expectedOutputID, !expectedOutputID.isEmpty,
               let currentOutputID, !currentOutputID.isEmpty else { return false }

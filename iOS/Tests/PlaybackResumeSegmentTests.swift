@@ -30,14 +30,19 @@ final class PlaybackResumeSegmentTests: XCTestCase {
         XCTAssertNil(PlaybackResumeSegment(totalFrames: tooLong, progress: 0))
     }
 
-    func testBluetoothReconnectResumesOnlyForSameNonemptyOutputID() {
-        XCTAssertTrue(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "device-1",
-                                                             currentOutputID: "device-1"))
-        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "device-1",
-                                                              currentOutputID: "device-2"))
-        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: nil,
-                                                              currentOutputID: "device-1"))
-        XCTAssertFalse(BluetoothReconnectPolicy.shouldResume(expectedOutputID: "",
-                                                              currentOutputID: ""))
+    func testCarPlayAndBluetoothReconnectResumeOnlyForSameNonemptyOutputID() {
+        XCTAssertTrue(PlaybackRouteReconnectPolicy.isReconnectable(portType: .carAudio))
+        XCTAssertTrue(PlaybackRouteReconnectPolicy.isReconnectable(portType: .bluetoothA2DP))
+        XCTAssertFalse(PlaybackRouteReconnectPolicy.isReconnectable(portType: .builtInSpeaker))
+        XCTAssertTrue(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: "carplay-route-1",
+                                                                 currentOutputID: "carplay-route-1"))
+        XCTAssertTrue(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: "bluetooth-1",
+                                                                 currentOutputID: "bluetooth-1"))
+        XCTAssertFalse(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: "carplay-route-1",
+                                                                  currentOutputID: "device-2"))
+        XCTAssertFalse(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: nil,
+                                                                  currentOutputID: "device-1"))
+        XCTAssertFalse(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: "",
+                                                                  currentOutputID: ""))
     }
 }
