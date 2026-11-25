@@ -16,6 +16,7 @@ DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/Volumes/SonanceEQBuildScratch/Sona
 LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall}"
 HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQHost.app"
 ROUTE_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQRoute.app"
+HOST_SPEC="${PROJECT_ROOT}/iOS/sonance-host.project.yml"
 INSTALL_ROUTE_COMPANION="${SONANCE_INSTALL_ROUTE_COMPANION:-0}"
 SIGNING_SETTINGS=("DEVELOPMENT_TEAM=${TEAM_ID}" "CODE_SIGN_STYLE=Automatic")
 
@@ -58,6 +59,31 @@ if [[ ! -d "/Volumes/SonanceEQBuildScratch" ]]; then
     exit 2
 fi
 
+diagnose_device_connection() {
+    echo "CoreDevice record for ${DEVICE_ID}:" >&2
+    xcrun devicectl list devices --search "${DEVICE_ID}" --timeout 10 >&2 || true
+
+    if command -v idevice_id >/dev/null 2>&1; then
+        if idevice_id -l 2>/dev/null | /usr/bin/grep -Fxq "${DEVICE_ID}"; then
+            echo "usbmuxd lists the target UDID." >&2
+        else
+            echo "usbmuxd does not list the target UDID." >&2
+        fi
+    else
+        echo "libimobiledevice is unavailable; usbmuxd enumeration was not checked." >&2
+    fi
+
+    local usb_match
+    usb_match="$(system_profiler SPUSBDataType 2>/dev/null | /usr/bin/grep -i -E 'iPhone|Apple Mobile Device' || true)"
+    if [[ -n "${usb_match}" ]]; then
+        echo "USB inventory contains an Apple mobile device:" >&2
+        echo "${usb_match}" >&2
+    else
+        echo "USB inventory contains no iPhone / Apple Mobile Device entry." >&2
+    fi
+    echo "No pairing, service restart, or device mutation was attempted." >&2
+}
+
 if ! xcrun xcdevice list 2>/dev/null | /usr/bin/python3 -c '
 import json
 import sys
@@ -71,7 +97,8 @@ sys.exit(0 if any(
     for device in devices
 ) else 1)
 ' "${DEVICE_ID}"; then
-    echo "Target iPhone ${DEVICE_ID} is not available to Xcode." >&2
+    echo "Target iPhone ${DEVICE_ID} is not available to Xcode; collecting read-only connection diagnostics." >&2
+    diagnose_device_connection
     exit 2
 fi
 
@@ -140,8 +167,42 @@ verify_bundle_id() {
 
 verify_bundle_id "${HOST_APP_PATH}" "${HOST_BUNDLE_ID}"
 
+# Refuse a stale DerivedData product. Bundle ID alone cannot distinguish the
+# combined host from older prototype builds that used the same identifier.
+EXPECTED_HOST_VERSION="$(awk '/^    MARKETING_VERSION:/ { print $2; exit }' "${HOST_SPEC}" | tr -d '"')"
+EXPECTED_HOST_BUILD="$(awk '/^    CURRENT_PROJECT_VERSION:/ { print $2; exit }' "${HOST_SPEC}" | tr -d '"')"
+if [[ -z "${EXPECTED_HOST_VERSION}" || -z "${EXPECTED_HOST_BUILD}" ]]; then
+    echo "Could not read expected host version/build from ${HOST_SPEC}." >&2
+    exit 1
+fi
+PRODUCT_HOST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${HOST_APP_PATH}/Info.plist")"
+PRODUCT_HOST_BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "${HOST_APP_PATH}/Info.plist")"
+if [[ "${PRODUCT_HOST_VERSION}" != "${EXPECTED_HOST_VERSION}" || "${PRODUCT_HOST_BUILD}" != "${EXPECTED_HOST_BUILD}" ]]; then
+    echo "Refusing stale host product: expected ${EXPECTED_HOST_VERSION} (${EXPECTED_HOST_BUILD}), found ${PRODUCT_HOST_VERSION} (${PRODUCT_HOST_BUILD}) at ${HOST_APP_PATH}." >&2
+    exit 1
+fi
+
 echo "Installing ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
 xcrun devicectl device install app --device "${DEVICE_ID}" "${HOST_APP_PATH}"
+INSTALLED_APPS_JSON="${LOG_DIR}/installed-host-apps.json"
+xcrun devicectl device info apps --device "${DEVICE_ID}" --bundle-id "${HOST_BUNDLE_ID}" --json-output "${INSTALLED_APPS_JSON}" >/dev/null
+python3 - "${INSTALLED_APPS_JSON}" "${HOST_BUNDLE_ID}" "${EXPECTED_HOST_VERSION}" "${EXPECTED_HOST_BUILD}" <<'PY'
+import json
+import pathlib
+import sys
+
+payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+apps = payload.get("result", {}).get("apps", [])
+matches = [app for app in apps if app.get("bundleIdentifier") == sys.argv[2]]
+if len(matches) != 1:
+    raise SystemExit(f"Expected one installed host app, found {len(matches)}")
+app = matches[0]
+actual = (app.get("version"), app.get("bundleVersion"))
+expected = (sys.argv[3], sys.argv[4])
+if actual != expected:
+    raise SystemExit(f"Installed host version mismatch: expected {expected[0]} ({expected[1]}), found {actual[0]} ({actual[1]})")
+print(f"Verified installed host {app['bundleIdentifier']} {actual[0]} ({actual[1]})")
+PY
 echo "Launching ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
 xcrun devicectl device process launch --device "${DEVICE_ID}" "${HOST_BUNDLE_ID}"
 
