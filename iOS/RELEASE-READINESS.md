@@ -3,6 +3,18 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
+## Route fallback diagnostic — 2026-11-25
+
+- The host source now classifies its current built-in speaker or car-audio route
+  as a fallback while the Media Device source link is disconnected. The “No
+  audio yet” card becomes “Audio route fallback detected,” names the route, and
+  directs the user to reselect Sonance EQ in Control Center. This is source
+  behavior only; the installed iPhone 15 remains on version 0.2.0 (7).
+- The latest phone build was stopped at Xcode's package-prebuild dependency
+  graph before compilation. At that time the shared Mac showed an active storage
+  cleanup with other builds paused. Retry after that cleanup frees the requested
+  disk space; the route diagnostic has not been compiled or installed.
+
 ## Current iOS build and install — 2026-11-24
 
 - Xcode 27.2 is available and first-run setup is complete. Its global

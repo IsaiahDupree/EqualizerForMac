@@ -70,13 +70,14 @@ the output on iPhone Speaker while CarPlay is available. That source-app refusal
 is outside Sonance EQ's control; the extension cannot identify or override an
 app that never starts a route session. The host UI source now explains this
 when no audio is arriving. It also shows the current output route reported by
-Sonance EQ, so a return to iPhone Speaker or CarPlay is visible in the app.
-When the route falls back, select Sonance EQ again in Control Center and resume
+Sonance EQ. If AVAudioSession reports the built-in speaker or car audio while
+no source is connected, the banner marks “Audio route fallback detected” and
+names the current output. Re-select Sonance EQ in Control Center and resume
 playback. If the player explicitly rejects the route, use CarPlay directly or
 a source player that supports the Sonance EQ route. iOS does not expose a way
 for Sonance EQ to force-select the route or make an incompatible source stream.
-This guidance does not mean the route is already installed or that SoundCloud
-support has been verified.
+This diagnosis is source-level until the changed host is built and observed on
+the iPhone; it does not mean the route is installed or SoundCloud is supported.
 
 Apple documents that source apps use `AVSystemRoute` to start playback and that
 the system delivers real-time samples only after a source app starts a route

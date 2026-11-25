@@ -22,16 +22,7 @@ changes = {
         'return "Pick Sonance EQ as the output in Control Center."':
         'return "No audio is reaching Sonance EQ. If the player says it does not support Sonance EQ Audio, it cannot send audio to this route. Choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
     },
-    root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
-        'restartNeeded\n            ? "Restart once after this update, then pick EffectDeck in Control Center."\n            : "Pick EffectDeck as the output in Control Center."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center."':
-        'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
-    },
+    root / "Sources/EffeTuneLive/Views/PipelineView.swift": {},
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
         'let kProtocolID = "media-device-protocol.com.isaiahdupree.SonanceEQ.iOSPrototype"',
@@ -92,23 +83,93 @@ for path, replacements in changes.items():
 pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
 source = pipeline.read_text()
 insertions = {
-    'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
-    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })',
     '    @State private var restartNeeded = false\n':
-    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n',
+    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n',
     '            restartNeeded = io.restartNeeded\n':
-    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n',
+    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n',
     '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n':
     '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n'
-    '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
-    '    let restartNeeded: Bool\n    let openTips: () -> Void':
-    '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void',
+    '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n'
+    '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
     '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)':
     '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
 }
+route_wiring = {
+    'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })',
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })':
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })',
+    '    let restartNeeded: Bool\n    let openTips: () -> Void':
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let openTips: () -> Void',
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void':
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let routeFallback: Bool\n    let openTips: () -> Void',
+}
+for old, new in route_wiring.items():
+    if new not in source and old in source:
+        source = source.replace(old, new, 1)
+for new in set(route_wiring.values()):
+    if new not in source:
+        raise SystemExit(f"Expected route wiring missing: {pipeline}: {new}")
+
 for old, new in insertions.items():
     if new not in source and old in source:
         source = source.replace(old, new, 1)
     if new not in source:
         raise SystemExit(f"Expected route status adaptation missing: {pipeline}: {new}")
+
+# Make an observed return to the built-in speaker or car audio explicit. The
+# route picker itself remains owned by iOS Control Center; this is diagnosis,
+# not a private or silent route-selection attempt.
+if 'return routeFallback ? "Audio route fallback detected"' not in source:
+    source = source.replace(
+        '        restartNeeded ? "\\(UIDevice.current.model) Restart Required" : "No audio yet"',
+        '        if restartNeeded { return "\\(UIDevice.current.model) Restart Required" }\n'
+        '        return routeFallback ? "Audio route fallback detected" : "No audio yet"', 1)
+    old_instructions = (
+        '        restartNeeded\n'
+        '            ? "Restart once after this update, then pick EffectDeck in Control Center."\n'
+        '            : "Pick EffectDeck as the output in Control Center."',
+        '        restartNeeded\n'
+        '            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n'
+        '            : "Pick Sonance EQ as the output in Control Center."',
+        '        restartNeeded\n'
+        '            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n'
+        '            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
+        '        restartNeeded\n'
+        '            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n'
+        '            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."')
+    new_instruction = (
+        '        if restartNeeded {\n'
+        '            return "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n'
+        '        }\n'
+        '        if routeFallback {\n'
+        '            return "Sonance EQ detected audio routed to \\(currentRoute). Open Control Center, select Sonance EQ, then resume playback. If the player says this route is unsupported, use CarPlay directly or a compatible player."\n'
+        '        }\n'
+        '        return "Pick Sonance EQ in Control Center. If the player says this route is unsupported, use CarPlay directly or a compatible player."')
+    for old_instruction in old_instructions:
+        if old_instruction in source:
+            source = source.replace(old_instruction, new_instruction, 1)
+            break
+    if 'if routeFallback {' not in source:
+        raise SystemExit(f"Could not install route fallback diagnosis in {pipeline}")
 pipeline.write_text(source)
+
+audio_io = root / "Sources/EffeTuneLive/Audio/AudioIO.swift"
+source = audio_io.read_text()
+if "@Published var routeFallback = false" not in source:
+    source = source.replace(
+        '    @Published var outputRoute: String = "—"\n',
+        '    @Published var outputRoute: String = "—"\n'
+        '    /// iOS returned playback to the built-in speaker or car-audio route while no source link is active.\n'
+        '    @Published var routeFallback = false\n', 1)
+if "let nowRouteIsFallback" not in source:
+    source = source.replace(
+        '        let nowRoute = outs.isEmpty ? "no output" : names\n',
+        '        let nowRoute = outs.isEmpty ? "no output" : names\n'
+        '        let nowRouteIsFallback = outs.contains {\n'
+        '            $0.portType == .builtInSpeaker || $0.portType == .carAudio\n'
+        '        }\n'
+        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n', 1)
+if "@Published var routeFallback = false" not in source or "let nowRouteIsFallback" not in source:
+    raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
+audio_io.write_text(source)
