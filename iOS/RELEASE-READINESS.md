@@ -57,6 +57,24 @@ iOS 27 cross-app product and has not been submitted or published.
 - This revision is included in installed version 0.2.0 (build 8). Physical
   CarPlay/Bluetooth route-bounce verification remains pending.
 
+## Combined Sonance EQ and EffectDeck app — 2026-11-24
+
+- Added the original Sonance EQ player/editor as a separate framework module
+  and exposed it alongside the EffectDeck host in a two-tab app. This preserves
+  the full file player and EQ UI while avoiding name collisions between the two
+  codebases.
+- XcodeGen initially produced an invalid duplicate `iOS` group for the sibling
+  source paths. Setting `createIntermediateGroups: false` fixed project
+  generation; regeneration and the device build now succeed.
+- Xcode 27.2 built and signed the framework, host and extensions; the install
+  script installed and launched `com.isaiahdupree.SonanceEQ.iOSPrototype` on
+  iPhone 15 UDID `00008120-000465A20C52201E`. `devicectl` reports version 0.2.0,
+  build 9. Build log:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+- Route-flap diagnostics are included. Physical CarPlay switching, SoundCloud
+  compatibility and Bluetooth playback have not been verified; SoundCloud's
+  explicit unsupported-route message remains outside the host's control.
+
 ## Current iOS build and install — 2026-11-24
 
 - Xcode 27.2 is available and first-run setup is complete. Its global

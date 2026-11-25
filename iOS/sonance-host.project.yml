@@ -3,7 +3,9 @@ options:
   bundleIdPrefix: com.isaiahdupree.SonanceEQ
   deploymentTarget:
     iOS: "27.0"
-  createIntermediateGroups: true
+  # Avoid duplicate references when this project includes both the vendored
+  # EffectDeck tree and sibling Sonance app sources through ../ paths.
+  createIntermediateGroups: false
   # 既定を Debug に固定する（configs を足すと xcodebuild -list の既定が動くため）。
   defaultConfig: Debug
 
@@ -32,7 +34,7 @@ settings:
     CLANG_ENABLE_OBJC_ARC: YES
     TARGETED_DEVICE_FAMILY: "1,2"
     MARKETING_VERSION: "0.2.0"
-    CURRENT_PROJECT_VERSION: "8"
+    CURRENT_PROJECT_VERSION: "9"
 
 # EffeTune の DSP コアは host-neutral な C++20 なので、そのまま arm64 で建つ。
 # WASM を経由しない。include の場所だけ揃えれば通る（実機向けに 75/75 確認済み）。
@@ -53,6 +55,35 @@ dspSettings: &dspSettings
     - $(SRCROOT)/Vendor/ysfx/thirdparty/WDL/source
 
 targets:
+
+  # Original standalone EQ/player as a separate module so its API and persisted
+  # settings stay independent from identically named EffectDeck types.
+  SonanceEQPlayer:
+    type: framework
+    platform: iOS
+    sources:
+      - path: ../../Sources/App
+        excludes: [Info.plist, PrivacyInfo.xcprivacy, SonanceEQApp.swift]
+      - path: ../../Sources/Shared
+      - path: ../../../Sources/SonanceEQ/Models/EQBand.swift
+      - path: ../../../Sources/SonanceEQ/Models/Presets.swift
+      - path: ../../../Sources/SonanceEQ/Models/PresetFile.swift
+      - path: ../../../Sources/SonanceEQ/DSP/Biquad.swift
+      - path: ../../../Sources/SonanceEQ/DSP/FilterDesigner.swift
+      - path: ../../../Sources/SonanceEQ/DSP/FrequencyResponse.swift
+      - path: ../../../Sources/SonanceEQ/DSP/FIRDesigner.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.PlayerKit
+        DEFINES_MODULE: YES
+        SWIFT_OBJC_BRIDGING_HEADER: ../../Sources/Shared/SonanceAnalysis.h
+        OTHER_LDFLAGS: "$(inherited) -lsqlite3"
+    dependencies:
+      - sdk: Accelerate.framework
+      - sdk: AppIntents.framework
+      - sdk: AudioToolbox.framework
+      - sdk: AVFAudio.framework
+      - sdk: CoreAudioKit.framework
 
   # ------------------------------------------------------------------
   # Full Sonance EQ host: EffectDeck UI/DSP, Sonance AUv3, and share extension.
@@ -78,6 +109,20 @@ targets:
       # TestFlight へ出すときの紫版。**同じバイナリでは分けられない**ので、
       # 起動時に差し替えるのではなく、書庫を作るときの構成（Beta）で選ぶ（ET_APPICON）。
       - path: Sources/EffeTuneLive/EffectDeckPublicBeta.icon
+        type: file
+        buildPhase: resources
+      # Keep the standalone player's offline correction catalog and licenses in
+      # the host app bundle; the player module resolves these through Bundle.main.
+      - path: ../../../Sources/SonanceEQ/Resources/autoeq.sqlite
+        type: file
+        buildPhase: resources
+      - path: ../../../Sources/SonanceEQ/Resources/OPRA-LICENSE.txt
+        type: file
+        buildPhase: resources
+      - path: ../../../Sources/SonanceEQ/Resources/openEq-LICENSE.txt
+        type: file
+        buildPhase: resources
+      - path: ../../../THIRD-PARTY-NOTICES.md
         type: file
         buildPhase: resources
       - path: Sources/Shared
@@ -112,6 +157,9 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: Sources/EffeTuneLive/EffeTuneLive-Bridging-Header.h
     dependencies:
       - target: YSFX
+      - target: SonanceEQPlayer
+        embed: true
+        codeSign: true
       - sdk: AVFoundation.framework
       - sdk: AudioToolbox.framework
       - sdk: CoreAudioKit.framework

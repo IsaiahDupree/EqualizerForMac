@@ -312,3 +312,39 @@ if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "
 if "@Published var routeChangeBurst = false" not in source or 'routeChangeTimes.count >= 3' not in source:
     raise SystemExit(f"Expected route flap detector missing: {audio_io}")
 audio_io.write_text(source)
+
+# The host app is the combined product: expose the original Sonance player and
+# the EffectDeck chain as sibling tabs. Keep the source project's screenshot
+# probe path intact for its UI investigations.
+host_app = root / "Sources/EffeTuneLive/EffeTuneLiveApp.swift"
+source = host_app.read_text()
+if "import SonanceEQPlayer" not in source:
+    source = source.replace("import UIKit\n", "import UIKit\nimport SonanceEQPlayer\n", 1)
+old_root = (
+    '            Group {\n'
+    '                // -ETProbe 1 のときは並べ替えの切り分け用の画面\n'
+    '                // （ReorderProbeView.swift の頭）。\n'
+    '                if ETScreenshotSeed.probe {\n'
+    '                    ETReorderProbeView()\n'
+    '                } else {\n'
+    '                    PipelineView()\n'
+    '                }\n'
+    '            }')
+new_root = (
+    '            if ETScreenshotSeed.probe {\n'
+    '                // -ETProbe 1 のときは並べ替えの切り分け用の画面\n'
+    '                // （ReorderProbeView.swift の頭）。\n'
+    '                ETReorderProbeView()\n'
+    '            } else {\n'
+    '                TabView {\n'
+    '                    SonancePlayerView()\n'
+    '                        .tabItem { Label("Sonance EQ", systemImage: "slider.horizontal.3") }\n'
+    '                    PipelineView()\n'
+    '                        .tabItem { Label("Effects", systemImage: "point.3.connected.trianglepath.dotted") }\n'
+    '                }\n'
+    '            }')
+if old_root in source:
+    source = source.replace(old_root, new_root, 1)
+if "import SonanceEQPlayer" not in source or "SonancePlayerView()" not in source or "PipelineView()" not in source:
+    raise SystemExit(f"Could not generate the combined Sonance and EffectDeck root: {host_app}")
+host_app.write_text(source)
