@@ -1,32 +1,56 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Install the complete EffectDeck-derived Sonance EQ host and its Apple-required
+# Media Device route companion. This script targets the assigned iPhone 15 by
+# exact UDID; a network-paired connection is supported, but never substitutes a
+# different device. Signing must include the Sonance App Group and Media Device
+# entitlement before either app is installed.
 DEVICE_ID="${SONANCE_IPHONE_UDID:-00008120-000465A20C52201E}"
-BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype"
+TEAM_ID="${SONANCE_DEVELOPMENT_TEAM:-Y4HDXFWXUV}"
+HOST_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype"
+ROUTE_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-${PROJECT_ROOT}/build/iphone15-derived}"
-LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-${PROJECT_ROOT}/build/iphone15-install}"
-APP_PATH="${DERIVED_DATA}/Build/Products/Debug-iphoneos/SonanceEQiOS.app"
-SIGNING_SETTINGS=()
+HOST_PROJECT="${PROJECT_ROOT}/iOS/Vendor/EffectDeck/SonanceEQHost.xcodeproj"
+CONFIGURATION="${SONANCE_BUILD_CONFIGURATION:-Debug}"
+DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceDerivedData}"
+LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall}"
+HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQHost.app"
+ROUTE_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQRoute.app"
+SIGNING_SETTINGS=("DEVELOPMENT_TEAM=${TEAM_ID}" "CODE_SIGN_STYLE=Automatic")
+AUTHENTICATION_ARGS=()
 
-if [[ -n "${SONANCE_DEVELOPMENT_TEAM:-}" ]]; then
-    SIGNING_SETTINGS+=("DEVELOPMENT_TEAM=${SONANCE_DEVELOPMENT_TEAM}")
+for name in SONANCE_ASC_API_KEY_PATH SONANCE_ASC_API_KEY_ID SONANCE_ASC_API_ISSUER_ID; do
+    if [[ -n "${!name:-}" ]]; then
+        AUTH_SET=$(( ${AUTH_SET:-0} + 1 ))
+    fi
+done
+if [[ "${AUTH_SET:-0}" -ne 0 && "${AUTH_SET:-0}" -ne 3 ]]; then
+    echo "Set all three SONANCE_ASC_API_KEY_PATH, SONANCE_ASC_API_KEY_ID and SONANCE_ASC_API_ISSUER_ID values, or leave all unset." >&2
+    exit 2
 fi
-if [[ -n "${SONANCE_CODE_SIGN_STYLE:-}" ]]; then
-    SIGNING_SETTINGS+=("CODE_SIGN_STYLE=${SONANCE_CODE_SIGN_STYLE}")
-fi
-if [[ -n "${SONANCE_PROVISIONING_PROFILE_SPECIFIER:-}" ]]; then
-    SIGNING_SETTINGS+=("PROVISIONING_PROFILE_SPECIFIER=${SONANCE_PROVISIONING_PROFILE_SPECIFIER}")
-fi
-if [[ -n "${SONANCE_CODE_SIGN_IDENTITY:-}" ]]; then
-    SIGNING_SETTINGS+=("CODE_SIGN_IDENTITY=${SONANCE_CODE_SIGN_IDENTITY}")
+if [[ "${AUTH_SET:-0}" -eq 3 ]]; then
+    if [[ ! -r "${SONANCE_ASC_API_KEY_PATH}" ]]; then
+        echo "App Store Connect API key file is missing or unreadable." >&2
+        exit 2
+    fi
+    AUTHENTICATION_ARGS+=(
+        -authenticationKeyPath "${SONANCE_ASC_API_KEY_PATH}"
+        -authenticationKeyID "${SONANCE_ASC_API_KEY_ID}"
+        -authenticationKeyIssuerID "${SONANCE_ASC_API_ISSUER_ID}"
+    )
 fi
 
 if ! xcodebuild -license check >/dev/null 2>&1; then
     cat >&2 <<'EOF'
-Xcode is not ready. Open Xcode on this Mac and complete its first-use setup
+Xcode is not ready. Open Xcode on this Mac and complete first-use setup
 before building. This script will not accept license agreements for you.
 EOF
+    exit 2
+fi
+
+if [[ ! -d "/Volumes/SonanceEQBuildScratch" ]]; then
+    echo "Build volume /Volumes/SonanceEQBuildScratch is not mounted; refusing to fill the Mac system volume." >&2
     exit 2
 fi
 
@@ -47,30 +71,73 @@ sys.exit(0 if any(
     exit 2
 fi
 
-mkdir -p "${LOG_DIR}"
-BUILD_LOG="${LOG_DIR}/xcodebuild.log"
-echo "Building Sonance EQ for iPhone ${DEVICE_ID}..."
-set -o pipefail
-xcodebuild \
-    -project "${PROJECT_ROOT}/iOS/SonanceEQ.xcodeproj" \
-    -scheme SonanceEQiOS \
-    -destination "platform=iOS,id=${DEVICE_ID}" \
-    -derivedDataPath "${DERIVED_DATA}" \
-    build "${SIGNING_SETTINGS[@]}" 2>&1 | tee "${BUILD_LOG}"
-
-if [[ ! -d "${APP_PATH}" ]]; then
-    echo "Build succeeded but app bundle was not found at ${APP_PATH}." >&2
-    exit 1
+echo "Regenerating the Sonance EQ host project from its tracked spec..."
+bash "${PROJECT_ROOT}/iOS/Tools/generate-sonance-host-project.sh"
+if [[ ! -d "${HOST_PROJECT}" ]]; then
+    echo "Generated project was not found at ${HOST_PROJECT}." >&2
+    exit 2
 fi
 
-BUILT_BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${APP_PATH}/Info.plist")"
-if [[ "${BUILT_BUNDLE_ID}" != "${BUNDLE_ID}" ]]; then
-    echo "Refusing install: expected ${BUNDLE_ID}, found ${BUILT_BUNDLE_ID}." >&2
-    exit 1
-fi
+mkdir -p "${LOG_DIR}" "${DERIVED_DATA}"
 
-echo "Installing ${BUNDLE_ID} on ${DEVICE_ID}..."
-xcrun devicectl device install app --device "${DEVICE_ID}" "${APP_PATH}"
-echo "Launching ${BUNDLE_ID} on ${DEVICE_ID}..."
-xcrun devicectl device process launch --device "${DEVICE_ID}" "${BUNDLE_ID}"
-echo "Installed and launched ${BUNDLE_ID} on ${DEVICE_ID}. Build log: ${BUILD_LOG}"
+build_scheme() {
+    local scheme="$1"
+    local log_path="${LOG_DIR}/${scheme}-xcodebuild.log"
+    echo "Building ${scheme} for iPhone ${DEVICE_ID}..."
+    set -o pipefail
+    if ! xcodebuild \
+        -project "${HOST_PROJECT}" \
+        -scheme "${scheme}" \
+        -configuration "${CONFIGURATION}" \
+        -destination "platform=iOS,id=${DEVICE_ID}" \
+        -derivedDataPath "${DERIVED_DATA}" \
+        -allowProvisioningUpdates \
+        "${AUTHENTICATION_ARGS[@]}" \
+        build "${SIGNING_SETTINGS[@]}" 2>&1 | tee "${log_path}"; then
+        if rg -q 'com.apple.security.application-groups' "${log_path}"; then
+            echo "Signing blocked: assign group.com.isaiahdupree.SonanceEQ to the host and Share App IDs, then regenerate their provisioning profiles." >&2
+        fi
+        if rg -q 'com.apple.developer.media-device-extension' "${log_path}"; then
+            echo "Signing blocked: Apple must enable the Media Device capability for the route installer and extension App IDs, then issue matching profiles." >&2
+        fi
+        echo "No apps were installed. See ${log_path}." >&2
+        return 1
+    fi
+}
+
+# Build both signed products before installing either one. A failed route
+# entitlement or App Group profile must not leave a misleading partial upgrade.
+build_scheme "EffeTuneLive"
+build_scheme "SonanceEQRouteInstaller"
+
+verify_bundle_id() {
+    local app_path="$1"
+    local expected="$2"
+    if [[ ! -d "${app_path}" ]]; then
+        echo "Build succeeded but app bundle is missing: ${app_path}" >&2
+        exit 1
+    fi
+    local actual
+    actual="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${app_path}/Info.plist")"
+    if [[ "${actual}" != "${expected}" ]]; then
+        echo "Refusing install: expected ${expected}, found ${actual} in ${app_path}." >&2
+        exit 1
+    fi
+    codesign --verify --deep --strict "${app_path}"
+}
+
+verify_bundle_id "${HOST_APP_PATH}" "${HOST_BUNDLE_ID}"
+verify_bundle_id "${ROUTE_APP_PATH}" "${ROUTE_BUNDLE_ID}"
+
+echo "Installing ${ROUTE_BUNDLE_ID} on ${DEVICE_ID}..."
+xcrun devicectl device install app --device "${DEVICE_ID}" "${ROUTE_APP_PATH}"
+echo "Installing ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
+xcrun devicectl device install app --device "${DEVICE_ID}" "${HOST_APP_PATH}"
+echo "Launching ${HOST_BUNDLE_ID} on ${DEVICE_ID}..."
+xcrun devicectl device process launch --device "${DEVICE_ID}" "${HOST_BUNDLE_ID}"
+
+cat <<EOF
+Installed and launched the full Sonance EQ host and route companion on ${DEVICE_ID}.
+Host build log: ${LOG_DIR}/EffeTuneLive-xcodebuild.log
+Route build log: ${LOG_DIR}/SonanceEQRouteInstaller-xcodebuild.log
+EOF

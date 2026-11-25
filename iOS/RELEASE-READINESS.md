@@ -24,6 +24,14 @@ iOS 27 cross-app product and has not been submitted or published.
   version 0.1.0, build 6. The new full host is version 0.2.0, build 7 and has not
   been installed. The separate `Sonance EQ Route` installer is also not
   installed. The iPhone is visible over its network interface, not USB.
+- `iOS/Tools/install-on-iphone15.sh` now regenerates the latest host project,
+  builds both the full host and route installer for the exact iPhone 15 UDID,
+  verifies their bundle IDs and signatures, and installs only after both builds
+  succeed. Its signed host build now stops on the missing App Group assignment;
+  the separate route build stops because neither route profile contains
+  `com.apple.developer.media-device-extension`. No install command was reached.
+  Current logs are `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`
+  and `/Volumes/SonanceEQBuildScratch/SonanceEQRouteInstaller-sign-build.log`.
 - An iOS 26 simulator runtime is installed, but the full host uses an iOS 27
   API (`ReorderDifference`) and cannot be compiled for that runtime by lowering
   its deployment target. No simulator launch or UI validation was performed.
