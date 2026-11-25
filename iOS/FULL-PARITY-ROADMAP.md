@@ -28,7 +28,7 @@ route is still awaiting entitlement and device validation.
 | Independent Mid and Side curves | Implemented in the AUv3 renderer, standalone player, editor and portable presets; mono streams keep the Mid curve | Run center/side isolation, state restore, mono and stereo tests on Apple runtimes; verify real-time cost in the host |
 | Auto headroom and output limiter | Auto Headroom now estimates the peak response of active Mid/Side curves and lowers preamp with a 1 dB margin; no true-peak limiter | Validate estimates against rendered sine sweeps, clipping fixtures and FIR mode; decide separately whether iOS needs a true-peak limiter |
 | Render timing diagnostics | Lock-free counters expose Sonance block count, effect deadline overruns, worst processing time and the latest buffer deadline in Live | Verify values on the phone under IIR/FIR and 44.1/48/96/192 kHz routes; collect separate host-level chain timing where the host exposes it |
-| EffectDeck-style chain host | Integrated in the full Sonance EQ host: chain editor, Effects/Plugins/Presets browser, import/share, built-in analyzers/effects, per-stage routing, audio settings, meters, remote panel and About/licensing; Sonance EQ standalone player is in a sibling tab and AUv3 is embedded | Full combined host installed and launched on iPhone 15 at 0.2.0 (9). Stage routing, import/share and audio behavior still need device validation |
+| EffectDeck-style chain host | Integrated in the full Sonance EQ host: chain editor, Effects/Plugins/Presets browser, import/share, built-in analyzers/effects, per-stage routing, audio settings, meters, remote panel and About/licensing; Sonance EQ standalone player is in a sibling tab and AUv3 is embedded | Full combined host installed and launched on iPhone 15 at 0.2.0 (10). Stage routing, import/share and audio behavior still need device validation |
 | System Media Device route | Separate minimal Sonance EQ Route installer and Media Device extension; audio samples bridge to the full host over loopback TCP | Apple entitlement and provisioning profile are not yet available; build is unsigned and route remains unverified on device |
 | System-wide capture and per-app routing/mixing/recording | Route follows the documented Control Center Media Device path; it has not run on hardware | Validate compatible playback sources; do not claim arbitrary app/game capture or mixing |
 | Mac Store licensing and paid Pro access | Not implemented for iPhone | Define the iOS distribution and entitlement model before release work |
@@ -39,9 +39,10 @@ The iOS app contains the full EffectDeck-style host and exposes the Sonance
 Audio Unit to compatible hosts. The host and the minimal Apple Media Device
 route installer are separate apps because Apple's extension rules require a
 dedicated installer container. The host and Share extension have matching App
-Group profiles and combined host build 9 is installed and launched on iPhone 15. The
-installed app currently reports “No audio yet” and asks for the Sonance EQ
-Control Center output. The route installer still lacks Apple's Media Device
+Group profiles and combined host build 10 is installed and launched on iPhone 15. The
+installed app reports route changes with the last system reason, distinguishes
+iPhone Speaker fallback from direct car-audio output, and warns against
+repeatedly selecting a route after the source rejects it. The route installer still lacks Apple's Media Device
 capability and matching profile, so that system route and Bluetooth return path
 remain unavailable/unverified. Do not treat the working host UI or in-app
 stage-routing editor as proof of system audio routing.
@@ -59,7 +60,7 @@ stage-routing editor as proof of system audio routing.
    accessibility labels before treating the iPhone build as release-ready.
 
 Xcode 27.2 first-use setup, host signing and installation now succeed. On
-2026-11-24, the exact iPhone 15 confirmed combined host build 9 installed and
+2026-11-25, the exact iPhone 15 confirmed combined host build 10 installed and
 launched. Apple audio tests, in-app stage-routing interaction, Mid/Side and FIR
 execution, processor-deadline measurements, and physical Bluetooth playback
 remain unverified. The route companion still requires Apple's Media Device

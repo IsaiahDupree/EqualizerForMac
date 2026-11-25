@@ -97,6 +97,10 @@ if '@State private var routeFallback = false' not in source:
     source = source.replace(
         '    @State private var outputRoute = "—"\n',
         '    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n', 1)
+if '@State private var carAudioActive = false' not in source:
+    source = source.replace(
+        '    @State private var routeFallback = false\n',
+        '    @State private var routeFallback = false\n    @State private var carAudioActive = false\n', 1)
 if '@State private var lastRouteChange = ""' not in source:
     source = source.replace(
         '    @State private var routeFallback = false\n',
@@ -112,6 +116,9 @@ if 'outputRoute = io.outputRoute' not in source:
 if 'routeFallback = io.routeFallback' not in source:
     source = source.replace('            outputRoute = io.outputRoute\n',
                             '            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n', 1)
+if 'carAudioActive = io.carAudioActive' not in source:
+    source = source.replace('            routeFallback = io.routeFallback\n',
+                            '            routeFallback = io.routeFallback\n            carAudioActive = io.carAudioActive\n', 1)
 if 'lastRouteChange = io.lastRouteChange' not in source:
     source = source.replace('            routeFallback = io.routeFallback\n',
                             '            routeFallback = io.routeFallback\n            lastRouteChange = io.lastRouteChange\n', 1)
@@ -125,6 +132,9 @@ if '.onReceive(io.$outputRoute)' not in source:
 if '.onReceive(io.$routeFallback)' not in source:
     source = source.replace('        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
                             '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n        .onReceive(io.$routeFallback) { routeFallback = $0 }\n', 1)
+if '.onReceive(io.$carAudioActive)' not in source:
+    source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
+                            '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n        .onReceive(io.$carAudioActive) { carAudioActive = $0 }\n', 1)
 if '.onReceive(io.$lastRouteChange)' not in source:
     source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
                             '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n', 1)
@@ -132,11 +142,12 @@ if '.onReceive(io.$routeChangeBurst)' not in source:
     source = source.replace('        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n',
                             '        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n        .onReceive(io.$routeChangeBurst) { routeChangeBurst = $0 }\n', 1)
 
-banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
+banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, carAudioActive: carAudioActive, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })', banner_call)
+source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })', banner_call)
 if banner_call not in source:
     raise SystemExit(f"Expected route-aware banner call missing: {pipeline}")
 
@@ -146,6 +157,9 @@ if '    let currentRoute: String' not in source:
 if '    let routeFallback: Bool' not in source:
     source = source.replace('    let currentRoute: String\n',
                             '    let currentRoute: String\n    let routeFallback: Bool\n', 1)
+if '    let carAudioActive: Bool' not in source:
+    source = source.replace('    let routeFallback: Bool\n',
+                            '    let routeFallback: Bool\n    let carAudioActive: Bool\n', 1)
 if '    let lastRouteChange: String' not in source:
     source = source.replace('    let routeFallback: Bool\n',
                             '    let routeFallback: Bool\n    let lastRouteChange: String\n', 1)
@@ -184,7 +198,8 @@ if 'Text("Last route change:' not in source:
         raise SystemExit(f"Expected route transition insertion point missing: {pipeline}")
     source = source.replace(needle, addition, 1)
 
-# Make an observed return to the built-in speaker or car audio explicit. The
+# Make an observed return to the built-in speaker explicit. Car audio is a
+# valid direct output and gets a separate informational status. The
 # route picker itself remains owned by iOS Control Center; this is diagnosis,
 # not a private or silent route-selection attempt.
 if 'return routeFallback ? "Output is on \\(currentRoute)"' not in source:
@@ -196,6 +211,11 @@ if 'if routeChangeBurst { return "Audio route keeps changing" }' not in source:
     source = source.replace(
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"',
         '        if routeChangeBurst { return "Audio route keeps changing" }\n'
+        '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
+if 'if carAudioActive { return "Output is routed to car audio" }' not in source:
+    source = source.replace(
+        '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"',
+        '        if carAudioActive { return "Output is routed to car audio" }\n'
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
 if 'else if !hasPeer || routeChangeBurst {' not in source:
     source = source.replace(
@@ -219,7 +239,10 @@ if 'else if !hasPeer || routeChangeBurst {' not in source:
         '            return "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n'
         '        }\n'
         '        if routeFallback {\n'
-        '            return "No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."\n'
+        '            return "No source audio has reached Sonance EQ. Current output: \\(currentRoute). If the player rejected Sonance EQ Audio, stop retrying that route; use CarPlay directly or play a local file. Otherwise select Sonance EQ once in Control Center and resume."\n'
+        '        }\n'
+        '        if carAudioActive {\n'
+        '            return "The current output is \\(currentRoute). Playback on this route bypasses Sonance EQ unless the source supports and selects the Sonance EQ route. If SoundCloud rejects it, keep CarPlay selected or use a compatible source."\n'
         '        }\n'
         '        return "Pick Sonance EQ in Control Center. If the player says this route is unsupported, use CarPlay directly or a compatible player."')
     for old_instruction in old_instructions:
@@ -228,33 +251,85 @@ if 'else if !hasPeer || routeChangeBurst {' not in source:
             break
     if 'if routeFallback {' not in source:
         raise SystemExit(f"Could not install route fallback diagnosis in {pipeline}")
-if 'if routeChangeBurst {' not in source:
+if 'return "iOS changed the audio route several times in 30 seconds.' not in source:
     source = source.replace(
         '        if routeFallback {\n',
         '        if routeChangeBurst {\n'
-        '            return "iOS changed the audio route several times in 30 seconds. The last change was: \\(lastRouteChange). Select Sonance EQ once in Control Center. If the player says this route is unsupported, it cannot send audio to Sonance EQ; use CarPlay directly or play a local file in Sonance EQ."\n'
+        '            return "iOS changed the audio route several times in 30 seconds. Last change: \\(lastRouteChange). Leave the current route selected instead of repeatedly switching. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."\n'
         '        }\n'
         '        if routeFallback {\n', 1)
     if 'return "iOS changed the audio route several times in 30 seconds.' not in source:
         raise SystemExit(f"Could not install route burst explanation in {pipeline}")
+if 'Playback on this route bypasses Sonance EQ' not in source:
+    source = source.replace(
+        '            return "No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."',
+        '            return "No source audio has reached Sonance EQ. Current output: \\(currentRoute). If the player rejected Sonance EQ Audio, stop retrying that route; use CarPlay directly or play a local file. Otherwise select Sonance EQ once in Control Center and resume."', 1)
+    source = source.replace(
+        '            return "No source audio has reached Sonance EQ. Current output: \\(currentRoute). If the player rejected Sonance EQ Audio, stop retrying that route; use CarPlay directly or play a local file. Otherwise select Sonance EQ once in Control Center and resume."\n'
+        '        }\n'
+        '        return "Pick Sonance EQ in Control Center. If the player says this route is unsupported, use CarPlay directly or a compatible player."',
+        '            return "No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."\n'
+        '        }\n'
+        '        if carAudioActive {\n'
+        '            return "The current output is \\(currentRoute). Playback on this route bypasses Sonance EQ unless the source supports and selects the Sonance EQ route. If SoundCloud rejects it, keep CarPlay selected or use a compatible source."\n'
+        '        }\n'
+        '        return "Pick Sonance EQ in Control Center. If the player says this route is unsupported, use CarPlay directly or a compatible player."', 1)
+source = source.replace(
+    'No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ.',
+    'No source audio has reached Sonance EQ. Current output: \\(currentRoute). If the player rejected Sonance EQ Audio, stop retrying that route; use CarPlay directly or play a local file. Otherwise select Sonance EQ once in Control Center and resume.')
+source = source.replace(
+    'iOS changed the audio route several times in 30 seconds. The last change was: \\(lastRouteChange). Select Sonance EQ once in Control Center. If the player says this route is unsupported, it cannot send audio to Sonance EQ; use CarPlay directly or play a local file in Sonance EQ.',
+    'iOS changed the audio route several times in 30 seconds. Last change: \\(lastRouteChange). Leave the current route selected instead of repeatedly switching. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ.')
+source = source.replace(
+    '    /// iOS returned playback to the built-in speaker or car-audio route while no source link is active.',
+    '    /// iOS returned playback to the built-in speaker while no source link is active.')
 pipeline.write_text(source)
 
 audio_io = root / "Sources/EffeTuneLive/Audio/AudioIO.swift"
 source = audio_io.read_text()
+source = source.replace(
+    '    /// iOS returned playback to the built-in speaker or car-audio route while no source link is active.',
+    '    /// iOS returned playback to the built-in speaker while no source link is active.')
 if "@Published var routeFallback = false" not in source:
     source = source.replace(
         '    @Published var outputRoute: String = "—"\n',
         '    @Published var outputRoute: String = "—"\n'
-        '    /// iOS returned playback to the built-in speaker or car-audio route while no source link is active.\n'
+        '    /// iOS returned playback to the built-in speaker while no source link is active.\n'
         '    @Published var routeFallback = false\n', 1)
+old_fallback = (
+    '        let nowRouteIsFallback = outs.contains {\n'
+    '            $0.portType == .builtInSpeaker || $0.portType == .carAudio\n'
+    '        }\n'
+    '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n')
+if old_fallback in source:
+    source = source.replace(
+        old_fallback,
+        '        let nowRouteIsFallback = outs.contains { $0.portType == .builtInSpeaker }\n'
+        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n'
+        '        let nowRouteIsCarAudio = outs.contains { $0.portType == .carAudio }\n'
+        '        if carAudioActive != nowRouteIsCarAudio { carAudioActive = nowRouteIsCarAudio }\n', 1)
 if "let nowRouteIsFallback" not in source:
     source = source.replace(
         '        let nowRoute = outs.isEmpty ? "no output" : names\n',
         '        let nowRoute = outs.isEmpty ? "no output" : names\n'
-        '        let nowRouteIsFallback = outs.contains {\n'
-        '            $0.portType == .builtInSpeaker || $0.portType == .carAudio\n'
-        '        }\n'
-        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n', 1)
+        '        let nowRouteIsFallback = outs.contains { $0.portType == .builtInSpeaker }\n'
+        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n'
+        '        let nowRouteIsCarAudio = outs.contains { $0.portType == .carAudio }\n'
+        '        if carAudioActive != nowRouteIsCarAudio { carAudioActive = nowRouteIsCarAudio }\n', 1)
+if "let nowRouteIsCarAudio" not in source:
+    source = source.replace(
+        '        let nowRouteIsFallback = outs.contains { $0.portType == .builtInSpeaker }\n'
+        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n',
+        '        let nowRouteIsFallback = outs.contains { $0.portType == .builtInSpeaker }\n'
+        '        if routeFallback != nowRouteIsFallback { routeFallback = nowRouteIsFallback }\n'
+        '        let nowRouteIsCarAudio = outs.contains { $0.portType == .carAudio }\n'
+        '        if carAudioActive != nowRouteIsCarAudio { carAudioActive = nowRouteIsCarAudio }\n', 1)
+if "@Published var carAudioActive = false" not in source:
+    source = source.replace(
+        '    @Published var routeFallback = false\n',
+        '    @Published var routeFallback = false\n'
+        '    /// The active output is car audio; playback on it bypasses this host.\n'
+        '    @Published var carAudioActive = false\n', 1)
 if "@Published var lastRouteChange = \"\"" not in source:
     source = source.replace(
         '    @Published var routeFallback = false\n',
@@ -307,6 +382,8 @@ if 'let currentUptime = ProcessInfo.processInfo.systemUptime' not in source:
         '        let nowOutput = names.isEmpty ? "—" : names\n', 1)
 if "@Published var routeFallback = false" not in source or "let nowRouteIsFallback" not in source:
     raise SystemExit(f"Expected route fallback observer missing: {audio_io}")
+if "@Published var carAudioActive = false" not in source or "let nowRouteIsCarAudio" not in source:
+    raise SystemExit(f"Expected car-audio route observer missing: {audio_io}")
 if "@Published var lastRouteChange = \"\"" not in source or 'lastRouteChange = "\\(route)' not in source:
     raise SystemExit(f"Expected route transition diagnostic missing: {audio_io}")
 if "@Published var routeChangeBurst = false" not in source or 'routeChangeTimes.count >= 3' not in source:

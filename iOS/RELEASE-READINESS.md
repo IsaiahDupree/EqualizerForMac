@@ -69,8 +69,8 @@ iOS 27 cross-app product and has not been submitted or published.
 - Xcode 27.2 built and signed the framework, host and extensions; the install
   script installed and launched `com.isaiahdupree.SonanceEQ.iOSPrototype` on
   iPhone 15 UDID `00008120-000465A20C52201E`. `devicectl` reports version 0.2.0,
-  build 9. Build log:
-  `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+  build 10. Build log:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteBuild10/EffeTuneLive-xcodebuild.log`.
 - Route-flap diagnostics are included. Physical CarPlay switching, SoundCloud
   compatibility and Bluetooth playback have not been verified; SoundCloud's
   explicit unsupported-route message remains outside the host's control.
