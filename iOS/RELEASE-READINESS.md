@@ -26,6 +26,21 @@ iOS 27 cross-app product and has not been submitted or published.
   unsupported route; direct CarPlay output or a compatible player is the
   available fallback.
 
+## Route fallback diagnosis — 2026-11-25
+
+- Build 13 recognizes both EffectDeck and Sonance EQ output names and retains
+  the transition when iOS changes to another route, including CarPlay or the iPhone speaker. The
+  host displays that state with the new current output and clears it when the
+  Sonance route becomes active again.
+- The guidance says to keep CarPlay selected if SoundCloud rejects Sonance EQ
+  Audio. The host does not override or retry route selection; iOS owns that
+  choice, and a source app that rejects the route cannot be made compatible by
+  the effect host.
+- Xcode 27.2 built, signed, installed, and launched build 13 on iPhone 15 UDID
+  `00008120-000465A20C52201E`. `devicectl` verified the installed host version
+  as 0.2.0 (13). Build log: `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`.
+- The actual CarPlay route notification still needs a physical run in the car.
+
 ## Route diagnostics build and iPhone install — 2026-11-24
 
 - Fixed the upstream adaptation so route state, observer, and banner fields are

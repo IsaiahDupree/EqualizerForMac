@@ -24,11 +24,11 @@ changes = {
     },
     root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
         'Image(systemName: restartNeeded ? "exclamationmark.triangle.fill" : "airplayaudio")':
-        'Image(systemName: (restartNeeded || routeFallback || routeChangeBurst) ? "exclamationmark.triangle.fill" : "airplayaudio")',
+        'Image(systemName: (restartNeeded || routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? "exclamationmark.triangle.fill" : "airplayaudio")',
         '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : AnyShapeStyle(.tint))':
-        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : (routeFallback || routeChangeBurst) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint))',
+        '.foregroundStyle(restartNeeded ? AnyShapeStyle(Color.red) : (routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint))',
         '.foregroundStyle(restartNeeded ? Color.red : Color.primary)':
-        '.foregroundStyle(restartNeeded ? Color.red : (routeFallback || routeChangeBurst) ? Color.orange : Color.primary)',
+        '.foregroundStyle(restartNeeded ? Color.red : (routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? Color.orange : Color.primary)',
     },
     root / "Sources/Extension/EffeTuneLiveExtension.swift": {
         'let kProtocolID = "media-device-protocol.ai.nemut.effetune"':
@@ -89,6 +89,79 @@ for path, replacements in changes.items():
 # with a unique new-source marker to make repeated project generation safe.
 pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
 source = pipeline.read_text()
+source = source.replace(
+    'Audio left Sonance EQ for \\(currentRoute)',
+    'Audio left the EQ route for \\(currentRoute)')
+source = source.replace(
+    'iOS moved audio away from Sonance EQ to \\(currentRoute). Playback is now outside the EQ chain. If SoundCloud says Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select Sonance EQ once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.',
+    'iOS moved audio away from the EQ route to \\(currentRoute). Playback is now outside the EQ chain. If the player says EffectDeck Audio or Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select the EQ route once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.')
+route_title = '        if routeReturnedFromSonanceEQ { return "Audio left the EQ route for \\(currentRoute)" }'
+source = source.replace(route_title + '\n' + route_title, route_title)
+route_instruction = (
+    '        if routeReturnedFromSonanceEQ {\n'
+    '            return "iOS moved audio away from the EQ route to \\(currentRoute). Playback is now outside the EQ chain. If the player says EffectDeck Audio or Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select the EQ route once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route."\n'
+    '        }')
+source = source.replace(route_instruction + '\n' + route_instruction, route_instruction)
+
+# Preserve a single route-rejection transition, even when it does not repeat
+# enough times to trip the burst detector. This is diagnostic only: iOS owns
+# output selection and an incompatible source app cannot be forced onto it.
+audio_io = root / "Sources/EffeTuneLive/Audio/AudioIO.swift"
+audio_source = audio_io.read_text()
+if '@Published var routeReturnedFromSonanceEQ = false' not in audio_source:
+    audio_source = audio_source.replace(
+        '    @Published var routeFallback = false\n',
+        '    @Published var routeFallback = false\n'
+        '    /// iOS moved playback away from our route after it had been selected.\n'
+        '    @Published var routeReturnedFromSonanceEQ = false\n', 1)
+if 'previousWasOwnDevice: Bool' not in audio_source:
+    audio_source = audio_source.replace(
+        '                let previousIdentity = previousRoute?.outputs\n'
+        '                    .map { "\\($0.portType.rawValue):\\($0.uid)" }\n'
+        '                    .joined(separator: "|")\n',
+        '                let previousIdentity = previousRoute?.outputs\n'
+        '                    .map { "\\($0.portType.rawValue):\\($0.uid)" }\n'
+        '                    .joined(separator: "|")\n'
+        '                let previousWasOwnDevice = previousRoute?.outputs.contains {\n'
+        '                    ETAudioSessionRules.isOwnDevice(portName: $0.portName) ||\n'
+        '                        $0.portName.localizedCaseInsensitiveContains("EffectDeck")\n'
+        '                } ?? false\n', 1)
+    audio_source = audio_source.replace(
+        '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity)\n',
+        '                    self?.refreshRoute(reason: reason, previousIdentity: previousIdentity,\n'
+        '                                       previousWasOwnDevice: previousWasOwnDevice)\n', 1)
+audio_source = audio_source.replace(
+    '                let previousWasOwnDevice = previousRoute?.outputs.contains {\n'
+    '                    ETAudioSessionRules.isOwnDevice(portName: $0.portName)\n'
+    '                } ?? false\n',
+    '                let previousWasOwnDevice = previousRoute?.outputs.contains {\n'
+    '                    ETAudioSessionRules.isOwnDevice(portName: $0.portName) ||\n'
+    '                        $0.portName.localizedCaseInsensitiveContains("EffectDeck")\n'
+    '                } ?? false\n', 1)
+audio_source = audio_source.replace(
+    '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil) {',
+    '    private func refreshRoute(reason: UInt = 99, previousIdentity: String? = nil,\n'
+    '                              previousWasOwnDevice: Bool = false) {', 1)
+if 'routeReturnedFromSonanceEQ = true' not in audio_source:
+    audio_source = audio_source.replace(
+        '        let nowRoute = outs.isEmpty ? "no output" : names\n',
+        '        let nowEQRoute = outs.contains {\n'
+        '            ETAudioSessionRules.isOwnDevice(portName: $0.portName) ||\n'
+        '                $0.portName.localizedCaseInsensitiveContains("EffectDeck")\n'
+        '        }\n'
+        '        if nowEQRoute {\n'
+        '            routeReturnedFromSonanceEQ = false\n'
+        '        } else if reason != 99 && previousWasOwnDevice {\n'
+        '            routeReturnedFromSonanceEQ = true\n'
+        '        }\n'
+        '        let nowLoopback = outs.contains { ETAudioSessionRules.isOwnDevice(portName: $0.portName) }\n'
+        '        let nowRoute = outs.isEmpty ? "no output" : names\n', 1)
+    audio_source = audio_source.replace(
+        '        let nowLoopback = outs.contains { ETAudioSessionRules.isOwnDevice(portName: $0.portName) }\n'
+        '        if loopback != nowLoopback { loopback = nowLoopback }',
+        '        if loopback != nowLoopback { loopback = nowLoopback }', 1)
+audio_io.write_text(audio_source)
+
 if '@State private var outputRoute = "—"' not in source:
     source = source.replace(
         '    @State private var restartNeeded = false\n',
@@ -97,6 +170,9 @@ if '@State private var routeFallback = false' not in source:
     source = source.replace(
         '    @State private var outputRoute = "—"\n',
         '    @State private var outputRoute = "—"\n    @State private var routeFallback = false\n', 1)
+if '@State private var routeReturnedFromSonanceEQ = false' not in source:
+    source = source.replace('    @State private var routeFallback = false\n',
+                            '    @State private var routeFallback = false\n    @State private var routeReturnedFromSonanceEQ = false\n', 1)
 if '@State private var carAudioActive = false' not in source:
     source = source.replace(
         '    @State private var routeFallback = false\n',
@@ -116,6 +192,9 @@ if 'outputRoute = io.outputRoute' not in source:
 if 'routeFallback = io.routeFallback' not in source:
     source = source.replace('            outputRoute = io.outputRoute\n',
                             '            outputRoute = io.outputRoute\n            routeFallback = io.routeFallback\n', 1)
+if 'routeReturnedFromSonanceEQ = io.routeReturnedFromSonanceEQ' not in source:
+    source = source.replace('            routeFallback = io.routeFallback\n',
+                            '            routeFallback = io.routeFallback\n            routeReturnedFromSonanceEQ = io.routeReturnedFromSonanceEQ\n', 1)
 if 'carAudioActive = io.carAudioActive' not in source:
     source = source.replace('            routeFallback = io.routeFallback\n',
                             '            routeFallback = io.routeFallback\n            carAudioActive = io.carAudioActive\n', 1)
@@ -132,6 +211,10 @@ if '.onReceive(io.$outputRoute)' not in source:
 if '.onReceive(io.$routeFallback)' not in source:
     source = source.replace('        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
                             '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n        .onReceive(io.$routeFallback) { routeFallback = $0 }\n', 1)
+if '.onReceive(io.$routeReturnedFromSonanceEQ)' not in source:
+    source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
+                            '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n'
+                            '        .onReceive(io.$routeReturnedFromSonanceEQ) { routeReturnedFromSonanceEQ = $0 }\n', 1)
 if '.onReceive(io.$carAudioActive)' not in source:
     source = source.replace('        .onReceive(io.$routeFallback) { routeFallback = $0 }\n',
                             '        .onReceive(io.$routeFallback) { routeFallback = $0 }\n        .onReceive(io.$carAudioActive) { carAudioActive = $0 }\n', 1)
@@ -142,7 +225,13 @@ if '.onReceive(io.$routeChangeBurst)' not in source:
     source = source.replace('        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n',
                             '        .onReceive(io.$lastRouteChange) { lastRouteChange = $0 }\n        .onReceive(io.$routeChangeBurst) { routeChangeBurst = $0 }\n', 1)
 
-banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, carAudioActive: carAudioActive, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
+banner_call = 'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, routeReturnedFromSonanceEQ: routeReturnedFromSonanceEQ, carAudioActive: carAudioActive, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })'
+source = source.replace(
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, carAudioActive: carAudioActive, routeChangeBurst: routeChangeBurst, lastRouteChange: lastRouteChange, openTips: { presentSheet(.tips) })',
+    banner_call)
+source = source.replace(
+    '} else if !hasPeer || routeChangeBurst {',
+    '} else if !hasPeer || routeChangeBurst || routeReturnedFromSonanceEQ {')
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })', banner_call)
 source = source.replace('ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, routeFallback: routeFallback, openTips: { presentSheet(.tips) })', banner_call)
@@ -157,6 +246,9 @@ if '    let currentRoute: String' not in source:
 if '    let routeFallback: Bool' not in source:
     source = source.replace('    let currentRoute: String\n',
                             '    let currentRoute: String\n    let routeFallback: Bool\n', 1)
+if '    let routeReturnedFromSonanceEQ: Bool' not in source:
+    source = source.replace('    let routeFallback: Bool\n',
+                            '    let routeFallback: Bool\n    let routeReturnedFromSonanceEQ: Bool\n', 1)
 if '    let carAudioActive: Bool' not in source:
     source = source.replace('    let routeFallback: Bool\n',
                             '    let routeFallback: Bool\n    let carAudioActive: Bool\n', 1)
@@ -212,6 +304,26 @@ if 'if routeChangeBurst { return "Audio route keeps changing" }' not in source:
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"',
         '        if routeChangeBurst { return "Audio route keeps changing" }\n'
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"', 1)
+if 'if routeReturnedFromSonanceEQ { return "Audio left the EQ route for \\(currentRoute)" }' not in source:
+    source = source.replace(
+        '        if routeChangeBurst { return "Audio route keeps changing" }',
+        '        if routeReturnedFromSonanceEQ { return "Audio left the EQ route for \\(currentRoute)" }\n'
+        '        if routeChangeBurst { return "Audio route keeps changing" }', 1)
+source = source.replace(
+    '(restartNeeded || routeFallback || routeChangeBurst) ? "exclamationmark.triangle.fill" : "airplayaudio"',
+    '(restartNeeded || routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? "exclamationmark.triangle.fill" : "airplayaudio"')
+source = source.replace(
+    '(routeFallback || routeChangeBurst) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint)',
+    '(routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(.tint)')
+source = source.replace(
+    '(routeFallback || routeChangeBurst) ? Color.orange : Color.primary',
+    '(routeFallback || routeReturnedFromSonanceEQ || routeChangeBurst) ? Color.orange : Color.primary')
+source = source.replace(
+    'if routeReturnedFromSonanceEQ { return "Audio left Sonance EQ for \\(currentRoute)" }',
+    'if routeReturnedFromSonanceEQ { return "Audio left the EQ route for \\(currentRoute)" }')
+source = source.replace(
+    'iOS moved audio away from Sonance EQ to \\(currentRoute). Playback is now outside the EQ chain. If SoundCloud says Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select Sonance EQ once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.',
+    'iOS moved audio away from the EQ route to \\(currentRoute). Playback is now outside the EQ chain. If the player says EffectDeck Audio or Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select the EQ route once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.')
 if 'if carAudioActive { return "Output is routed to car audio" }' not in source:
     source = source.replace(
         '        return routeFallback ? "Output is on \\(currentRoute)" : "No audio yet"',
@@ -220,7 +332,7 @@ if 'if carAudioActive { return "Output is routed to car audio" }' not in source:
 if 'else if !hasPeer || routeChangeBurst {' not in source:
     source = source.replace(
         '            } else if !hasPeer {\n                ConnectBanner(',
-        '            } else if !hasPeer || routeChangeBurst {\n                ConnectBanner(', 1)
+        '            } else if !hasPeer || routeChangeBurst || routeReturnedFromSonanceEQ {\n                ConnectBanner(', 1)
     old_instructions = (
         '        restartNeeded\n'
         '            ? "Restart once after this update, then pick EffectDeck in Control Center."\n'
@@ -260,6 +372,15 @@ if 'return "iOS changed the audio route several times in 30 seconds.' not in sou
         '        if routeFallback {\n', 1)
     if 'return "iOS changed the audio route several times in 30 seconds.' not in source:
         raise SystemExit(f"Could not install route burst explanation in {pipeline}")
+if 'iOS moved audio away from the EQ route to \\(currentRoute).' not in source:
+    source = source.replace(
+        '        if routeChangeBurst {\n',
+        '        if routeReturnedFromSonanceEQ {\n'
+        '            return "iOS moved audio away from the EQ route to \\(currentRoute). Playback is now outside the EQ chain. If the player says EffectDeck Audio or Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select the EQ route once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route."\n'
+        '        }\n'
+        '        if routeChangeBurst {\n', 1)
+    if 'iOS moved audio away from the EQ route to \\(currentRoute).' not in source:
+        raise SystemExit(f"Could not install single route-return diagnosis in {pipeline}")
 if 'Playback on this route bypasses Sonance EQ' not in source:
     source = source.replace(
         '            return "No source audio has reached Sonance EQ. Its current output is \\(currentRoute). Select Sonance EQ in Control Center and resume. If SoundCloud says this route is unsupported, use CarPlay directly or play a local file in Sonance EQ."',
@@ -482,3 +603,42 @@ if old_root in source:
 if "import SonanceEQPlayer" not in source or "SonancePlayerView()" not in source or "PipelineView()" not in source:
     raise SystemExit(f"Could not generate the combined Sonance and EffectDeck root: {host_app}")
 host_app.write_text(source)
+
+# The legacy picker route is still labeled EffectDeck on devices that already
+# have that route installed. Treat either product label as the same EQ route
+# for diagnosis, but only Sonance's own endpoint counts as an audio loopback.
+audio_io = root / "Sources/EffeTuneLive/Audio/AudioIO.swift"
+audio_source = audio_io.read_text()
+old_route_state = (
+    '        let nowLoopback = outs.contains { ETAudioSessionRules.isOwnDevice(portName: $0.portName) }\n'
+    '        if nowLoopback {\n'
+    '            routeReturnedFromSonanceEQ = false\n'
+    '        } else if reason != 99 && previousWasOwnDevice {\n'
+    '            routeReturnedFromSonanceEQ = true\n'
+    '        }\n'
+    '        let nowRoute = outs.isEmpty ? "no output" : names\n')
+new_route_state = (
+    '        let nowEQRoute = outs.contains {\n'
+    '            ETAudioSessionRules.isOwnDevice(portName: $0.portName) ||\n'
+    '                $0.portName.localizedCaseInsensitiveContains("EffectDeck")\n'
+    '        }\n'
+    '        if nowEQRoute {\n'
+    '            routeReturnedFromSonanceEQ = false\n'
+    '        } else if reason != 99 && previousWasOwnDevice {\n'
+    '            routeReturnedFromSonanceEQ = true\n'
+    '        }\n'
+    '        let nowLoopback = outs.contains { ETAudioSessionRules.isOwnDevice(portName: $0.portName) }\n'
+    '        let nowRoute = outs.isEmpty ? "no output" : names\n')
+if old_route_state in audio_source:
+    audio_source = audio_source.replace(old_route_state, new_route_state, 1)
+audio_io.write_text(audio_source)
+
+pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
+pipeline_source = pipeline.read_text()
+pipeline_source = pipeline_source.replace(
+    'Audio left Sonance EQ for \\(currentRoute)',
+    'Audio left the EQ route for \\(currentRoute)')
+pipeline_source = pipeline_source.replace(
+    'iOS moved audio away from Sonance EQ to \\(currentRoute). Playback is now outside the EQ chain. If SoundCloud says Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select Sonance EQ once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.',
+    'iOS moved audio away from the EQ route to \\(currentRoute). Playback is now outside the EQ chain. If the player says EffectDeck Audio or Sonance EQ Audio is unsupported, keep CarPlay selected; that player cannot send audio to this route. With a compatible source, select the EQ route once in Control Center and resume. iOS controls route selection, so Sonance EQ cannot force the route.')
+pipeline.write_text(pipeline_source)
