@@ -17,7 +17,6 @@ HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceE
 ROUTE_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQRoute.app"
 INSTALL_ROUTE_COMPANION="${SONANCE_INSTALL_ROUTE_COMPANION:-0}"
 SIGNING_SETTINGS=("DEVELOPMENT_TEAM=${TEAM_ID}" "CODE_SIGN_STYLE=Automatic")
-AUTHENTICATION_ARGS=()
 
 if [[ "${INSTALL_ROUTE_COMPANION}" != "0" && "${INSTALL_ROUTE_COMPANION}" != "1" ]]; then
     echo "SONANCE_INSTALL_ROUTE_COMPANION must be 0 or 1." >&2
@@ -38,11 +37,6 @@ if [[ "${AUTH_SET:-0}" -eq 3 ]]; then
         echo "App Store Connect API key file is missing or unreadable." >&2
         exit 2
     fi
-    AUTHENTICATION_ARGS+=(
-        -authenticationKeyPath "${SONANCE_ASC_API_KEY_PATH}"
-        -authenticationKeyID "${SONANCE_ASC_API_KEY_ID}"
-        -authenticationKeyIssuerID "${SONANCE_ASC_API_ISSUER_ID}"
-    )
 fi
 
 if ! xcodebuild -license check >/dev/null 2>&1; then
@@ -87,16 +81,26 @@ mkdir -p "${LOG_DIR}" "${DERIVED_DATA}"
 build_scheme() {
     local scheme="$1"
     local log_path="${LOG_DIR}/${scheme}-xcodebuild.log"
+    local -a xcode_args
+    xcode_args=(
+        -project "${HOST_PROJECT}"
+        -scheme "${scheme}"
+        -configuration "${CONFIGURATION}"
+        -destination "platform=iOS,id=${DEVICE_ID}"
+        -derivedDataPath "${DERIVED_DATA}"
+        -allowProvisioningUpdates
+    )
+    if [[ "${AUTH_SET:-0}" -eq 3 ]]; then
+        xcode_args+=(
+            -authenticationKeyPath "${SONANCE_ASC_API_KEY_PATH}"
+            -authenticationKeyID "${SONANCE_ASC_API_KEY_ID}"
+            -authenticationKeyIssuerID "${SONANCE_ASC_API_ISSUER_ID}"
+        )
+    fi
     echo "Building ${scheme} for iPhone ${DEVICE_ID}..."
     set -o pipefail
     if ! xcodebuild \
-        -project "${HOST_PROJECT}" \
-        -scheme "${scheme}" \
-        -configuration "${CONFIGURATION}" \
-        -destination "platform=iOS,id=${DEVICE_ID}" \
-        -derivedDataPath "${DERIVED_DATA}" \
-        -allowProvisioningUpdates \
-        "${AUTHENTICATION_ARGS[@]}" \
+        "${xcode_args[@]}" \
         build "${SIGNING_SETTINGS[@]}" 2>&1 | tee "${log_path}"; then
         if rg -q 'com.apple.security.application-groups' "${log_path}"; then
             echo "Signing blocked: assign group.com.isaiahdupree.SonanceEQ to the host and Share App IDs, then regenerate their provisioning profiles." >&2
