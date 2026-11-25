@@ -66,6 +66,38 @@ iOS 27 cross-app product and has not been submitted or published.
   SoundCloud rejecting EffectDeck Audio; Sonance EQ cannot override that app's
   route support or iOS output selection.
 
+## SoundCloud and CarPlay route report — 2026-11-25
+
+- The supplied screenshots show iPhone Speaker selected while CarPlay and the
+  EffectDeck route are available, followed by SoundCloud's explicit alert:
+  “SoundCloud does not support playing media with EffectDeck Audio.” This is
+  direct evidence that the selected source rejects the EQ audio route; it is
+  not evidence of an EQ render failure.
+- The installed host's route observer records transitions away from Sonance EQ
+  and shows the current route, last transition and recovery guidance. It does
+  not read SoundCloud's private alert, force iOS to retain an unsupported route,
+  or bridge CarPlay audio into the EQ chain.
+- Recovery for this source is to select CarPlay directly and keep it selected.
+  EQ processing of SoundCloud playback requires SoundCloud to support the iOS
+  Media Device route; Sonance EQ cannot add that support. Sonance EQ's own local
+  file player remains a separate EQ playback path.
+- Version 0.2.0 (14) remains installed on iPhone 15. The supplied screenshots
+  document the source refusal, but the car's physical route-change sequence
+  still needs an in-car run before claiming a reproduced route-flap test.
+
+## Preset and output-correction UI regression — 2026-11-25
+
+- Fixed the UI test's preset-list navigation to handle lazy rows in the full-screen
+  SwiftUI library sheet, then passed
+  `EqualizerRelaunchTests.testNamedPresetCanBeSavedAndLoadedAfterRelaunch` on
+  iPhone 15 UDID `00008120-000465A20C52201E`.
+- The test covers saving and reopening a named preset, assigning it as output
+  correction, toggling correction off, verifying the off state after process
+  relaunch, and clearing the assignment and test preset.
+- The UI test ran against the standalone `SonanceEQiOS` target (0.1.0 build 6);
+  the combined 0.2.0 build 14 host was reinstalled and relaunched afterward.
+- Result bundle: `/Volumes/SonanceEQBuildScratch/SonanceCorrectionUITest/RouteCorrection18.xcresult`.
+
 ## Route diagnostics build and iPhone install — 2026-11-24
 
 - Fixed the upstream adaptation so route state, observer, and banner fields are
