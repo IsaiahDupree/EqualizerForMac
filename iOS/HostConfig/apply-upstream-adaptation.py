@@ -23,19 +23,6 @@ changes = {
         'return "No audio is reaching Sonance EQ. If the player says it does not support Sonance EQ Audio, it cannot send audio to this route. Choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."',
     },
     root / "Sources/EffeTuneLive/Views/PipelineView.swift": {
-        'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
-        'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })',
-        '    @State private var restartNeeded = false\n':
-        '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n',
-        '            restartNeeded = io.restartNeeded\n':
-        '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n',
-        '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n':
-        '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n'
-        '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
-        '    let restartNeeded: Bool\n    let openTips: () -> Void':
-        '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void',
-        '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)':
-        '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
         'restartNeeded\n            ? "Restart once after this update, then pick EffectDeck in Control Center."\n            : "Pick EffectDeck as the output in Control Center."':
         'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center. Install Sonance EQ Route if it is not listed."\n            : "Pick Sonance EQ in Control Center. If audio switches to iPhone or CarPlay, select Sonance EQ again and resume playback. A player that says this route is unsupported cannot send audio here; use CarPlay directly or a supported player."',
         'restartNeeded\n            ? "Restart once after this update, then pick Sonance EQ in Control Center."\n            : "Pick Sonance EQ as the output in Control Center. Install Sonance EQ Route if it is not listed. If the player says this route is unsupported, choose CarPlay directly or play a local file in Sonance EQ. If audio switches back without that message, tap Help."':
@@ -98,3 +85,30 @@ for path, replacements in changes.items():
         if expected not in source:
             raise SystemExit(f"Expected upstream adaptation missing: {path}: {expected}")
     path.write_text(source)
+
+# These are structural insertions: their old text remains a substring of the
+# inserted text, so keep them separate from global replacements and guard each
+# with a unique new-source marker to make repeated project generation safe.
+pipeline = root / "Sources/EffeTuneLive/Views/PipelineView.swift"
+source = pipeline.read_text()
+insertions = {
+    'ConnectBanner(restartNeeded: restartNeeded, openTips: { presentSheet(.tips) })':
+    'ConnectBanner(restartNeeded: restartNeeded, currentRoute: outputRoute, openTips: { presentSheet(.tips) })',
+    '    @State private var restartNeeded = false\n':
+    '    @State private var restartNeeded = false\n    @State private var outputRoute = "—"\n',
+    '            restartNeeded = io.restartNeeded\n':
+    '            restartNeeded = io.restartNeeded\n            outputRoute = io.outputRoute\n',
+    '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n':
+    '        .onReceive(io.$restartNeeded) { restartNeeded = $0 }\n'
+    '        .onReceive(io.$outputRoute) { outputRoute = $0 }\n',
+    '    let restartNeeded: Bool\n    let openTips: () -> Void':
+    '    let restartNeeded: Bool\n    let currentRoute: String\n    let openTips: () -> Void',
+    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)':
+    '                    Text(instruction)\n                        .etFont(size: 12)\n                        .foregroundStyle(.secondary)\n                        .fixedSize(horizontal: false, vertical: true)\n                    if !currentRoute.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, currentRoute != "—" {\n                        Text("Current output seen by Sonance EQ: \\(currentRoute)")\n                            .etFont(size: 11)\n                            .foregroundStyle(.secondary)\n                            .fixedSize(horizontal: false, vertical: true)\n                    }',
+}
+for old, new in insertions.items():
+    if new not in source and old in source:
+        source = source.replace(old, new, 1)
+    if new not in source:
+        raise SystemExit(f"Expected route status adaptation missing: {pipeline}: {new}")
+pipeline.write_text(source)
