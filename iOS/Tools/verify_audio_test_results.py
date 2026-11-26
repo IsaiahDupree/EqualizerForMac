@@ -6,15 +6,13 @@ from pathlib import Path
 import re
 
 
-def strings(value):
-    if isinstance(value, str):
-        yield value
-    elif isinstance(value, dict):
-        for child in value.values():
-            yield from strings(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from strings(child)
+def nodes(value):
+    """Traverse only xcresult node lists, never arbitrary metadata strings."""
+    if isinstance(value, list):
+        for node in value:
+            if isinstance(node, dict):
+                yield node
+                yield from nodes(node.get("children"))
 
 
 def verify(summary, test_tree, source):
@@ -33,10 +31,23 @@ def verify(summary, test_tree, source):
         errors.append(f"Session result is not Passed: {summary.get('result')!r}")
     if summary.get("testFailures"):
         errors.append("xcresult includes test/session failures")
-    identifiers = "\n".join(strings(test_tree))
+    roots = test_tree.get("testNodes") if isinstance(test_tree, dict) else None
+    suites = [node for node in nodes(roots)
+              if node.get("name") == "AudioContinuityTests"
+              and node.get("nodeType", "Test Suite") == "Test Suite"]
+    if len(suites) != 1:
+        errors.append(f"Expected exactly one AudioContinuityTests suite, observed {len(suites)}")
+        return errors
+    children = suites[0].get("children")
+    cases = children if isinstance(children, list) else []
     for name in sorted(expected):
-        if not re.search(r"\b" + re.escape(name) + r"\b", identifiers):
-            errors.append(f"Expected test is absent from the result tree: {name}")
+        matches = [case for case in cases if isinstance(case, dict)
+                   and case.get("name") in (name, name + "()")
+                   and case.get("nodeType", "Test Case") == "Test Case"]
+        if len(matches) != 1:
+            errors.append(f"Expected exactly one result for {name}, observed {len(matches)}")
+        elif matches[0].get("result") != "Passed":
+            errors.append(f"{name}: expected Passed, observed {matches[0].get('result')!r}")
     return errors
 
 
