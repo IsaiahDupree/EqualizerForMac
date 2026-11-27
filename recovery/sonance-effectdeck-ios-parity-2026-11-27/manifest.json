@@ -1,0 +1,57 @@
+{
+  "worktree_branch": "feature/sonance-effectdeck-ios-parity",
+  "worktree_head": "a224092a330aae8ee3e8f0916cdbe909a3232d46",
+  "dependencies": [
+    {
+      "dependency": "ysfx",
+      "remote": "https://github.com/JoepVanlier/ysfx.git",
+      "base_commit": "5c3452fee62583aa3d1b7e877d0c758c4024af89",
+      "local_branch": "",
+      "patch_file": "ysfx.patch",
+      "patch_bytes": 122013,
+      "status_paths": [
+        "include/ysfx.h",
+        "sources/ysfx.cpp",
+        "sources/ysfx.hpp",
+        "sources/ysfx_api_eel.cpp",
+        "sources/ysfx_api_file.cpp",
+        "sources/ysfx_api_file.hpp",
+        "sources/ysfx_api_gfx.cpp",
+        "sources/ysfx_api_gfx_lice.hpp",
+        "sources/ysfx_api_reaper.cpp",
+        "sources/ysfx_config.cpp",
+        "sources/ysfx_preprocess.cpp",
+        "thirdparty/WDL/source/WDL/eel2/eel_fft.h",
+        "thirdparty/WDL/source/WDL/eel2/eel_mdct.h",
+        "thirdparty/WDL/source/WDL/eel2/eel_strings.h",
+        "thirdparty/WDL/source/WDL/eel2/glue_port.h",
+        "thirdparty/WDL/source/WDL/eel2/ns-eel.h",
+        "thirdparty/WDL/source/WDL/eel2/nseel-cfunc.c",
+        "thirdparty/WDL/source/WDL/eel2/nseel-compiler.c",
+        "thirdparty/WDL/source/WDL/eel2/nseel-ram.c",
+        "thirdparty/WDL/source/WDL/heapbuf.h",
+        "thirdparty/WDL/source/WDL/lice/lice.cpp",
+        "thirdparty/WDL/source/WDL/lice/lice_arc.cpp",
+        "thirdparty/WDL/source/WDL/lice/lice_line.cpp",
+        "thirdparty/WDL/source/WDL/wdlstring.h",
+        "thirdparty/clap-juce-extensions",
+        "thirdparty/WDL/source/WDL/eel2/glue_port_vm.h"
+      ]
+    },
+    {
+      "dependency": "effetune",
+      "remote": "https://github.com/Frieve-A/effetune",
+      "base_commit": "3769b9aefebf2dce2de3169690d4a95e1716da4c",
+      "local_branch": "",
+      "patch_file": "effetune.patch",
+      "patch_bytes": 16283,
+      "status_paths": [
+        "dsp/core/abi.cpp",
+        "dsp/core/engine.cpp",
+        "dsp/core/engine.h",
+        "dsp/include/effetune/abi.h"
+      ]
+    }
+  ],
+  "excluded": "Nested clap-juce-extensions checkout contains staged deletions; excluded as local checkout state."
+}
