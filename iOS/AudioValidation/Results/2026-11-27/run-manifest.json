@@ -1,0 +1,13 @@
+{
+  "suite": "Sonance installed AUv3 audio quality and continuity",
+  "started_at_utc": "2026-11-27T17:53:45.150888+00:00",
+  "commit": "6e13a26981a5fa9e5977fbd8c37e0096f0775b7a",
+  "working_tree": "",
+  "xcode": "Xcode 27.2\nBuild version 27B52",
+  "destination": "platform=iOS Simulator,id=5E7B45DE-871B-41A7-A224-64B14BFCE10C",
+  "digital_suite_status": "passed",
+  "physical_bluetooth_status": "not_run",
+  "scope": "Installed AUv3 offline rendering. No real-time deadline or Bluetooth claim.",
+  "finished_at_utc": "2026-11-27T17:54:46.446536+00:00",
+  "exit_code": 0
+}

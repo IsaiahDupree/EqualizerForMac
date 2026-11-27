@@ -54,6 +54,17 @@ Run the suite directly on an owned Mac with Xcode and the iOS Simulator
 available. Do not use hosted CI for this validation; retain the local result
 bundle with the change review.
 
+### Latest recorded digital run
+
+On 2026-11-27, Xcode 27.2 ran the suite on the iPad Pro 13-inch (M5) iOS 26.0
+simulator at source commit `6e13a26981a5fa9e5977fbd8c37e0096f0775b7a`:
+**12 passed, 0 failed, 0 skipped**. The runner's result verifier passed. The
+`.xcresult`, run manifest, test tree, summary and build log are retained in
+[`Results/2026-11-27`](Results/2026-11-27/). This confirms offline audio-unit
+rendering only; it does not validate the iPhone 15, Bluetooth, CarPlay,
+real-time host deadlines or the EffectDeck media route. The physical run remains
+pending.
+
 ### Why these tests are different
 
 The older `RenderStream.measure()` uses 48 kHz and fixed 960-frame blocks and
