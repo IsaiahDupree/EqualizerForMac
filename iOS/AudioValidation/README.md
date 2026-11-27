@@ -54,7 +54,23 @@ Run the suite directly on an owned Mac with Xcode and the iOS Simulator
 available. Do not use hosted CI for this validation; retain the local result
 bundle with the change review.
 
-### Latest recorded digital run
+### Latest full-app simulator run
+
+On 2026-11-27, Xcode 27.2 ran the complete `SonanceEQiOS` unit and UI scheme
+on the iPad Pro 13-inch (M5), iOS 26.0 simulator at source commit
+`aed14f7b6abd504da9ac2beef88595905e539ad2`: **59 passed, 0 failed, 0
+skipped**. The suite includes all 12 `AudioContinuityTests`, 11 Audio Unit
+integration tests, and the editor/playback UI tests. The result summary,
+test-by-test tree and run manifest are in
+[`Results/2026-11-27`](Results/2026-11-27/). The complete 68 MB `.xcresult`
+is retained locally at
+`build/audio-quality/2026-11-27-full/SonanceEQiOS-FullSuite.xcresult` (the
+workspace ignores `build/` artifacts). Xcode recorded three QoS priority
+inversion warnings and two SwiftUI `_UIReparentingView` warnings; all tests
+still passed. Those warnings need follow-up, and the simulator run does not
+validate the iPhone 15, Bluetooth, CarPlay or real-route behavior.
+
+### Dedicated continuity runner run
 
 On 2026-11-27, Xcode 27.2 ran the suite on the iPad Pro 13-inch (M5) iOS 26.0
 simulator at source commit `6e13a26981a5fa9e5977fbd8c37e0096f0775b7a`:

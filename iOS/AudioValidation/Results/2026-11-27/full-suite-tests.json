@@ -1,0 +1,677 @@
+{
+  "devices" : [
+    {
+      "architecture" : "arm64",
+      "deviceId" : "5E7B45DE-871B-41A7-A224-64B14BFCE10C",
+      "deviceName" : "iPad Pro 13-inch (M5)",
+      "modelName" : "iPad Pro 13-inch (M5)",
+      "osBuildNumber" : "23A343",
+      "osVersion" : "26.0",
+      "platform" : "iOS Simulator"
+    }
+  ],
+  "testNodes" : [
+    {
+      "children" : [
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "duration" : "0.65s",
+                  "durationInSeconds" : 0.6487870216369629,
+                  "name" : "testEstimatedHeadroomControlsKnownMidAndSideBoosts()",
+                  "nodeIdentifier" : "AudioContinuityTests/testEstimatedHeadroomControlsKnownMidAndSideBoosts()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testEstimatedHeadroomControlsKnownMidAndSideBoosts",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "2s",
+                  "durationInSeconds" : 2.681607961654663,
+                  "name" : "testFlatAndBypassPreserveEverySampleAcrossRatesAndChannels()",
+                  "nodeIdentifier" : "AudioContinuityTests/testFlatAndBypassPreserveEverySampleAcrossRatesAndChannels()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testFlatAndBypassPreserveEverySampleAcrossRatesAndChannels",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.074s",
+                  "durationInSeconds" : 0.07415401935577393,
+                  "name" : "testLinearPhaseFIRBypassKeepsItsDocumentedDelayAndZeroesInputTail()",
+                  "nodeIdentifier" : "AudioContinuityTests/testLinearPhaseFIRBypassKeepsItsDocumentedDelayAndZeroesInputTail()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testLinearPhaseFIRBypassKeepsItsDocumentedDelayAndZeroesInputTail",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.25s",
+                  "durationInSeconds" : 0.2528649568557739,
+                  "name" : "testLinearPhaseIgnoresBandsAboveTheCurrentNyquistFrequency()",
+                  "nodeIdentifier" : "AudioContinuityTests/testLinearPhaseIgnoresBandsAboveTheCurrentNyquistFrequency()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testLinearPhaseIgnoresBandsAboveTheCurrentNyquistFrequency",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.26s",
+                  "durationInSeconds" : 0.2594999074935913,
+                  "name" : "testMaximumBandCascadeKeepsAllBlocksFiniteAndAudibleWithHeadroom()",
+                  "nodeIdentifier" : "AudioContinuityTests/testMaximumBandCascadeKeepsAllBlocksFiniteAndAudibleWithHeadroom()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testMaximumBandCascadeKeepsAllBlocksFiniteAndAudibleWithHeadroom",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.21s",
+                  "durationInSeconds" : 0.208764910697937,
+                  "name" : "testMidSideCurvesProcessCenterAndSideIndependently()",
+                  "nodeIdentifier" : "AudioContinuityTests/testMidSideCurvesProcessCenterAndSideIndependently()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testMidSideCurvesProcessCenterAndSideIndependently",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.14s",
+                  "durationInSeconds" : 0.138342022895813,
+                  "name" : "testQualityComparisonDetectsInjectedGapsCorruptionAndChannelChanges()",
+                  "nodeIdentifier" : "AudioContinuityTests/testQualityComparisonDetectsInjectedGapsCorruptionAndChannelChanges()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testQualityComparisonDetectsInjectedGapsCorruptionAndChannelChanges",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.27s",
+                  "durationInSeconds" : 0.26825404167175293,
+                  "name" : "testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState()",
+                  "nodeIdentifier" : "AudioContinuityTests/testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testSameAudioUnitSurvivesHostFormatReallocationWithoutLosingState",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.28s",
+                  "durationInSeconds" : 0.28120195865631104,
+                  "name" : "testStaticEQIsIndependentOfRenderBlockPartitionAndHasExpectedCenterGain()",
+                  "nodeIdentifier" : "AudioContinuityTests/testStaticEQIsIndependentOfRenderBlockPartitionAndHasExpectedCenterGain()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testStaticEQIsIndependentOfRenderBlockPartitionAndHasExpectedCenterGain",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.15s",
+                  "durationInSeconds" : 0.1521289348602295,
+                  "name" : "testStereoChannelsRemainIndependent()",
+                  "nodeIdentifier" : "AudioContinuityTests/testStereoChannelsRemainIndependent()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testStereoChannelsRemainIndependent",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.17s",
+                  "durationInSeconds" : 0.16628503799438477,
+                  "name" : "testStrongBassFixturePreservesExpectedGainWithExplicitHeadroom()",
+                  "nodeIdentifier" : "AudioContinuityTests/testStrongBassFixturePreservesExpectedGainWithExplicitHeadroom()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testStrongBassFixturePreservesExpectedGainWithExplicitHeadroom",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.11s",
+                  "durationInSeconds" : 0.1121680736541748,
+                  "name" : "testSupportedGainAndBypassEditsKeepTheKnownToneContinuous()",
+                  "nodeIdentifier" : "AudioContinuityTests/testSupportedGainAndBypassEditsKeepTheKnownToneContinuous()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests/testSupportedGainAndBypassEditsKeepTheKnownToneContinuous",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "AudioContinuityTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioContinuityTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.2s",
+                  "durationInSeconds" : 0.2018430233001709,
+                  "name" : "testAddingAndRemovingBandsChangesTheRenderedAudioAndRestoresInAHost()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testAddingAndRemovingBandsChangesTheRenderedAudioAndRestoresInAHost()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testAddingAndRemovingBandsChangesTheRenderedAudioAndRestoresInAHost",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "[Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread running at Default quality-of-service class. Investigate ways to avoid priority inversions",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "0.4s",
+                  "durationInSeconds" : 0.40010809898376465,
+                  "name" : "testAppPlaysASelectedAudioFileThroughItsEmbeddedEffect()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testAppPlaysASelectedAudioFileThroughItsEmbeddedEffect()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testAppPlaysASelectedAudioFileThroughItsEmbeddedEffect",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.11s",
+                  "durationInSeconds" : 0.11316895484924316,
+                  "name" : "testBundledHeadphoneCorrectionAppliesToTheAudioUnitParameterTree()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testBundledHeadphoneCorrectionAppliesToTheAudioUnitParameterTree()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testBundledHeadphoneCorrectionAppliesToTheAudioUnitParameterTree",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.015s",
+                  "durationInSeconds" : 0.014782905578613281,
+                  "name" : "testFloatingCurveVideoRendersTheFilterAndPlaybackProgress()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testFloatingCurveVideoRendersTheFilterAndPlaybackProgress()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testFloatingCurveVideoRendersTheFilterAndPlaybackProgress",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.037s",
+                  "durationInSeconds" : 0.037068963050842285,
+                  "name" : "testHostCanRequestSonanceEditor()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testHostCanRequestSonanceEditor()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testHostCanRequestSonanceEditor",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.095s",
+                  "durationInSeconds" : 0.09461104869842529,
+                  "name" : "testHostRestoresParameterStateAndRendersMono()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testHostRestoresParameterStateAndRendersMono()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testHostRestoresParameterStateAndRendersMono",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.12s",
+                  "durationInSeconds" : 0.12134397029876709,
+                  "name" : "testInstalledEffectProcessesStereoAndBypassesDuringPlayback()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testInstalledEffectProcessesStereoAndBypassesDuringPlayback()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testInstalledEffectProcessesStereoAndBypassesDuringPlayback",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "[Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread running at Default quality-of-service class. Investigate ways to avoid priority inversions",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "2s",
+                  "durationInSeconds" : 2.239538073539734,
+                  "name" : "testLiveFullBandMidSideFIRLoadMeetsRenderDeadlines()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testLiveFullBandMidSideFIRLoadMeetsRenderDeadlines()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testLiveFullBandMidSideFIRLoadMeetsRenderDeadlines",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.17s",
+                  "durationInSeconds" : 0.17206203937530518,
+                  "name" : "testMacFilterShapesRenderAndRestoreInAHost()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testMacFilterShapesRenderAndRestoreInAHost()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testMacFilterShapesRenderAndRestoreInAHost",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.87s",
+                  "durationInSeconds" : 0.8666000366210938,
+                  "name" : "testMidSideCurvesRestoreThroughHostParameterState()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testMidSideCurvesRestoreThroughHostParameterState()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testMidSideCurvesRestoreThroughHostParameterState",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.86s",
+                  "durationInSeconds" : 0.8560669422149658,
+                  "name" : "testPlaybackAppliesSavedCorrectionAfterEQAndBypassesItIndependently()",
+                  "nodeIdentifier" : "AudioUnitIntegrationTests/testPlaybackAppliesSavedCorrectionAfterEQAndBypassesItIndependently()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests/testPlaybackAppliesSavedCorrectionAfterEQAndBypassesItIndependently",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "AudioUnitIntegrationTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AudioUnitIntegrationTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.0055s",
+                  "durationInSeconds" : 0.005533933639526367,
+                  "name" : "testBundledCatalogSearchAndCorrectionConversion()",
+                  "nodeIdentifier" : "AutoEqCatalogTests/testBundledCatalogSearchAndCorrectionConversion()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AutoEqCatalogTests/testBundledCatalogSearchAndCorrectionConversion",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.022s",
+                  "durationInSeconds" : 0.022313952445983887,
+                  "name" : "testCatalogEscapesSearchWildcardsAndFiltersByCategory()",
+                  "nodeIdentifier" : "AutoEqCatalogTests/testCatalogEscapesSearchWildcardsAndFiltersByCategory()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AutoEqCatalogTests/testCatalogEscapesSearchWildcardsAndFiltersByCategory",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0051s",
+                  "durationInSeconds" : 0.005128979682922363,
+                  "name" : "testSelectingCatalogCorrectionUpdatesAndPersistsMainEQ()",
+                  "nodeIdentifier" : "AutoEqCatalogTests/testSelectingCatalogCorrectionUpdatesAndPersistsMainEQ()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AutoEqCatalogTests/testSelectingCatalogCorrectionUpdatesAndPersistsMainEQ",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "AutoEqCatalogTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/AutoEqCatalogTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.0027s",
+                  "durationInSeconds" : 0.0026650428771972656,
+                  "name" : "testAddedAndDeletedBandsPersistIncludingAnEmptyCurve()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testAddedAndDeletedBandsPersistIncludingAnEmptyCurve()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testAddedAndDeletedBandsPersistIncludingAnEmptyCurve",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0013s",
+                  "durationInSeconds" : 0.0013140439987182617,
+                  "name" : "testAuditioningAProtectsTheEditedCurveAndSavedSettings()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testAuditioningAProtectsTheEditedCurveAndSavedSettings()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testAuditioningAProtectsTheEditedCurveAndSavedSettings",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0022s",
+                  "durationInSeconds" : 0.0022429227828979492,
+                  "name" : "testBackgroundCheckpointCapturesAnInProgressSliderEdit()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testBackgroundCheckpointCapturesAnInProgressSliderEdit()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testBackgroundCheckpointCapturesAnInProgressSliderEdit",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0088s",
+                  "durationInSeconds" : 0.0088120698928833,
+                  "name" : "testEstimatedHeadroomUsesTheLouderMidOrSideCurveAndNeverRaisesPreamp()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testEstimatedHeadroomUsesTheLouderMidOrSideCurveAndNeverRaisesPreamp()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testEstimatedHeadroomUsesTheLouderMidOrSideCurveAndNeverRaisesPreamp",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0036s",
+                  "durationInSeconds" : 0.003587961196899414,
+                  "name" : "testExistingTuningSurvivesUpgradeAndACompletedEdit()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testExistingTuningSurvivesUpgradeAndACompletedEdit()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testExistingTuningSurvivesUpgradeAndACompletedEdit",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00037s",
+                  "durationInSeconds" : 0.00037097930908203125,
+                  "name" : "testLegacySettingsDecodeWithFlatSideCurveAndStereoModeOff()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testLegacySettingsDecodeWithFlatSideCurveAndStereoModeOff()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testLegacySettingsDecodeWithFlatSideCurveAndStereoModeOff",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0016s",
+                  "durationInSeconds" : 0.001600027084350586,
+                  "name" : "testNewEditAfterUndoClearsRedoHistory()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testNewEditAfterUndoClearsRedoHistory()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testNewEditAfterUndoClearsRedoHistory",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.002s",
+                  "durationInSeconds" : 0.001950979232788086,
+                  "name" : "testOutputCorrectionEditPersistsForItsRouteAfterRouteChanges()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testOutputCorrectionEditPersistsForItsRouteAfterRouteChanges()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testOutputCorrectionEditPersistsForItsRouteAfterRouteChanges",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0022s",
+                  "durationInSeconds" : 0.0022020339965820312,
+                  "name" : "testSpeechProfileIsAudibleEditableAndSurvivesRelaunch()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testSpeechProfileIsAudibleEditableAndSurvivesRelaunch()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testSpeechProfileIsAudibleEditableAndSurvivesRelaunch",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00039s",
+                  "durationInSeconds" : 0.0003949403762817383,
+                  "name" : "testSpeechProfilesHaveValidCurvesWithReducedLowEnd()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testSpeechProfilesHaveValidCurvesWithReducedLowEnd()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testSpeechProfilesHaveValidCurvesWithReducedLowEnd",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0017s",
+                  "durationInSeconds" : 0.0017119646072387695,
+                  "name" : "testUndoRedoGroupsContinuousEditsAndPersistsRestoredSettings()",
+                  "nodeIdentifier" : "EqualizerSessionTests/testUndoRedoGroupsContinuousEditsAndPersistsRestoredSettings()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests/testUndoRedoGroupsContinuousEditsAndPersistsRestoredSettings",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "EqualizerSessionTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/EqualizerSessionTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.00049s",
+                  "durationInSeconds" : 0.00048601627349853516,
+                  "name" : "testCarPlayAndBluetoothReconnectResumeOnlyForSameNonemptyOutputID()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testCarPlayAndBluetoothReconnectResumeOnlyForSameNonemptyOutputID()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testCarPlayAndBluetoothReconnectResumeOnlyForSameNonemptyOutputID",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00041s",
+                  "durationInSeconds" : 0.0004050731658935547,
+                  "name" : "testClampsProgressToValidFileRange()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testClampsProgressToValidFileRange()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testClampsProgressToValidFileRange",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00035s",
+                  "durationInSeconds" : 0.00035202503204345703,
+                  "name" : "testEngineConfigurationChangePreservesReconnectTarget()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testEngineConfigurationChangePreservesReconnectTarget()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testEngineConfigurationChangePreservesReconnectTarget",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00037s",
+                  "durationInSeconds" : 0.00037097930908203125,
+                  "name" : "testRejectsFilesTooLongForSingleAudioPlayerSegment()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testRejectsFilesTooLongForSingleAudioPlayerSegment()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testRejectsFilesTooLongForSingleAudioPlayerSegment",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00031s",
+                  "durationInSeconds" : 0.0003070831298828125,
+                  "name" : "testStartsAtBeginningWhenPlaybackIsFresh()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testStartsAtBeginningWhenPlaybackIsFresh()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testStartsAtBeginningWhenPlaybackIsFresh",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00034s",
+                  "durationInSeconds" : 0.00033795833587646484,
+                  "name" : "testUsesSavedFractionOfFileForResume()",
+                  "nodeIdentifier" : "PlaybackResumeSegmentTests/testUsesSavedFractionOfFileForResume()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests/testUsesSavedFractionOfFileForResume",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "PlaybackResumeSegmentTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackResumeSegmentTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.0004s",
+                  "durationInSeconds" : 0.0004010200500488281,
+                  "name" : "testSummaryUsesObservedRouteValues()",
+                  "nodeIdentifier" : "PlaybackRouteFormatTests/testSummaryUsesObservedRouteValues()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackRouteFormatTests/testSummaryUsesObservedRouteValues",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00036s",
+                  "durationInSeconds" : 0.0003610849380493164,
+                  "name" : "testUnavailableOrInvalidRouteValuesStayUnknown()",
+                  "nodeIdentifier" : "PlaybackRouteFormatTests/testUnavailableOrInvalidRouteValuesStayUnknown()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackRouteFormatTests/testUnavailableOrInvalidRouteValuesStayUnknown",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "PlaybackRouteFormatTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PlaybackRouteFormatTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "0.083s",
+                  "durationInSeconds" : 0.08337104320526123,
+                  "name" : "testGraphicEQImportExplainsTheParametricApproximation()",
+                  "nodeIdentifier" : "PresetLibraryTests/testGraphicEQImportExplainsTheParametricApproximation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testGraphicEQImportExplainsTheParametricApproximation",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00097s",
+                  "durationInSeconds" : 0.0009660720825195312,
+                  "name" : "testGraphicEQRejectsUnorderedAndMalformedPoints()",
+                  "nodeIdentifier" : "PresetLibraryTests/testGraphicEQRejectsUnorderedAndMalformedPoints()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testGraphicEQRejectsUnorderedAndMalformedPoints",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.006s",
+                  "durationInSeconds" : 0.005988955497741699,
+                  "name" : "testImportsAutoEqTextWithPreampShelvesAndDisabledBands()",
+                  "nodeIdentifier" : "PresetLibraryTests/testImportsAutoEqTextWithPreampShelvesAndDisabledBands()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testImportsAutoEqTextWithPreampShelvesAndDisabledBands",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.074s",
+                  "durationInSeconds" : 0.07412505149841309,
+                  "name" : "testImportsGraphicEQAsHeadroomSafeParametricApproximation()",
+                  "nodeIdentifier" : "PresetLibraryTests/testImportsGraphicEQAsHeadroomSafeParametricApproximation()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testImportsGraphicEQAsHeadroomSafeParametricApproximation",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.0044s",
+                  "durationInSeconds" : 0.004374980926513672,
+                  "name" : "testLibrarySavesCurrentCurveAndBulkImportsMacFiles()",
+                  "nodeIdentifier" : "PresetLibraryTests/testLibrarySavesCurrentCurveAndBulkImportsMacFiles()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testLibrarySavesCurrentCurveAndBulkImportsMacFiles",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "0.00035s",
+                  "durationInSeconds" : 0.00034999847412109375,
+                  "name" : "testPresetRoundTripPreservesIndependentMidSideCurves()",
+                  "nodeIdentifier" : "PresetLibraryTests/testPresetRoundTripPreservesIndependentMidSideCurves()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests/testPresetRoundTripPreservesIndependentMidSideCurves",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "PresetLibraryTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests/PresetLibraryTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "SonanceEQiOSTests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSTests",
+          "nodeType" : "Unit test bundle",
+          "result" : "Passed"
+        },
+        {
+          "children" : [
+            {
+              "children" : [
+                {
+                  "children" : [
+                    {
+                      "name" : "Adding '_UIReparentingView' as a subview of UIHostingController.view is not supported and may result in a broken view hierarchy. Add your view above UIHostingController.view in a common superview or insert it into your SwiftUI content in a UIViewRepresentable instead.",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "18s",
+                  "durationInSeconds" : 18.01486098766327,
+                  "name" : "testAutoEqProfileCanBeSearchedAndAssignedToOutput()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testAutoEqProfileCanBeSearchedAndAssignedToOutput()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testAutoEqProfileCanBeSearchedAndAssignedToOutput",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "12s",
+                  "durationInSeconds" : 12.344967007637024,
+                  "name" : "testBandDropdownAddsAndRemovesTheSelectedBand()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testBandDropdownAddsAndRemovesTheSelectedBand()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testBandDropdownAddsAndRemovesTheSelectedBand",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "9s",
+                  "durationInSeconds" : 9.93672800064087,
+                  "name" : "testEditorUndoAndRedoRestorePresetChanges()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testEditorUndoAndRedoRestorePresetChanges()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testEditorUndoAndRedoRestorePresetChanges",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "[Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread running at Default quality-of-service class. Investigate ways to avoid priority inversions",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "30s",
+                  "durationInSeconds" : 30.615141987800598,
+                  "name" : "testLocalPlaybackContinuesOnHomeScreenAndStopsOnTermination()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testLocalPlaybackContinuesOnHomeScreenAndStopsOnTermination()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testLocalPlaybackContinuesOnHomeScreenAndStopsOnTermination",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "children" : [
+                    {
+                      "name" : "Adding '_UIReparentingView' as a subview of UIHostingController.view is not supported and may result in a broken view hierarchy. Add your view above UIHostingController.view in a common superview or insert it into your SwiftUI content in a UIViewRepresentable instead.",
+                      "nodeType" : "Runtime Warning"
+                    }
+                  ],
+                  "duration" : "44s",
+                  "durationInSeconds" : 44.90263593196869,
+                  "name" : "testNamedPresetCanBeSavedAndLoadedAfterRelaunch()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testNamedPresetCanBeSavedAndLoadedAfterRelaunch()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testNamedPresetCanBeSavedAndLoadedAfterRelaunch",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "11s",
+                  "durationInSeconds" : 11.299843072891235,
+                  "name" : "testTapSelectsAndDraggingMovesFilterOnCurve()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testTapSelectsAndDraggingMovesFilterOnCurve()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testTapSelectsAndDraggingMovesFilterOnCurve",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                },
+                {
+                  "duration" : "28s",
+                  "durationInSeconds" : 28.361687064170837,
+                  "name" : "testTuningAndActiveBandSurviveLeavingAndTerminatingTheApp()",
+                  "nodeIdentifier" : "EqualizerRelaunchTests/testTuningAndActiveBandSurviveLeavingAndTerminatingTheApp()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests/testTuningAndActiveBandSurviveLeavingAndTerminatingTheApp",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "EqualizerRelaunchTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/EqualizerRelaunchTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            },
+            {
+              "children" : [
+                {
+                  "duration" : "5s",
+                  "durationInSeconds" : 5.263278961181641,
+                  "name" : "testIndependentHostStillRendersEQAfterSonanceTerminates()",
+                  "nodeIdentifier" : "HostedEffectLifecycleTests/testIndependentHostStillRendersEQAfterSonanceTerminates()",
+                  "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/HostedEffectLifecycleTests/testIndependentHostStillRendersEQAfterSonanceTerminates",
+                  "nodeType" : "Test Case",
+                  "result" : "Passed"
+                }
+              ],
+              "name" : "HostedEffectLifecycleTests",
+              "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests/HostedEffectLifecycleTests",
+              "nodeType" : "Test Suite",
+              "result" : "Passed"
+            }
+          ],
+          "name" : "SonanceEQiOSUITests",
+          "nodeIdentifierURL" : "test://com.apple.xcode/SonanceEQ/SonanceEQiOSUITests",
+          "nodeType" : "UI test bundle",
+          "result" : "Passed"
+        }
+      ],
+      "name" : "SonanceEQiOS",
+      "nodeType" : "Test Plan",
+      "result" : "Passed"
+    }
+  ],
+  "testPlanConfigurations" : [
+    {
+      "configurationId" : "1",
+      "configurationName" : "Test Scheme Action"
+    }
+  ]
+}

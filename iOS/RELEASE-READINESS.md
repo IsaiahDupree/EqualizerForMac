@@ -28,6 +28,23 @@ iOS 27 cross-app product and has not been submitted or published.
   session was measured, so the physical Bluetooth/CarPlay playback acceptance
   run remains outstanding. The Media Device route capability is still absent.
 
+## Latest standalone app regression — 2026-11-27
+
+- The full `SonanceEQiOS` unit and UI scheme passed **59/59**, with zero skips,
+  on the iPad Pro 13-inch (M5) iOS 26.0 simulator under Xcode 27.2. The result
+  tree and manifest are retained in `iOS/AudioValidation/Results/2026-11-27/`;
+  the full `.xcresult` is kept locally at
+  `build/audio-quality/2026-11-27-full/SonanceEQiOS-FullSuite.xcresult`.
+- Xcode reported three QoS priority-inversion warnings and two
+  `_UIReparentingView` hierarchy warnings. The tests passed, but the QoS and UI
+  warnings remain open follow-up items.
+- This validates the standalone app and its AUv3 offline/render integration on
+  a simulator. It does not validate the EffectDeck host's iOS 27 UI, iPhone
+  audio output, Bluetooth, CarPlay or the Media Device route.
+- The exact iPhone 15 again reports unavailable to CoreDevice (error -27 on
+  `xcdevice`) and no iPhone is present in USB inventory. The updated build has
+  not been installed; physical route playback remains unverified.
+
 ## Route-report sharing — 2026-11-25
 
 - Added a user-triggered Share action to the route warning. Its report contains

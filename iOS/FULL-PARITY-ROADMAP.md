@@ -95,18 +95,17 @@ quick app relaunch, single route return and direct CarPlay bypass. The latest ha
 delivery to retain rapid transitions; its production host build compiles for
 iOS 27. The simulator cannot load the production `MediaDevice` extension. The complete
 embedded-host Logic suite passes 1,436/1,436 tests with parallelization
-disabled on the iOS 26 simulator. The current standalone `SonanceEQiOS` scheme
-passes 57/57 unit and UI tests with no skips on the same simulator, including
-all-sample audio continuity, playback, preset, AutoEq, correction and AU
-lifecycle coverage. Result bundle:
-`/tmp/SonanceStandaloneCurrent.xcresult`. The two live-playback integration
-cases also assert AU render telemetry and zero deadline misses; all 9 focused
-Audio Unit integration tests pass at `/tmp/SonanceAudioRealtimeTests.xcresult`.
-Xcode still reports thread-QoS inversion warnings on those playback tests, so
-the simulator timing counters do not replace physical listening validation.
-The full suite also logged `_UIReparentingView` runtime warnings; no test failed. The
-production host UI suite still needs an iOS 27 simulator or the iPhone; physical
-route behavior needs the phone.
+disabled on the iOS 26 simulator. On 2026-11-27, the current standalone
+`SonanceEQiOS` scheme passed **59/59** unit and UI tests with no skips on the
+iPad Pro 13-inch (M5) simulator, including all-sample audio continuity,
+playback, presets, AutoEq, correction and AU lifecycle coverage. Summary and
+test tree: `iOS/AudioValidation/Results/2026-11-27/`; complete local result:
+`build/audio-quality/2026-11-27-full/SonanceEQiOS-FullSuite.xcresult`. Xcode
+reported three thread-QoS inversion warnings and two `_UIReparentingView`
+hierarchy warnings despite all tests passing. These simulator results do not
+replace physical listening validation. The production host UI suite still
+needs an iOS 27 simulator or the iPhone; physical route behavior needs the
+phone.
 
 ## Acceptance evidence
 
