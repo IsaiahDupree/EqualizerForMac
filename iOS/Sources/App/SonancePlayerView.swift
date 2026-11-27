@@ -194,7 +194,12 @@ private struct ListeningGuideView: View {
                 }
                 Section("Use another audio app") {
                     Text("Add Sonance EQ as an effect in a compatible AUv3 host. Choose a speech curve from the host's Sonance Presets menu. The host controls its own effect settings.")
-                    Text("The Sonance player does not receive other apps' audio directly. A separate compatible host and route are needed, and compatibility varies.")
+                    Text("The Sonance player does not receive other apps' audio directly. A separate compatible AUv3 host is needed. If an app says it can’t play through EffectDeck Audio, that app hasn’t supplied audio to the effect, so Sonance can’t process it.")
+                        .foregroundStyle(.secondary)
+                }
+                Section("Play through CarPlay or Bluetooth") {
+                    Text("Connect CarPlay or Bluetooth, open an audio file in Sonance, and start playback. Sonance applies its EQ to that file and sends the processed audio to the active iPhone output route.")
+                    Text("This does not apply Sonance EQ to SoundCloud, Apple Music, or other apps playing their own audio. iOS doesn’t give Sonance a system-wide audio tap or a supported way to chain another app’s audio through Sonance and then back out to CarPlay.")
                         .foregroundStyle(.secondary)
                 }
                 Section("Keep your sound") {

@@ -103,13 +103,28 @@ the Sonance Audio Unit.
 Apple's iOS 27 AVSystemRouting guidance describes app playback to a remote
 device and realtime samples delivered through a Media Device extension. It does
 not describe using a same-iPhone virtual route as an unrestricted system-wide
-audio tap followed by a second independent CarPlay output. Treat that proposed
-two-route topology as unsupported unless Apple documents and approves a
-specific API path. The immediate, testable next step is to validate the owned
-local-file playback path to CarPlay, while keeping route-ingress tests limited
-to source apps that support Apple's route API. Record the actual active output
-and route-change history; do not mark the route extension as passing until its
-entitlement and a physical run are available.
+audio tap followed by a second independent CarPlay output. The real-time
+samples API is for a Media Device extension acting as a remote playback
+endpoint; Apple documents receiving the mixed samples in an audio server driver
+plug-in and transmitting them to that device. This is not a documented way to
+take that stream back into the iPhone's AVAudioSession and select CarPlay as a
+second output. The current Apple Developer Program terms also say an app
+bundling this extension should have the sole purpose of delivering and
+installing it, which conflicts with making the extension a feature inside a
+general-purpose EQ app. Do not productize this topology unless Apple documents
+and approves a specific design and app purpose.
+
+The user-visible SoundCloud message (“does not support playing media with
+‘EffectDeck Audio’”) is a source-app rejection, not an EQ setting or a CarPlay
+route failure. In that state the extension receives no SoundCloud samples. The
+supported Sonance-owned path to validate is local-file playback through the
+currently active Bluetooth or CarPlay route. For audio from another app, use
+only a source that actually supports a compatible AUv3 host/effect workflow.
+The immediate, testable next step is to validate the owned local-file playback
+path to CarPlay, while keeping route-ingress tests limited to source apps that
+support Apple's route API. Record the actual active output and route-change
+history; do not mark the route extension as passing until its entitlement and a
+physical run are available.
 
 On 2026-11-27, Xcode 27.2 built and installed combined host build 35
 (0.2.0) on iPhone 15 `00008120-000465A20C52201E` running iOS 27.3, then
