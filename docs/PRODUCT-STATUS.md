@@ -34,3 +34,11 @@ The public review, source release notes, hardware probe, and App Store version a
 - App Store Connect's latest 1.0.9 version is `REJECTED`; the exact Resolution Center reason is not available in the API or notification email. Do not treat either customer review as Apple's rejection finding. Hardware routing, the current rejection reason, and physical acceptance remain separate open questions.
 
 No source, App Privacy, listing, upload, review reply, or submission change was made by this review refresh.
+
+## Current market comparison — 2026-11-27
+
+- Rogue Amoeba's current SoundSource materials position it as a menu-bar audio-control app. Its official manual documents a built-in 10-band equalizer, saved presets, and menu-bar controls. [Product](https://www.rogueamoeba.com/soundsource/), [effects manual](https://www.rogueamoeba.com/support/manuals/soundsource/?page=built-in-effects), [menu-bar controls](https://rogueamoeba.com/support/manuals/soundsource/?page=menu-bar-controls).
+- eqMac's official site lists a parametric equalizer, app-volume mixer, configurable interface, and Audio Unit hosting. [eqMac](https://eqmac.app/).
+- These are feature-positioning checks, not comparative CPU, latency, audio-quality, or conversion benchmarks. They reinforce the specific customer request for discoverable menu-bar entry and a straightforward preset workflow; they do not establish which feature will improve retention or willingness to pay.
+- PR #10's native menu-bar candidate and PR #11's output-specific preset recall cover only parts of this parity gap. A named in-app preset library and easier preset organization remain open product candidates. Keep login-at-start opt-in if pursued; no automatic launch behavior or privacy/tracking change is authorized by this evidence.
+- The current App Store Connect feed still returns only the three portfolio reviews listed in the portfolio report. Sonance EQ's two reviews are not version-linked; feature changes remain candidates pending source review, validation, and release approval.
