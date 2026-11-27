@@ -142,3 +142,17 @@ the wildcard profile does not contain the installed API-created development
 certificate. The test stopped at signing and did not change the installed
 build. Resolve the runner profile/account before claiming on-device UI test
 coverage.
+
+After the build-35 install, the standalone player help was updated to explain
+that CarPlay/Bluetooth output works for audio played by Sonance, while a source
+app's rejection of “EffectDeck Audio” means no source samples reached Sonance.
+Xcode 27.2 rebuilt the combined host for `generic/platform=iOS` from the current
+branch; the signed app's bundle ID is
+`com.isaiahdupree.SonanceEQ.iOSPrototype`, version 0.2.0 (35), and
+`codesign --verify --deep --strict` passed. The built `SonanceEQPlayer` framework
+contains the updated CarPlay guidance. A build targeting the exact iPhone 15
+timed out waiting for the device, and `devicectl` now reports it unavailable
+with no USB iPhone in `system_profiler`; therefore this updated build has not
+been installed. No new audio or UI test ran in this build pass. The signed
+installable app is at
+`/tmp/SonanceEQHostDeviceDerivedData/Build/Products/Debug-iphoneos/SonanceEQHost.app`.
