@@ -1,0 +1,10 @@
+{
+  "format": "git-binary-diff",
+  "vendor_repo": "https://github.com/JoepVanlier/ysfx.git",
+  "vendor_base_commit": "5c3452fee62583aa3d1b7e877d0c758c4024af89",
+  "sha256": "7964cbbe094d732fb5d3c900057088f35b189ac20a06a9a233a6a86d47a72a0e",
+  "bytes": 121336,
+  "includes_new_source": "thirdparty/WDL/source/WDL/eel2/glue_port_vm.h",
+  "excluded_local_submodule_pointer": "thirdparty/clap-juce-extensions",
+  "note": "Relative-path snapshot of current local ysfx worktree changes. Kept as a patch; not pushed to the third-party upstream."
+}
