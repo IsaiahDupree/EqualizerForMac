@@ -110,7 +110,7 @@ struct PresetLibraryView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityIdentifier("savedPreset")
+            .accessibilityIdentifier("savedPreset-\(entry.file.name)")
             Menu {
                 Button("Rename") { promptForName(entry) }
                 Button("Replace with Current EQ") { confirmation = .replace(entry) }
@@ -153,6 +153,7 @@ struct PresetLibraryView: View {
                     var report = ["Saved \(added) \(added == 1 ? "preset" : "presets")."]
                     if kept > 0 { report.append("\(kept) already in the library.") }
                     report.append(contentsOf: batch.problems)
+                    report.append(contentsOf: batch.notices)
                     message = report.joined(separator: "\n")
                 }
             }

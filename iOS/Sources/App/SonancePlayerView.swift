@@ -12,6 +12,9 @@ private struct EqualizerView: View {
     @State private var showingGuide = false
     @State private var workspace = AudioWorkspace.equalizer
     @State private var floatingCurve = FloatingCurve()
+#if DEBUG
+    @State private var didCheckPlaybackFixture = false
+#endif
 
     private var player: PreviewPlayer { session.player }
 
@@ -37,6 +40,11 @@ private struct EqualizerView: View {
                             onEditingChanged: session.editingChanged,
                             onPresetLibrary: { showingPresets = true },
                             onHeadphoneCatalog: { showingHeadphoneCatalog = true },
+                            showsEditHistory: true,
+                            canUndo: session.canUndo,
+                            canRedo: session.canRedo,
+                            onUndo: session.undo,
+                            onRedo: session.redo,
                             comparison: EqualizerComparison(hasReference: session.reference != nil,
                                                             listeningToReference: session.playingReference,
                                                             capture: session.captureReference, audition: session.auditionReference)
@@ -83,6 +91,9 @@ private struct EqualizerView: View {
                 }
             }
         }
+#if DEBUG
+        .onAppear { loadDebugPlaybackFixtureIfRequested() }
+#endif
         .tint(EqualizerEditor.accent)
         .sheet(isPresented: $showingPresets) {
             PresetLibraryView(library: session.presets, session: session)
@@ -122,6 +133,18 @@ private struct EqualizerView: View {
         }
         .modifier(AudioSessionLifecycleObserver(player: player))
     }
+
+#if DEBUG
+    private func loadDebugPlaybackFixtureIfRequested() {
+        guard !didCheckPlaybackFixture else { return }
+        didCheckPlaybackFixture = true
+        guard ProcessInfo.processInfo.arguments.contains("--sonance-ui-test-playback-fixture"),
+              let fixture = Bundle.main.url(forResource: "SonanceBackgroundVerification", withExtension: "wav") else {
+            return
+        }
+        player.select(fixture)
+    }
+#endif
 
     private var pluginHelp: some View {
         DisclosureGroup("Use Sonance EQ in another app") {

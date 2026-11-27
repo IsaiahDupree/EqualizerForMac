@@ -1,11 +1,12 @@
 # iOS 27 routing experiment
 
-Status: **not tested; not productized**. The existing Sonance iOS prototype
-plays files and provides an AUv3 effect; it does not register a Media Device
-route. A separate [debug-only Route Lab](RouteExperiment/README.md) contains
-unverified source with a low-pass filter, unauthenticated transport, and
-unresolved privacy concerns. It is not integrated into Sonance EQ. Speech
-listening modes are available independently in the player and AUv3 host.
+Status: **route source integrated, entitlement and hardware behavior unverified**.
+The host source includes a Media Device extension and PCM bridge, and the app
+also has an independent local-file player and AUv3 effect. The Media Device
+route is not usable in a signed product build yet: the managed entitlement and
+matching provisioning profiles are missing. A separate [debug-only Route
+Lab](RouteExperiment/README.md) contains additional unverified code and is not
+integrated into Sonance EQ.
 
 Apple requires the media-device-extension entitlement for both the extension
 and its container app. Apple's current Media Device and AVSystemRouting guides
@@ -34,8 +35,9 @@ any product integration, obtain written Apple guidance on same-device effects
 and the container app's permitted purpose. If that gate is resolved in the
 future, the separate device prerequisites are:
 
-1. Xcode 27.2 with the iOS 27 SDK. It is installed on this Mac, but its
-   first-use license has not been accepted, so builds cannot run yet.
+1. Xcode 27.2 with the iOS 27 SDK. The current branch can compile the host
+   without the Media Device entitlement, but the route installer cannot be
+   provisioned for real route activation until Apple grants that capability.
 2. Sarah's iPhone 11, UDID `00008030-000359A13688802E`, connected, trusted,
    and running iOS 27. Verify its actual OS before testing; do not upgrade it
    or change its data as an assumed prerequisite.
@@ -70,3 +72,58 @@ output and reproduction steps as runs are performed.
 | Background and lock screen | Not tested | |
 | Interruption and recovery | Not tested | |
 | Latency and battery | Not tested | |
+
+## CarPlay and system-audio routing diagnosis — 2026-11-27
+
+There are two independent route legs, and the current design cannot claim a
+working phone-to-EQ-to-CarPlay path:
+
+1. **Ingress (source → EQ):** the Media Device extension can receive samples
+   only after iOS activates its route and the source app sends audio to that
+   route. Apple documents AVSystemRouting as an app-facing routing API. It is
+   not an API for capturing arbitrary audio from other apps. In the supplied
+   screenshot, SoundCloud explicitly rejects “EffectDeck Audio”; that session
+   therefore has no source samples for Sonance to process.
+2. **Egress (EQ → car):** `AudioIO.escapeVirtualDevice` detects when the host's
+   own AVAudioSession is routed back to the Sonance virtual device and applies
+   `overrideOutputAudioPort(.speaker)` to break the feedback loop. Apple
+   documents that this override sends a `.playAndRecord` session to the built-in
+   speaker. Consequently the current virtual-route design cannot deliver its
+   processed signal to CarPlay while that escape is active. Removing the
+   override without a different, independently selected output path risks the
+   documented-in-code loop: virtual route → extension → DSP → host output →
+   virtual route.
+
+The local-file player is a separate, viable path: it owns the source audio,
+processes it in Sonance, and configures an `.playback` audio session. It should
+be tested with CarPlay as its selected output; this does not enable EQ of
+SoundCloud or other apps. The AUv3 path likewise works only in an app that hosts
+the Sonance Audio Unit.
+
+Apple's iOS 27 AVSystemRouting guidance describes app playback to a remote
+device and realtime samples delivered through a Media Device extension. It does
+not describe using a same-iPhone virtual route as an unrestricted system-wide
+audio tap followed by a second independent CarPlay output. Treat that proposed
+two-route topology as unsupported unless Apple documents and approves a
+specific API path. The immediate, testable next step is to validate the owned
+local-file playback path to CarPlay, while keeping route-ingress tests limited
+to source apps that support Apple's route API. Record the actual active output
+and route-change history; do not mark the route extension as passing until its
+entitlement and a physical run are available.
+
+On 2026-11-27, Xcode 27.2 built and installed combined host build 35
+(0.2.0) on iPhone 15 `00008120-000465A20C52201E` running iOS 27.3, then
+launched the host process. This verifies host build/sign/install only. The
+device connection is `localNetwork`, not USB. `devicectl device info audio`
+reports that this device does not support its Audio Output Device Selection
+capability, so it did not provide the active Bluetooth/CarPlay route. The
+physical endpoint comparison remains not run.
+
+The targeted physical host UI test also remains unexecuted: its checked-in
+manual provisioning profile targets `HostUITests`, while Xcode signs the
+runner as `HostUITests.xctrunner`. Switching the target to automatic signing
+then exposed that no Apple developer account is configured in this Xcode and
+the wildcard profile does not contain the installed API-created development
+certificate. The test stopped at signing and did not change the installed
+build. Resolve the runner profile/account before claiming on-device UI test
+coverage.

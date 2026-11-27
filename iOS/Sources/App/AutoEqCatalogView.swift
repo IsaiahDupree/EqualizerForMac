@@ -30,6 +30,7 @@ struct AutoEqCatalogView: View {
                         HStack(spacing: 4) {
                             Button { select(preset) } label: { row(preset) }
                                 .buttonStyle(.plain)
+                                .accessibilityIdentifier("headphonePreset-\(preset.id)")
                             Menu {
                                 Button("Load into Main EQ", systemImage: "slider.horizontal.3") {
                                     select(preset)

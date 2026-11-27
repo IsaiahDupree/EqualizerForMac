@@ -32,6 +32,50 @@ final class EqualizerSessionTests: XCTestCase {
     }
 
     @MainActor
+    func testUndoRedoGroupsContinuousEditsAndPersistsRestoredSettings() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+        let original = session.snapshot.settings
+
+        session.editingChanged(true)
+        session.updateEQ { $0.bands[0].gain = 2 }
+        session.updateEQ { $0.bands[0].gain = 4 }
+        session.editingChanged(false)
+
+        XCTAssertTrue(session.canUndo)
+        XCTAssertFalse(session.canRedo)
+        session.undo()
+        XCTAssertEqual(session.snapshot.settings, original)
+        XCTAssertFalse(session.canUndo)
+        XCTAssertTrue(session.canRedo)
+        XCTAssertEqual(try store.load().settings, original)
+
+        session.redo()
+        XCTAssertEqual(session.snapshot.settings.bands[0].gain, 4)
+        XCTAssertTrue(session.canUndo)
+        XCTAssertFalse(session.canRedo)
+        XCTAssertEqual(try store.load().settings.bands[0].gain, 4)
+    }
+
+    @MainActor
+    func testNewEditAfterUndoClearsRedoHistory() {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = EqualizerStore(file: directory.appending(path: "session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+        session.updateEQ { $0.preamp = -2 }
+        session.undo()
+
+        session.updateEQ { $0.preamp = -3 }
+
+        XCTAssertTrue(session.canUndo)
+        XCTAssertFalse(session.canRedo)
+        XCTAssertEqual(session.snapshot.settings.preamp, -3)
+    }
+
+    @MainActor
     func testSpeechProfileIsAudibleEditableAndSurvivesRelaunch() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         let domain = "SonanceSpeechTests.\(UUID().uuidString)"
@@ -160,5 +204,26 @@ final class EqualizerSessionTests: XCTestCase {
         XCTAssertEqual(try store.load().settings.preamp, -7)
         session.updateEQ { $0.bypassed = true }
         XCTAssertTrue(try store.load().settings.bypassed)
+    }
+
+    @MainActor
+    func testOutputCorrectionEditPersistsForItsRouteAfterRouteChanges() throws {
+        let location = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: location) }
+        let store = EqualizerStore(file: location.appending(path: "equalizer-session.json"), legacyDefaults: .standard)
+        let session = EqualizerSession(store: store)
+        let output = PlaybackOutput(id: "disconnected-route", name: "Former Bluetooth output")
+        var correction = try OutputCorrection(name: "Test correction", settings: MobileEQSettings())
+
+        XCTAssertTrue(session.setCorrection(correction, for: output))
+        correction.enabled = false
+        XCTAssertTrue(session.setCorrection(correction, for: output))
+
+        let relaunched = EqualizerSession(store: store)
+        XCTAssertEqual(relaunched.correction(for: output), correction)
+        XCTAssertFalse(relaunched.correction(for: output)?.enabled ?? true)
+
+        XCTAssertTrue(relaunched.setCorrection(nil, for: output))
+        XCTAssertNil(EqualizerSession(store: store).correction(for: output))
     }
 }

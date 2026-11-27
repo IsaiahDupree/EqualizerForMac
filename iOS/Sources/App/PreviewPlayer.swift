@@ -22,6 +22,7 @@ final class PreviewPlayer {
     @ObservationIgnored private var sessionActive = false
     @ObservationIgnored private var resumeAfterInterruption = false
     @ObservationIgnored private var reconnectOutputID: String?
+    @ObservationIgnored private var activeReconnectableOutputID: String?
     @ObservationIgnored private var activeSegment: PlaybackResumeSegment?
     @ObservationIgnored private(set) var settings = MobileEQSettings()
     @ObservationIgnored private var pausedProgress = 0.0
@@ -142,6 +143,7 @@ final class PreviewPlayer {
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
+            rememberReconnectableOutput()
         } catch {
             guard playRequest == request else { return }
             stop()
@@ -152,6 +154,8 @@ final class PreviewPlayer {
     func pause() {
         guard state == .playing, let graph else { return }
         pausedProgress = progress
+        reconnectOutputID = nil
+        activeReconnectableOutputID = nil
         graph.player.pause()
         graph.engine.pause()
         state = .paused
@@ -218,6 +222,7 @@ final class PreviewPlayer {
             graph.player.play()
             outputName = session.currentRoute.outputs.first?.portName
             state = .playing
+            rememberReconnectableOutput()
         } catch {
             stop()
             self.error = "Playback couldn’t resume. Tap Play to start the file again."
@@ -241,6 +246,7 @@ final class PreviewPlayer {
         sleepTimerTask = nil
         sleepTimerMinutes = nil
         reconnectOutputID = nil
+        activeReconnectableOutputID = nil
         pausedProgress = 0
         activeSegment = nil
         graph?.player.stop()
@@ -361,8 +367,17 @@ final class PreviewPlayer {
     func handleConfigurationChange(_ notification: Notification) {
         guard state == .playing || state == .paused,
               let engine = notification.object as? AVAudioEngine, engine === graph?.engine else { return }
-        parkForRouteChange(reconnectID: nil)
+        let reconnectID = PlaybackRouteReconnectPolicy.configurationChangeReconnectID(
+            pendingOutputID: reconnectOutputID,
+            activeOutputID: state == .playing ? activeReconnectableOutputID : nil)
+        parkForRouteChange(reconnectID: reconnectID)
         error = "The audio output changed. Playback is paused; tap Play to continue from here."
+    }
+
+    private func rememberReconnectableOutput() {
+        activeReconnectableOutputID = session.currentRoute.outputs.first(where: {
+            PlaybackRouteReconnectPolicy.isReconnectable(portType: $0.portType)
+        })?.uid
     }
 
     private func parkForRouteChange(reconnectID: String?) {

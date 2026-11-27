@@ -27,8 +27,10 @@ gates Apple Music Understanding analysis behind iOS 27 SDK availability. It
 can share a text practice plan without attaching audio. Batch import can be
 stopped after the current file.
 
-The iPhone and iPad app runs on iOS 17 or later. Open a mono or stereo file
-from Files, tap Play, and compare your changes with Bypass EQ. The app includes
+The standalone player target supports iOS 17 and later. The full EffectDeck
+host currently requires iOS 27 because its ordered-effects UI uses SwiftUI
+reordering APIs introduced in that release. Open a mono or stereo file from
+Files, tap Play, and compare your changes with Bypass EQ. The app includes
 the Mac app’s ten starting bands, five built-in presets, and the bundled 8,862
 entry headphone correction catalog. Choose a band
 from the **Filter Bands** dropdown or tap its point on the curve. Drag the
@@ -68,7 +70,10 @@ The preset keeps the filter values and enabled states. Bypass is a separate
 playback control.
 
 Use **Import Presets** in the library to open AutoEq `ParametricEQ.txt` files
-with bell and shelf filters. Tap the headphone icon to open **Output
+with bell and shelf filters or Wavelet / Equalizer APO `GraphicEQ:` curves. A
+GraphicEQ curve is fitted to up to 32 parametric bell filters, gets estimated
+headroom when the file has no preamp, and is labeled as an approximation during
+import. Tap the headphone icon to open **Output
 Correction** and assign a saved preset to the current output. Sonance keeps a
 copy of the preset for that output and restores the assignment and its on/off
 setting after relaunch. Corrections apply after your EQ to files played in
@@ -158,11 +163,18 @@ saves the current EQ. Build 2 loads the EQ settings from build 1 when upgrading.
 
 ## Build and verify
 
-To build, install and launch Sonance EQ on the designated iPhone 15 over USB,
-run `bash iOS/Tools/install-on-iphone15.sh`. The script checks Xcode readiness
-and the exact device ID first, verifies the built bundle ID, and records the
-build log under `iOS/build/iphone15-install/`. Complete Xcode's first-use setup
-in Xcode itself before running it; the script never accepts the license.
+To build, install and launch Sonance EQ on the assigned stationary iPhone 11
+over USB, run `bash iOS/Tools/install-on-test-iphone.sh`. The script defaults
+to UDID `00008030-000359A13688802E`, checks Xcode readiness and that exact device
+ID first, verifies the built bundle ID, and requires at least 4 GiB free on the
+DerivedData volume before compiling. DerivedData and
+logs default to `/tmp/SonanceEQHostDeviceDerivedData` on the Mac's local APFS
+volume; set `SONANCE_IPHONE_DERIVED_DATA` to another local APFS path when
+needed. Avoid NTFS or external DerivedData volumes, which caused Xcode build
+planning to stall on this setup.
+Use `SONANCE_BUILD_MIN_FREE_KB` only to change the explicit free-space floor.
+Complete Xcode's first-use setup in Xcode itself before running it; the script
+never accepts the license.
 
 Build all locally available Swift utility targets from their tracked XcodeGen
 specs with one bounded Simulator build command:
@@ -230,6 +242,11 @@ measures its EQ output before and after Sonance terminates. To include the
 active background playback case, put a 30-second mono or stereo WAV named
 `Sonance Background Verification.wav` at the top level of **On My iPhone** or
 **On My iPad** in Files on the test device.
+
+The Debug simulator UI test generates its own 60-second PCM test tone inside
+the app bundle and selects it only when launched with the test argument. Release
+builds do not generate or load that fixture. Physical iPhone playback testing
+continues to use the Files-based procedure above.
 
 ## iOS 27 routing
 

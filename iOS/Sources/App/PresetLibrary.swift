@@ -25,7 +25,7 @@ enum PresetError: LocalizedError {
         switch self {
         case .nameRequired: return "Enter a preset name between 1 and 100 characters."
         case .nameTaken: return "A preset with that name already exists."
-        case .invalidFile: return "Choose a Sonance EQ preset, preset collection, or AutoEq ParametricEQ text file."
+        case .invalidFile: return "Choose a Sonance EQ preset, preset collection, or AutoEq ParametricEQ / GraphicEQ text file."
         case .tooManyFilters: return "Sonance EQ for iPhone supports up to \(MobileEQ.maximumBandCount) filters per preset."
         case .outOfRange: return "A filter or preamp value is outside the iPhone editor’s range."
         case .libraryUnavailable: return "Saved presets couldn’t be opened. The existing library was preserved."
@@ -52,13 +52,20 @@ extension MobileEQSettings {
 struct PresetImport {
     var files: [PresetFile] = []
     var problems: [String] = []
+    var notices: [String] = []
+
+    private struct FileResult {
+        var files: [PresetFile]
+        var notices: [String] = []
+    }
 
     static func read(_ urls: [URL]) -> PresetImport {
         var result = PresetImport()
         for url in urls {
             do {
-                let files = try readFile(url)
-                for file in files {
+                let imported = try readFile(url)
+                result.notices.append(contentsOf: imported.notices)
+                for file in imported.files {
                     do {
                         _ = try MobileEQSettings(preset: file)
                         _ = try PresetLibrary.validName(file.name)
@@ -74,7 +81,7 @@ struct PresetImport {
         return result
     }
 
-    private static func readFile(_ url: URL) throws -> [PresetFile] {
+    private static func readFile(_ url: URL) throws -> FileResult {
         let accessed = url.startAccessingSecurityScopedResource()
         defer { if accessed { url.stopAccessingSecurityScopedResource() } }
         let limit = 4 * 1024 * 1024
@@ -85,15 +92,19 @@ struct PresetImport {
         guard data.count <= limit else { throw PresetError.invalidFile }
         if url.pathExtension.lowercased() == "txt" {
             guard let text = String(data: data, encoding: .utf8) else { throw PresetError.invalidFile }
-            return [try AutoEqTextPreset.read(text, name: url.deletingPathExtension().lastPathComponent)]
+            let file = try AutoEqTextPreset.read(text, name: url.deletingPathExtension().lastPathComponent)
+            let notices = AutoEqTextPreset.isGraphicEQ(text)
+                ? ["\(url.lastPathComponent): GraphicEQ was approximated with up to 32 parametric bell filters; compare the response curve before relying on an exact match."]
+                : []
+            return FileResult(files: [file], notices: notices)
         }
         let decoder = JSONDecoder()
         if let collection = try? decoder.decode(PresetCollection.self, from: data),
            collection.app == "SonanceEQ", collection.version == 1, !collection.presets.isEmpty {
-            return collection.presets
+            return FileResult(files: collection.presets)
         }
         guard let file = try? decoder.decode(PresetFile.self, from: data) else { throw PresetError.invalidFile }
-        return [file]
+        return FileResult(files: [file])
     }
 }
 

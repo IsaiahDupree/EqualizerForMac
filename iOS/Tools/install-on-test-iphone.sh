@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the EffectDeck-derived Sonance EQ host on the assigned iPhone 15 by
+# Install the EffectDeck-derived Sonance EQ host on the assigned stationary iPhone 11 by
 # exact UDID. The optional Media Device route companion is a separate Apple
 # capability and must not prevent installing or testing the full host.
-DEVICE_ID="${SONANCE_IPHONE_UDID:-00008120-000465A20C52201E}"
+DEVICE_ID="${SONANCE_IPHONE_UDID:-00008030-000359A13688802E}"
 TEAM_ID="${SONANCE_DEVELOPMENT_TEAM:-Y4HDXFWXUV}"
 HOST_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype"
 ROUTE_BUNDLE_ID="com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller"
@@ -12,8 +12,9 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 HOST_PROJECT="${PROJECT_ROOT}/iOS/Vendor/EffectDeck/SonanceEQHost.xcodeproj"
 CONFIGURATION="${SONANCE_BUILD_CONFIGURATION:-Debug}"
 BUILD_JOBS="${SONANCE_BUILD_JOBS:-2}"
-DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceDerivedData}"
-LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall}"
+DERIVED_DATA="${SONANCE_IPHONE_DERIVED_DATA:-/tmp/SonanceEQHostDeviceDerivedData}"
+LOG_DIR="${SONANCE_IPHONE_LOG_DIR:-${DERIVED_DATA}/logs}"
+MIN_BUILD_FREE_KB="${SONANCE_BUILD_MIN_FREE_KB:-4194304}"
 HOST_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQHost.app"
 ROUTE_APP_PATH="${DERIVED_DATA}/Build/Products/${CONFIGURATION}-iphoneos/SonanceEQRoute.app"
 HOST_SPEC="${PROJECT_ROOT}/iOS/sonance-host.project.yml"
@@ -54,7 +55,7 @@ EOF
     exit 2
 fi
 
-if [[ ! -d "/Volumes/SonanceEQBuildScratch" ]]; then
+if [[ ( "${DERIVED_DATA}" == "/Volumes/SonanceEQBuildScratch" || "${DERIVED_DATA}" == "/Volumes/SonanceEQBuildScratch/"* ) && ! -d "/Volumes/SonanceEQBuildScratch" ]]; then
     echo "Build volume /Volumes/SonanceEQBuildScratch is not mounted; refusing to fill the Mac system volume." >&2
     exit 2
 fi
@@ -84,7 +85,7 @@ diagnose_device_connection() {
     echo "No pairing, service restart, or device mutation was attempted." >&2
 }
 
-if ! xcrun xcdevice list 2>/dev/null | /usr/bin/python3 -c '
+if ! xcrun xcdevice list --timeout 10 2>/dev/null | /usr/bin/python3 -c '
 import json
 import sys
 
@@ -99,6 +100,23 @@ sys.exit(0 if any(
 ' "${DEVICE_ID}"; then
     echo "Target iPhone ${DEVICE_ID} is not available to Xcode; collecting read-only connection diagnostics." >&2
     diagnose_device_connection
+    exit 2
+fi
+
+if [[ ! "${MIN_BUILD_FREE_KB}" =~ ^[0-9]+$ ]] || (( MIN_BUILD_FREE_KB < 1 )); then
+    echo "SONANCE_BUILD_MIN_FREE_KB must be a positive integer." >&2
+    exit 2
+fi
+
+SPACE_CHECK_PATH="$(dirname "${DERIVED_DATA}")"
+if [[ ! -d "${SPACE_CHECK_PATH}" ]]; then
+    echo "The parent directory for the DerivedData path is not mounted or does not exist: ${SPACE_CHECK_PATH}" >&2
+    exit 2
+fi
+AVAILABLE_BUILD_KB="$(df -Pk "${SPACE_CHECK_PATH}" | awk 'NR == 2 { print $4 }')"
+if [[ ! "${AVAILABLE_BUILD_KB}" =~ ^[0-9]+$ ]] || (( AVAILABLE_BUILD_KB < MIN_BUILD_FREE_KB )); then
+    echo "Build volume for ${DERIVED_DATA} has ${AVAILABLE_BUILD_KB:-unknown} KiB free; ${MIN_BUILD_FREE_KB} KiB is required." >&2
+    echo "Set SONANCE_IPHONE_DERIVED_DATA to a mounted build volume with sufficient free space." >&2
     exit 2
 fi
 
@@ -136,10 +154,10 @@ build_scheme() {
     if ! xcodebuild \
         "${xcode_args[@]}" \
         build "${SIGNING_SETTINGS[@]}" 2>&1 | tee "${log_path}"; then
-        if rg -q 'com.apple.security.application-groups' "${log_path}"; then
+        if rg -qi 'error:.*(provisioning profile|entitlement).*(application-groups|group\.com\.isaiahdupree\.SonanceEQ)|(application-groups|group\.com\.isaiahdupree\.SonanceEQ).*error:.*(provisioning profile|entitlement)' "${log_path}"; then
             echo "Signing blocked: assign group.com.isaiahdupree.SonanceEQ to the host and Share App IDs, then regenerate their provisioning profiles." >&2
         fi
-        if rg -q 'com.apple.developer.media-device-extension' "${log_path}"; then
+        if rg -qi 'error:.*(provisioning profile|entitlement).*com\.apple\.developer\.media-device-extension|com\.apple\.developer\.media-device-extension.*error:.*(provisioning profile|entitlement)' "${log_path}"; then
             echo "Signing blocked: Apple must enable the Media Device capability for the route installer and extension App IDs, then issue matching profiles." >&2
         fi
         echo "Build failed. See ${log_path}." >&2

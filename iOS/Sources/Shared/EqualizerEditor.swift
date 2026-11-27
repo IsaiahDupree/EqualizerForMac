@@ -14,6 +14,11 @@ struct EqualizerEditor: View {
     var onEditingChanged: (Bool) -> Void = { _ in }
     var onPresetLibrary: (() -> Void)?
     var onHeadphoneCatalog: (() -> Void)?
+    var showsEditHistory = false
+    var canUndo = false
+    var canRedo = false
+    var onUndo: () -> Void = {}
+    var onRedo: () -> Void = {}
     var comparison: EqualizerComparison?
 
     private var listeningToReference: Bool { comparison?.listeningToReference == true }
@@ -33,6 +38,24 @@ struct EqualizerEditor: View {
                     .font(.title2.weight(.semibold))
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
+                if showsEditHistory {
+                    Button(action: onUndo) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canUndo)
+                    .accessibilityLabel("Undo EQ change")
+                    .accessibilityIdentifier("undoEQ")
+                    Button(action: onRedo) {
+                        Image(systemName: "arrow.uturn.forward")
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canRedo)
+                    .accessibilityLabel("Redo EQ change")
+                    .accessibilityIdentifier("redoEQ")
+                }
                 presets
             }
             HStack {

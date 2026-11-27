@@ -29,9 +29,10 @@ final class AudioUnitIntegrationTests: XCTestCase {
         let wet = try stream.measure()
         XCTAssertEqual(wet[0], 6, accuracy: 0.25)
         XCTAssertEqual(wet[1], -2.9, accuracy: 0.35)
-        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.renderBlocksAddress)?.value ?? 0, 0)
-        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.maximumProcessingMicrosecondsAddress)?.value ?? 0, 0)
-        XCTAssertGreaterThan(tree.parameter(withAddress: MobileEQ.lastDeadlineMicrosecondsAddress)?.value ?? 0, 0)
+        let metrics = await renderMetricsAfterOutOfProcessSync(tree)
+        XCTAssertGreaterThan(metrics?.completedBlocks ?? 0, 0)
+        XCTAssertGreaterThan(metrics?.maximumProcessingMicroseconds ?? 0, 0)
+        XCTAssertGreaterThan(metrics?.lastDeadlineMicroseconds ?? 0, 0)
 
         effect.auAudioUnit.shouldBypassEffect = true
         let dry = try stream.measure()
@@ -164,6 +165,29 @@ final class AudioUnitIntegrationTests: XCTestCase {
     }
 
     @MainActor
+    func testBundledHeadphoneCorrectionAppliesToTheAudioUnitParameterTree() async throws {
+        let preset = try XCTUnwrap(AutoEqCatalog.shared.search("AirPods Pro 3", limit: 20).first)
+        let expected = try preset.settings()
+        let effect = try await installedEffect()
+        let tree = try XCTUnwrap(effect.auAudioUnit.parameterTree)
+
+        expected.apply(to: tree)
+
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.bandCountAddress)?.value, Float(expected.bands.count))
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.preampAddress)?.value, expected.preamp)
+        XCTAssertEqual(tree.parameter(withAddress: MobileEQ.bypassAddress)?.value, 0)
+        for (index, band) in expected.bands.enumerated() {
+            XCTAssertEqual(tree.parameter(withAddress: MobileEQ.address(.frequency, band: index))?.value, Float(band.frequency))
+            XCTAssertEqual(tree.parameter(withAddress: MobileEQ.address(.gain, band: index))?.value, band.gain)
+            XCTAssertEqual(tree.parameter(withAddress: MobileEQ.address(.quality, band: index))?.value, Float(band.q))
+        }
+
+        let rendered = try RenderStream(effect: effect, frequencies: [1_000, 4_000]).measure()
+        XCTAssertEqual(rendered.count, 2)
+        XCTAssertTrue(rendered.allSatisfy { $0.isFinite }, "A bundled correction must render finite output through the installed Audio Unit.")
+    }
+
+    @MainActor
     func testHostCanRequestSonanceEditor() async throws {
         let effect = try await installedEffect()
         XCTAssertTrue(effect.auAudioUnit.providesUserInterface)
@@ -226,6 +250,7 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(frame.dominantFrequency), 1_000, accuracy: 25)
         XCTAssertEqual(frame.left.peak, -12.1, accuracy: 0.6)
         XCTAssertNil(frame.right)
+        try await assertLiveRenderMetItsDeadlines(player)
         player.pause()
         XCTAssertEqual(player.state, .paused)
         await player.play()
@@ -281,11 +306,92 @@ final class AudioUnitIntegrationTests: XCTestCase {
         XCTAssertTrue(session.setCorrection(correction, for: output))
         try await expectPeak(-18.1)
         XCTAssertEqual(EqualizerSession(store: store).correction(for: output), correction)
+        try await assertLiveRenderMetItsDeadlines(player)
+    }
+
+    @MainActor
+    func testLiveFullBandMidSideFIRLoadMeetsRenderDeadlines() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".wav")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let buffer = try makeTone(frequencies: [500, 1_200], frames: 384_000)
+        do {
+            let file = try AVAudioFile(forWriting: url, settings: buffer.format.settings)
+            try file.write(from: buffer)
+        }
+
+        func bands(gainSign: Float) -> [EQBand] {
+            (0..<MobileEQ.maximumBandCount).map { index in
+                let fraction = Double(index) / Double(MobileEQ.maximumBandCount - 1)
+                let frequency = 35 * pow(16_000 / 35, fraction)
+                let gain = index.isMultiple(of: 2) ? gainSign * 0.5 : -gainSign * 0.5
+                return EQBand(frequency: frequency, gain: gain, q: 0.707, type: .peaking)
+            }
+        }
+
+        var settings = MobileEQSettings(bands: bands(gainSign: 1), preamp: -18)
+        settings.sideBands = bands(gainSign: -1)
+        settings.midSideEnabled = true
+        settings.linearPhaseEnabled = true
+        XCTAssertTrue(settings.isValid)
+
+        let player = PreviewPlayer()
+        defer { player.stop() }
+        player.select(url)
+        player.apply(settings)
+        await player.play()
+        XCTAssertEqual(player.state, .playing, player.error ?? "")
+
+        var frames: [AudioAnalysisFrame] = []
+        for _ in 0..<24 {
+            if let frame = player.readAnalysis() { frames.append(frame) }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+
+        XCTAssertGreaterThan(frames.count, 5, "Full-load playback should keep producing analysis frames")
+        XCTAssertTrue(frames.contains { $0.left.peak.isFinite && $0.right?.peak.isFinite == true })
+        try await assertLiveRenderMetItsDeadlines(player)
     }
 
     private func installedEffect() async throws -> AVAudioUnit {
-        let components = AVAudioUnitComponentManager.shared().components(matching: MobileEQ.component)
-        XCTAssertEqual(components.count, 1, "The embedded AUv3 must be visible to hosts")
-        return try await AVAudioUnit.instantiate(with: MobileEQ.component, options: .loadOutOfProcess)
+        let manager = AVAudioUnitComponentManager.shared()
+        let componentCount = manager.components(matching: MobileEQ.component).count
+        do {
+            return try await AVAudioUnit.instantiate(with: MobileEQ.component, options: .loadOutOfProcess)
+        } catch {
+            throw NSError(domain: "SonanceEQ.AudioUnitIntegrationTests", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey:
+                            "Sonance AUv3 instantiation failed (component catalog matches: \(componentCount)): \(error.localizedDescription)"])
+        }
+    }
+
+    @MainActor
+    private func renderMetricsAfterOutOfProcessSync(_ tree: AUParameterTree) async -> AudioRenderMetrics? {
+        // AVAudioUnit.instantiate(.loadOutOfProcess) proxies render telemetry
+        // across the extension boundary; allow its read-only parameter values
+        // to catch up after the offline engine has completed its render calls.
+        for _ in 0..<50 {
+            let metrics = AudioRenderMetrics(parameterTree: tree)
+            if (metrics?.completedBlocks ?? 0) > 0,
+               (metrics?.lastDeadlineMicroseconds ?? 0) > 0 {
+                return metrics
+            }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        return AudioRenderMetrics(parameterTree: tree)
+    }
+
+    @MainActor
+    private func assertLiveRenderMetItsDeadlines(_ player: PreviewPlayer,
+                                                file: StaticString = #filePath,
+                                                line: UInt = #line) async throws {
+        var metrics: AudioRenderMetrics?
+        for _ in 0..<30 {
+            metrics = player.readRenderMetrics()
+            if (metrics?.completedBlocks ?? 0) > 0 { break }
+            try await Task.sleep(for: .milliseconds(40))
+        }
+        let live = try XCTUnwrap(metrics, "Live Audio Unit render telemetry should be available", file: file, line: line)
+        XCTAssertGreaterThan(live.completedBlocks, 0, file: file, line: line)
+        XCTAssertEqual(live.deadlineMisses, 0, "Live rendering must not miss an audio buffer deadline", file: file, line: line)
     }
 }

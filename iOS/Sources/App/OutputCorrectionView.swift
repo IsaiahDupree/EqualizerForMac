@@ -63,15 +63,10 @@ struct OutputCorrectionView: View {
             .accessibilityIdentifier("correctionPreset")
 
             if let correction {
-                Toggle("Apply Correction", isOn: Binding(
-                    get: { session.correction(for: output)?.enabled ?? false },
-                    set: { enabled in
-                        var updated = correction
-                        updated.enabled = enabled
-                        update(updated, for: output)
-                    }
-                ))
-                .accessibilityIdentifier("applyOutputCorrection")
+                OutputCorrectionToggle(correction: correction) { updated in
+                    update(updated, for: output)
+                }
+                .id("\(output.id):\(correction.name)")
 
                 Button("Clear Assignment", role: .destructive) { update(nil, for: output) }
             }
@@ -79,7 +74,7 @@ struct OutputCorrectionView: View {
             Text("Correction")
         } footer: {
             if presets.isEmpty {
-                Text("Save a preset or import an AutoEq text file in the Preset Library to assign it here.")
+                Text("Save a preset or import an AutoEq ParametricEQ / GraphicEQ text file in the Preset Library to assign it here.")
             } else {
                 Text("This preset follows the current output and runs after your EQ for audio played in Sonance.")
             }
@@ -88,5 +83,41 @@ struct OutputCorrectionView: View {
 
     private func update(_ correction: OutputCorrection?, for output: PlaybackOutput) {
         message = session.setCorrection(correction, for: output) ? nil : "The audio output changed. Choose a preset for the current output."
+    }
+}
+
+private struct OutputCorrectionToggle: View {
+    let correction: OutputCorrection
+    let onUpdate: (OutputCorrection) -> Void
+    @State private var enabled: Bool
+
+    init(correction: OutputCorrection, onUpdate: @escaping (OutputCorrection) -> Void) {
+        self.correction = correction
+        self.onUpdate = onUpdate
+        _enabled = State(initialValue: correction.enabled)
+    }
+
+    var body: some View {
+        Button {
+            enabled.toggle()
+            var updated = correction
+            updated.enabled = enabled
+            onUpdate(updated)
+        } label: {
+            HStack {
+                Text("Apply Correction")
+                Spacer()
+                Toggle("Apply Correction", isOn: $enabled)
+                    .labelsHidden()
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Apply Correction")
+        .accessibilityValue(enabled ? "On" : "Off")
+        .accessibilityAddTraits(enabled ? .isSelected : [])
+        .accessibilityIdentifier("applyOutputCorrection")
     }
 }

@@ -45,4 +45,20 @@ final class PlaybackResumeSegmentTests: XCTestCase {
         XCTAssertFalse(PlaybackRouteReconnectPolicy.shouldResume(expectedOutputID: "",
                                                                   currentOutputID: ""))
     }
+
+    func testEngineConfigurationChangePreservesReconnectTarget() {
+        XCTAssertEqual(
+            PlaybackRouteReconnectPolicy.configurationChangeReconnectID(
+                pendingOutputID: nil,
+                activeOutputID: "bluetooth-1"),
+            "bluetooth-1")
+        XCTAssertEqual(
+            PlaybackRouteReconnectPolicy.configurationChangeReconnectID(
+                pendingOutputID: "carplay-1",
+                activeOutputID: "bluetooth-1"),
+            "carplay-1")
+        XCTAssertNil(PlaybackRouteReconnectPolicy.configurationChangeReconnectID(
+            pendingOutputID: "",
+            activeOutputID: nil))
+    }
 }

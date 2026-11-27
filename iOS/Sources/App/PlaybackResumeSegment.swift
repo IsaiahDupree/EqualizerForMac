@@ -36,4 +36,14 @@ enum PlaybackRouteReconnectPolicy {
               let currentOutputID, !currentOutputID.isEmpty else { return false }
         return expectedOutputID == currentOutputID
     }
+
+    /// Preserve the route identity across an engine format notification. The
+    /// route-change notification can be delivered after the engine has already
+    /// been reconfigured, so it may not be available to seed reconnection state.
+    static func configurationChangeReconnectID(pendingOutputID: String?,
+                                               activeOutputID: String?) -> String? {
+        if let pendingOutputID, !pendingOutputID.isEmpty { return pendingOutputID }
+        guard let activeOutputID, !activeOutputID.isEmpty else { return nil }
+        return activeOutputID
+    }
 }

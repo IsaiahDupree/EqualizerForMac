@@ -54,6 +54,50 @@ final class PresetLibraryTests: XCTestCase {
         XCTAssertEqual(settings.bands.map(\.enabled), [true, false, true])
     }
 
+    func testImportsGraphicEQAsHeadroomSafeParametricApproximation() throws {
+        let points = (0...256).map { index -> (Double, Double) in
+            let frequency = 20 * pow(1_000, Double(index) / 256)
+            let distance = log(frequency / 1_000) / 0.35
+            let gain = 6 * exp(-0.5 * distance * distance)
+            return (frequency, gain)
+        }
+        let graphic = "\u{FEFF}GraphicEQ: " + points.map { "\($0.0) \($0.1)" }.joined(separator: "; ") + ";"
+        let file = try AutoEqTextPreset.read(graphic, name: "Measured curve")
+        let settings = try MobileEQSettings(preset: file)
+        XCTAssertEqual(settings.bands.count, MobileEQ.maximumBandCount)
+        XCTAssertTrue(settings.bands.allSatisfy { $0.type == .peaking })
+        XCTAssertGreaterThan(settings.bands.filter(\.enabled).count, 8)
+        XCTAssertLessThan(settings.preamp, -5)
+
+        let response = FrequencyResponse.curve(bands: settings.bands, sampleRate: 48_000,
+                                               points: 1_001, fMin: 20, fMax: 20_000)
+        func nearest(_ frequency: Double) -> Double {
+            response.min { abs($0.freq - frequency) < abs($1.freq - frequency) }?.db ?? 0
+        }
+        XCTAssertGreaterThan(nearest(1_000), 4.5)
+        XCTAssertLessThan(nearest(100), 2.0)
+        XCTAssertLessThan(nearest(10_000), 2.0)
+        XCTAssertTrue(AutoEqTextPreset.isGraphicEQ(graphic))
+    }
+
+    func testGraphicEQRejectsUnorderedAndMalformedPoints() {
+        XCTAssertThrowsError(try AutoEqTextPreset.read("GraphicEQ: 20 0; 40 1; 30 2", name: "bad"))
+        XCTAssertThrowsError(try AutoEqTextPreset.read("GraphicEQ: 20 0; invalid", name: "bad"))
+    }
+
+    func testGraphicEQImportExplainsTheParametricApproximation() throws {
+        let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appending(path: "Wavelet GraphicEQ.txt")
+        try Data("GraphicEQ: 20 0; 1000 6; 20000 0".utf8).write(to: file)
+
+        let result = PresetImport.read([file])
+
+        XCTAssertEqual(result.files.count, 1)
+        XCTAssertTrue(try XCTUnwrap(result.notices.first).contains("approximated"))
+    }
+
     @MainActor
     func testLibrarySavesCurrentCurveAndBulkImportsMacFiles() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)

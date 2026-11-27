@@ -136,12 +136,34 @@ struct MobileAutoEqPreset: Identifiable, Hashable {
             throw AutoEqCatalogError.invalidPreset
         }
         let settings = MobileEQSettings(
-            bands: filters.map { EQBand(frequency: $0.frequency, gain: $0.gain, q: $0.q, type: $0.type) },
+            bands: filters.enumerated().map { index, filter in
+                EQBand(id: stableBandID(index: index), frequency: filter.frequency,
+                       gain: filter.gain, q: filter.q, type: filter.type)
+            },
             preamp: preampDb,
             bypassed: false
         )
         guard settings.isValid else { throw AutoEqCatalogError.invalidPreset }
         return settings
+    }
+
+    /// AutoEq conversions for the same catalog row should retain band identity
+    /// across repeated loads so equality, editing selection, and UI diffing are
+    /// stable. The row id and filter position uniquely identify each band.
+    private func stableBandID(index: Int) -> UUID {
+        let row = UInt64(bitPattern: Int64(id))
+        let position = UInt64(index)
+        var bytes = [UInt8](repeating: 0, count: 16)
+        for offset in 0..<8 {
+            bytes[offset] = UInt8((row >> (56 - offset * 8)) & 0xff)
+            bytes[offset + 8] = UInt8((position >> (56 - offset * 8)) & 0xff)
+        }
+        bytes[6] = (bytes[6] & 0x0f) | 0x50
+        bytes[8] = (bytes[8] & 0x3f) | 0x80
+        return UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3],
+                           bytes[4], bytes[5], bytes[6], bytes[7],
+                           bytes[8], bytes[9], bytes[10], bytes[11],
+                           bytes[12], bytes[13], bytes[14], bytes[15]))
     }
 
     private struct StoredFilter: Decodable {

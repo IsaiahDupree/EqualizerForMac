@@ -54,10 +54,17 @@ final class EqualizerSession {
     private(set) var storageMessage: String?
     private(set) var reference: MobileEQSettings?
     private(set) var playingReference = false
+    private(set) var canUndo = false
+    private(set) var canRedo = false
 
     @ObservationIgnored private let store: EqualizerStore
     @ObservationIgnored private var savedSnapshot: EqualizerSnapshot
     @ObservationIgnored private var isEditing = false
+    @ObservationIgnored private var editBaseline: EqualizerSnapshot?
+    @ObservationIgnored private var undoHistory: [EqualizerSnapshot] = []
+    @ObservationIgnored private var redoHistory: [EqualizerSnapshot] = []
+    @ObservationIgnored private var applyingHistory = false
+    private static let historyLimit = 50
 
     init(store: EqualizerStore = .live) {
         self.store = store
@@ -83,8 +90,13 @@ final class EqualizerSession {
     }
 
     func updateEQ(_ update: (inout MobileEQSettings) -> Void) {
-        update(&snapshot.settings)
-        snapshot.selectedBand = snapshot.settings.selection(snapshot.selectedBand)
+        var updated = snapshot.settings
+        update(&updated)
+        guard updated != snapshot.settings else { return }
+        if isEditing && editBaseline == nil { editBaseline = snapshot }
+        if !isEditing && !applyingHistory { recordUndoPoint(snapshot) }
+        snapshot.settings = updated
+        snapshot.selectedBand = updated.selection(snapshot.selectedBand)
         if !playingReference { player.apply(snapshot.settings) }
         if !isEditing { saveIfChanged() }
     }
@@ -127,10 +139,22 @@ final class EqualizerSession {
 
     @discardableResult
     func setCorrection(_ correction: OutputCorrection?, for output: PlaybackOutput) -> Bool {
-        guard player.currentOutput?.id == output.id else { return false }
+        // The assignment belongs to the captured output identity. A route can
+        // change while the correction sheet is open; preserve the user's edit
+        // for that output, while PreviewPlayer applies it only when that exact
+        // identity is active again.
+        guard !output.id.isEmpty, correction?.isValid != false else { return false }
         var assignments = snapshot.outputCorrections ?? [:]
-        assignments[output.id] = correction
-        snapshot.outputCorrections = assignments.isEmpty ? nil : assignments
+        if let correction {
+            assignments[output.id] = correction
+        } else {
+            assignments.removeValue(forKey: output.id)
+        }
+        var updated = snapshot
+        updated.outputCorrections = assignments.isEmpty ? nil : assignments
+        guard updated != snapshot else { return true }
+        recordUndoPoint(snapshot)
+        snapshot = updated
         player.applyOutputCorrections(assignments)
         saveIfChanged()
         return true
@@ -143,12 +167,65 @@ final class EqualizerSession {
     }
 
     func editingChanged(_ editing: Bool) {
+        if editing && !isEditing {
+            editBaseline = snapshot
+        } else if !editing && isEditing, let baseline = editBaseline, baseline != snapshot,
+                  !applyingHistory {
+            recordUndoPoint(baseline)
+        }
         isEditing = editing
-        if !editing { saveIfChanged() }
+        if !editing {
+            editBaseline = nil
+            saveIfChanged()
+        }
+    }
+
+    func undo() {
+        finishEditingForHistory()
+        guard let previous = undoHistory.popLast() else { return }
+        auditionReference(false)
+        redoHistory.append(snapshot)
+        restoreFromHistory(previous)
+        updateHistoryAvailability()
+    }
+
+    func redo() {
+        finishEditingForHistory()
+        guard let next = redoHistory.popLast() else { return }
+        auditionReference(false)
+        undoHistory.append(snapshot)
+        restoreFromHistory(next)
+        updateHistoryAvailability()
     }
 
     func checkpointForBackground() {
         editingChanged(false)
+    }
+
+    private func finishEditingForHistory() {
+        if isEditing { editingChanged(false) }
+    }
+
+    private func recordUndoPoint(_ point: EqualizerSnapshot) {
+        guard !applyingHistory else { return }
+        undoHistory.append(point)
+        if undoHistory.count > Self.historyLimit { undoHistory.removeFirst(undoHistory.count - Self.historyLimit) }
+        redoHistory.removeAll(keepingCapacity: true)
+        updateHistoryAvailability()
+    }
+
+    private func restoreFromHistory(_ restored: EqualizerSnapshot) {
+        applyingHistory = true
+        snapshot = restored
+        player.apply(snapshot.settings)
+        player.applyOutputCorrections(snapshot.outputCorrections ?? [:])
+        saveIfChanged()
+        applyingHistory = false
+    }
+
+    private func updateHistoryAvailability() {
+        canUndo = !undoHistory.isEmpty
+        canRedo = !redoHistory.isEmpty
     }
 
     private func saveIfChanged() {

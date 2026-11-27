@@ -1,6 +1,7 @@
 import AudioToolbox
 import AVFAudio
 import Foundation
+import XCTest
 
 /// Test-only input whose expected samples are independent of Sonance's DSP.
 /// The integer-frequency, one-second signals join continuously when repeated.
@@ -154,13 +155,16 @@ private final class QualitySourceCursor {
     }
 }
 
-/// Captures the actual installed AU through AVAudioEngine. This is an OFFLINE
-/// host test: it cannot prove callback deadlines, Bluetooth RF reliability, or
-/// playback while a physical iPhone is locked. Every successful output block is
-/// retained, including startup. No silent blocks are skipped to make a test pass.
+/// Captures the installed AU's render block directly. Bypassing AVAudioEngine's
+/// mixer avoids measuring its mono/stereo pan and channel-conversion gain as if
+/// it were part of the EQ. This is an OFFLINE test: it cannot prove callback
+/// deadlines, Bluetooth RF reliability, or playback while an iPhone is locked.
+/// Every successful output block is retained, including startup.
 final class QualityRenderStream {
-    private let engine = AVAudioEngine()
-    private let source: AVAudioSourceNode
+    private let audioUnit: AUAudioUnit
+    private let renderBlock: AURenderBlock
+    private let sourceCursor: QualitySourceCursor
+    private let input: AVAudioPCMBuffer
     private let effect: AVAudioUnit
     private let output: AVAudioPCMBuffer
     private let signal: QualitySignal
@@ -179,23 +183,18 @@ final class QualityRenderStream {
         self.signal = signal
         self.output = buffer
         self.maximumFrames = maximumFrames
-        let cursor = QualitySourceCursor(signal)
-        source = AVAudioSourceNode(format: format) { isSilence, _, frames, list in
-            isSilence.pointee = false
-            return cursor.fill(list, frames: Int(frames))
+        guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: maximumFrames) else {
+            throw QualityRenderError.failure("Could not allocate deterministic input buffer")
         }
-        engine.attach(source)
-        engine.attach(effect)
-        engine.connect(source, to: effect, format: format)
-        engine.connect(effect, to: engine.mainMixerNode, format: format)
-        engine.mainMixerNode.outputVolume = 1
-        do {
-            try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: maximumFrames)
-            try engine.start()
-        } catch {
-            close()
-            throw error
-        }
+        self.input = inputBuffer
+        self.sourceCursor = QualitySourceCursor(signal)
+        self.audioUnit = effect.auAudioUnit
+        try audioUnit.inputBusses[0].setFormat(format)
+        try audioUnit.outputBusses[0].setFormat(format)
+        audioUnit.maximumFramesToRender = maximumFrames
+        try audioUnit.allocateRenderResources()
+        audioUnit.reset()
+        self.renderBlock = audioUnit.renderBlock
     }
 
     deinit { close() }
@@ -203,12 +202,7 @@ final class QualityRenderStream {
     func close() {
         guard !closed else { return }
         closed = true
-        engine.stop()
-        engine.disableManualRenderingMode()
-        engine.disconnectNodeOutput(source)
-        engine.disconnectNodeOutput(effect)
-        engine.detach(effect)
-        engine.detach(source)
+        if audioUnit.renderResourcesAllocated { audioUnit.deallocateRenderResources() }
     }
 
     func capture(frames: Int, blockPattern: [AVAudioFrameCount]) throws -> QualityCapture {
@@ -226,27 +220,20 @@ final class QualityRenderStream {
         var contextRetries = 0
         while rendered < frames {
             let requested = min(blockPattern[blockIndex % blockPattern.count], AVAudioFrameCount(frames - rendered))
-            let before = engine.manualRenderingSampleTime
-            var attempts = 0
-            while true {
-                output.frameLength = 0
-                let result = try engine.renderOffline(requested, to: output)
-                if result == .success { break }
-                // AVAudioEngine permits retrying this offline status. It must
-                // not advance the timeline or consume a nominal output block.
-                // These retries are reported, not called Bluetooth underruns.
-                guard result == .cannotDoInCurrentContext,
-                      engine.manualRenderingSampleTime == before, attempts < 100 else {
-                    throw QualityRenderError.failure("Offline render failed at frame \(rendered): \(result)")
-                }
-                attempts += 1
-                contextRetries += 1
-                Thread.sleep(forTimeInterval: 0.001)
+            input.frameLength = requested
+            output.frameLength = requested
+            var flags: AudioUnitRenderActionFlags = []
+            var timestamp = AudioTimeStamp()
+            timestamp.mSampleTime = Double(rendered)
+            timestamp.mFlags = .sampleTimeValid
+            let pullInput: AURenderPullInputBlock = { [sourceCursor] _, _, frames, bus, inputData in
+                guard bus == 0 else { return kAudioUnitErr_InvalidElement }
+                return sourceCursor.fill(inputData, frames: Int(frames))
             }
-            guard output.frameLength == requested,
-                  engine.manualRenderingSampleTime == before + AVAudioFramePosition(requested),
-                  let channels = output.floatChannelData else {
-                throw QualityRenderError.failure("Incomplete or discontinuous output at frame \(rendered)")
+            let status = renderBlock(&flags, &timestamp, requested, 0,
+                                     output.mutableAudioBufferList, pullInput)
+            guard status == noErr, let channels = output.floatChannelData else {
+                throw QualityRenderError.failure("AU render failed at frame \(rendered): \(status)")
             }
             for channel in samples.indices {
                 samples[channel].append(contentsOf: UnsafeBufferPointer(start: channels[channel], count: Int(requested)))

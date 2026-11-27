@@ -1,5 +1,6 @@
 import AudioToolbox
 import AVFAudio
+import Dispatch
 import os
 
 private final class RenderStorage {
@@ -59,6 +60,7 @@ final class SonanceAudioUnit: AUAudioUnit {
     private let outputBus: AUAudioUnitBus
     private var inputs: AUAudioUnitBusArray!
     private var outputs: AUAudioUnitBusArray!
+    private var telemetryTimer: DispatchSourceTimer?
 
     override init(componentDescription: AudioComponentDescription,
                   options: AudioComponentInstantiationOptions = []) throws {
@@ -118,9 +120,11 @@ final class SonanceAudioUnit: AUAudioUnit {
             super.deallocateRenderResources()
             throw auError(kAudioUnitErr_FailedInitialization)
         }
+        startTelemetryPublishing()
     }
 
     override func deallocateRenderResources() {
+        stopTelemetryPublishing()
         SonanceRenderReleaseResources(storage.pointer)
         super.deallocateRenderResources()
     }
@@ -261,6 +265,7 @@ final class SonanceAudioUnit: AUAudioUnit {
         let tree = AUParameterTree.createTree(withChildren: nodes)
         tree.implementorValueObserver = { [weak self] parameter, value in
             guard let self else { return }
+            guard !MobileEQ.isTelemetryAddress(parameter.address) else { return }
             self.control.withLock { state in
                 state.setValue(value, at: parameter.address)
                 if let (band, _) = MobileEQ.bandControl(at: parameter.address), band >= state.bandCount { return }
@@ -285,5 +290,36 @@ final class SonanceAudioUnit: AUAudioUnit {
             }
         }
         return tree
+    }
+
+    private func startTelemetryPublishing() {
+        guard telemetryTimer == nil else { return }
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now() + .milliseconds(50), repeating: .milliseconds(100))
+        timer.setEventHandler { [weak self] in self?.publishTelemetry() }
+        telemetryTimer = timer
+        timer.resume()
+    }
+
+    private func stopTelemetryPublishing() {
+        telemetryTimer?.cancel()
+        telemetryTimer = nil
+    }
+
+    /// Read lock-free counters off the audio callback and publish them through the
+    /// standard AUParameter tree so out-of-process hosts receive fresh telemetry.
+    private func publishTelemetry() {
+        guard let tree = parameterTree else { return }
+        let values: [(AUParameterAddress, Float)] = [
+            (MobileEQ.renderBlocksAddress, Float(SonanceRenderCompletedBlocks(storage.pointer))),
+            (MobileEQ.deadlineMissesAddress, Float(SonanceRenderDeadlineMisses(storage.pointer))),
+            (MobileEQ.maximumProcessingMicrosecondsAddress,
+             Float(SonanceRenderMaximumProcessingNanoseconds(storage.pointer)) / 1_000),
+            (MobileEQ.lastDeadlineMicrosecondsAddress,
+             Float(SonanceRenderLastDeadlineNanoseconds(storage.pointer)) / 1_000),
+        ]
+        for (address, value) in values {
+            tree.parameter(withAddress: address)?.value = value
+        }
     }
 }

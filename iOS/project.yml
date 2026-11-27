@@ -8,8 +8,9 @@ settings:
   base:
     SWIFT_VERSION: '5.0'
     MARKETING_VERSION: '0.1.0'
-    CURRENT_PROJECT_VERSION: '6'
+    CURRENT_PROJECT_VERSION: '8'
     CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: Y4HDXFWXUV
     TARGETED_DEVICE_FAMILY: '1,2'
 
 fileGroups:
@@ -19,6 +20,14 @@ targets:
   SonanceEQiOS:
     type: application
     platform: iOS
+    preBuildScripts:
+      - name: Generate Debug playback UI-test tone
+        script: |
+          if [[ "$CONFIGURATION" == "Debug" ]]; then
+            python3 "$SRCROOT/Tools/generate-ui-playback-fixture.py" \
+              "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/SonanceBackgroundVerification.wav"
+          fi
+        basedOnDependencyAnalysis: false
     sources:
       - path: Sources/App
         excludes:
@@ -42,6 +51,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype
+        CODE_SIGN_ENTITLEMENTS: HostConfig/App.entitlements
+        CODE_SIGN_STYLE: Automatic
         OTHER_LDFLAGS: "$(inherited) -lsqlite3"
         SWIFT_OBJC_BRIDGING_HEADER: Sources/Shared/SonanceAnalysis.h
         GENERATE_INFOPLIST_FILE: YES
@@ -75,10 +86,15 @@ targets:
       - ../Sources/SonanceEQ/DSP/FilterDesigner.swift
       - ../Sources/SonanceEQ/DSP/FrequencyResponse.swift
       - ../Sources/SonanceEQ/DSP/FIRDesigner.swift
+      - Sources/App/AutoEqCatalog.swift
+      - path: ../Sources/SonanceEQ/Resources/autoeq.sqlite
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit
+        CODE_SIGN_STYLE: Automatic
         APPLICATION_EXTENSION_API_ONLY: YES
+        OTHER_LDFLAGS: "$(inherited) -lsqlite3"
         SWIFT_OBJC_BRIDGING_HEADER: Sources/AudioUnit/SonanceRender.h
     dependencies:
       - sdk: Accelerate.framework
@@ -113,6 +129,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.Tests
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: Apple Development
+        PROVISIONING_PROFILE_SPECIFIER: "Riff Engine local device tests 20261109"
         GENERATE_INFOPLIST_FILE: YES
 
   SonanceEQiOSUITests:
@@ -126,6 +145,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.UITests
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: Apple Development
+        PROVISIONING_PROFILE_SPECIFIER: "Riff Engine local device tests 20261109"
         GENERATE_INFOPLIST_FILE: YES
 
 schemes:

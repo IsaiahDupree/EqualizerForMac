@@ -2,6 +2,69 @@ import XCTest
 
 final class EqualizerRelaunchTests: XCTestCase {
     @MainActor
+    func testEditorUndoAndRedoRestorePresetChanges() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Presets"].tap()
+        app.buttons["Flat"].tap()
+        let preamp = app.sliders["eqPreamp"]
+        reveal(preamp, in: app)
+        let initial = try XCTUnwrap(preamp.value as? String)
+
+        app.buttons["Presets"].tap()
+        app.buttons["Vocal"].tap()
+        let undo = app.buttons["undoEQ"]
+        let redo = app.buttons["redoEQ"]
+        XCTAssertTrue(undo.isEnabled)
+        XCTAssertNotEqual(preamp.value as? String, initial)
+
+        undo.tap()
+        XCTAssertEqual(preamp.value as? String, initial)
+        XCTAssertTrue(redo.isEnabled)
+
+        redo.tap()
+        XCTAssertNotEqual(preamp.value as? String, initial)
+        XCTAssertTrue(undo.isEnabled)
+    }
+
+    @MainActor
+    func testAutoEqProfileCanBeSearchedAndAssignedToOutput() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+
+        app.buttons["Presets"].tap()
+        app.buttons["Headphone Correction Library"].tap()
+        let search = app.textFields["headphoneCatalogSearch"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("AirPods Pro 3")
+
+        let preset = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@", "headphonePreset-"
+        )).firstMatch
+        XCTAssertTrue(preset.waitForExistence(timeout: 5))
+        XCTAssertTrue(preset.label.localizedCaseInsensitiveContains("AirPods Pro 3"))
+
+        app.buttons["headphonePresetActions"].firstMatch.tap()
+        let assign = app.buttons["Assign as Output Correction"]
+        XCTAssertTrue(assign.waitForExistence(timeout: 5))
+        XCTAssertTrue(assign.isEnabled, "The simulator must expose one current output for assignment.")
+        assign.tap()
+
+        app.buttons["outputCorrection"].tap()
+        let correctionPreset = app.buttons["correctionPreset"]
+        XCTAssertTrue(correctionPreset.waitForExistence(timeout: 5))
+        XCTAssertTrue((correctionPreset.value as? String)?.localizedCaseInsensitiveContains("AirPods Pro 3") == true)
+        let applyCorrection = app.buttons["applyOutputCorrection"]
+        XCTAssertEqual(applyCorrection.value as? String, "On")
+
+        app.buttons["Clear Assignment"].tap()
+        app.buttons["Done"].tap()
+    }
+
+    @MainActor
     func testNamedPresetCanBeSavedAndLoadedAfterRelaunch() throws {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -24,8 +87,11 @@ final class EqualizerRelaunchTests: XCTestCase {
         let field = alert.textFields.firstMatch
         field.tap()
         field.typeText(name)
+        XCTAssertEqual(field.value as? String, name)
         alert.buttons["Save"].tap()
-        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 5))
+        retainScreenshot("Preset Library After Save", app)
+        let savedPreset = app.buttons["savedPreset-\(name)"]
+        reveal(savedPreset, in: app, presetRow: true)
         retainScreenshot("Preset Library", app)
         app.buttons["Done"].tap()
         presets.tap()
@@ -35,7 +101,9 @@ final class EqualizerRelaunchTests: XCTestCase {
         app.launch()
         presets.tap()
         app.buttons["Preset Library"].tap()
-        app.staticTexts[name].tap()
+        let restoredPreset = app.buttons["savedPreset-\(name)"]
+        reveal(restoredPreset, in: app, presetRow: true)
+        restoredPreset.tap()
         reveal(preamp, in: app)
         XCTAssertEqual(preamp.value as? String, level)
 
@@ -45,19 +113,33 @@ final class EqualizerRelaunchTests: XCTestCase {
         XCTAssertTrue(picker.waitForExistence(timeout: 5))
         picker.tap()
         app.buttons[name].tap()
-        let enabled = app.switches["applyOutputCorrection"]
+        let enabled = app.buttons["applyOutputCorrection"]
         XCTAssertEqual(picker.value as? String, name)
-        XCTAssertEqual(enabled.value as? String, "1")
+        XCTAssertEqual(enabled.value as? String, "On")
         retainScreenshot("Output Correction", app)
         enabled.tap()
-        XCTAssertEqual(enabled.value as? String, "0")
+        let disabledExpectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in (enabled.value as? String) == "Off" },
+            object: nil
+        )
+        retainScreenshot("Output Correction After Toggle", app)
+        XCTAssertEqual(XCTWaiter.wait(for: [disabledExpectation], timeout: 3), .completed)
         app.terminate()
         app.launch()
         outputCorrection.tap()
         XCTAssertEqual(picker.value as? String, name)
-        XCTAssertEqual(enabled.value as? String, "0")
+        XCTAssertEqual(enabled.value as? String, "Off")
         app.buttons["Clear Assignment"].tap()
         XCTAssertEqual(picker.value as? String, "Choose")
+        app.buttons["Done"].tap()
+        presets.tap()
+        app.buttons["Preset Library"].tap()
+        let presetActions = app.buttons["Actions for \(name)"]
+        revealPresetActions(presetActions, in: app)
+        presetActions.tap()
+        app.buttons["Delete Preset"].tap()
+        app.buttons["Delete Preset"].tap()
+        XCTAssertFalse(app.buttons["savedPreset-\(name)"].exists)
     }
 
     @MainActor
@@ -161,7 +243,11 @@ final class EqualizerRelaunchTests: XCTestCase {
         app.terminate()
         app.launch()
 
-        XCTAssertEqual(bypass.value as? String, changedBypass)
+        let restoredBypass = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == %@", changedBypass),
+            object: bypass
+        )
+        XCTAssertEqual(XCTWaiter.wait(for: [restoredBypass], timeout: 5), .completed)
         XCTAssertEqual(app.buttons["playAudio"].label, "Play")
         XCTAssertFalse(app.buttons["playAudio"].isEnabled)
         reveal(selector, in: app)
@@ -189,28 +275,13 @@ final class EqualizerRelaunchTests: XCTestCase {
     @MainActor
     func testLocalPlaybackContinuesOnHomeScreenAndStopsOnTermination() async throws {
         let app = XCUIApplication()
+        app.launchArguments.append("--sonance-ui-test-playback-fixture")
         app.launch()
-        app.buttons["openAudio"].tap()
-
-        let elements = app.descendants(matching: .any)
-        let fixture = elements.matching(NSPredicate(format: "label IN %@",
-            ["Sonance Background Verification", "Sonance Background Verification.wav"])).firstMatch
-        if !fixture.exists {
-            let location = elements.matching(NSPredicate(format: "label IN %@", ["On My iPhone", "On My iPad"])).firstMatch
-            if !location.exists {
-                let browse = elements.matching(NSPredicate(format: "label == %@", "Browse")).firstMatch
-                if browse.waitForExistence(timeout: 5), browse.isHittable { browse.tap() }
-            }
-            if location.waitForExistence(timeout: 5), location.isHittable { location.tap() }
+        let openAudio = app.buttons["openAudio"]
+        let fixtureSelected = NSPredicate { _, _ in
+            (openAudio.value as? String)?.contains("SonanceBackgroundVerification.wav") == true
         }
-        try XCTSkipUnless(fixture.waitForExistence(timeout: 5),
-                          "Place Sonance Background Verification.wav in On My iPhone to run this case.")
-        let tile = app.cells.containing(.staticText, identifier: fixture.label).firstMatch
-        if tile.exists, tile.isHittable {
-            tile.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.30)).tap()
-        } else {
-            fixture.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: -28)).tap()
-        }
+        await fulfillment(of: [XCTNSPredicateExpectation(predicate: fixtureSelected, object: openAudio)], timeout: 8)
 
         let transport = app.buttons["playAudio"]
         let ready = NSPredicate { _, _ in transport.exists && transport.isHittable && transport.isEnabled }
@@ -257,6 +328,7 @@ final class EqualizerRelaunchTests: XCTestCase {
         XCTAssertEqual(transport.label, "Pause")
 
         app.terminate()
+        app.launchArguments = []
         app.launch()
         XCTAssertEqual(transport.label, "Play")
         XCTAssertFalse(transport.isEnabled)
@@ -271,16 +343,43 @@ final class EqualizerRelaunchTests: XCTestCase {
     }
 
     @MainActor
-    private func reveal(_ item: XCUIElement, in app: XCUIApplication, down: Bool = true) {
+    private func reveal(_ item: XCUIElement, in app: XCUIApplication, down: Bool = true,
+                        presetRow: Bool = false) {
         func visibleInEditor() -> Bool {
-            guard item.isHittable else { return false }
+            guard item.exists, item.isHittable else { return false }
+            if presetRow {
+                return item.frame.minY > app.navigationBars.firstMatch.frame.maxY
+            }
             let abovePlayer = item.frame.maxY < app.buttons["playAudio"].frame.minY - 10
             return abovePlayer && item.frame.minY > app.navigationBars.firstMatch.frame.maxY
         }
-        for _ in 0..<5 where !visibleInEditor() {
-            let scroll = app.scrollViews.firstMatch
-            if down { scroll.swipeUp(velocity: .slow) } else { scroll.swipeDown(velocity: .slow) }
+        let list = app.collectionViews.firstMatch
+        var attempts = 0
+        while !visibleInEditor() && attempts < 8 {
+            attempts += 1
+            if presetRow && list.exists {
+                let from = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.8 : 0.25))
+                let to = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.25 : 0.8))
+                from.press(forDuration: 0.1, thenDragTo: to)
+            } else if down {
+                app.scrollViews.firstMatch.swipeUp(velocity: .slow)
+            } else {
+                app.scrollViews.firstMatch.swipeDown(velocity: .slow)
+            }
         }
-        XCTAssertTrue(visibleInEditor(), item.debugDescription)
+        XCTAssertTrue(visibleInEditor(), "Expected the requested control to be visible and hittable.")
+    }
+
+    @MainActor
+    private func revealPresetActions(_ item: XCUIElement, in app: XCUIApplication) {
+        let list = app.collectionViews.firstMatch
+        var attempts = 0
+        while (!item.exists || !item.isHittable) && attempts < 8 {
+            attempts += 1
+            let from = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+            let to = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+            from.press(forDuration: 0.1, thenDragTo: to)
+        }
+        XCTAssertTrue(item.exists && item.isHittable, "Expected the saved preset actions to be visible.")
     }
 }

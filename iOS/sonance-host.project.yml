@@ -2,6 +2,8 @@ name: SonanceEQHost
 options:
   bundleIdPrefix: com.isaiahdupree.SonanceEQ
   deploymentTarget:
+    # The EffectDeck-derived host currently uses SwiftUI reorder APIs introduced
+    # in iOS 27. Keep its minimum aligned until those calls have iOS 26 fallbacks.
     iOS: "27.0"
   # Avoid duplicate references when this project includes both the vendored
   # EffectDeck tree and sibling Sonance app sources through ../ paths.
@@ -29,12 +31,13 @@ settings:
     # 既定は青。Beta 構成だけ上の configs で紫に上書きする。
     ET_APPICON: EffeTuneLive
     CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: Y4HDXFWXUV
     SWIFT_VERSION: "5.0"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     CLANG_ENABLE_OBJC_ARC: YES
     TARGETED_DEVICE_FAMILY: "1,2"
     MARKETING_VERSION: "0.2.0"
-    CURRENT_PROJECT_VERSION: "14"
+    CURRENT_PROJECT_VERSION: "35"
 
 # EffeTune の DSP コアは host-neutral な C++20 なので、そのまま arm64 で建つ。
 # WASM を経由しない。include の場所だけ揃えれば通る（実機向けに 75/75 確認済み）。
@@ -190,10 +193,14 @@ targets:
       - path: ../../../Sources/SonanceEQ/DSP/FilterDesigner.swift
       - path: ../../../Sources/SonanceEQ/DSP/FrequencyResponse.swift
       - path: ../../../Sources/SonanceEQ/DSP/FIRDesigner.swift
+      - path: ../../Sources/App/AutoEqCatalog.swift
+      - path: ../../../Sources/SonanceEQ/Resources/autoeq.sqlite
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.AudioUnit
         APPLICATION_EXTENSION_API_ONLY: YES
+        OTHER_LDFLAGS: "$(inherited) -lsqlite3"
         SWIFT_OBJC_BRIDGING_HEADER: ../../Sources/AudioUnit/SonanceRender.h
     dependencies:
       - sdk: Accelerate.framework
@@ -286,6 +293,7 @@ targets:
       - path: ../../HostConfig/RouteInstallerApp.swift
     settings:
       base:
+        IPHONEOS_DEPLOYMENT_TARGET: "27.0"
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller
         PRODUCT_NAME: SonanceEQRoute
         INFOPLIST_FILE: ../../HostConfig/RouteInstaller-Info.plist
@@ -320,6 +328,7 @@ targets:
           - "ETLICEFont.*"
     settings:
       base:
+        IPHONEOS_DEPLOYMENT_TARGET: "27.0"
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller.MediaDevice
         PRODUCT_NAME: EffeTuneLiveExtension
         INFOPLIST_FILE: ../../HostConfig/MediaDevice-Info.plist
@@ -390,6 +399,8 @@ targets:
       - path: Tests/Fixtures/JSFX
         buildPhase: resources
       - path: Sources/EffeTuneLive/Audio/RouteEscape.swift
+      # Route-change burst/window model. Foundation only; exercised without audio hardware.
+      - path: Sources/EffeTuneLive/Audio/ETRouteChangeHistory.swift
       # JSFX を建てる専用スレッドと列挙つまみの選択。Foundation だけ（JSFXLoaderTests）。
       - path: Sources/EffeTuneLive/Audio/ETJSFXLoader.swift
       # ソース表示の行分けと色分け。Foundationだけ（JSFXSourceSyntaxTests）。
@@ -592,6 +603,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.HostUnitTests
+        # Logic tests mostly exercise OS-independent rules and should run on
+        # the locally available iOS 26 simulator; the production host remains iOS 27.
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
         GENERATE_INFOPLIST_FILE: YES
         # ETJSFXHost.cpp は本体と同じ形で建てる（本体は dspSettings 経由）。
         CLANG_CXX_LANGUAGE_STANDARD: "c++20"
@@ -616,9 +630,13 @@ targets:
     platform: iOS
     sources:
       - path: Tests/UI
+      - path: ../../HostUITests
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.isaiahdupree.SonanceEQ.iOSPrototype.HostUITests
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: Apple Development
+        DEVELOPMENT_TEAM: Y4HDXFWXUV
         TEST_TARGET_NAME: EffeTuneLive
         GENERATE_INFOPLIST_FILE: YES
     dependencies:

@@ -3,6 +3,228 @@
 This branch is a development prototype. It is not a finished, distribution-ready
 iOS 27 cross-app product and has not been submitted or published.
 
+## Latest physical install and Xcode checks — 2026-11-27
+
+- Restored the host target's iOS 27 minimum after an iOS 26 device build exposed
+  unguarded SwiftUI `reorderable` / `ReorderDifference` APIs that require iOS 27.
+  Xcode 27.2 then built the combined host successfully for the exact iPhone 15.
+- Installed and launched Sonance EQ **0.2.0 (35)** on
+  `00008120-000465A20C52201E` (iPhone 15, iOS 27.3). `devicectl device info
+  apps` verified the installed bundle ID and version; the host and AU process
+  were present afterward. The CoreDevice transport was `localNetwork`, not USB.
+- The build uses `/tmp/SonanceEQHostDeviceDerivedData` on local APFS. The prior
+  external scratch volume had only 61 MiB free, and Xcode planning stalled when
+  DerivedData was placed on the NTFS passport volume. The installer script now
+  defaults to the verified local path and reports entitlement signing errors
+  only when the log contains an actual matching provisioning error.
+- A targeted host UI smoke test did **not** run. First, the pinned profile
+  targeted `HostUITests` while Xcode requires `HostUITests.xctrunner`; automatic
+  signing then stopped because no Apple developer account is configured in this
+  Xcode and the wildcard profile does not include the installed development
+  certificate. The project now leaves this test target on automatic signing,
+  but a valid Xcode account/profile is still required for device UI tests.
+- `devicectl device info audio` reports that Audio Output Device Selection is
+  unsupported by this phone. No active CarPlay/Bluetooth endpoint or audio
+  session was measured, so the physical Bluetooth/CarPlay playback acceptance
+  run remains outstanding. The Media Device route capability is still absent.
+
+## Route-report sharing — 2026-11-25
+
+- Added a user-triggered Share action to the route warning. Its report contains
+  the app/build and iOS versions, current output, route-state flags, and recent
+  transitions. It excludes track details and audio samples; nothing is sent
+  until the user chooses a destination in the system share sheet.
+- The focused host route suite passes **19/19** on the iOS 26 simulator. Result:
+  `/Volumes/My Passport/SonanceEQ-build-34/RouteReportTests.xcresult`.
+- Signed iPhoneOS build **0.2.0 (35)** passes strict deep signature
+  verification. Host, Share extension, and Audio Unit extension all report
+  build 35. App: `/Volumes/My Passport/SonanceEQ-build-35/SonanceEQHost.app`.
+- The requested iPhone 15 remains paired but unavailable to CoreDevice. The
+  exact-UDID install attempt returned error 4016; Xcode discovery returns -27,
+  and USB inventory has no attached phone. Physical CarPlay and Bluetooth
+  checks remain pending.
+
+## Route diagnosis copy — 2026-11-25
+
+- Updated the no-audio and Known limitations text to recognize both route labels
+  shown to the user: **EffectDeck Audio** and **Sonance EQ Audio**. The recovery
+  wording says to choose CarPlay directly for car audio, or use a compatible
+  source/local file for EQ, without implying Sonance EQ can override a source's
+  route rejection.
+- Xcode 27.2 on the iOS 26 iPad Pro simulator: `StatusReadingsTests` passed
+  20/20 and `ETRouteChangeHistoryTests` passed 17/17. Results:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteHelpCopy.xcresult` and
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteBounceRetest.xcresult`.
+- The focused route bounce suite passed 17/17 after its recovery guidance was
+  updated to recognize both route labels. Result:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteBounceCopy.xcresult`.
+- Combined host build 34 (0.2.0) includes the detailed guidance and was built
+  for iPhoneOS with the project's development team configured. The app at
+  `/Volumes/SonanceEQBuildScratch/SonanceHostBuild34/SonanceEQHost.app` passes
+  strict deep signature verification; the host, Share extension and Audio Unit
+  extension report build 34. The iPhone 15 remains `unavailable` to CoreDevice
+  and absent from USB inventory, so build 34 is not installed and no physical
+  CarPlay or Bluetooth run has been completed.
+
+## Live maximum-load render check — 2026-11-25
+
+- Added a live player stress case with 32 active Mid bands, 32 active Side
+  bands, Mid/Side enabled and linear-phase FIR enabled. It played a stereo
+  fixture for 24 observation intervals, required continued analysis frames,
+  and asserted zero Audio Unit render deadline misses.
+- The focused iOS 26 iPad Pro M5 simulator run passed **1/1**, with no skips or
+  failures. Result: `/Volumes/SonanceEQBuildScratch/SonanceLiveFullLoad.xcresult`.
+  Xcode still emitted a QoS inversion runtime warning, so the deadline result
+  applies to the measured simulator run only.
+- A fresh install attempt for the signed host build 34 on iPhone 15 UDID
+  `00008120-000465A20C52201E` failed with CoreDevice error 4016: no requested
+  connectivity, power or service states were assertable. `devicectl` reports
+  the device paired with Developer Mode enabled but unavailable; `xcdevice`
+  still returns device-preparation error -27 and USB inventory has no iPhone.
+  Physical installation, CarPlay and Bluetooth playback remain unverified.
+
+## Latest iPhone install and route diagnosis — 2026-11-25
+
+- Current standalone `SonanceEQiOS` scheme passed **57/57** unit and UI tests on
+  the iOS 26 iPad Pro simulator, with no skips. This includes the all-sample
+  audio-continuity suite, EQ/session and preset behavior, AU lifecycle,
+  playback recovery, and player UI flows. Result bundle:
+  `/tmp/SonanceStandaloneCurrent.xcresult`. Xcode recorded several simulator
+  runtime warnings (thread QoS inversion and `_UIReparentingView` hierarchy); no
+  test failed. Physical iPhone/audio routing remains unverified.
+- The two live playback integration cases now also assert AU render telemetry:
+  completed blocks are reported and the running deadline-miss counter stays at
+  zero. The focused `AudioUnitIntegrationTests` suite passed 9/9 on the iOS 26
+  simulator; result: `/tmp/SonanceAudioRealtimeTests.xcresult`. Xcode still
+  reports QoS inversion warnings on those cases, despite zero measured AU
+  deadline misses in the test. This is simulator evidence, not a phone result.
+- Full embedded-host `Logic` suite now passes **1,436/1,436** on the iOS 26
+  iPad Pro simulator with test parallelization disabled. Result:
+  `/tmp/SonanceEffectDeckFullLogicSerial.xcresult`. A prior parallel run had
+  1,435/1,436 passing because `JSFXAudioTests.testStereoSwapExchangesChannels`
+  exceeded the 2-second JSFX compile guard; the exact test passed alone, then
+  passed again in the successful serial suite. The first result bundle's
+  simulator diagnostics are incomplete because its scratch volume ran out of
+  space; it is retained as a failed-run record, not a pass.
+- Combined host build 34 (0.2.0) contains the current route guidance for both
+  **EffectDeck Audio** and **Sonance EQ Audio**, in the general no-audio state
+  and both CarPlay bounce classifications. Its focused route-history suite
+  passed 17/17 on the iOS 26 iPad simulator; result:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteBounceCopyFinal.xcresult`. The signed
+  app bundle is `/Volumes/SonanceEQBuildScratch/SonanceHostBuild34/SonanceEQHost.app`.
+  CoreDevice still reports the exact iPhone 15 unavailable, and USB inventory
+  has no iPhone, so installation and physical route validation are pending.
+- Standalone playback now preserves a Bluetooth/CarPlay output identity if an audio-engine configuration notification arrives before the route-change notification. It records reconnectable outputs while playback is active and keeps a pending reconnect target ahead of the previous route identity; user-paused playback does not seed a new target. `PlaybackResumeSegmentTests` passed 6/6 on the iOS 26 iPad Pro M5 simulator. Result bundle: `/Volumes/SonanceEQBuildScratch/SonanceBluetoothReconnectPolicy.xcresult`.
+- Combined host build 32 (0.2.0) embeds this update and the Effects host recovery UI; build succeeded for iPhoneOS and passed strict code-signature verification. App: `/Volumes/SonanceEQBuildScratch/SonanceHostBuild32/SonanceEQHost.app`. The iPhone 15 remains unavailable to Xcode and absent from USB inventory, so this build is not installed and its Bluetooth route has not been tested physically.
+- Combined host build 33 (0.2.0) adds the current SoundCloud route-rejection guidance for both **EffectDeck Audio** and **Sonance EQ Audio**. iPhoneOS build and strict deep signature verification passed; app: `/Volumes/SonanceEQBuildScratch/SonanceHostBuild33/SonanceEQHost.app`. The phone is still unavailable, so installation and physical route validation remain pending.
+
+- Installed and launched Sonance EQ 0.2.0 (build 28) on Isaiah's iPhone 15,
+  UDID `00008120-000465A20C52201E`. `devicectl` confirms the app and its
+  Audio Unit extension are installed and running.
+- The supplied screenshots show SoundCloud explicitly rejecting **EffectDeck
+  Audio**, after which iOS has **iPhone Speaker** selected while CarPlay remains
+  available. This is a source-route compatibility rejection, not proof of an EQ
+  render failure. Sonance EQ cannot make SoundCloud accept the route or force
+  iOS to keep it selected.
+- The recovery action now uses one shared predicate for the visible **Open Player** button and its tests, so route bursts, fallback routes, and CarPlay ↔ EQ/speaker bounces expose the same local-player escape hatch, while a restart-required state suppresses it. Focused `ETRouteChangeHistoryTests` passed 16/16 on the iPad Pro M5 simulator; result bundle: `/Volumes/SonanceEQBuildScratch/SonanceRouteRecoveryAction.xcresult`.
+- Build 30 (0.2.0) compiled and signed for iPhoneOS. `codesign --verify --deep --strict` passed. App: `/Volumes/SonanceEQBuildScratch/SonanceHostBuild30/SonanceEQHost.app`. `xcdevice` reports Isaiah's iPhone 15 as unavailable with error -27 while browsing the LAN; `system_profiler` shows no iPhone on USB. This build is not installed and in-car behavior has not been verified.
+- The no-audio banner now also offers **Open Player** whenever the host has no audio peer, so the fallback is available before a repeated route-change threshold is reached. Required-restart states still suppress the action. The generated host project compiles this UI path; focused `ETRouteChangeHistoryTests` passed 17/17 on the iPad Pro M5 simulator. Result: `/Volumes/SonanceEQBuildScratch/SonanceRouteRecoveryNoAudio.xcresult`.
+- Build 31 (0.2.0) compiled and passed `codesign --verify --deep --strict`; app bundle: `/Volumes/SonanceEQBuildScratch/SonanceHostBuild31/SonanceEQHost.app`. It is not installed because Xcode cannot currently connect to the iPhone 15.
+- The integrated host records AVAudioSession route changes, preserves recent
+  evidence for 30 seconds, distinguishes CarPlay ↔ EQ and CarPlay ↔ speaker
+  bounce patterns, and offers **Open Player** to recover into Sonance EQ's
+  local-file player. Focused route-history tests passed 15/15 on the iOS 27.2
+  iPad Pro M5 simulator. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/CarPlayRouteCurrent.xcresult`. Physical
+  CarPlay behavior still needs an in-car reproduction.
+- Generic route-instability warnings now also show **Open Player**; this closes
+  a recovery-action gap when iOS is switching routes without matching a known
+  CarPlay/speaker or CarPlay/EQ pattern. Build 29 compiled and signed for
+  iPhoneOS; `codesign --verify --deep --strict` passed. App:
+  `/Volumes/SonanceEQBuildScratch/SonanceHostBuild29/Build/Products/Debug-iphoneos/SonanceEQHost.app`.
+  Xcode still reports the exact iPhone 15 as `unavailable`, so build 29 has not
+  been installed and CarPlay behavior remains unverified on hardware.
+- Build 28 contains the host and AUv3 extension, but not the separate Sonance
+  EQ Media Device route extension. The Apple Media Device entitlement needed to
+  ship that system route is still unavailable to this team. The phone's
+  **EffectDeck** route is provided by the separately installed EffectDeck app;
+  the Sonance host cannot claim or rename that route without Apple's entitlement.
+- For SoundCloud in the car, select **CarPlay** directly and leave it selected
+  (audio bypasses Sonance EQ). For EQ processing, use a compatible source in a
+  supported host or play a local file in Sonance EQ.
+
+## Latest CarPlay and EQ handoff work — 2026-11-25
+
+- Retested the focused `ETRouteChangeHistoryTests` on the iOS 26 iPad Pro M5
+  simulator: 15/15 passed, including the SoundCloud-style unsupported-route
+  return, CarPlay/speaker and CarPlay/EQ bounce classification, event-history
+  persistence, and recovery copy. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/CarPlayRouteHistoryRetest.xcresult`.
+- Added an **Open Player** recovery button to the route warning. It switches
+  directly to Sonance EQ's local audio player so the user can choose a file
+  instead of repeatedly selecting a route the streaming app rejects. The
+  generic iOS Simulator build compiled successfully with Xcode 27.2, arm64,
+  and one build job. The app cannot read another app's rejection alert or
+  change that app's route compatibility.
+- Current USB inventory does not show the designated iPhone 11
+  (`00008030-000359A13688802E`). Isaiah's iPhone 15 reports `unavailable` to
+  Xcode. I did not install to the personal phone; physical CarPlay behavior
+  remains unverified.
+- The route banner now distinguishes three repeated CarPlay ↔ Sonance EQ
+  handoffs from the existing CarPlay ↔ iPhone speaker pattern. It retains the
+  last 30 seconds of route evidence across a quick app relaunch and explains the
+  compatible-source/local-file fallback. CarPlay ↔ EQ bounces now use the same
+  orange warning icon and text as the other route failures.
+- The detector now also recognizes a connected three-change path through the
+  iPhone speaker (CarPlay → speaker → EQ → CarPlay), while rejecting unrelated
+  route records that do not connect. The focused XCTest suite covers this
+  sequence, disconnected-route rejection, new-history persistence and loading
+  history written by the older format. Simulator results do not validate the
+  production Media Device extension or physical CarPlay behavior.
+- The standalone Sonance Audio Unit continuity suite was rerun on the iOS 26
+  iPad Pro simulator: 12/12 tests passed, zero skipped. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/SonanceGoalContinuityCurrent/AudioQuality.xcresult`.
+- The regenerated EffectDeck-integrated host compiled for arm64 iPhoneOS at
+  build 28 with exit code 0. This was a compile-only build; the signed app on
+  the phone and the physical route remain unverified.
+- Focused `ETRouteChangeHistoryTests`: 15/15 passed on the iOS 26 simulator
+  after the warning presentation fix. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteEQWarningUIFix.xcresult`;
+  log: `/tmp/sonance-route-eq-warning-ui-fix.log`.
+- Combined host simulator build including the warning-style fix succeeded.
+  App: `/Volumes/SonanceEQBuildScratch/SonanceRouteWarningBuildDerivedData/Build/Products/Debug-iphonesimulator/SonanceEQHost.app`;
+  log: `/tmp/sonance-route-warning-build.log`.
+- Signed iPhoneOS build 0.2.0 (28) includes the same fix; bundle ID and deep
+  signature verification passed. App:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQBuild27DerivedData/Build/Products/Debug-iphoneos/SonanceEQHost.app`;
+  log: `/tmp/sonance-host-build28-device.log`.
+- Exact-UDID install was attempted and returned CoreDevice error 4016 with no
+  assertable connectivity/service states. The phone remains absent from USB
+  inventory, so build 28 is signed but not installed.
+- Combined host 0.2.0 (build 27) built and signed for arm64 iPhoneOS; deep
+  codesign verification passed. App:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQBuild27DerivedData/Build/Products/Debug-iphoneos/SonanceEQHost.app`;
+  log: `/tmp/sonance-route-eq-bounce-device-build-signed.log`.
+- The assigned iPhone 15 UDID `00008120-000465A20C52201E` currently reports
+  `unavailable` to Xcode, so build 27 is not installed and the physical CarPlay
+  handoff is not verified. The supplied SoundCloud alert says it rejects
+  EffectDeck Audio; the host cannot make that source support the route or force
+  iOS to keep it selected. For that source, select CarPlay directly; EQ requires
+  a compatible source or Sonance EQ's local-file player.
+
+## Full standalone simulator regression — 2026-11-25
+
+- The regenerated standalone iOS scheme passed 48/48 unit tests and all eight
+  UI tests on the iOS 26 iPad Pro simulator. The missing Files fixture was replaced
+  by a generated, audible Debug-only WAV test signal, so the playback test now
+  runs without manual simulator setup. All 56 tests passed, with no skips,
+  including background/resume, termination, preset, AU lifecycle, AutoEq and
+  output-correction coverage.
+- Result bundle: `/Volumes/SonanceEQBuildScratch/SonanceStandaloneFullRegression-Rerun.xcresult`;
+  log: `/tmp/sonance-standalone-full-regression-rerun.log`.
+- This verifies simulator behavior only. It does not replace iPhone 15 touch,
+  Bluetooth playback, CarPlay, or AUv3 host validation.
+
 ## Route diagnostic status — 2026-11-24
 
 - The host tracks route transitions, translates common system reasons, and
@@ -84,6 +306,59 @@ iOS 27 cross-app product and has not been submitted or published.
 - Version 0.2.0 (14) remains installed on iPhone 15. The supplied screenshots
   document the source refusal, but the car's physical route-change sequence
   still needs an in-car run before claiming a reproduced route-flap test.
+
+## CarPlay route-bounce detection — 2026-11-25
+
+- Combined host build 25 records route endpoints using AVAudioSession port
+  types and flags three consecutive CarPlay ↔ built-in-speaker transitions
+  inside 30 seconds as a specific handoff pattern. The status banner names the
+  pattern and tells the user to leave CarPlay selected for car playback or use
+  a compatible source/local file for EQ.
+- Added focused route-history tests for detection, banner guidance and avoiding
+  false classification of unrelated Bluetooth/speaker transitions. The
+  `ETRouteChangeHistoryTests` Logic target now passes 10/10 on the iOS 26 iPad
+  Pro simulator. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteHistoryModel-fixed.xcresult`;
+  log: `/tmp/sonance-route-history-model-fixed.log`.
+- Xcode 27.2 build 25 compiled and signed successfully; `codesign --verify
+  --deep --strict` passed. Log: `/tmp/sonance-eq-build25.log`.
+- The exact iPhone 15 UDID `00008120-000465A20C52201E` reports unavailable to
+  Xcode with device-prep error -27, so build 25 is not installed. The route
+  pattern needs a physical CarPlay run. This detection cannot make SoundCloud
+  support the rejected EffectDeck Audio route or force iOS to select it.
+
+## Media Device entitlement portal recheck — 2026-11-25
+
+- Rechecked the Apple Developer account for Team ID `Y4HDXFWXUV` and the
+  route-installer App ID `com.isaiahdupree.SonanceEQ.iOSPrototype.RouteInstaller`.
+- The App ID's **Capability Requests** tab has no Media Device entry; Safari's
+  page search for “Media Device” reports no match. The separate Capabilities
+  list also has no matching capability. No entitlement request was submitted
+  and no signing configuration was changed.
+- This leaves Apple's managed `com.apple.developer.media-device-extension`
+  entitlement and matching provisioning profiles as the blocker for the
+  Control Center Media Device route. The existing route-bounce detector can
+  explain observed CarPlay/iPhone-speaker switches, but cannot make an
+  unsupported source such as the photographed SoundCloud session accept the
+  EffectDeck Audio route.
+
+## Persistent route evidence — 2026-11-25
+
+- The host now stores the bounded route history in `UserDefaults` when iOS
+  reports a route transition and restores it on app launch. Entries expire
+  after 30 seconds of the same system-uptime epoch, so a quick relaunch retains
+  the diagnosis while stale evidence and pre-reboot uptime values are discarded.
+- The focused route-history Logic target passes 11/11 on the iOS 26 iPad Pro
+  simulator, including serialization/restore and expiry. Result bundle:
+  `/Volumes/SonanceEQBuildScratch/SonanceRouteHistoryPersistenceDefaults.xcresult`;
+  log: `/tmp/sonance-route-history-persistence-defaults.log`.
+- Combined host version 0.2.0 (build 26) builds and signs for arm64 iPhoneOS;
+  `codesign --verify --deep --strict` passes. App bundle:
+  `/Volumes/SonanceEQBuildScratch/SonanceEQBuild26DerivedData/Build/Products/Debug-iphoneos/SonanceEQHost.app`;
+  log: `/tmp/sonance-eq-build26.log`.
+- Build 26 is not installed. Xcode still lists the assigned iPhone 15 UDID
+  `00008120-000465A20C52201E` with tunnel state `unavailable`. Physical route
+  behavior and Bluetooth playback remain unverified.
 
 ## Preset and output-correction UI regression — 2026-11-25
 
@@ -183,10 +458,13 @@ iOS 27 cross-app product and has not been submitted or published.
   version 0.1.0, build 6. The new full host is version 0.2.0, build 7 and has not
   been installed. The separate `Sonance EQ Route` installer is also not
   installed. The iPhone is visible over its network interface, not USB.
-- `iOS/Tools/install-on-iphone15.sh` now regenerates the latest host project,
-  builds both the full host and route installer for the exact iPhone 15 UDID,
-  verifies their bundle IDs and signatures, and installs only after both builds
-  succeed. Its signed host build now stops on the missing App Group assignment;
+- `iOS/Tools/install-on-test-iphone.sh` now defaults to the assigned stationary
+  iPhone 11 UDID `00008030-000359A13688802E`. It regenerates the latest host
+  project, builds both the full host and route installer, verifies their bundle
+  IDs and signatures, and installs only after both builds succeed. The
+  historical build results below were recorded against the iPhone 15 and do
+  not establish current iPhone 11 availability or test status. The signed host
+  build stopped on the missing App Group assignment;
   the separate route build stops because neither route profile contains
   `com.apple.developer.media-device-extension`. No install command was reached.
   Current logs are `/Volumes/SonanceEQBuildScratch/SonanceEQHostDeviceInstall/EffeTuneLive-xcodebuild.log`
@@ -597,3 +875,17 @@ iOS Simulator destination with code signing disabled. The script uses bounded
 local build concurrency and writes DerivedData under `/tmp` by default. It
 does not run tests, launch a simulator, install to a device, or publish an app.
 EverReach remains in its separate repository and is built there independently.
+## CarPlay reconnect recovery — 2026-11-25
+
+- The standalone Sonance file player now recognizes CarPlay as a reconnectable
+  output. If that exact route disappears, playback parks at its current
+  position and resumes only when the same CarPlay output identity returns.
+  It will not resume onto the iPhone speaker or a different available route.
+- An intentional user pause remains paused. The focused playback recovery suite
+  passes 5/5 on the iOS 26 iPad Pro simulator, including same-CarPlay identity acceptance,
+  different-route rejection, Bluetooth identity acceptance and empty-ID rejection.
+- This covers the in-app file player. It cannot make SoundCloud accept the
+  separate EffectDeck Audio system route; that source's rejection still requires
+  direct CarPlay playback or a compatible player/local file for EQ.
+- Physical CarPlay reconnect and route-bounce behavior remain unverified because
+  the target iPhone 15 is currently unavailable to Xcode.

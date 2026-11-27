@@ -15,7 +15,10 @@ enum Presets {
         }
     }
 
-    static var flat: [EQBand] { graphic(gains: Array(repeating: 0, count: isoCenters.count)) }
+    // One stable identity for the shared default curve. Recreating this array
+    // with fresh UUIDs made equal settings compare unequal and caused SwiftUI
+    // band identity to churn when legacy files omitted the Side curve.
+    static let flat = graphic(gains: Array(repeating: 0, count: isoCenters.count))
 
     static var bassBoost: [EQBand] {
         graphic(gains: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0])
