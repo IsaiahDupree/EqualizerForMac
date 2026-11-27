@@ -24,3 +24,13 @@ Updated: 2026-10-21
 ## Evidence boundaries
 
 The public review, source release notes, hardware probe, and App Store version are separate evidence sources. A source fix or locally built candidate does not establish that the public binary contains it or that audio is audible on the reported hardware.
+
+## Customer-review refresh — 2026-11-27
+
+- The App Store Connect customer-review feed now returns two distinct public reports for Sonance EQ. The U.S. one-star report from 2026-08-11 still says output routing failed on a MacBook with and without a Scarlett 2i2. A Poland two-star review dated 2026-11-13 is titled “Promises a lot, fails to deliver” and says Pro lacks a menu-bar icon/menu, automatic default-preset loading, and a less cumbersome preset workflow; it also requests OS login launch and lists dark mode as optional.
+- The review API response does not include an App Store version relationship. At the review date 1.0.8 was the latest saleable version; 1.0.9 was under review and later rejected. Treat 1.0.8 as the likely context, not a verified per-review version attribution.
+- Current source already has candidate work in draft PR #10 for native menu-bar access and PR #11 for a free listening preview, routing recovery, and automatic preset recall by output device. These are unreleased draft changes. The current import/export flow still relies on files; the latest review indicates that a named in-app preset library may still be useful. It also asks for launch at login; no automatic-login behavior was added or enabled.
+- The owner-only first-party 30-day Sonance feature report checked 2026-11-27 records zero production events/installations for Sonance EQ. This is a tracking-coverage gap, not evidence of no use. It cannot establish conversion or quantify demand for the requested features.
+- App Store Connect's latest 1.0.9 version is `REJECTED`; the exact Resolution Center reason is not available in the API or notification email. Do not treat either customer review as Apple's rejection finding. Hardware routing, the current rejection reason, and physical acceptance remain separate open questions.
+
+No source, App Privacy, listing, upload, review reply, or submission change was made by this review refresh.
