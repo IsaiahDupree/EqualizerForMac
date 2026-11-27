@@ -199,7 +199,7 @@ private struct ListeningGuideView: View {
                 }
                 Section("Play through CarPlay or Bluetooth") {
                     Text("Connect CarPlay or Bluetooth, open an audio file in Sonance, and start playback. Sonance applies its EQ to that file and sends the processed audio to the active iPhone output route.")
-                    Text("This does not apply Sonance EQ to SoundCloud, Apple Music, or other apps playing their own audio. iOS doesn’t give Sonance a system-wide audio tap or a supported way to chain another app’s audio through Sonance and then back out to CarPlay.")
+                    Text("This does not apply Sonance EQ to SoundCloud, Apple Music, or other apps playing their own audio. iOS doesn’t give Sonance a general-purpose system-wide audio tap or a supported way to chain another app’s audio through Sonance and then back out to CarPlay.")
                         .foregroundStyle(.secondary)
                 }
                 Section("Keep your sound") {
